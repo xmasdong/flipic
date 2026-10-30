@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PixDeck: a free Mac image viewer with arrow-key browsing</title>
+<meta name="description" content="PixDeck is a free image viewer for Mac. Double-click any image and use the arrow keys to browse the whole folder, like on Windows. Pinch to zoom, see EXIF details, batch convert HEIC to JPG. Under 1 MB, notarized by Apple.">
+<link rel="canonical" href="https://xmasdong.github.io/macphoto/en/">
+<link rel="alternate" hreflang="zh-CN" href="https://xmasdong.github.io/macphoto/">
+<link rel="alternate" hreflang="en" href="https://xmasdong.github.io/macphoto/en/">
+<link rel="alternate" hreflang="x-default" href="https://xmasdong.github.io/macphoto/">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="apple-touch-icon" href="../icon-256.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="PixDeck: a free Mac image viewer">
+<meta property="og:description" content="Double-click an image, browse the whole folder with the arrow keys. Free, under 1 MB.">
+<meta property="og:image" content="https://xmasdong.github.io/macphoto/og.jpg">
+<meta property="og:url" content="https://xmasdong.github.io/macphoto/en/">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PixDeck",
+  "operatingSystem": "macOS 13 or later",
+  "applicationCategory": "MultimediaApplication",
+  "softwareVersion": "0.3.0",
+  "fileSize": "898KB",
+  "downloadUrl": "https://xmasdong.github.io/macphoto/download/PixDeck.dmg",
+  "image": "https://xmasdong.github.io/macphoto/og.jpg",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "description": "Mac image viewer: double-click an image and browse the whole folder with the arrow keys, pinch to zoom, view EXIF, batch convert HEIC to JPG."
+}
+</script>
+<style>
+:root {
+  --paper: oklch(97.2% 0.008 80);
+  --paper-2: oklch(94.5% 0.011 78);
+  --ink: oklch(23% 0.012 60);
+  --ink-2: oklch(42% 0.012 60);
+  --ink-3: oklch(58% 0.01 60);
+  --rule: oklch(88% 0.01 70);
+  --table: oklch(19% 0.008 60);
+  --table-ink: oklch(90% 0.01 75);
+  --table-ink-2: oklch(68% 0.01 70);
+  --amber: oklch(72% 0.11 68);
+  --display: ui-serif, "New York", Georgia, serif;
+  --body: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --measure: 34rem;
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1.0625rem/1.65 var(--body); }
+a { color: inherit; }
+h1, h2 { text-wrap: balance; }
+img { display: block; max-width: 100%; height: auto; }
+.wrap { width: min(72rem, 100% - 2 * var(--gutter)); margin-inline: auto; }
+.top { display: flex; align-items: center; justify-content: space-between; padding-block: 1.25rem; }
+.brand { display: flex; align-items: center; gap: .6rem; text-decoration: none; font-weight: 600; }
+.brand img { width: 30px; height: 30px; border-radius: 23%; }
+.top nav { display: flex; gap: clamp(1rem, 3vw, 2rem); font-size: .9375rem; color: var(--ink-2); }
+.top nav a { text-decoration: none; }
+.hero { padding-block: clamp(3rem, 9vw, 7.5rem) clamp(2.5rem, 6vw, 4.5rem); }
+.eyebrow { font-size: .875rem; color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; margin: 0 0 1.25rem; }
+h1 { font-family: var(--display); font-weight: 600; font-size: clamp(2.5rem, 6.2vw, 4.6rem); line-height: 1.08; letter-spacing: -.015em; margin: 0; max-width: 14em; }
+.lede { max-width: var(--measure); margin: 1.75rem 0 0; color: var(--ink-2); font-size: clamp(1.0625rem, 1.6vw, 1.1875rem); }
+.get { margin-top: 2.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.75rem; }
+.btn { display: inline-flex; align-items: center; gap: .65rem; background: var(--ink); color: var(--paper); text-decoration: none; font-weight: 600; padding: .95rem 1.6rem; border-radius: 999px; transition: transform .2s cubic-bezier(.22,1,.36,1), background-color .2s; }
+.btn:hover { background: oklch(30% 0.014 60); }
+.btn:active { transform: scale(.98); }
+.btn svg { width: 18px; height: 18px; }
+.alt { color: var(--ink-2); font-size: .9375rem; }
+.facts { margin: 1.25rem 0 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: .35rem 1.25rem; font-size: .875rem; color: var(--ink-3); }
+.table { background: var(--table); color: var(--table-ink); padding-block: clamp(2.5rem, 6vw, 5rem) clamp(2rem, 4vw, 3rem); }
+.frame { position: relative; aspect-ratio: 1440 / 900; border-radius: clamp(8px, 1.1vw, 14px); overflow: hidden; box-shadow: 0 0 0 1px oklch(100% 0 0 / .08), 0 30px 60px -20px oklch(0% 0 0 / .6); }
+.frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .16s ease-out; }
+.frame img.on { opacity: 1; }
+.deck { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; font-size: .9375rem; color: var(--table-ink-2); }
+.deck kbd { font: 600 .8125rem/1 var(--body); color: var(--table-ink); border: 1px solid oklch(100% 0 0 / .22); border-bottom-width: 2px; border-radius: 6px; padding: .3rem .5rem; margin-inline: .15rem; }
+.keys { display: flex; align-items: center; gap: .5rem; }
+.keys button { width: 44px; height: 44px; border-radius: 50%; cursor: pointer; background: oklch(100% 0 0 / .06); color: var(--table-ink); border: 1px solid oklch(100% 0 0 / .14); display: grid; place-items: center; }
+.keys button:hover { background: oklch(100% 0 0 / .12); }
+.keys button.hit { background: oklch(100% 0 0 / .2); }
+.keys svg { width: 18px; height: 18px; }
+.count { font-variant-numeric: tabular-nums; }
+.feature { display: grid; gap: clamp(1.75rem, 4vw, 4rem); align-items: center; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); padding-block: clamp(4rem, 9vw, 7rem); }
+.feature + .feature { border-top: 1px solid var(--rule); }
+.feature.flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+.feature.flip .copytext { order: 2; }
+h2 { font-family: var(--display); font-weight: 600; font-size: clamp(1.75rem, 3.4vw, 2.6rem); line-height: 1.15; margin: 0 0 1.25rem; }
+.copytext p { margin: 0 0 1rem; color: var(--ink-2); max-width: var(--measure); }
+.copytext p strong { color: var(--ink); }
+.shot { border-radius: 10px; overflow: hidden; box-shadow: 0 0 0 1px oklch(23% 0.012 60 / .08), 0 24px 48px -24px oklch(23% 0.012 60 / .45); }
+.specs { padding-block: clamp(4rem, 8vw, 6rem); border-top: 1px solid var(--rule); }
+.specs dt { font-size: .8125rem; color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; margin-top: 1.4rem; }
+.specs dt:first-child { margin-top: 0; }
+.specs dd { margin: .2rem 0 0; max-width: 40rem; }
+footer { padding-block: 3rem 4rem; font-size: .8125rem; color: var(--ink-3); }
+footer p { margin: 0 0 .6rem; max-width: 48rem; }
+@media (prefers-reduced-motion: reduce) { .frame img { transition: none; } }
+@media (max-width: 760px) {
+  .feature, .feature.flip { grid-template-columns: 1fr; }
+  .feature.flip .copytext { order: 0; }
+  .deck { flex-direction: column-reverse; align-items: flex-start; }
+  .hint-keys { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="wrap top">
+  <a class="brand" href="./"><img src="../icon-256.png" alt="" width="30" height="30">PixDeck</a>
+  <nav><a href="../" hreflang="zh-CN">中文</a></nav>
+</header>
+<main>
+  <section class="wrap hero">
+    <p class="eyebrow">Image viewer for Mac</p>
+    <h1>Double-click a photo. Arrow keys through the whole folder.</h1>
+    <p class="lede">PixDeck does one thing: viewing images. Open a photo, flip to the next one, zoom in for detail. It works the way image viewers on Windows always have.</p>
+    <div class="get">
+      <a class="btn" href="../download/PixDeck.dmg" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+        Download for Mac, free
+      </a>
+      <span class="alt">Also on <a href="https://github.com/xmasdong/macphoto/releases/latest">GitHub</a></span>
+    </div>
+    <ul class="facts">
+      <li>macOS 13 or later</li>
+      <li>Apple silicon and Intel</li>
+      <li>898 KB download</li>
+      <li>Notarized by Apple</li>
+    </ul>
+  </section>
+
+  <section class="table" aria-label="Browsing demo">
+    <div class="wrap">
+      <div class="frame" id="frame">
+        <img class="on" src="../shots/browse-01.webp" alt="PixDeck showing photo 1 of 8 in a folder" width="1440" height="900" fetchpriority="high">
+      </div>
+      <div class="deck">
+        <span class="hint-keys">Press <kbd>←</kbd><kbd>→</kbd> on your keyboard. These are real PixDeck screenshots (Chinese UI).</span>
+        <span class="keys">
+          <button type="button" data-step="-1" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+          <span class="count" id="count" aria-live="polite">1 / 8</span>
+          <button type="button" data-step="1" aria-label="Next"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <section class="feature">
+      <div class="copytext">
+        <h2>Next image, one key away</h2>
+        <p>Open a single image in Preview and that is all you get. To flip through, you have to go back to Finder and select the whole set first.</p>
+        <p>In PixDeck, <strong>double-click any image and press →</strong> for the next one. Sort by name, date taken, date modified, date created or file size. Nearby images are prepared in the background, so even 48-megapixel photos keep up.</p>
+      </div>
+      <img class="shot" src="../shots/browse-06.webp" alt="PixDeck thumbnail strip and navigation arrows" width="1440" height="900" loading="lazy">
+    </section>
+    <section class="feature flip">
+      <div class="copytext">
+        <h2>Zoom that follows your fingers</h2>
+        <p>Pinch on the trackpad and the image scales right under your fingers. Press <strong>Space</strong> or double-click to toggle between fit and 100%; the full-resolution original loads only when you zoom in far enough to need it.</p>
+      </div>
+      <img class="shot" src="../shots/zoom.webp" alt="PixDeck viewing a photo at 100%" width="1440" height="900" loading="lazy">
+    </section>
+    <section class="feature">
+      <div class="copytext">
+        <h2>EXIF at a glance</h2>
+        <p>Size, file size, format and zoom level stay in the corner, plus camera, lens, shutter, aperture, ISO and date taken when the photo has them. Press <strong>I</strong> for the full panel.</p>
+      </div>
+      <img class="shot" src="../shots/exif.webp" alt="PixDeck photo info panel" width="1440" height="900" loading="lazy">
+    </section>
+    <section class="feature flip">
+      <div class="copytext">
+        <h2>Batch convert HEIC to JPG</h2>
+        <p>Convert a whole folder to JPEG, PNG or HEIC in one go (⇧⌘C). Converted files go into a subfolder; your originals stay untouched.</p>
+      </div>
+      <img class="shot" src="../shots/convert.webp" alt="PixDeck batch convert dialog" width="1440" height="900" loading="lazy">
+    </section>
+  </div>
+
+  <section class="specs">
+    <div class="wrap">
+      <dl>
+        <dt>Formats</dt>
+        <dd>JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and common camera RAW formats</dd>
+        <dt>Also</dt>
+        <dd>Rotate and save (lossless for JPEG and HEIC), export compressed copies, batch rename, slideshow, set as wallpaper, 14 interface languages</dd>
+        <dt>Privacy</dt>
+        <dd>No network access, no account, no data collection. PixDeck only reads the images you open.</dd>
+      </dl>
+    </div>
+  </section>
+</main>
+<footer class="wrap">
+  <p>Photos in the screenshots are from Wikimedia Commons: Kanas Lake by Muye Ma, Nalati Grassland by Yoshi Canopus, starry desert by thomas shellberg (CC0); Tianchi by David Stanley, Kuerdening by George Lu, Bosten Lake by liuxingy2015 (CC BY 2.0); Guozigou Bridge by Timothytyy, Jiangjunshan by Pazakui (CC BY 4.0).</p>
+  <p><a href="https://github.com/xmasdong/macphoto">GitHub</a> · <a href="https://github.com/xmasdong/macphoto/issues">Feedback</a></p>
+</footer>
+<script>
+(() => {
+  const total = 8, frame = document.getElementById('frame'), count = document.getElementById('count');
+  const imgs = [frame.querySelector('img')];
+  let i = 0;
+  const get = n => {
+    if (!imgs[n]) {
+      const im = new Image(1440, 900);
+      im.src = `../shots/browse-${String(n + 1).padStart(2, '0')}.webp`;
+      im.alt = `PixDeck showing photo ${n + 1} of ${total}`;
+      im.decoding = 'async';
+      frame.appendChild(im);
+      imgs[n] = im;
+    }
+    return imgs[n];
+  };
+  const go = step => {
+    const next = (i + step + total) % total, im = get(next);
+    const show = () => {
+      imgs[i].classList.remove('on'); im.classList.add('on'); i = next;
+      count.textContent = `${i + 1} / ${total}`;
+      get((i + step + total) % total);
+    };
+    im.complete ? show() : im.addEventListener('load', show, { once: true });
+  };
+  const flash = step => {
+    const b = document.querySelector(`.keys button[data-step="${step}"]`);
+    b.classList.add('hit'); setTimeout(() => b.classList.remove('hit'), 140);
+  };
+  document.addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); flash(1); go(1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); flash(-1); go(-1); }
+  });
+  document.querySelectorAll('.keys button').forEach(b => b.addEventListener('click', () => go(Number(b.dataset.step))));
+  window.addEventListener('load', () => { get(1); get(total - 1); });
+})();
+</script>
+</body>
+</html>

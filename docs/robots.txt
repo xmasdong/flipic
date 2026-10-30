@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://xmasdong.github.io/macphoto/sitemap.xml
