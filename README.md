@@ -10,6 +10,7 @@ Mac 上的看图工具，只管看图这一件事。双击任意一张图，就�
 
 - 系统要求：macOS 13 或更新版本，Apple 芯片和 Intel 芯片的 Mac 都能用
 - 已通过 Apple 公证，使用 Developer ID 签名
+- 官网：[xmasdong.github.io/macphoto](https://xmasdong.github.io/macphoto/)，国内下载慢可以从官网下
 - 历史版本见 [Releases](https://github.com/xmasdong/macphoto/releases)
 
 ## 安装
