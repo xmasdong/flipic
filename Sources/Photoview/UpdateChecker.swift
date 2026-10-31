@@ -6,7 +6,7 @@ enum UpdateChecker {
     /// 测试时可以用环境变量 FLIPIC_UPDATE_FEED 指向本地文件
     static let feedURL = ProcessInfo.processInfo.environment["FLIPIC_UPDATE_FEED"].flatMap(URL.init(string:))
         ?? URL(string: "https://flipic.app/version.json")!
-    static let fallbackDownload = URL(string: "https://flipic.app/download/Flipic.dmg")!
+    static let fallbackDownload = URL(string: "https://github.com/xmasdong/flipic/releases/latest/download/Flipic.dmg")!
 
     struct Release {
         let version: String
