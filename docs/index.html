@@ -24,8 +24,8 @@
   "name": "PixDeck",
   "operatingSystem": "macOS 13 或更新版本",
   "applicationCategory": "MultimediaApplication",
-  "softwareVersion": "0.3.1",
-  "fileSize": "917KB",
+  "softwareVersion": "0.4.0",
+  "fileSize": "1.2MB",
   "downloadUrl": "https://xmasdong.github.io/macphoto/download/PixDeck.dmg",
   "image": "https://xmasdong.github.io/macphoto/og.jpg",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" },
@@ -261,7 +261,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
       <ul class="facts">
         <li>macOS 13 或更新版本</li>
         <li>Apple 芯片与 Intel 通用</li>
-        <li>安装包 917 KB</li>
+        <li>安装包 1.2 MB</li>
         <li>已通过 Apple 公证</li>
       </ul>
       <div class="on-phone">
@@ -302,7 +302,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
     <section class="feature flip">
       <div class="copytext">
         <h2>放大看细节，跟着手指走</h2>
-        <p>触控板双指捏合时，缩放跟着手指走，松开有回弹；鼠标滚轮也能以光标为中心缩放。</p>
+        <p>触控板双指捏合时，缩放跟着手指走，松开有回弹；鼠标滚轮也能以光标为中心缩放。习惯用滚轮翻页的，在「显示 › 鼠标滚轮」里改一下就行。</p>
         <p><strong>双击</strong>在适应窗口和 100% 之间切换。平时只解码适合屏幕的尺寸，放大到看得出差别时才换成原图，所以内存占用不高。</p>
       </div>
       <img class="shot" src="shots/zoom.webp" alt="PixDeck 以 100% 比例查看照片细节" width="1440" height="900" loading="lazy">
@@ -318,6 +318,15 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
     </section>
 
     <section class="feature flip">
+      <div class="copytext">
+        <h2>活动照片太多，先把废片挑出来</h2>
+        <p>会议、活动一拍就是几百张，找能用的那几张很费时间。按 <strong>⇧⌘K</strong> 进入清理模式（Beta），PixDeck 会在本机检查整个文件夹，分成四类：相似连拍、内容完全相同的文件、闭眼、模糊或虚焦。</p>
+        <p>连拍里会推荐保留最清楚、没人闭眼的那张，其余默认勾上；闭眼的照片会框出是哪张脸。空格放大检查，点一下取消勾选。只有你按下「移到废纸篓」才会删除，⌘Z 可以撤销。RAW 和同名 JPG 一起处理。</p>
+      </div>
+      <img class="shot" src="shots/cleanup.webp" alt="PixDeck 清理模式：相似连拍分组与推荐保留" width="1440" height="967" loading="lazy">
+    </section>
+
+    <section class="feature">
       <div class="copytext">
         <h2>HEIC 批量转 JPG</h2>
         <p>iPhone 拍的 HEIC 照片发给别人打不开，一张张转太慢。PixDeck 可以把整个文件夹一次转完，转好的放进子文件夹，原图不动。</p>
@@ -346,7 +355,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
       <table aria-label="常用快捷键">
         <tbody>
           <tr><td>← →</td><td>上一张 / 下一张</td></tr>
-          <tr><td>↑ ↓ 或滚轮</td><td>放大 / 缩小</td></tr>
+          <tr><td>↑ ↓ 或滚轮</td><td>放大 / 缩小（滚轮可改成翻页）</td></tr>
           <tr><td>空格</td><td>窗口贴合图片比例预览</td></tr>
           <tr><td>双击</td><td>适应窗口和 100% 来回切</td></tr>
           <tr><td>I</td><td>照片信息</td></tr>
@@ -356,6 +365,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
           <tr><td>回车</td><td>重命名</td></tr>
           <tr><td>⌘S</td><td>导出压缩副本</td></tr>
           <tr><td>⌘⌫</td><td>移到废纸篓</td></tr>
+          <tr><td>⇧⌘K</td><td>清理模式 Beta</td></tr>
         </tbody>
       </table>
     </div>
@@ -398,7 +408,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
         免费下载 Mac 版
       </a>
-      <span class="alt">0.3.1 · <a href="https://github.com/xmasdong/macphoto/releases">历史版本</a></span>
+      <span class="alt">0.4.0 · <a href="https://github.com/xmasdong/macphoto/releases">历史版本</a></span>
     </div>
   </section>
 </main>
