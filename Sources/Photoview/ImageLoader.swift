@@ -51,11 +51,29 @@ final class ImageLoader {
         "jpg", "jpeg", "jpe", "png", "heic", "heif", "webp", "gif", "bmp",
         "tif", "tiff", "jp2", "jxl", "avif", "ico", "icns",
         "dng", "arw", "cr2", "cr3", "nef", "raf", "orf", "rw2", "srw", "pef",
+        "psd", "tga", "exr", "hdr",
     ]
 
+    /// 常见格式直接按扩展名认；其余只要系统把它归为图片、且 ImageIO 能解码（PSD、TGA、OpenEXR、Radiance HDR、DICOM 等）也收进来。
+    /// 结果按扩展名缓存，几千个文件的文件夹也不用每个都查一遍
     static func isSupportedExtension(_ name: String) -> Bool {
-        supportedExtensions.contains((name as NSString).pathExtension.lowercased())
+        let ext = (name as NSString).pathExtension.lowercased()
+        guard !ext.isEmpty else { return false }
+        if supportedExtensions.contains(ext) { return true }
+        extensionLock.lock()
+        defer { extensionLock.unlock() }
+        if let hit = extensionCache[ext] { return hit }
+        var ok = false
+        if let type = UTType(filenameExtension: ext), type.conforms(to: .image) {
+            ok = imageIOTypes.contains { type.conforms(to: $0) }
+        }
+        extensionCache[ext] = ok
+        return ok
     }
+
+    private static let imageIOTypes: [UTType] = ((CGImageSourceCopyTypeIdentifiers() as? [String]) ?? []).compactMap { UTType($0) }
+    private static var extensionCache: [String: Bool] = [:]
+    private static let extensionLock = NSLock()
 
     /// ImageIO 降采样解码：maxPixel 是需要的最大边长像素
     /// allowEmbedded：允许直接用文件内嵌的 EXIF 缩略图（胶片条用，免去整图解码）

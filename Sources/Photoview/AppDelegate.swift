@@ -43,6 +43,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--listtest"), i + 1 < CommandLine.arguments.count {
+            // --listtest <文件>：打开一个文件，列出同文件夹里能翻到的图片，逐张确认解码出画面
+            buildMenu()
+            windowController = ViewerWindowController()
+            windowController.showWindow(nil)
+            windowController.open(URL(fileURLWithPath: CommandLine.arguments[i + 1]))
+            let vc = windowController.contentViewController as? ViewerViewController
+            vc?.runListTest()
+            return
+        }
         if CommandLine.arguments.contains("--selfupdatetest") || CommandLine.arguments.contains("--selfupdatenow") {
             // 用 FLIPIC_UPDATE_FEED 指向的版本信息走一遍自动更新。
             // --selfupdatetest：只到替换完成，打印结果后退出；--selfupdatenow：完整流程，包括显示进度窗口和重新打开

@@ -85,7 +85,7 @@ Every setting lives in one window (⌘,): sorting, crossfade, slideshow interval
 
 **Formats and languages**
 
-JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and common camera RAW formats (ARW, CR2, CR3, NEF, RAF, DNG and more). The interface is available in 14 languages and follows your system setting.
+JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PSD, TGA, OpenEXR and common camera RAW formats (ARW, CR2, CR3, NEF, RAF, DNG and more). Any other image format macOS can decode opens too. The interface is available in 14 languages and follows your system setting.
 
 ## Keyboard shortcuts
 

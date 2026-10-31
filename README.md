@@ -85,7 +85,7 @@
 
 **格式和语言**
 
-JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（需 macOS 14 或更新），以及常见相机 RAW（ARW、CR2、CR3、NEF、RAF、DNG 等）。界面有 14 种语言，跟随系统设置。
+JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（需 macOS 14 或更新）、PSD、TGA、OpenEXR，以及常见相机 RAW（ARW、CR2、CR3、NEF、RAF、DNG 等）。系统能解码的其他图片格式也能打开。界面有 14 种语言，跟随系统设置。
 
 ## 快捷键
 

@@ -2788,6 +2788,23 @@ final class ViewerViewController: NSViewController {
         imageView.keyDown(with: e)
     }
 
+    func runListTest() {
+        NSLog("LIST opened=%@ count=%d items=%@", folder.current?.url.lastPathComponent ?? "-", folder.count,
+              folder.items.map(\.url.lastPathComponent).joined(separator: ","))
+        var i = 0
+        func step() {
+            guard i < folder.count else { NSApp.terminate(nil); return }
+            goTo(i)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [self] in
+                let px = imageView.pixelSize
+                NSLog("LIST %@ shown=%d size=%.0fx%.0f", folder.current?.url.lastPathComponent ?? "-", imageView.debugHasImage ? 1 : 0, px.width, px.height)
+                i += 1
+                step()
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { step() }
+    }
+
     /// --esctest <文件夹>：Esc 关闭开着时，放大先回适应窗口，再按关窗口；关着时不关窗口
     func runEscTest() {
         let saved = Self.escCloses
