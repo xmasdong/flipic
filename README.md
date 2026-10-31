@@ -1,49 +1,78 @@
-# PixDeck
+<p align="center">
+  <img src="docs/icon-256.png" width="128" height="128" alt="PixDeck 图标">
+</p>
 
-Mac 上的看图工具，只管看图这一件事。双击任意一张图，就能用左右键把同一个文件夹里的图片翻一遍。
+<h1 align="center">PixDeck</h1>
+
+<p align="center">
+  Mac 上的轻量看图工具。双击一张图，用左右键把整个文件夹翻一遍。
+</p>
+
+<p align="center">
+  <a href="https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg"><b>下载 PixDeck.dmg</b></a>
+  ·
+  <a href="https://xmasdong.github.io/macphoto/">官网</a>
+  ·
+  <a href="#english">English</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/xmasdong/macphoto/releases/latest"><img src="https://img.shields.io/github/v/release/xmasdong/macphoto?label=%E7%89%88%E6%9C%AC&color=444" alt="最新版本"></a>
+  <img src="https://img.shields.io/badge/macOS-13%2B-444" alt="macOS 13 或更新">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-444" alt="GPL-3.0"></a>
+</p>
 
 ![PixDeck 浏览照片](docs/screenshot-browse.jpg)
 
-## 下载
+用系统自带的「预览」打开一张图，它就只显示这一张，想看下一张得回访达全选再打开。PixDeck 就是为这件事做的：双击任意一张，按 → 就是下一张，同一个文件夹的图片都能翻到。安装包 1.2 MB，不联网，不要账号。
 
-**[下载 PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)**（1.2 MB）
+## 下载安装
 
-- 系统要求：macOS 13 或更新版本，Apple 芯片和 Intel 芯片的 Mac 都能用
-- 已通过 Apple 公证，使用 Developer ID 签名
-- 官网：[xmasdong.github.io/macphoto](https://xmasdong.github.io/macphoto/)，国内下载慢可以从官网下
-- 历史版本见 [Releases](https://github.com/xmasdong/macphoto/releases)
+1. 下载 [PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)，国内下载慢可以从[官网](https://xmasdong.github.io/macphoto/)下
+2. 打开 dmg，把 PixDeck 拖进「应用程序」
+3. 第一次打开时系统会提示这是从互联网下载的 App，点「打开」
 
-## 安装
+需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片都能用。安装包用 Developer ID 签名并通过了 Apple 公证。历史版本在 [Releases](https://github.com/xmasdong/macphoto/releases)。
 
-1. 打开下载好的 `PixDeck.dmg`
-2. 把 PixDeck 拖进「应用程序」文件夹
-3. 第一次打开时，系统会提示这是从互联网下载的 App，点「打开」即可
+想设成默认看图软件：在访达里右键一张图，选「显示简介」，「打开方式」选 PixDeck，再点「全部更改」。jpg、png、heic 这些格式要各设一次。
 
-想把它设成默认看图软件：在 Finder 里右键一张图，选「显示简介」，在「打开方式」里选 PixDeck，再点「全部更改」。jpg、png、heic 等格式各需要设置一次。
+## 功能
 
-## 能做什么
+**看图**
 
-- **连续翻页**：双击一张图，同文件夹的图片按左右键往下翻，可以按文件名、拍摄时间、修改时间、创建时间或文件大小排序
-- **空格预览**：按空格，窗口贴合照片比例，整张图铺满窗口，跟访达的空格预览一样；再按一次回到原来的窗口
-- **缩放**：触控板双指捏合跟着手指缩放，滚轮也可以；双击在适应窗口和 100% 之间切换，放大后自动换成原图
-- **滚轮翻页**：在「显示 › 鼠标滚轮」里改成「切换上一张 / 下一张」，滚一格翻一张，⌘+滚轮缩放
-- **清理模式（Beta）**：⌘⇧K 扫描当前文件夹，找出相似连拍、内容完全相同的文件、闭眼和模糊的照片。连拍组里推荐保留最好的一张，其余默认勾选；只有你按下按钮才会移到废纸篓，⌘Z 可撤销。RAW 和同名 JPG 一起处理，全部在本机完成
-- **拍摄参数**：左上角显示尺寸、大小、相机、镜头、快门、光圈、ISO 和拍摄时间，按 I 打开完整的照片信息
-- **批量处理**：整个文件夹批量转换格式（JPEG / PNG / HEIC），转好的放进子文件夹，原图不动；也支持批量重命名
-- **其他**：旋转后写回文件（JPEG、HEIC 只改方向标记，画质无损）、导出压缩副本、幻灯片放映、设为桌面壁纸、移到废纸篓
-- 支持 JPEG、PNG、HEIC、WebP、GIF（动图）、TIFF、AVIF、JPEG XL（需 macOS 14 或更新）以及常见相机 RAW 格式
-- 界面支持 14 种语言，跟随系统设置
+- 同一个文件夹里左右翻页，可以按文件名、拍摄时间、修改时间、创建时间或文件大小排序，会记住上次的选择
+- 按空格，窗口贴合照片比例预览，跟访达的空格预览一样，再按一次回到原窗口
+- 触控板双指捏合缩放；双击在适应窗口和 100% 之间切换，放大到需要时才解码原图
+- 鼠标滚轮默认缩放，也可以在「显示 › 鼠标滚轮」改成翻页
+- 左上角显示尺寸、文件大小、相机、镜头、快门、光圈、ISO 和拍摄时间，按 I 看完整的照片信息
 
-![照片信息面板](docs/screenshot-exif.jpg)
+**挑片（清理模式，Beta）**
 
-## 常用快捷键
+活动、会议一拍几百张时，按 ⇧⌘K 进入清理模式。PixDeck 在本机检查整个文件夹，分成相似连拍、内容完全相同的文件、闭眼、模糊或虚焦四类。连拍组里推荐保留最清楚、没人闭眼的那张，其余默认勾上，闭眼的照片会框出是哪张脸。
+
+删除只在你按下「移到废纸篓」时发生，⌘Z 可以撤销。RAW 和同名 JPG 算一张，一起处理。检测会有误判，删之前过一眼。
+
+![清理模式](docs/shots/cleanup.webp)
+
+**批量处理和其他**
+
+- 整个文件夹批量转换格式（JPEG、PNG、HEIC），输出到子文件夹，原图不动
+- 批量重命名
+- 旋转后写回文件，JPEG 和 HEIC 只改方向标记，画质无损
+- 导出压缩副本、幻灯片放映、设为桌面壁纸、移到废纸篓
+
+**格式和语言**
+
+JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（需 macOS 14 或更新），以及常见相机 RAW（ARW、CR2、CR3、NEF、RAF、DNG 等）。界面有 14 种语言，跟随系统设置。
+
+## 快捷键
 
 | 按键 | 作用 |
 |---|---|
 | ← → | 上一张 / 下一张 |
-| ↑ ↓ 或滚轮 | 放大 / 缩小（滚轮可改成翻页） |
-| 空格 | 窗口贴合图片比例预览（再按一次退出） |
-| 双击 | 适应窗口和 100% 来回切 |
+| ↑ ↓、滚轮 | 放大 / 缩小（滚轮可改成翻页） |
+| 空格 | 贴合图片比例预览，再按一次退出 |
+| 双击 | 适应窗口 / 100% |
 | I | 照片信息 |
 | T | 缩略图栏 |
 | R / L | 向右 / 向左旋转 |
@@ -51,47 +80,84 @@ Mac 上的看图工具，只管看图这一件事。双击任意一张图，就�
 | 回车 | 重命名 |
 | ⌘S | 导出压缩副本 |
 | ⌘⌫ | 移到废纸篓 |
-| ⌘⇧K | 清理模式 Beta |
+| ⇧⌘K | 清理模式 |
+| ⇧⌘C / ⇧⌘B | 批量转换 / 批量重命名 |
 
 ## 隐私
 
-PixDeck 不联网，没有账号，不收集任何数据。只读取你打开的图片，所有处理都在本机完成。
-
-## 反馈
-
-用着有不顺手的地方，欢迎在 [Issues](https://github.com/xmasdong/macphoto/issues) 里告诉我。
+PixDeck 不联网，没有账号，不收集任何数据，只读取你打开的图片。清理模式的检测结果存在 `~/Library/Caches/PixDeck`，不会往你的照片文件夹里写文件。代码都在这个仓库里，可以自己查。
 
 ## 从源码构建
 
-PixDeck 用 Swift 和 AppKit 写成，没有第三方依赖。需要 macOS 13 或更新版本和 Xcode 15 或更新版本（或 Swift 5.9 命令行工具）。
+用 Swift 和 AppKit 写成，没有第三方依赖。需要 macOS 13 或更新版本，以及 Xcode 15 或 Swift 5.9 命令行工具。
 
 ```bash
 git clone https://github.com/xmasdong/macphoto.git
 cd macphoto
-./build.sh                       # 产出 build/PixDeck.app（本机临时签名）
+./build.sh                 # 产出 build/PixDeck.app，本机临时签名
 open build/PixDeck.app
 ```
 
-想用 Xcode 打开：装好 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 后运行 `xcodegen generate`，生成 `PixDeck.xcodeproj`。
+想用 Xcode 打开，先装 [XcodeGen](https://github.com/yonaskolb/XcodeGen)，再运行 `xcodegen generate` 生成工程。
 
-带 Developer ID 签名和公证的发布包用 `scripts/build_devid.sh` 构建，签名凭据按 `scripts/devid.env.example` 填在 `scripts/devid.env` 里（不进版本库）。
+要出带签名和公证的安装包，用 `scripts/build_devid.sh`。签名凭据照 `scripts/devid.env.example` 填进 `scripts/devid.env`，这个文件不进版本库。
 
-目录说明：`Sources/Photoview` 是全部源码，`Resources` 是 Info.plist、图标和 14 种语言的文案，`docs` 是官网。
+### 代码结构
 
-## 开源协议
+```
+Sources/Photoview/
+  AppDelegate.swift            菜单栏与启动参数
+  ViewerViewController.swift   看图主界面：翻页、预取、HUD、工具条、导出与批量处理
+  ZoomableImageView.swift      缩放、拖动、手势、键盘与滚轮
+  ImageLoader.swift            ImageIO 降采样解码与按内存分档的缓存
+  FolderModel.swift            文件列表与排序
+  Filmstrip.swift              底部缩略图栏
+  ExifReader.swift             照片信息
+  CleanupScanner.swift         清理模式的逐张检测：清晰度、人脸与闭眼、画面特征、哈希
+  CleanupResult.swift          分组、推荐保留与默认勾选
+  CleanupController.swift      清理模式界面
+Resources/                     Info.plist、图标、14 种语言的文案
+docs/                          官网（GitHub Pages）
+scripts/                       签名打包、测试图生成等脚本
+```
 
-[GPL-3.0](LICENSE)。可以自由使用、修改和再发布；发布修改后的版本时，也需要以 GPL-3.0 开源。
+调试时可以用这些启动参数，不需要点界面：
+
+```bash
+PixDeck=build/PixDeck.app/Contents/MacOS/PixDeck
+$PixDeck --bench <文件夹>            # 翻页延迟、内存、主线程卡顿
+$PixDeck --cleanup-report <文件夹>   # 清理模式逐张指标与分类结果
+```
+
+## 参与
+
+用着不顺手、发现 bug，或者想要什么功能，都可以开 [Issue](https://github.com/xmasdong/macphoto/issues)。PR 也欢迎，尤其是翻译：除了简体中文，其他语言的文案都有改进空间。
+
+## 协议
+
+[GPL-3.0](LICENSE)。可以自由使用、修改和再发布；发布修改后的版本，也要以 GPL-3.0 开源。
 
 ---
 
-## English
+<h2 id="english">English</h2>
 
-PixDeck is a lightweight image viewer for macOS. Double-click any image and browse the whole folder with the arrow keys: pinch-to-zoom that follows your fingers, 100% view with full-resolution decoding, EXIF details, batch format conversion, a Cleanup Mode (Beta) that finds similar bursts, exact duplicates, closed eyes and blurry shots, and 14 interface languages. No network access, no account, no data collection.
+PixDeck is a lightweight image viewer for macOS. Double-click any image and page through the whole folder with the arrow keys. It is a 1.2 MB download, makes no network connections, and needs no account.
 
-Open source under [GPL-3.0](LICENSE). Build from source with `./build.sh` (macOS 13+, Swift 5.9+, no third-party dependencies).
+**[Download PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)** (macOS 13 or later, Apple silicon and Intel, notarized by Apple)
 
-**[Download PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)** — macOS 13 or later, Apple silicon and Intel, notarized by Apple.
+- Browse a folder with ← →, sorted by name, date taken, date modified, date created or file size
+- Space opens a Quick Look style preview that wraps the window to the photo
+- Pinch to zoom, double-click to toggle fit and 100%; the full-resolution original is decoded only when you need it
+- Scroll wheel zooms by default, or pages through photos (View › Scroll Wheel)
+- EXIF at a glance: camera, lens, shutter, aperture, ISO, date taken
+- **Cleanup Mode (Beta, ⇧⌘K)** finds similar bursts, exact duplicates, closed eyes and blurry shots on your Mac. It suggests the best frame of each burst; nothing is deleted until you press Move to Trash, and ⌘Z undoes it
+- Batch convert to JPEG, PNG or HEIC, batch rename, lossless rotation for JPEG and HEIC
+- JPEG, PNG, HEIC, WebP, GIF, TIFF, AVIF, JPEG XL and common camera RAW formats; 14 interface languages
+
+Build from source with `./build.sh` (Swift 5.9+, no third-party dependencies). Licensed under [GPL-3.0](LICENSE).
 
 ---
 
 截图中的风景照来自 Wikimedia Commons：喀纳斯湖 Muye Ma、那拉提草原 Yoshi Canopus、沙漠星空 thomas shellberg（CC0）；天山天池 David Stanley、库尔德宁 George Lu、博斯腾湖 liuxingy2015（CC BY 2.0）；果子沟大桥 Timothytyy、将军山 Pazakui（CC BY 4.0）。
+
+Landscape photos in the screenshots are from Wikimedia Commons under CC0, CC BY 2.0 and CC BY 4.0; see the credits above.
