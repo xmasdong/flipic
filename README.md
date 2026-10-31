@@ -49,7 +49,7 @@
 - 触控板双指捏合缩放；鼠标停在想看的地方按 0，就在那里放大到 100%，再按一次恢复；双击也能在适应窗口和 100% 之间切换，放大到需要时才解码原图
 - 翻页默认直接切换，没有渐变；喜欢淡入淡出可以在「显示 › 翻页渐变」打开
 - 鼠标滚轮默认缩放，也可以在「显示 › 鼠标滚轮」改成翻页
-- 左上角显示尺寸、文件大小、相机、镜头、快门、光圈、ISO 和拍摄时间，按 I 看完整的照片信息
+- 界面默认只有照片，不显示任何信息；按 I 在右上角看相机、镜头、快门、光圈、ISO、拍摄时间和尺寸，按 Esc 关掉
 
 **挑片（清理模式，Beta）**
 
@@ -85,7 +85,6 @@ JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（需 macOS 14 或
 | 0 | 在鼠标位置放大到 100%，再按一次恢复 |
 | 双击 | 适应窗口 / 100% |
 | I | 照片信息（右上角面板，Esc 也能关） |
-| ⌘⇧H | 显示 / 隐藏左上角信息浮层 |
 | Esc | 回到适应窗口；打开「显示 › 按 Esc 关闭窗口」后，适应窗口时直接关闭 |
 | T | 缩略图栏 |
 | R / L | 向右 / 向左旋转 |
@@ -156,4 +155,4 @@ $Flipic --cleanup-report <文件夹>   # 清理模式逐张指标与分类结果
 
 图标先用 `scripts/icon/make_icon.py` 从桂林阳朔的一张照片（Wikimedia Commons，CC0）里提取真实山脊线画成底稿，再照底稿绘制成插画。
 
-截图中的风景照来自 Wikimedia Commons：喀纳斯湖 Muye Ma、那拉提草原 Yoshi Canopus、沙漠星空 thomas shellberg（CC0）；天山天池 David Stanley、库尔德宁 George Lu、博斯腾湖 liuxingy2015（CC BY 2.0）；果子沟大桥 Timothytyy、将军山 Pazakui（CC BY 4.0）。
+截图中的照片来自 Wikimedia Commons，均为 CC0：圣托里尼 Aidan Meyer、Anthony Delanoix，布莱德湖 Aleš Krivec，哈尔施塔特 Fineas Anton、Martin Horák，冰岛 Alexandre Godreau，优胜美地 John Salzarulo，阳朔 Manon Boyer。桌面是 macOS 自带壁纸。

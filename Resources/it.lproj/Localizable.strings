@@ -123,7 +123,7 @@ Esc  Torna ad adatta (esce da schermo intero)
 Pizzica / scorri  Zoom sul cursore, trascina o ⌘+scorri per spostare
 Vista › Rotella  può servire a cambiare foto
 I  Info foto    T  Striscia miniature    F  Schermo intero
-⌘⇧H  Mostra / nascondi le info in sovrimpressione    Esc  Chiude prima il pannello info
+Esc  Chiude prima il pannello info
 Con Vista › Esc chiude la finestra: Esc chiude se la foto è adattata, con lo zoom prima torna ad adattare
 ⌘⇧C  Conversione in blocco    ⌘⇧B  Rinomina in blocco    ⌘⇧D  Immagine scrivania
 ⌘E  Modifica nell’editor foto (apre il RAW con lo stesso nome se c’è)
@@ -212,8 +212,6 @@ Trascina una cartella o un'immagine per aprire";
 /* 翻页渐变 */
 "menu.fadeTransition" = "Dissolvenza tra le foto";
 
-/* 信息浮层 */
-"menu.hud" = "Info in sovrimpressione";
 
 /* Esc 关闭 */
 "menu.escCloses" = "Esc chiude la finestra";

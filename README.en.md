@@ -49,7 +49,7 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 - Rest the pointer on any detail and press 0 to zoom to 100% right there; press 0 again to go back. Pinch to zoom on the trackpad; double-click also toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.
 - Photos switch instantly when you page; if you like a crossfade, turn on View › Fade Between Photos.
 - The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, switch View › Scroll Wheel to Previous / Next Photo; ⌘ + scroll then zooms.
-- The corner overlay shows size, file size, camera, lens, shutter speed, aperture, ISO and date taken. Press I for the full info panel, including color profile.
+- Nothing but the photo by default. Press I for camera, lens, shutter speed, aperture, ISO, date taken, size and color profile; Esc closes it.
 
 **Culling (Cleanup Mode, Beta)**
 
@@ -85,7 +85,6 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and
 | 0 | Zoom to 100% at the pointer; press again to fit |
 | Double-click | Fit to window / 100% |
 | I | Photo info panel (Esc also closes it) |
-| ⌘⇧H | Show / hide the info overlay |
 | Esc | Back to fit; with View › Esc Closes Window on, closes the window when fitted |
 | T | Thumbnail strip |
 | R / L | Rotate right / left |
@@ -156,4 +155,4 @@ Found a bug, something that feels off, or a feature you want? Open an [issue](ht
 
 The icon started as a draft from `scripts/icon/make_icon.py`, which traces the real skyline of a photo taken in Yangshuo, Guilin (Wikimedia Commons, CC0); the final artwork was illustrated over that draft.
 
-Landscape photos in the screenshots are from Wikimedia Commons: Kanas Lake by Muye Ma, Nalati Grassland by Yoshi Canopus and starry desert by thomas shellberg (CC0); Tianchi by David Stanley, Kuerdening by George Lu and Bosten Lake by liuxingy2015 (CC BY 2.0); Guozigou Bridge by Timothytyy and Jiangjunshan by Pazakui (CC BY 4.0).
+Photos in the screenshots are from Wikimedia Commons, all CC0: Santorini by Aidan Meyer and Anthony Delanoix, Lake Bled by Aleš Krivec, Hallstatt by Fineas Anton and Martin Horák, Iceland by Alexandre Godreau, Yosemite by John Salzarulo, Yangshuo by Manon Boyer. The desktop is a built-in macOS wallpaper.

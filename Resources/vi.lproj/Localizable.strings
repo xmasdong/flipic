@@ -123,7 +123,7 @@ Esc  Về vừa cửa sổ (thoát toàn màn hình trước)
 Chụm / cuộn  Thu phóng tại con trỏ, kéo hoặc ⌘+cuộn để di chuyển
 Hiển thị › Con lăn chuột  có thể đổi sang chuyển ảnh
 I  Thông tin ảnh    T  Thanh hình thu nhỏ    F  Toàn màn hình
-⌘⇧H  Hiện / ẩn lớp thông tin    Esc  Đóng bảng thông tin ảnh trước
+Esc  Đóng bảng thông tin ảnh trước
 Khi bật Hiển thị › Esc đóng cửa sổ: Esc đóng khi ảnh vừa cửa sổ, còn khi phóng to thì trước hết về vừa cửa sổ
 ⌘⇧C  Chuyển đổi hàng loạt    ⌘⇧B  Đổi tên hàng loạt    ⌘⇧D  Hình nền
 ⌘E  Sửa trong trình chỉnh ảnh (mở RAW cùng tên nếu có)
@@ -212,8 +212,6 @@ Kéo thư mục hoặc ảnh vào để mở";
 /* 翻页渐变 */
 "menu.fadeTransition" = "Hiệu ứng mờ dần khi chuyển ảnh";
 
-/* 信息浮层 */
-"menu.hud" = "Lớp thông tin";
 
 /* Esc 关闭 */
 "menu.escCloses" = "Esc đóng cửa sổ";

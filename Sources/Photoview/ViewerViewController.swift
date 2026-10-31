@@ -48,9 +48,6 @@ final class ViewerViewController: NSViewController {
     private static let exportFormats: [(name: String, uti: UTType, ext: String)] = [
         ("JPEG", .jpeg, "jpg"), ("PNG", .png, "png"), ("HEIC", .heic, "heic"),
     ]
-    private var currentSummary: ExifSummary?
-    private var currentFileSize: Int64?
-    private var summaryCache: [URL: ExifSummary] = [:]
     private var warmupGeneration = 0
     private var prefetchedURLs = Set<URL>()
     private var lastNavDirection = 1
@@ -522,7 +519,6 @@ final class ViewerViewController: NSViewController {
     // MARK: - 打开与加载
 
     func open(url: URL) {
-        summaryCache.removeAll()
         prefetchedURLs.removeAll()
         decodeQueue.cancelAllOperations()
         prefetchQueue.cancelAllOperations()
@@ -566,7 +562,6 @@ final class ViewerViewController: NSViewController {
         guard let item = folder.current else { return }
         let url = item.url
         decodeQueue.cancelAllOperations()
-        refreshInfoCard(for: url, gen: gen)
         updateSmartCache()
         updateHUD(); updateExifPanel(); syncFilmstripSelection()
 
@@ -681,12 +676,6 @@ final class ViewerViewController: NSViewController {
         loadCaptureDatesIfNeeded()
     }
 
-    /// 左上角的照片信息浮层（文件名、尺寸、拍摄参数），可在显示菜单里关掉，跨启动记住；临时提示不受影响
-    static var hudEnabled: Bool {
-        get { !UserDefaults.standard.bool(forKey: "hudHidden") }
-        set { UserDefaults.standard.set(!newValue, forKey: "hudHidden") }
-    }
-
     /// 适应窗口时按 Esc 直接关闭窗口（退出），默认关
     static var escCloses: Bool {
         get { UserDefaults.standard.bool(forKey: "escCloses") }
@@ -697,11 +686,6 @@ final class ViewerViewController: NSViewController {
         Self.escCloses.toggle()
         flash(Self.escCloses ? L10n.t("msg.escClosesOn", "适应窗口时按 Esc 关闭 Flipic")
                              : L10n.t("msg.escClosesOff", "Esc 不再关闭窗口"))
-    }
-
-    @objc func toggleHUD(_ sender: Any?) {
-        Self.hudEnabled.toggle()
-        updateHUD()
     }
 
     @objc func toggleFadeTransition(_ sender: Any?) {
@@ -831,70 +815,13 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - HUD / EXIF / 胶片条
 
+    /// 左上角只用来显示几秒就消失的临时提示；照片信息统一在右上角面板（I）里看
     private func updateHUD() {
         guard !isFlashing else { return }
-        guard peekSaved == nil, Self.hudEnabled else {
-            hudView.isHidden = true
-            return
-        }
-        guard let item = folder.current else {
-            hudView.isHidden = true
-            hudNameLabel.stringValue = ""
-            return
-        }
-        hudNameLabel.stringValue = "\(folder.index + 1) / \(folder.count) · \(item.url.lastPathComponent)"
-
-        var parts: [String] = []
-        let zoom = "\(Int((imageView.displayedScale * 100).rounded()))%"
-        if let s = item.pixelSize, s.width > 0 {
-            parts.append("\(Int(s.width)) × \(Int(s.height))")
-            if let size = currentFileSize {
-                parts.append(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
-            }
-            parts.append(item.url.pathExtension.uppercased())
-        }
-        parts.append(zoom)
-        hudDimsLabel.stringValue = parts.joined(separator: " · ")
-
-        if let s = currentSummary {
-            var l1 = [String]()
-            if let c = s.camera { l1.append(c) }
-            if let l = s.lens { l1.append(l) }
-            hudExifLabel1.stringValue = l1.joined(separator: " · ")
-            hudExifLabel1.isHidden = l1.isEmpty
-            var l2 = [String]()
-            if let p = s.params { l2.append(p) }
-            if let d = s.date { l2.append(d) }
-            hudExifLabel2.stringValue = l2.joined(separator: " · ")
-            hudExifLabel2.isHidden = l2.isEmpty
-        } else {
-            hudExifLabel1.isHidden = true
-            hudExifLabel2.isHidden = true
-        }
-        hudView.isHidden = false
+        hudView.isHidden = true
     }
 
     /// 异步读取当前图的 EXIF 摘要与文件大小，读完后刷新信息条
-    private func refreshInfoCard(for url: URL, gen: Int) {
-        currentSummary = nil
-        currentFileSize = nil
-        if let cached = summaryCache[url] {
-            currentSummary = cached
-            updateHUD()
-            return
-        }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let summary = ExifReader.summary(url: url)
-            let size = ((try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int64) ?? 0
-            DispatchQueue.main.async {
-                guard let self, self.generation == gen else { return }
-                self.summaryCache[url] = summary
-                self.currentSummary = summary
-                self.currentFileSize = size
-                self.updateHUD()
-            }
-        }
-    }
 
     /// 面板打开时才读完整 EXIF，在后台读完再回主线程排版
     private func updateExifPanel() {
@@ -1923,31 +1850,27 @@ final class ViewerViewController: NSViewController {
         }
     }
 
-    /// --hudtest <输出目录> <文件夹>：关掉信息浮层后翻页仍不出现、临时提示照常；Esc 先关右上角照片信息
+    /// --hudtest <输出目录> <文件夹>：翻页后左上角不出现信息、临时提示照常；Esc 先关右上角照片信息
     func runHUDTest(outDir: String) {
         try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
-        let saved = Self.hudEnabled
         func esc() {
             guard let w = view.window, let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
                 windowNumber: w.windowNumber, context: nil, characters: "\u{1B}", charactersIgnoringModifiers: "\u{1B}",
                 isARepeat: false, keyCode: 53) else { return }
             imageView.keyDown(with: e)
         }
-        NSLog("HUD start enabled=%d hidden=%d", Self.hudEnabled ? 1 : 0, hudView.isHidden ? 1 : 0)
-        toggleHUD(nil)
         navigate(1)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [self] in
-            NSLog("HUD off after nav hidden=%d", hudView.isHidden ? 1 : 0)
-            captureWindow(to: "\(outDir)/hud-off.png", raw: true)
+            NSLog("HUD after nav hidden=%d info panel open=%d", hudView.isHidden ? 1 : 0, exifPanel.isHidden ? 0 : 1)
+            captureWindow(to: "\(outDir)/default.png", raw: true)
             flash("test flash")
             NSLog("HUD flash shows=%d", hudView.isHidden ? 0 : 1)
             toggleInfoPanel(nil)
             NSLog("INFO open=%d", exifPanel.isHidden ? 0 : 1)
             esc()
-            NSLog("INFO after esc open=%d fit=%@", exifPanel.isHidden ? 0 : 1, imageView.fitDiagnostics)
+            NSLog("INFO after esc open=%d", exifPanel.isHidden ? 0 : 1)
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [self] in
                 NSLog("HUD after flash hidden=%d", hudView.isHidden ? 1 : 0)
-                Self.hudEnabled = saved
                 NSApp.terminate(nil)
             }
         }
@@ -1980,6 +1903,36 @@ final class ViewerViewController: NSViewController {
                 esc()
             }
         }
+    }
+
+    /// --xhs-shots <输出目录> <文件夹>：小红书配图用的几张原始窗口截图
+    func runXhsShots(outDir: String) {
+        guard let window = view.window else { return }
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        window.setFrame(CGRect(x: 0, y: 0, width: 1440, height: 900), display: true)
+        window.center()
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        func cap(_ name: String) { captureWindow(to: "\(outDir)/\(name).png", raw: true) }
+        at(0.3) { self.goTo(0) }
+        at(1.6) { self.pokeControls() }
+        at(0.4) { cap("browse") }
+        at(0.2) { self.toggleInfoPanel(nil) }
+        at(1.2) { self.pokeControls() }
+        at(0.4) { cap("info") }
+        at(0.2) { self.toggleInfoPanel(nil); self.goTo(2) }
+        at(1.6) {
+            // 哈尔施塔特：在湖边房子那里按 0
+            let b = self.imageView.bounds
+            self.imageView.debugToggle(at: CGPoint(x: b.width * 0.66, y: b.height * 0.62))
+        }
+        at(2.4) { self.pokeControls() }
+        at(0.4) { cap("zoom") }
+        at(0.2) { self.imageView.fit(); self.goTo(1) }
+        at(1.4) { _ = self.beginPeek() }
+        at(1.6) { cap("peek") }
+        at(0.3) { self.endPeek() }
+        at(1.0) { NSApp.terminate(nil) }
     }
 
     func runBrowseShots(outDir: String) {
@@ -2326,8 +2279,6 @@ extension ViewerViewController: NSMenuItemValidation {
             menuItem.state = menuItem.tag == folder.sortKey.rawValue ? .on : .off
         } else if menuItem.action == #selector(toggleEscCloses(_:)) {
             menuItem.state = Self.escCloses ? .on : .off
-        } else if menuItem.action == #selector(toggleHUD(_:)) {
-            menuItem.state = Self.hudEnabled ? .on : .off
         } else if menuItem.action == #selector(toggleFadeTransition(_:)) {
             menuItem.state = ZoomableImageView.fadeTransition ? .on : .off
         } else if menuItem.action == #selector(setSlideshowInterval(_:)) {

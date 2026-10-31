@@ -123,7 +123,7 @@ Esc  Sığdırmaya dön (tam ekrandan çıkış)
 Tutup açma / kaydırma  İmleçte yakınlaştır, taşıma için sürükle veya ⌘+kaydır
 Görüntü › Kaydırma tekerleği  fotoğraf değiştirmeye ayarlanabilir
 I  Fotoğraf bilgisi    T  Küçük resim şeridi    F  Tam ekran
-⌘⇧H  Bilgi katmanını göster / gizle    Esc  Önce fotoğraf bilgi panelini kapatır
+Esc  Önce fotoğraf bilgi panelini kapatır
 Görüntü › Esc pencereyi kapatır açıkken: sığdırılmışken Esc kapatır, yakınlaştırılmışken önce sığdırır
 ⌘⇧C  Toplu dönüştürme    ⌘⇧B  Toplu yeniden adlandırma    ⌘⇧D  Duvar kağıdı
 ⌘E  Fotoğraf düzenleyicide düzenle (aynı adlı RAW varsa onu açar)
@@ -212,8 +212,6 @@ Açmak için klasör veya resim sürükleyin";
 /* 翻页渐变 */
 "menu.fadeTransition" = "Fotoğraflar arasında geçiş efekti";
 
-/* 信息浮层 */
-"menu.hud" = "Bilgi katmanı";
 
 /* Esc 关闭 */
 "menu.escCloses" = "Esc pencereyi kapatır";
