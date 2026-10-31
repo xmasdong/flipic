@@ -1,0 +1,191 @@
+/* PixDeck — Español */
+
+"menu.about" = "Acerca de PixDeck";
+"menu.hide" = "Ocultar PixDeck";
+"menu.hideOthers" = "Ocultar otros";
+"menu.showAll" = "Mostrar todo";
+"menu.quit" = "Salir de PixDeck";
+"menu.file" = "Archivo";
+"menu.open" = "Abrir…";
+"menu.reveal" = "Mostrar en el Finder";
+"menu.rename" = "Renombrar…";
+"menu.exportAs" = "Exportar como…";
+"menu.trash" = "Mover a la papelera";
+"menu.close" = "Cerrar ventana";
+"menu.view" = "Visualización";
+"menu.zoomIn" = "Ampliar";
+"menu.zoomOut" = "Reducir";
+"menu.actualSize" = "Tamaño real (100 %)";
+"menu.fit" = "Ajustar a la ventana";
+"menu.rotateCW" = "Girar 90° horario";
+"menu.rotateCCW" = "Girar 90° antihorario";
+"menu.info" = "Información de foto";
+"menu.filmstrip" = "Tira de miniaturas";
+"menu.slideshow" = "Presentación";
+"menu.fullscreen" = "Pantalla completa";
+"menu.go" = "Ir";
+"menu.prev" = "Anterior";
+"menu.next" = "Siguiente";
+"menu.first" = "Primera";
+"menu.last" = "Última";
+"menu.tools" = "Herramientas";
+"menu.batchConvert" = "Convertir formato por lotes…";
+"menu.batchRename" = "Renombrar por lotes…";
+"menu.wallpaper" = "Usar como fondo de escritorio";
+"menu.window" = "Ventana";
+"menu.miniaturize" = "Minimizar";
+"menu.windowZoom" = "Zoom";
+"menu.front" = "Traer todo al frente";
+"menu.help" = "Ayuda";
+"menu.shortcuts" = "Atajos de teclado";
+"tip.prev" = "Anterior (←)";
+"tip.next" = "Siguiente (→)";
+"tip.zoomIn" = "Ampliar (↑)";
+"tip.zoomOut" = "Reducir (↓)";
+"tip.fit" = "Ajustar a la ventana (0 / doble clic)";
+"tip.actual" = "Tamaño real (1)";
+"tip.rotateCCW" = "Girar 90° antihorario (L)";
+"tip.rotateCW" = "Girar 90° horario (R)";
+"tip.slideshow" = "Presentación (S)";
+"tip.info" = "Información de foto (I)";
+"tip.strip" = "Mostrar u ocultar la tira de miniaturas (T)";
+"tip.export" = "Exportación rápida comprimida (⌘S)";
+"tip.rename" = "Renombrar (Retorno)";
+"tip.trash" = "Mover a la papelera (⌘⌫)";
+"ui.emptyHint" = "Arrastra una carpeta o imagen a esta ventana o pulsa Abrir…";
+"ui.openButton" = "Abrir…";
+"ui.noImages" = "No hay archivos de imagen reconocibles aquí";
+"ui.noMore" = "No hay más imágenes en esta carpeta";
+"ui.exifTitle" = "Información de foto";
+"ui.noExif" = "Este archivo no tiene datos EXIF";
+"msg.exporting" = "Exportando…";
+"msg.exported" = "%1$@ exportado: %2$@ → %3$@";
+"msg.exportFailed" = "Error al exportar: %@";
+"msg.slideshowOn" = "Presentación en curso · 3 s por foto · S o salir de pantalla completa para detener";
+"msg.slideshowOff" = "Presentación detenida";
+"msg.oneImage" = "Esta carpeta solo contiene una imagen";
+"msg.wallpaperSet" = "Fondo de escritorio establecido: %@";
+"msg.wallpaperFailed" = "No se pudo establecer el fondo: %@";
+"msg.renamedTo" = "Renombrado a %@";
+"msg.renameFailed" = "Error al renombrar: %@";
+"msg.converting" = "Convirtiendo %1$d/%2$d";
+"msg.convertDone" = "Conversión completada: %1$d correctas, %2$d con error, salida en Converted-%3$@/";
+"msg.renamedCount" = "%d imágenes renombradas";
+"msg.prefixEmpty" = "El prefijo no puede estar vacío";
+"alert.rename" = "Renombrar";
+"alert.renameKeepExt" = "Escribe un nuevo nombre (conserva la extensión .%@)";
+"alert.renameNoExt" = "Escribe un nuevo nombre";
+"alert.renameButton" = "Renombrar";
+"alert.cancel" = "Cancelar";
+"bc.title" = "Convertir formato por lotes";
+"bc.info" = "Convierte las %d imágenes de esta carpeta en la subcarpeta Converted-* (mismo nombre, otra extensión).";
+"bc.start" = "Convertir";
+"bc.quality" = "Calidad %d";
+"br.title" = "Renombrar por lotes";
+"br.info" = "Renombra las %d imágenes de esta carpeta como 'prefijo-001.ext'.";
+"br.field" = "Prefijo";
+"br.button" = "Renombrar";
+"exp.title" = "Exportar imagen comprimida";
+"exp.message" = "Elige ubicación, nombre y formato";
+"exp.quality" = "Calidad %d";
+"exp.format" = "Formato";
+"exp.estimate" = "Tamaño estimado: %@";
+"exp.estimating" = "Tamaño estimado: calculando…";
+
+"menu.saveRotation" = "Guardar rotación";
+"msg.rotSaved" = "Rotación guardada (sin pérdidas)";
+"msg.rotSavedReencoded" = "Rotación guardada (recodificada para este formato)";
+"msg.rotFailed" = "Error al guardar la rotación: %@";
+"msg.rotNone" = "No hay rotación pendiente de guardar";
+"msg.rotAnimated" = "Las imágenes animadas no admiten guardar la rotación";
+"msg.rotSaving" = "Guardando rotación…";
+"msg.rotHint" = "Vista girada · ⌘⌥S para guardar en el archivo";
+"about.body" = "■ ACERCA DE
+Un visor de imágenes nativo para macOS: apertura instantánea, navegación fluida por carpetas, zoom por gestos y EXIF de un vistazo. Totalmente sin conexión — sin solicitudes de red, sin recopilación de datos, sin cuentas.
+
+■ USO
+Arrastra una carpeta o imagen a esta ventana para verla; o clic derecho sobre una imagen en el Finder y abrir con PixDeck.
+← → navega; rueda / pellizco / ↑↓ zoom; arrastra para mover; doble clic alterna ajustar ⇄ 100 %; Esc restablece.
+R / L giran la vista; ⌘⌥S guarda la rotación en el archivo sin pérdidas; Retorno renombra; ⌘⌫ mueve a la papelera.
+⌘S exporta una copia comprimida (ubicación / formato / calidad); el menú Herramientas añade conversión y renombrado por lotes.
+S inicia la presentación; I muestra la información; T la tira de miniaturas; F pantalla completa. Los controles se ocultan tras unos segundos y reaparecen al mover el ratón.
+La interfaz y todos los mensajes siguen automáticamente el idioma del sistema (14 idiomas).";
+"about.shortcutsTitle" = "Atajos de teclado";
+"sc.title" = "Atajos de teclado";
+"sc.body" = "← / →  Anterior / Siguiente (en bucle)
+↑ / ↓  Ampliar / Reducir (mantener para repetir)
+R / L  Girar 90° horario / antihorario
+S  Presentación (3 s por foto, S para detener)
+Espacio  Vista previa ajustada a la imagen (pulsa de nuevo para salir)
+Doble clic  Ajustar ⇄ 100 %
+Esc  Volver a ajustar (sale de pantalla completa)
+1 / 0  Tamaño real / Ajustar a la ventana
+Pellizcar / desplazar  Zoom en el cursor, arrastrar o ⌘+desplazar para mover
+Visualización › Rueda del ratón  puede cambiar de foto
+I  Información    T  Tira de miniaturas    F  Pantalla completa
+⌘⇧C  Conversión por lotes    ⌘⇧B  Renombrar por lotes    ⌘⇧D  Fondo de escritorio
+⌘⇧K  Modo limpieza Beta: duplicados, ojos cerrados, desenfoque
+⌘S  Exportación rápida    ⌘⇧E  Exportar como…
+Retorno  Renombrar la imagen actual
+⌘⌥S  Guardar rotación en el archivo
+⌘⌫  Mover a la papelera    ⌘R  Mostrar en el Finder
+Arrastra una carpeta o imagen para abrir";
+"exif.camera" = "Cámara";
+"exif.lens" = "Objetivo";
+"exif.params" = "Exposición";
+"exif.bias" = "Compensación de exposición";
+"exif.date" = "Fecha de captura";
+"exif.size" = "Dimensiones";
+"exif.profile" = "Perfil de color";
+"exif.file" = "Archivo";
+
+/* 排序 */
+"menu.sort" = "Ordenar por";
+"sort.name" = "Nombre";
+"sort.captureDate" = "Fecha de captura";
+"sort.modified" = "Fecha de modificación";
+"sort.created" = "Fecha de creación";
+"sort.size" = "Tamaño del archivo";
+"sort.descending" = "Descendente";
+
+/* 清理模式 */
+"menu.cleanup" = "Modo limpieza Beta";
+"cleanup.title" = "Modo limpieza";
+"cleanup.similar" = "Ráfagas similares";
+"cleanup.duplicate" = "Duplicados exactos";
+"cleanup.closedEyes" = "Ojos cerrados";
+"cleanup.blurry" = "Borrosas / desenfocadas";
+"cleanup.empty.similar" = "No hay ráfagas similares";
+"cleanup.empty.duplicate" = "No hay archivos idénticos";
+"cleanup.empty.closedEyes" = "No hay fotos con ojos cerrados";
+"cleanup.empty.blurry" = "No hay fotos borrosas";
+"cleanup.selectAll" = "Marcar todo";
+"cleanup.selectNone" = "Desmarcar todo";
+"cleanup.done" = "Listo";
+"cleanup.hint" = "Clic para marcar / desmarcar · Espacio para revisar";
+"cleanup.trash" = "Trasladar a la papelera";
+"cleanup.trashN" = "Trasladar a la papelera (%d)";
+"cleanup.scanned" = "%d fotos revisadas en %d s";
+"cleanup.scanning" = "Revisando %d / %d";
+"cleanup.waiting" = "Revisando…";
+"cleanup.detail.groups" = "%d grupos · %d fotos";
+"cleanup.detail.copies" = "%d juegos idénticos · %d fotos";
+"cleanup.detail.count" = "%d fotos";
+"cleanup.noneSelected" = "Nada marcado";
+"cleanup.selected" = "%d marcadas · %@";
+"cleanup.keep" = "Conservar";
+"cleanup.state.checked" = "Marcada, Intro para desmarcar";
+"cleanup.state.unchecked" = "Sin marcar, Intro para marcar";
+"cleanup.trashed" = "%d fotos a la papelera · ⌘Z para deshacer";
+"cleanup.restored" = "%d archivos restaurados";
+"cleanup.header.copies" = "%d copias idénticas";
+"cleanup.header.betterInBurst" = "Hay una foto mejor en la misma ráfaga";
+"cleanup.header.burst" = "%d fotos · %@";
+"cleanup.tip" = "¿Muchas fotos? ⌘⇧K abre el modo limpieza: duplicados, ojos cerrados y desenfoque";
+
+/* 滚轮 */
+"menu.wheel" = "Rueda del ratón";
+"wheel.zoom" = "Zoom";
+"wheel.navigate" = "Foto anterior / siguiente";
+"wheel.navigate.on" = "Rueda: cambiar de foto (⌘+rueda para zoom)";
+"wheel.zoom.on" = "Rueda: zoom (⌘+rueda para desplazar)";

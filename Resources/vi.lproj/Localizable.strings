@@ -1,0 +1,191 @@
+/* PixDeck — Tiếng Việt */
+
+"menu.about" = "Giới thiệu PixDeck";
+"menu.hide" = "Ẩn PixDeck";
+"menu.hideOthers" = "Ẩn các ứng dụng khác";
+"menu.showAll" = "Hiện tất cả";
+"menu.quit" = "Thoát PixDeck";
+"menu.file" = "Tệp";
+"menu.open" = "Mở…";
+"menu.reveal" = "Hiện trong Finder";
+"menu.rename" = "Đổi tên…";
+"menu.exportAs" = "Xuất thành…";
+"menu.trash" = "Chuyển vào Thùng rác";
+"menu.close" = "Đóng cửa sổ";
+"menu.view" = "Xem";
+"menu.zoomIn" = "Phóng to";
+"menu.zoomOut" = "Thu nhỏ";
+"menu.actualSize" = "Kích thước thực (100%)";
+"menu.fit" = "Vừa cửa sổ";
+"menu.rotateCW" = "Xoay 90° theo chiều kim đồng hồ";
+"menu.rotateCCW" = "Xoay 90° ngược chiều kim đồng hồ";
+"menu.info" = "Thông tin ảnh";
+"menu.filmstrip" = "Thanh hình thu nhỏ";
+"menu.slideshow" = "Trình chiếu";
+"menu.fullscreen" = "Toàn màn hình";
+"menu.go" = "Đi";
+"menu.prev" = "Trước";
+"menu.next" = "Sau";
+"menu.first" = "Đầu";
+"menu.last" = "Cuối";
+"menu.tools" = "Công cụ";
+"menu.batchConvert" = "Chuyển đổi hàng loạt…";
+"menu.batchRename" = "Đổi tên hàng loạt…";
+"menu.wallpaper" = "Đặt làm hình nền";
+"menu.window" = "Cửa sổ";
+"menu.miniaturize" = "Thu nhỏ";
+"menu.windowZoom" = "Phóng to/Thu nhỏ";
+"menu.front" = "Đưa tất cả ra trước";
+"menu.help" = "Trợ giúp";
+"menu.shortcuts" = "Phím tắt";
+"tip.prev" = "Trước (←)";
+"tip.next" = "Sau (→)";
+"tip.zoomIn" = "Phóng to (↑)";
+"tip.zoomOut" = "Thu nhỏ (↓)";
+"tip.fit" = "Vừa cửa sổ (0 / nhấp đúp)";
+"tip.actual" = "Kích thước thực (1)";
+"tip.rotateCCW" = "Xoay 90° ngược chiều kim đồng hồ (L)";
+"tip.rotateCW" = "Xoay 90° theo chiều kim đồng hồ (R)";
+"tip.slideshow" = "Trình chiếu (S)";
+"tip.info" = "Thông tin ảnh (I)";
+"tip.strip" = "Bật/tắt thanh hình thu nhỏ (T)";
+"tip.export" = "Xuất nhanh bản nén (⌘S)";
+"tip.rename" = "Đổi tên (Return)";
+"tip.trash" = "Chuyển vào Thùng rác (⌘⌫)";
+"ui.emptyHint" = "Kéo thư mục hoặc ảnh vào cửa sổ này, hoặc nhấp Mở…";
+"ui.openButton" = "Mở…";
+"ui.noImages" = "Không có tệp ảnh nào nhận dạng được ở đây";
+"ui.noMore" = "Không còn ảnh nào trong thư mục này";
+"ui.exifTitle" = "Thông tin ảnh";
+"ui.noExif" = "Tệp này không có dữ liệu EXIF";
+"msg.exporting" = "Đang xuất…";
+"msg.exported" = "Đã xuất %1$@: %2$@ → %3$@";
+"msg.exportFailed" = "Xuất thất bại: %@";
+"msg.slideshowOn" = "Đang trình chiếu · 3 giây/ảnh · nhấn S hoặc thoát toàn màn hình để dừng";
+"msg.slideshowOff" = "Đã dừng trình chiếu";
+"msg.oneImage" = "Thư mục này chỉ có một ảnh";
+"msg.wallpaperSet" = "Đã đặt hình nền: %@";
+"msg.wallpaperFailed" = "Không đặt được hình nền: %@";
+"msg.renamedTo" = "Đã đổi tên thành %@";
+"msg.renameFailed" = "Đổi tên thất bại: %@";
+"msg.converting" = "Đang chuyển đổi %1$d/%2$d";
+"msg.convertDone" = "Chuyển đổi xong: thành công %1$d, thất bại %2$d, kết quả trong Converted-%3$@/";
+"msg.renamedCount" = "Đã đổi tên %d ảnh";
+"msg.prefixEmpty" = "Tiền tố không được để trống";
+"alert.rename" = "Đổi tên";
+"alert.renameKeepExt" = "Nhập tên mới (giữ phần mở rộng .%@)";
+"alert.renameNoExt" = "Nhập tên mới";
+"alert.renameButton" = "Đổi tên";
+"alert.cancel" = "Hủy";
+"bc.title" = "Chuyển đổi hàng loạt";
+"bc.info" = "Chuyển %d ảnh trong thư mục này vào thư mục con Converted-* (giữ tên, đổi phần mở rộng).";
+"bc.start" = "Chuyển đổi";
+"bc.quality" = "Chất lượng %d";
+"br.title" = "Đổi tên hàng loạt";
+"br.info" = "Đổi tên %d ảnh trong thư mục này theo dạng 'tiền tố-001.ext'.";
+"br.field" = "Tiền tố";
+"br.button" = "Đổi tên";
+"exp.title" = "Xuất ảnh nén";
+"exp.message" = "Chọn vị trí, tên tệp và định dạng";
+"exp.quality" = "Chất lượng %d";
+"exp.format" = "Định dạng";
+"exp.estimate" = "Kích thước ước tính: %@";
+"exp.estimating" = "Kích thước ước tính: đang tính…";
+
+"menu.saveRotation" = "Lưu kiểu xoay";
+"msg.rotSaved" = "Đã lưu kiểu xoay (không mất dữ liệu)";
+"msg.rotSavedReencoded" = "Đã lưu kiểu xoay (mã hóa lại cho định dạng này)";
+"msg.rotFailed" = "Lưu kiểu xoay thất bại: %@";
+"msg.rotNone" = "Không có kiểu xoay nào chưa lưu";
+"msg.rotAnimated" = "Ảnh động không hỗ trợ lưu kiểu xoay";
+"msg.rotSaving" = "Đang lưu kiểu xoay…";
+"msg.rotHint" = "Đã xoay khung xem · ⌘⌥S để lưu vào tệp";
+"about.body" = "■ GIỚI THIỆU
+Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Hoạt động hoàn toàn ngoại tuyến — không gọi mạng, không thu thập dữ liệu, không tài khoản.
+
+■ CÁCH DÙNG
+Kéo thư mục hoặc ảnh vào cửa sổ để duyệt; hoặc nhấp phải ảnh trong Finder và mở bằng PixDeck.
+← / → chuyển ảnh; cuộn / chụm / ↑↓ thu phóng; kéo để di chuyển; nhấp đúp chuyển vừa cửa sổ ⇄ 100%; Esc đặt lại.
+R / L xoay ảnh; ⌘⌥S ghi kiểu xoay vào tệp không mất dữ liệu; Return đổi tên; ⌘⌫ chuyển vào Thùng rác.
+⌘S xuất bản nén (vị trí / định dạng / chất lượng); menu Công cụ có chuyển đổi và đổi tên hàng loạt.
+S trình chiếu; I thông tin ảnh; T thanh hình thu nhỏ; F toàn màn hình. Bộ điều khiển tự ẩn sau vài giây không hoạt động và hiện lại khi di chuột.
+Giao diện và mọi thông báo tự theo ngôn ngữ hệ thống (hỗ trợ 14 ngôn ngữ).";
+"about.shortcutsTitle" = "Phím tắt";
+"sc.title" = "Phím tắt";
+"sc.body" = "← / →  Trước / Sau (vòng lặp)
+↑ / ↓  Phóng to / Thu nhỏ (giữ để lặp)
+R / L  Xoay 90° theo / ngược chiều kim đồng hồ
+S  Trình chiếu (3 giây/ảnh, S để dừng)
+Dấu cách  Xem trước vừa khít tỉ lệ ảnh (nhấn lại để thoát)
+Nhấp đúp  Vừa cửa sổ ⇄ 100%
+Esc  Về vừa cửa sổ (thoát toàn màn hình trước)
+1 / 0  Kích thước thực / Vừa cửa sổ
+Chụm / cuộn  Thu phóng tại con trỏ, kéo hoặc ⌘+cuộn để di chuyển
+Hiển thị › Con lăn chuột  có thể đổi sang chuyển ảnh
+I  Thông tin ảnh    T  Thanh hình thu nhỏ    F  Toàn màn hình
+⌘⇧C  Chuyển đổi hàng loạt    ⌘⇧B  Đổi tên hàng loạt    ⌘⇧D  Hình nền
+⌘⇧K  Chế độ dọn dẹp Beta: trùng lặp, nhắm mắt, ảnh mờ
+⌘S  Xuất nhanh    ⌘⇧E  Xuất thành…
+Return  Đổi tên ảnh đang xem
+⌘⌥S  Lưu kiểu xoay vào tệp
+⌘⌫  Chuyển vào Thùng rác    ⌘R  Hiện trong Finder
+Kéo thư mục hoặc ảnh vào để mở";
+"exif.camera" = "Máy ảnh";
+"exif.lens" = "Ống kính";
+"exif.params" = "Thông số chụp";
+"exif.bias" = "Bù phơi sáng";
+"exif.date" = "Ngày chụp";
+"exif.size" = "Kích thước";
+"exif.profile" = "Hồ sơ màu";
+"exif.file" = "Tệp";
+
+/* 排序 */
+"menu.sort" = "Sắp xếp theo";
+"sort.name" = "Tên";
+"sort.captureDate" = "Ngày chụp";
+"sort.modified" = "Ngày sửa đổi";
+"sort.created" = "Ngày tạo";
+"sort.size" = "Kích thước tệp";
+"sort.descending" = "Giảm dần";
+
+/* 清理模式 */
+"menu.cleanup" = "Chế độ dọn dẹp Beta";
+"cleanup.title" = "Chế độ dọn dẹp";
+"cleanup.similar" = "Ảnh chụp liên tiếp giống nhau";
+"cleanup.duplicate" = "Trùng lặp hoàn toàn";
+"cleanup.closedEyes" = "Nhắm mắt";
+"cleanup.blurry" = "Mờ / lệch nét";
+"cleanup.empty.similar" = "Không có ảnh liên tiếp giống nhau";
+"cleanup.empty.duplicate" = "Không có tệp trùng nội dung";
+"cleanup.empty.closedEyes" = "Không có ảnh nhắm mắt";
+"cleanup.empty.blurry" = "Không có ảnh mờ";
+"cleanup.selectAll" = "Chọn tất cả";
+"cleanup.selectNone" = "Bỏ chọn tất cả";
+"cleanup.done" = "Xong";
+"cleanup.hint" = "Bấm để chọn / bỏ · Phím cách để xem kỹ";
+"cleanup.trash" = "Chuyển vào Thùng rác";
+"cleanup.trashN" = "Chuyển vào Thùng rác (%d)";
+"cleanup.scanned" = "Đã kiểm tra %d ảnh trong %d giây";
+"cleanup.scanning" = "Đang kiểm tra %d / %d";
+"cleanup.waiting" = "Đang kiểm tra…";
+"cleanup.detail.groups" = "%d nhóm · %d ảnh";
+"cleanup.detail.copies" = "%d bộ giống hệt · %d ảnh";
+"cleanup.detail.count" = "%d ảnh";
+"cleanup.noneSelected" = "Chưa chọn ảnh nào";
+"cleanup.selected" = "Đã chọn %d · %@";
+"cleanup.keep" = "Nên giữ";
+"cleanup.state.checked" = "Đã chọn, Return để bỏ";
+"cleanup.state.unchecked" = "Chưa chọn, Return để chọn";
+"cleanup.trashed" = "Đã chuyển %d ảnh vào Thùng rác · ⌘Z để hoàn tác";
+"cleanup.restored" = "Đã khôi phục %d tệp";
+"cleanup.header.copies" = "%d bản giống hệt";
+"cleanup.header.betterInBurst" = "Trong cùng loạt có ảnh tốt hơn";
+"cleanup.header.burst" = "%d ảnh · %@";
+"cleanup.tip" = "Nhiều ảnh? ⌘⇧K mở chế độ dọn dẹp: trùng lặp, nhắm mắt, ảnh mờ";
+
+/* 滚轮 */
+"menu.wheel" = "Con lăn chuột";
+"wheel.zoom" = "Phóng to / thu nhỏ";
+"wheel.navigate" = "Ảnh trước / sau";
+"wheel.navigate.on" = "Con lăn: chuyển ảnh (⌘+con lăn để phóng to)";
+"wheel.zoom.on" = "Con lăn: phóng to / thu nhỏ (⌘+con lăn để kéo)";

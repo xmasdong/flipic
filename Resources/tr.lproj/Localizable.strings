@@ -1,0 +1,191 @@
+/* PixDeck — Türkçe */
+
+"menu.about" = "PixDeck Hakkında";
+"menu.hide" = "PixDeck'ü Gizle";
+"menu.hideOthers" = "Diğerlerini Gizle";
+"menu.showAll" = "Tümünü Göster";
+"menu.quit" = "PixDeck'den Çık";
+"menu.file" = "Dosya";
+"menu.open" = "Aç…";
+"menu.reveal" = "Finder'da Göster";
+"menu.rename" = "Yeniden Adlandır…";
+"menu.exportAs" = "Farklı Dışa Aktar…";
+"menu.trash" = "Çöpe Taşı";
+"menu.close" = "Pencereyi Kapat";
+"menu.view" = "Görünüm";
+"menu.zoomIn" = "Büyüt";
+"menu.zoomOut" = "Küçült";
+"menu.actualSize" = "Gerçek Boyut (%100)";
+"menu.fit" = "Pencereye Sığdır";
+"menu.rotateCW" = "90° Saat Yönünde Döndür";
+"menu.rotateCCW" = "90° Saat Tersine Döndür";
+"menu.info" = "Fotoğraf Bilgisi";
+"menu.filmstrip" = "Küçük Resim Şeridi";
+"menu.slideshow" = "Slayt Gösterisi";
+"menu.fullscreen" = "Tam Ekran";
+"menu.go" = "Git";
+"menu.prev" = "Önceki";
+"menu.next" = "Sonraki";
+"menu.first" = "İlk";
+"menu.last" = "Son";
+"menu.tools" = "Araçlar";
+"menu.batchConvert" = "Toplu Biçim Dönüştürme…";
+"menu.batchRename" = "Toplu Yeniden Adlandırma…";
+"menu.wallpaper" = "Masaüstü Duvar Kağıdı Yap";
+"menu.window" = "Pencere";
+"menu.miniaturize" = "Küçült";
+"menu.windowZoom" = "Yakınlaştır";
+"menu.front" = "Tümünü Öne Getir";
+"menu.help" = "Yardım";
+"menu.shortcuts" = "Klavye Kısayolları";
+"tip.prev" = "Önceki (←)";
+"tip.next" = "Sonraki (→)";
+"tip.zoomIn" = "Büyüt (↑)";
+"tip.zoomOut" = "Küçült (↓)";
+"tip.fit" = "Pencereye Sığdır (0 / çift tık)";
+"tip.actual" = "Gerçek Boyut (1)";
+"tip.rotateCCW" = "90° Saat Tersine Döndür (L)";
+"tip.rotateCW" = "90° Saat Yönünde Döndür (R)";
+"tip.slideshow" = "Slayt Gösterisi (S)";
+"tip.info" = "Fotoğraf Bilgisi (I)";
+"tip.strip" = "Küçük Resim Şeridi Aç/Kapat (T)";
+"tip.export" = "Hızlı Sıkıştırılmış Dışa Aktarma (⌘S)";
+"tip.rename" = "Yeniden Adlandır (Return)";
+"tip.trash" = "Çöpe Taşı (⌘⌫)";
+"ui.emptyHint" = "Bu pencereye bir klasör veya resim sürükleyin ya da Aç… düğmesine tıklayın";
+"ui.openButton" = "Aç…";
+"ui.noImages" = "Burada tanınan resim dosyası yok";
+"ui.noMore" = "Bu klasörde başka resim yok";
+"ui.exifTitle" = "Fotoğraf Bilgisi";
+"ui.noExif" = "Bu dosyada EXIF verisi yok";
+"msg.exporting" = "Dışa aktarılıyor…";
+"msg.exported" = "%1$@ dışa aktarıldı: %2$@ → %3$@";
+"msg.exportFailed" = "Dışa aktarma başarısız: %@";
+"msg.slideshowOn" = "Slayt gösterisi oynatılıyor · fotoğraf başına 3 sn · Durdurmak için S veya tam ekrandan çık";
+"msg.slideshowOff" = "Slayt gösterisi durduruldu";
+"msg.oneImage" = "Bu klasörde yalnızca bir resim var";
+"msg.wallpaperSet" = "Duvar kağıdı ayarlandı: %@";
+"msg.wallpaperFailed" = "Duvar kağıdı ayarlanamadı: %@";
+"msg.renamedTo" = "Yeni adı: %@";
+"msg.renameFailed" = "Yeniden adlandırma başarısız: %@";
+"msg.converting" = "Dönüştürülüyor %1$d/%2$d";
+"msg.convertDone" = "Dönüştürme tamam: %1$d başarılı, %2$d başarısız, çıktı Converted-%3$@/ içinde";
+"msg.renamedCount" = "%d resim yeniden adlandırıldı";
+"msg.prefixEmpty" = "Önek boş olamaz";
+"alert.rename" = "Yeniden Adlandır";
+"alert.renameKeepExt" = "Yeni bir ad girin (.%@ uzantısı korunur)";
+"alert.renameNoExt" = "Yeni bir ad girin";
+"alert.renameButton" = "Yeniden Adlandır";
+"alert.cancel" = "İptal";
+"bc.title" = "Toplu Biçim Dönüştürme";
+"bc.info" = "Bu klasördeki %d resmi Converted-* alt klasörüne dönüştürür (aynı ad, yeni uzantı).";
+"bc.start" = "Dönüştür";
+"bc.quality" = "Kalite %d";
+"br.title" = "Toplu Yeniden Adlandırma";
+"br.info" = "Bu klasördeki %d resmi 'önek-001.uzantı' biçiminde yeniden adlandırır.";
+"br.field" = "Önek";
+"br.button" = "Yeniden Adlandır";
+"exp.title" = "Sıkıştırılmış Resmi Dışa Aktar";
+"exp.message" = "Konum, ad ve biçimi seçin";
+"exp.quality" = "Kalite %d";
+"exp.format" = "Biçim";
+"exp.estimate" = "Tahmini boyut: %@";
+"exp.estimating" = "Tahmini boyut: hesaplanıyor…";
+
+"menu.saveRotation" = "Döndürmeyi Kaydet";
+"msg.rotSaved" = "Döndürme kaydedildi (kayıpsız)";
+"msg.rotSavedReencoded" = "Döndürme kaydedildi (bu biçim için yeniden kodlandı)";
+"msg.rotFailed" = "Döndürme kaydedilemedi: %@";
+"msg.rotNone" = "Kaydedilmemiş döndürme yok";
+"msg.rotAnimated" = "Hareketli resimler döndürme kaydetmeyi desteklemiyor";
+"msg.rotSaving" = "Döndürme kaydediliyor…";
+"msg.rotHint" = "Görünüm döndürüldü · ⌘⌥S ile dosyaya kaydedin";
+"about.body" = "■ HAKKINDA
+macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Tamamen çevrimdışı — ağ isteği yok, veri toplama yok, hesap yok.
+
+■ KULLANIM
+Gezinmek için bir klasörü veya resmi bu pencereye sürükleyin; ya da Finder'da bir resme sağ tıklayıp PixDeck ile açın.
+← / → gezinme; kaydırma / tutup açma / ↑↓ zoom; taşıma için sürükleme; çift tık sığdır ⇄ %100; Esc sıfırlar.
+R / L görünümü döndürür; ⌘⌥S döndürmeyi dosyaya kayıpsız yazar; Return yeniden adlandırır; ⌘⌫ Çöp Kutusu'na taşır.
+⌘S sıkıştırılmış kopya dışa aktarır (konum / biçim / kalite); Araçlar menüsünde toplu dönüştürme ve yeniden adlandırma var.
+S slayt gösterisi; I fotoğraf bilgisi; T küçük resim şeridi; F tam ekran. Kontroller birkaç saniye hareketsizlikte gizlenir, fare oynayınca geri gelir.
+Arayüz ve tüm mesajlar otomatik olarak sistem dilini izler (14 dil).";
+"about.shortcutsTitle" = "Klavye Kısayolları";
+"sc.title" = "Klavye Kısayolları";
+"sc.body" = "← / →  Önceki / Sonraki (döngüsel)
+↑ / ↓  Büyüt / Küçült (basılı tutun)
+R / L  90° saat yönü / tersi döndür
+S  Slayt gösterisi (fotoğraf başına 3 sn, S ile durdur)
+Boşluk  Görsel oranında önizleme (çıkmak için tekrar basın)
+Çift tık  Pencereye sığdır ⇄ %100
+Esc  Sığdırmaya dön (tam ekrandan çıkış)
+1 / 0  Gerçek boyut / Pencereye sığdır
+Tutup açma / kaydırma  İmleçte yakınlaştır, taşıma için sürükle veya ⌘+kaydır
+Görüntü › Kaydırma tekerleği  fotoğraf değiştirmeye ayarlanabilir
+I  Fotoğraf bilgisi    T  Küçük resim şeridi    F  Tam ekran
+⌘⇧C  Toplu dönüştürme    ⌘⇧B  Toplu yeniden adlandırma    ⌘⇧D  Duvar kağıdı
+⌘⇧K  Temizlik modu Beta: kopyalar, kapalı gözler, bulanıklık
+⌘S  Hızlı dışa aktarma    ⌘⇧E  Farklı dışa aktar…
+Return  Geçerli resmi yeniden adlandır
+⌘⌥S  Döndürmeyi dosyaya kaydet
+⌘⌫  Çöpe taşı    ⌘R  Finder'da göster
+Açmak için klasör veya resim sürükleyin";
+"exif.camera" = "Kamera";
+"exif.lens" = "Lens";
+"exif.params" = "Pozlama";
+"exif.bias" = "Pozlama Telafisi";
+"exif.date" = "Çekim Tarihi";
+"exif.size" = "Boyutlar";
+"exif.profile" = "Renk Profili";
+"exif.file" = "Dosya";
+
+/* 排序 */
+"menu.sort" = "Sıralama";
+"sort.name" = "Ad";
+"sort.captureDate" = "Çekim Tarihi";
+"sort.modified" = "Değiştirilme Tarihi";
+"sort.created" = "Oluşturulma Tarihi";
+"sort.size" = "Dosya Boyutu";
+"sort.descending" = "Azalan";
+
+/* 清理模式 */
+"menu.cleanup" = "Temizlik modu Beta";
+"cleanup.title" = "Temizlik modu";
+"cleanup.similar" = "Benzer seriler";
+"cleanup.duplicate" = "Birebir kopyalar";
+"cleanup.closedEyes" = "Kapalı gözler";
+"cleanup.blurry" = "Bulanık / odak dışı";
+"cleanup.empty.similar" = "Benzer seri bulunamadı";
+"cleanup.empty.duplicate" = "Aynı içerikli dosya yok";
+"cleanup.empty.closedEyes" = "Gözü kapalı fotoğraf yok";
+"cleanup.empty.blurry" = "Bulanık fotoğraf yok";
+"cleanup.selectAll" = "Tümünü işaretle";
+"cleanup.selectNone" = "Hiçbirini işaretleme";
+"cleanup.done" = "Bitti";
+"cleanup.hint" = "Tıkla: işaretle / kaldır · Boşluk: incele";
+"cleanup.trash" = "Çöp Sepeti’ne Taşı";
+"cleanup.trashN" = "Çöp Sepeti’ne Taşı (%d)";
+"cleanup.scanned" = "%d fotoğraf %d sn’de kontrol edildi";
+"cleanup.scanning" = "Kontrol ediliyor %d / %d";
+"cleanup.waiting" = "Kontrol ediliyor…";
+"cleanup.detail.groups" = "%d grup · %d fotoğraf";
+"cleanup.detail.copies" = "%d aynı set · %d fotoğraf";
+"cleanup.detail.count" = "%d fotoğraf";
+"cleanup.noneSelected" = "Seçili fotoğraf yok";
+"cleanup.selected" = "%d seçili · %@";
+"cleanup.keep" = "Saklanması önerilen";
+"cleanup.state.checked" = "İşaretli, Return ile kaldır";
+"cleanup.state.unchecked" = "İşaretsiz, Return ile işaretle";
+"cleanup.trashed" = "%d fotoğraf Çöp Sepeti’ne taşındı · ⌘Z geri al";
+"cleanup.restored" = "%d dosya geri yüklendi";
+"cleanup.header.copies" = "%d aynı kopya";
+"cleanup.header.betterInBurst" = "Aynı seride daha iyi bir kare var";
+"cleanup.header.burst" = "%d fotoğraf · %@";
+"cleanup.tip" = "Çok mu fotoğraf var? ⌘⇧K temizlik modunu açar: kopyalar, kapalı gözler, bulanıklık";
+
+/* 滚轮 */
+"menu.wheel" = "Kaydırma tekerleği";
+"wheel.zoom" = "Yakınlaştır";
+"wheel.navigate" = "Önceki / sonraki fotoğraf";
+"wheel.navigate.on" = "Tekerlek: fotoğraf değiştir (⌘+tekerlek yakınlaştırır)";
+"wheel.zoom.on" = "Tekerlek: yakınlaştır (⌘+tekerlek kaydırır)";

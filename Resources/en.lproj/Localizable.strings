@@ -1,0 +1,203 @@
+/* PixDeck — English */
+
+"menu.about" = "About PixDeck";
+"menu.hide" = "Hide PixDeck";
+"menu.hideOthers" = "Hide Others";
+"menu.showAll" = "Show All";
+"menu.quit" = "Quit PixDeck";
+
+"menu.file" = "File";
+"menu.open" = "Open…";
+"menu.reveal" = "Reveal in Finder";
+"menu.rename" = "Rename…";
+"menu.exportAs" = "Export As…";
+"menu.trash" = "Move to Trash";
+"menu.close" = "Close Window";
+
+"menu.view" = "View";
+"menu.zoomIn" = "Zoom In";
+"menu.zoomOut" = "Zoom Out";
+"menu.actualSize" = "Actual Size (100%)";
+"menu.fit" = "Fit to Window";
+"menu.rotateCW" = "Rotate 90° Clockwise";
+"menu.rotateCCW" = "Rotate 90° Counter-clockwise";
+"menu.info" = "Photo Info";
+"menu.filmstrip" = "Thumbnail Strip";
+"menu.slideshow" = "Slideshow";
+"menu.fullscreen" = "Enter Full Screen";
+
+"menu.go" = "Go";
+"menu.prev" = "Previous";
+"menu.next" = "Next";
+"menu.first" = "First";
+"menu.last" = "Last";
+
+"menu.tools" = "Tools";
+"menu.batchConvert" = "Batch Convert Format…";
+"menu.batchRename" = "Batch Rename…";
+"menu.wallpaper" = "Set as Desktop Wallpaper";
+
+"menu.window" = "Window";
+"menu.miniaturize" = "Minimize";
+"menu.windowZoom" = "Zoom";
+"menu.front" = "Bring All to Front";
+
+"menu.help" = "Help";
+"menu.shortcuts" = "Keyboard Shortcuts";
+
+"tip.prev" = "Previous (←)";
+"tip.next" = "Next (→)";
+"tip.zoomIn" = "Zoom In (↑)";
+"tip.zoomOut" = "Zoom Out (↓)";
+"tip.fit" = "Fit to Window (0 / double-click)";
+"tip.actual" = "Actual Size (1)";
+"tip.rotateCCW" = "Rotate 90° CCW (L)";
+"tip.rotateCW" = "Rotate 90° CW (R)";
+"tip.slideshow" = "Slideshow (S)";
+"tip.info" = "Photo Info (I)";
+"tip.strip" = "Toggle Thumbnail Strip (T)";
+"tip.export" = "Quick Export Compressed Copy (⌘S)";
+"tip.rename" = "Rename (Return)";
+"tip.trash" = "Move to Trash (⌘⌫)";
+
+"ui.emptyHint" = "Drop a folder or image into this window, or click Open…";
+"ui.openButton" = "Open…";
+"ui.noImages" = "No recognizable image files here";
+"ui.noMore" = "No more images in this folder";
+"ui.exifTitle" = "Photo Info";
+"ui.noExif" = "No EXIF data for this file";
+
+"msg.exporting" = "Exporting…";
+"msg.exported" = "Exported %1$@: %2$@ → %3$@";
+"msg.exportFailed" = "Export failed: %@";
+"msg.slideshowOn" = "Slideshow playing · 3s per photo · press S or exit full screen to stop";
+"msg.slideshowOff" = "Slideshow stopped";
+"msg.oneImage" = "This folder has only one image";
+"msg.wallpaperSet" = "Wallpaper set: %@";
+"msg.wallpaperFailed" = "Failed to set wallpaper: %@";
+"msg.renamedTo" = "Renamed to %@";
+"msg.renameFailed" = "Rename failed: %@";
+"msg.converting" = "Converting %1$d/%2$d";
+"msg.convertDone" = "Conversion done: %1$d ok, %2$d failed, output in Converted-%3$@/";
+"msg.renamedCount" = "Renamed %d images";
+"msg.prefixEmpty" = "Prefix cannot be empty";
+
+"alert.rename" = "Rename";
+"alert.renameKeepExt" = "Enter a new name (keeps the .%@ extension)";
+"alert.renameNoExt" = "Enter a new name";
+"alert.renameButton" = "Rename";
+"alert.cancel" = "Cancel";
+"bc.title" = "Batch Convert Format";
+"bc.info" = "Convert %d images in this folder into the subfolder Converted-* (same names, new extension).";
+"bc.start" = "Convert";
+"bc.quality" = "Quality %d";
+"br.title" = "Batch Rename";
+"br.info" = "Rename all %d images in this folder as 'prefix-001.ext'.";
+"br.field" = "Prefix";
+"br.button" = "Rename";
+"exp.title" = "Export Compressed Image";
+"exp.message" = "Choose location, file name and format";
+"exp.quality" = "Quality %d";
+
+"exp.format" = "Format";
+"exp.estimate" = "Estimated size: %@";
+"exp.estimating" = "Estimated size: calculating…";
+
+"menu.saveRotation" = "Save Rotation";
+"msg.rotSaved" = "Rotation saved (lossless)";
+"msg.rotSavedReencoded" = "Rotation saved (re-encoded for this format)";
+"msg.rotFailed" = "Failed to save rotation: %@";
+"msg.rotNone" = "No unsaved rotation";
+"msg.rotAnimated" = "Animated images don't support write-back rotation";
+"msg.rotSaving" = "Saving rotation…";
+"msg.rotHint" = "View rotated · press ⌘⌥S to save to file";
+"about.body" = "■ ABOUT
+A native macOS image viewer: instant opening, buttery folder navigation, gesture zoom and EXIF at a glance. Fully on-device — no network requests, no data collection, no accounts.
+
+■ HOW TO USE
+Drop a folder or image into the window to browse; or right-click an image in Finder and open it with PixDeck.
+← → to flip; scroll / pinch / ↑↓ to zoom; drag to pan; double-click toggles fit ⇄ 100%; Esc resets.
+R / L rotate the view; ⌘⌥S writes the rotation back to the file losslessly; Return renames; ⌘⌫ moves to Trash.
+⌘S exports a compressed copy (location / format / quality); the Tools menu adds batch convert and batch rename.
+S starts a slideshow; I shows photo info; T toggles the thumbnail strip; F for full screen. Controls auto-hide after a few idle seconds and reappear on mouse movement.
+The interface and every message follow your system language automatically (14 supported).";
+"about.shortcutsTitle" = "Keyboard Shortcuts";
+"sc.title" = "Keyboard Shortcuts";
+"sc.body" = "← / →  Previous / Next (wraps around)
+↑ / ↓  Zoom in / out (hold to repeat)
+R / L  Rotate 90° CW / CCW
+S  Slideshow (3s per photo, S to stop)
+Space  Preview fitted to the image (press again to exit)
+Double-click  Fit ⇄ 100%
+Esc  Back to fit (exits full screen first)
+1 / 0  Actual size / Fit to window
+Pinch / scroll  Zoom at cursor, drag or ⌘+scroll to pan
+View › Scroll Wheel  switch to paging through photos
+I  Photo info    T  Thumbnail strip    F  Full screen
+⌘⇧C  Batch convert    ⌘⇧B  Batch rename    ⌘⇧D  Set wallpaper
+⌘⇧K  Cleanup Mode Beta: duplicates, closed eyes, blur
+⌘S  Quick export    ⌘⇧E  Export as…
+Return  Rename current image
+⌘⌥S  Save rotation to file
+⌘⌫  Move to trash    ⌘R  Reveal in Finder
+Drop a folder or image to open";
+
+"exif.camera" = "Camera";
+"exif.lens" = "Lens";
+"exif.params" = "Exposure";
+"exif.bias" = "Exposure Bias";
+"exif.date" = "Date Taken";
+"exif.size" = "Dimensions";
+"exif.profile" = "Color Profile";
+"exif.file" = "File";
+
+/* 排序 */
+"menu.sort" = "Sort By";
+"sort.name" = "Name";
+"sort.captureDate" = "Date Taken";
+"sort.modified" = "Date Modified";
+"sort.created" = "Date Created";
+"sort.size" = "File Size";
+"sort.descending" = "Descending";
+
+/* 清理模式 */
+"menu.cleanup" = "Cleanup Mode Beta";
+"cleanup.title" = "Cleanup";
+"cleanup.similar" = "Similar Bursts";
+"cleanup.duplicate" = "Exact Duplicates";
+"cleanup.closedEyes" = "Closed Eyes";
+"cleanup.blurry" = "Blurry / Out of Focus";
+"cleanup.empty.similar" = "No similar bursts found";
+"cleanup.empty.duplicate" = "No identical files";
+"cleanup.empty.closedEyes" = "No closed-eye photos found";
+"cleanup.empty.blurry" = "No blurry photos found";
+"cleanup.selectAll" = "Select All";
+"cleanup.selectNone" = "Select None";
+"cleanup.done" = "Done";
+"cleanup.hint" = "Click to check / uncheck · Space to inspect";
+"cleanup.trash" = "Move to Trash";
+"cleanup.trashN" = "Move to Trash (%d)";
+"cleanup.scanned" = "Checked %d photos in %d s";
+"cleanup.scanning" = "Checking %d / %d";
+"cleanup.waiting" = "Checking…";
+"cleanup.detail.groups" = "%d groups · %d photos";
+"cleanup.detail.copies" = "%d identical sets · %d photos";
+"cleanup.detail.count" = "%d photos";
+"cleanup.noneSelected" = "Nothing selected";
+"cleanup.selected" = "%d selected · %@";
+"cleanup.keep" = "Suggested keep";
+"cleanup.state.checked" = "Checked, Return to uncheck";
+"cleanup.state.unchecked" = "Not checked, Return to check";
+"cleanup.trashed" = "Moved %d photos to Trash · ⌘Z to undo";
+"cleanup.restored" = "Restored %d files";
+"cleanup.header.copies" = "%d identical copies";
+"cleanup.header.betterInBurst" = "A better shot exists in the same burst";
+"cleanup.header.burst" = "%d photos · %@";
+"cleanup.tip" = "Lots of photos? Press ⌘⇧K for Cleanup Mode to find duplicates, closed eyes and blur";
+
+/* 滚轮 */
+"menu.wheel" = "Scroll Wheel";
+"wheel.zoom" = "Zoom";
+"wheel.navigate" = "Previous / Next Photo";
+"wheel.navigate.on" = "Scroll wheel: switch photos (⌘+scroll to zoom)";
+"wheel.zoom.on" = "Scroll wheel: zoom (⌘+scroll to pan)";

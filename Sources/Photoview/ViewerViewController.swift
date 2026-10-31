@@ -1,0 +1,2009 @@
+import AppKit
+import ImageIO
+import UniformTypeIdentifiers
+
+final class ViewerViewController: NSViewController {
+
+    private let folder = FolderModel()
+    private let loader = ImageLoader.shared
+
+    private let imageView = ZoomableImageView()
+    private let filmstrip = FilmstripView()
+    private let hudView = NSVisualEffectView()
+    private let hudStack = NSStackView()
+    private let hudNameLabel = NSTextField(labelWithString: "")
+    private let hudDimsLabel = NSTextField(labelWithString: "")
+    private let hudExifLabel1 = NSTextField(labelWithString: "")
+    private let hudExifLabel2 = NSTextField(labelWithString: "")
+    private let exifPanel = NSVisualEffectView()
+    private let exifStack = NSStackView()
+    private let emptyState = NSStackView()
+    private let emptyHint = NSTextField(labelWithString: "")
+    private let toolbarView = NSVisualEffectView()
+    private var slideshowButton: NSButton?
+    private var prevArrowContainer: NSView!
+    private var nextArrowContainer: NSView!
+    private var prevArrowButton: ToolbarButton!
+    private var nextArrowButton: ToolbarButton!
+    private var controlsHideTimer: Timer?
+    private var controlsVisible = true
+    private var filmstripHeight: NSLayoutConstraint!
+    private var generation = 0
+    private var slideshowTimer: Timer?
+    private var isProcessing = false
+    private var qualityLabel: NSTextField?
+    private var flashItem: DispatchWorkItem?
+    private var isFlashing = false
+    private var exportEstimateWork: DispatchWorkItem?
+    private var exportEstimateGeneration = 0
+    private var exportEstimateCache: [String: Int64] = [:]
+    private var exportFormatPopup: NSPopUpButton?
+    private var exportQualitySlider: NSSlider?
+    private var exportQualityLabel: NSTextField?
+    private var exportEstimateLabel: NSTextField?
+    private weak var exportSavePanel: NSSavePanel?
+    private var batchQualitySlider: NSSlider?
+    private var aboutWindowController: NSWindowController?
+
+    private static let exportFormats: [(name: String, uti: UTType, ext: String)] = [
+        ("JPEG", .jpeg, "jpg"), ("PNG", .png, "png"), ("HEIC", .heic, "heic"),
+    ]
+    private var currentSummary: ExifSummary?
+    private var currentFileSize: Int64?
+    private var summaryCache: [URL: ExifSummary] = [:]
+    private var warmupGeneration = 0
+    private var prefetchedURLs = Set<URL>()
+    private var lastNavDirection = 1
+    private var fullRequested = false
+    private var folderGeneration = 0
+    /// 打开的是文件夹且用户还没翻页：拍摄时间读完重排后回到新的第一张
+    private var showFirstAfterResort = false
+    /// 按住空格预览：进入前的窗口与界面状态，退出时原样恢复；非 nil 即正在预览
+    private var peekSaved: (frame: NSRect, minSize: NSSize, filmstripHidden: Bool, infoHidden: Bool)?
+    /// 清理模式开着时盖在整个看图界面上
+    private var cleanup: CleanupController?
+
+    /// 当前图解码：最多 2 路并行（新图预览 + 旧图全分辨率不互相堵）；翻页即取消过期任务
+    private let decodeQueue = ViewerViewController.makeQueue("decode", width: 2, qos: .userInitiated)
+    /// 预取串行：后台一次只解一张，不与前台抢 CPU 和内存带宽
+    private let prefetchQueue = ViewerViewController.makeQueue("prefetch", width: 1, qos: .utility)
+    private let thumbQueue = ViewerViewController.makeQueue("thumb", width: 2, qos: .utility)
+
+    private static func makeQueue(_ name: String, width: Int, qos: QualityOfService) -> OperationQueue {
+        let q = OperationQueue()
+        q.name = "pixdeck.\(name)"
+        q.maxConcurrentOperationCount = width
+        q.qualityOfService = qos
+        return q
+    }
+
+    /// 缓存策略：缩略图预热限 100 张；预览窗口随浏览方向滑动；窗口外显式淘汰。
+    /// 全分辨率图只在放大到预览不够清晰时才解码（ImageLoader 里只留 2 张）
+    private enum CachePolicy {
+        static let warmupLimit = 100
+        static let previewAhead = 5      // 浏览方向前方多备几张
+        static let previewBehind = 2     // 后方留少量，往回翻也快
+        static let evictPreviewOutside = 8
+    }
+
+    private static let filmstripID = NSUserInterfaceItemIdentifier("thumb")
+
+    // MARK: - 布局
+
+    override func loadView() {
+        let dropView = DropView(frame: NSRect(x: 0, y: 0, width: 1280, height: 860))
+        dropView.wantsLayer = true
+        dropView.layer?.backgroundColor = NSColor(calibratedWhite: 0.055, alpha: 1).cgColor
+        dropView.onDrop = { [weak self] urls in
+            guard let url = urls.first else { return }
+            self?.open(url: url)
+        }
+        dropView.onMouseMoved = { [weak self] in self?.pokeControls() }
+        dropView.onMouseExited = { [weak self] in self?.scheduleControlsHide() }
+        view = dropView
+
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.onZoomChange = { [weak self] _ in self?.updateHUD() }
+        imageView.onNeedsDetail = { [weak self] in self?.loadFullResolution() }
+        imageView.onNavigate = { [weak self] delta in self?.navigate(delta) }
+        imageView.onFirst = { [weak self] in self?.goTo(0) }
+        imageView.onLast = { [weak self] in self?.goTo(max(self?.folder.count ?? 1, 1) - 1) }
+        imageView.onToggleInfo = { [weak self] in self?.toggleInfoPanel(nil) }
+        imageView.onToggleFilmstrip = { [weak self] in self?.toggleFilmstrip(nil) }
+        imageView.onToggleFullscreen = { [weak self] in
+            guard let window = self?.view.window else { return }
+            self?.imageView.endPeek()
+            window.toggleFullScreen(window)
+        }
+        imageView.onTrash = { [weak self] in self?.trashCurrent(nil) }
+        imageView.onSlideshow = { [weak self] in self?.toggleSlideshow(nil) }
+        imageView.onRename = { [weak self] in self?.renameCurrent(nil) }
+        imageView.onFirstFrame = { [weak self] size in
+            self?.folder.setCurrentPixelSize(size)
+            self?.updateHUD()
+        }
+        imageView.onActivity = { [weak self] in self?.pokeControls() }
+        imageView.onPeekBegin = { [weak self] in self?.beginPeek() ?? false }
+        imageView.onPeekEnd = { [weak self] in self?.endPeek() }
+        imageView.onEscape = { [weak self] in
+            guard let self, let window = self.view.window else { return }
+            if self.imageView.isPeeking {
+                self.imageView.endPeek()
+            } else if window.styleMask.contains(.fullScreen) {
+                window.toggleFullScreen(window)
+            } else {
+                self.imageView.fit(animate: true)
+            }
+        }
+        view.addSubview(imageView)
+
+        NotificationCenter.default.addObserver(self, selector: #selector(windowDidExitFullScreen(_:)),
+                                               name: NSWindow.didExitFullScreenNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(windowWillClose(_:)),
+                                               name: NSWindow.willCloseNotification, object: nil)
+
+        filmstrip.translatesAutoresizingMaskIntoConstraints = false
+        filmstrip.collectionView.dataSource = self
+        filmstrip.collectionView.delegate = self
+        filmstrip.collectionView.register(FilmstripItem.self, forItemWithIdentifier: Self.filmstripID)
+        view.addSubview(filmstrip)
+
+        buildHUD()
+        buildExifPanel()
+        buildEmptyState()
+        buildToolbar()
+        buildArrows()
+
+        filmstripHeight = filmstrip.heightAnchor.constraint(equalToConstant: 76)
+
+        NSLayoutConstraint.activate([
+            filmstrip.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            filmstrip.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            filmstrip.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            filmstripHeight,
+
+            imageView.topAnchor.constraint(equalTo: view.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            imageView.bottomAnchor.constraint(equalTo: filmstrip.topAnchor),
+
+            hudView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            hudView.topAnchor.constraint(equalTo: view.topAnchor, constant: 44),
+
+            exifPanel.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
+            exifPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            exifPanel.widthAnchor.constraint(equalToConstant: 300),
+
+            toolbarView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toolbarView.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: -8),
+
+            prevArrowContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            prevArrowContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            nextArrowContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            nextArrowContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+
+            emptyState.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            emptyState.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -30),
+        ])
+    }
+
+    // 左右两侧的翻页大箭头
+    private func buildArrows() {
+        let defs: [(symbol: String, tip: String, action: Selector)] = [
+            ("chevron.left", L10n.t("tip.prev", "上一张（←）"), #selector(navigateBackward(_:))),
+            ("chevron.right", L10n.t("tip.next", "下一张（→）"), #selector(navigateForward(_:))),
+        ]
+        for (i, d) in defs.enumerated() {
+            let (container, button) = iconButton(symbol: d.symbol, tip: d.tip, action: d.action,
+                                                 size: NSSize(width: 44, height: 56), cornerRadius: 11,
+                                                 symbolSize: 20, symbolWeight: .semibold)
+            if i == 0 {
+                prevArrowContainer = container
+                prevArrowButton = button
+            } else {
+                nextArrowContainer = container
+                nextArrowButton = button
+            }
+            view.addSubview(container)
+        }
+    }
+
+    // MARK: - 控件自动隐藏
+
+    private func pokeControls() {
+        guard peekSaved == nil else { return }
+        setControlsVisible(true)
+        controlsHideTimer?.invalidate()
+        let timer = Timer(timeInterval: 3.0, repeats: false) { [weak self] _ in
+            self?.setControlsVisible(false)
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        controlsHideTimer = timer
+    }
+
+    private func scheduleControlsHide() {
+        controlsHideTimer?.invalidate()
+        let timer = Timer(timeInterval: 1.0, repeats: false) { [weak self] _ in
+            self?.setControlsVisible(false)
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        controlsHideTimer = timer
+    }
+
+    private func setControlsVisible(_ visible: Bool) {
+        guard visible != controlsVisible else { return }
+        controlsVisible = visible
+        let targets = [toolbarView, prevArrowContainer!, nextArrowContainer!]
+        if visible {
+            for t in targets where folder.current != nil { t.isHidden = false }
+        }
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = visible ? 0.15 : 0.4
+            for t in targets {
+                t.animator().alphaValue = visible ? 1 : 0
+            }
+        }, completionHandler: {
+            for t in targets {
+                t.isHidden = t.alphaValue < 0.01
+            }
+        })
+    }
+
+    private func updateControlsPresence() {
+        let present = folder.current != nil
+        for t in [toolbarView, prevArrowContainer!, nextArrowContainer!] { t.isHidden = !present }
+        if present { pokeControls() }
+    }
+
+    // MARK: - 空格预览：窗口贴合图片比例（同访达空格预览）
+
+    /// 返回是否进入了预览：全屏或没有图片时不进入
+    private func beginPeek() -> Bool {
+        guard let window = view.window, peekSaved == nil, folder.current != nil,
+              !window.styleMask.contains(.fullScreen) else { return false }
+        peekSaved = (window.frame, window.minSize, filmstrip.isHidden, exifPanel.isHidden)
+        controlsHideTimer?.invalidate()
+        setControlsVisible(false)
+        hudView.isHidden = true
+        exifPanel.isHidden = true
+        filmstrip.isHidden = true
+        filmstripHeight.constant = 0
+        window.minSize = NSSize(width: 160, height: 120)
+        imageView.fit()
+        wrapWindowToImage()
+        return true
+    }
+
+    private func endPeek() {
+        guard let window = view.window, let saved = peekSaved else { return }
+        peekSaved = nil
+        window.setFrame(saved.frame, display: true, animate: true)
+        window.minSize = saved.minSize
+        filmstrip.isHidden = saved.filmstripHidden
+        filmstripHeight.constant = saved.filmstripHidden ? 0 : 76
+        exifPanel.isHidden = saved.infoHidden
+        if !saved.infoHidden { updateExifPanel() }
+        updateHUD()
+        pokeControls()
+        imageView.fit()
+    }
+
+    /// 窗口按图片比例重新取形：以原图 100% 的点尺寸为上限，超出屏幕可见区 90% 则等比缩小，
+    /// 中心对准进入预览前的窗口中心
+    private func wrapWindowToImage() {
+        guard let window = view.window, let saved = peekSaved,
+              let screen = window.screen ?? NSScreen.main else { return }
+        let px = imageView.pixelSize
+        guard px.width > 0, px.height > 0 else { return }
+        let visible = screen.visibleFrame
+        var w = px.width / window.backingScaleFactor
+        var h = px.height / window.backingScaleFactor
+        let k = min(1, visible.width * 0.9 / w, visible.height * 0.9 / h)
+        w *= k; h *= k
+        let minSide: CGFloat = 360
+        if max(w, h) < minSide {
+            let g = minSide / max(w, h)
+            w *= g; h *= g
+        }
+        var frame = window.frameRect(forContentRect: NSRect(x: 0, y: 0, width: w, height: h))
+        frame.origin = CGPoint(x: saved.frame.midX - frame.width / 2, y: saved.frame.midY - frame.height / 2)
+        frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
+        frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
+        window.setFrame(frame, display: true, animate: true)
+    }
+
+    // MARK: - 悬浮工具条
+
+    private func buildToolbar() {
+        toolbarView.material = .hudWindow
+        toolbarView.blendingMode = .withinWindow
+        toolbarView.state = .active
+        toolbarView.wantsLayer = true
+        toolbarView.layer?.cornerRadius = 13
+        toolbarView.layer?.masksToBounds = true
+        toolbarView.translatesAutoresizingMaskIntoConstraints = false
+        toolbarView.isHidden = true
+
+        let stack = NSStackView()
+        stack.orientation = .horizontal
+        stack.spacing = 3
+        stack.edgeInsets = NSEdgeInsets(top: 7, left: 10, bottom: 7, right: 10)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        toolbarView.addSubview(stack)
+
+        // 按功能分组，组间插入分隔线
+        let groups: [[(symbol: String, tip: String, action: Selector)]] = [
+            [("plus.magnifyingglass", L10n.t("tip.zoomIn", "放大（↑）"), #selector(zoomIn(_:))),
+             ("minus.magnifyingglass", L10n.t("tip.zoomOut", "缩小（↓）"), #selector(zoomOut(_:))),
+             ("arrow.down.right.and.arrow.up.left", L10n.t("tip.fit", "适应窗口（0 / 双击）"), #selector(zoomFit(_:))),
+             ("1.magnifyingglass", L10n.t("tip.actual", "实际大小（1）"), #selector(zoomActual(_:)))],
+            [("rotate.left", L10n.t("tip.rotateCCW", "向左旋转 90°（L）"), #selector(rotateCCW(_:))),
+             ("rotate.right", L10n.t("tip.rotateCW", "向右旋转 90°（R）"), #selector(rotateCW(_:)))],
+            [("play.fill", L10n.t("tip.slideshow", "幻灯片放映（S）"), #selector(toggleSlideshow(_:)))],
+            [("info.circle", L10n.t("tip.info", "照片信息（I）"), #selector(toggleInfoPanel(_:))),
+             ("photo.on.rectangle", L10n.t("tip.strip", "底部缩略图栏开关（T）"), #selector(toggleFilmstrip(_:)))],
+            [("square.and.arrow.down", L10n.t("tip.export", "导出压缩副本（⌘S）"), #selector(exportAs(_:))),
+             ("pencil", L10n.t("tip.rename", "重命名（回车）"), #selector(renameCurrent(_:))),
+             ("trash", L10n.t("tip.trash", "移到废纸篓（⌘⌫）"), #selector(trashCurrent(_:)))],
+        ]
+        for (gi, group) in groups.enumerated() {
+            if gi > 0 {
+                let separator = toolbarSeparator()
+                stack.addArrangedSubview(separator)
+                stack.setCustomSpacing(9, after: separator)
+            }
+            for d in group {
+                let (container, button) = iconButton(symbol: d.symbol, tip: d.tip, action: d.action,
+                                                     size: NSSize(width: 36, height: 32), cornerRadius: 7,
+                                                     tint: d.symbol == "trash" ? .systemRed : .labelColor)
+                if d.symbol == "play.fill" { slideshowButton = button }
+                stack.addArrangedSubview(container)
+            }
+        }
+        view.addSubview(toolbarView)
+
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: toolbarView.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: toolbarView.bottomAnchor),
+            stack.leadingAnchor.constraint(equalTo: toolbarView.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: toolbarView.trailingAnchor),
+        ])
+    }
+
+    private func toolbarSeparator() -> NSView {
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 1, height: 22))
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor.separatorColor.withAlphaComponent(0.7).cgColor
+        return view
+    }
+
+    /// 图标按钮包在固定尺寸容器里：按钮用 frame + autoresizing 定位（NSButton 的内部
+    /// 尺寸约束会干扰 Auto Layout），容器负责进入 Auto Layout 体系
+    private func iconButton(symbol: String, tip: String, action: Selector,
+                            size: NSSize, cornerRadius: CGFloat,
+                            symbolSize: CGFloat = 15,
+                            symbolWeight: NSFont.Weight = .medium,
+                            tint: NSColor = .labelColor) -> (container: NSView, button: ToolbarButton) {
+        let container = NSView(frame: NSRect(origin: .zero, size: size))
+        container.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            container.widthAnchor.constraint(equalToConstant: size.width),
+            container.heightAnchor.constraint(equalToConstant: size.height),
+        ])
+
+        let button = ToolbarButton(frame: container.bounds)
+        button.target = self
+        button.action = action
+        if var image = NSImage(systemSymbolName: symbol, accessibilityDescription: tip) {
+            image = image.withSymbolConfiguration(.init(pointSize: symbolSize, weight: symbolWeight)) ?? image
+            button.image = image
+        } else {
+            button.title = tip
+        }
+        button.isBordered = false
+        button.imagePosition = .imageOnly
+        button.contentTintColor = tint
+        button.toolTip = tip
+        button.wantsLayer = true
+        button.layer?.cornerRadius = cornerRadius
+        button.autoresizingMask = [.width, .height]
+        container.addSubview(button)
+        return (container, button)
+    }
+
+    private func updateSlideshowButton() {
+        guard let button = slideshowButton else { return }
+        let symbol = slideshowTimer != nil ? "stop.fill" : "play.fill"
+        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 13, weight: .medium))
+    }
+
+    private func buildHUD() {
+        hudView.material = .hudWindow
+        hudView.blendingMode = .withinWindow
+        hudView.state = .active
+        hudView.wantsLayer = true
+        hudView.layer?.cornerRadius = 12
+        hudView.layer?.masksToBounds = true
+        hudView.translatesAutoresizingMaskIntoConstraints = false
+        hudView.isHidden = true
+
+        hudStack.orientation = .vertical
+        hudStack.alignment = .leading
+        hudStack.spacing = 5
+        hudStack.edgeInsets = NSEdgeInsets(top: 9, left: 13, bottom: 9, right: 13)
+        hudStack.translatesAutoresizingMaskIntoConstraints = false
+        hudView.addSubview(hudStack)
+        view.addSubview(hudView)
+
+        let labels: [(NSTextField, NSFont, NSColor)] = [
+            (hudNameLabel, .systemFont(ofSize: 13, weight: .semibold), .labelColor),
+            (hudDimsLabel, .monospacedDigitSystemFont(ofSize: 12, weight: .regular), .labelColor),
+            (hudExifLabel1, .monospacedDigitSystemFont(ofSize: 12, weight: .regular), .secondaryLabelColor),
+            (hudExifLabel2, .monospacedDigitSystemFont(ofSize: 12, weight: .regular), .secondaryLabelColor),
+        ]
+        for (label, f, c) in labels {
+            label.font = f
+            label.textColor = c
+            // 单行 + 中段截断：长文件名显示为「前缀…扩展名」，卡片尺寸恒定不撑开
+            label.lineBreakMode = .byTruncatingMiddle
+            label.maximumNumberOfLines = 1
+            label.cell?.truncatesLastVisibleLine = true
+            label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            label.translatesAutoresizingMaskIntoConstraints = false
+            hudStack.addArrangedSubview(label)
+        }
+
+        NSLayoutConstraint.activate([
+            hudStack.topAnchor.constraint(equalTo: hudView.topAnchor),
+            hudStack.bottomAnchor.constraint(equalTo: hudView.bottomAnchor),
+            hudStack.leadingAnchor.constraint(equalTo: hudView.leadingAnchor),
+            hudStack.trailingAnchor.constraint(equalTo: hudView.trailingAnchor),
+            hudView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+            hudView.topAnchor.constraint(equalTo: view.topAnchor, constant: 44),
+            hudView.widthAnchor.constraint(lessThanOrEqualToConstant: 420),
+        ])
+    }
+
+    private func buildExifPanel() {
+        exifPanel.material = .hudWindow
+        exifPanel.blendingMode = .withinWindow
+        exifPanel.state = .active
+        exifPanel.wantsLayer = true
+        exifPanel.layer?.cornerRadius = 12
+        exifPanel.layer?.masksToBounds = true
+        exifPanel.translatesAutoresizingMaskIntoConstraints = false
+        exifPanel.isHidden = true
+
+        exifStack.orientation = .vertical
+        exifStack.alignment = .leading
+        exifStack.spacing = 6
+        exifStack.edgeInsets = NSEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
+        exifStack.translatesAutoresizingMaskIntoConstraints = false
+        exifPanel.addSubview(exifStack)
+        view.addSubview(exifPanel)
+
+        NSLayoutConstraint.activate([
+            exifStack.topAnchor.constraint(equalTo: exifPanel.topAnchor),
+            exifStack.bottomAnchor.constraint(equalTo: exifPanel.bottomAnchor),
+            exifStack.leadingAnchor.constraint(equalTo: exifPanel.leadingAnchor),
+            exifStack.trailingAnchor.constraint(equalTo: exifPanel.trailingAnchor),
+        ])
+    }
+
+    private func buildEmptyState() {
+        emptyState.orientation = .vertical
+        emptyState.alignment = .centerX
+        emptyState.spacing = 12
+        emptyState.translatesAutoresizingMaskIntoConstraints = false
+
+        let title = NSTextField(labelWithString: "PixDeck")
+        title.font = .systemFont(ofSize: 30, weight: .semibold)
+        title.textColor = .tertiaryLabelColor
+        emptyHint.stringValue = L10n.t("ui.emptyHint", "把文件夹或图片拖进这个窗口，或点击「打开…」")
+        emptyHint.font = .systemFont(ofSize: 13)
+        emptyHint.textColor = .secondaryLabelColor
+        let button = NSButton(title: L10n.t("ui.openButton", "打开…"), target: self, action: #selector(openFolderPanel(_:)))
+        button.bezelStyle = .rounded
+        button.controlSize = .large
+
+        emptyState.addArrangedSubview(title)
+        emptyState.addArrangedSubview(emptyHint)
+        emptyState.addArrangedSubview(button)
+        view.addSubview(emptyState)
+    }
+
+    // MARK: - 打开与加载
+
+    func open(url: URL) {
+        summaryCache.removeAll()
+        prefetchedURLs.removeAll()
+        decodeQueue.cancelAllOperations()
+        prefetchQueue.cancelAllOperations()
+        thumbQueue.cancelAllOperations()
+        folderGeneration += 1
+        var isDir: ObjCBool = false
+        FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
+        showFirstAfterResort = isDir.boolValue
+        let ok = folder.open(url: url)
+        emptyState.isHidden = ok
+        updateControlsPresence()
+        if !ok {
+            imageView.set(image: nil, resetToFit: true, isNew: true)
+            emptyHint.stringValue = L10n.t("ui.noImages", "这里没有可识别的图片文件")
+        }
+        filmstrip.collectionView.reloadData()
+        filmstrip.scrollTo(index: folder.index)
+        if ok {
+            view.window?.makeFirstResponder(imageView)
+            showImage(resetToFit: true)
+            startFolderWarmup()
+            loadCaptureDatesIfNeeded()
+            showCleanupHintIfNeeded()
+        } else {
+            updateHUD()
+        }
+    }
+
+    private var previewPixelTarget: CGFloat {
+        let scale = view.window?.backingScaleFactor ?? 2
+        let b = view.bounds
+        return min(max(max(b.width, b.height) * scale, 1024), 8192)
+    }
+
+    /// 加载管线：缓存命中直出 → 降采样预览秒开 → 放大到预览不够清晰时才解全分辨率。
+    /// 主线程只做缓存查询，文件 I/O 与解码全部在限流队列里
+    private func showImage(resetToFit: Bool) {
+        generation += 1
+        let gen = generation
+        fullRequested = false
+        guard let item = folder.current else { return }
+        let url = item.url
+        decodeQueue.cancelAllOperations()
+        refreshInfoCard(for: url, gen: gen)
+        updateSmartCache()
+        updateHUD(); updateExifPanel(); syncFilmstripSelection()
+
+        let fitPx = previewPixelTarget
+        if let info = loader.cachedInfo(for: url),
+           let hit = loader.cachedFull(for: url) ?? loader.cachedPreview(for: url, maxPixel: fitPx) {
+            fullRequested = loader.cachedFull(for: url) != nil
+            adopt(hit, logicalSize: info.pixelSize, resetToFit: resetToFit, isNew: true)
+            if info.isAnimated { imageView.startAnimatedPlayback(url: url) }
+            return
+        }
+
+        let loader = self.loader
+        decodeQueue.addOperation { [weak self] in
+            guard self?.generation == gen, let info = loader.info(for: url) else { return }
+            let pv = loader.preview(for: url, maxPixel: fitPx)
+            DispatchQueue.main.async {
+                guard let self, self.generation == gen, let pv else { return }
+                self.adopt(pv, logicalSize: info.pixelSize, resetToFit: resetToFit, isNew: true)
+                // 动图：ImageIO 在主队列按帧时长驱动播放
+                if info.isAnimated { self.imageView.startAnimatedPlayback(url: url) }
+            }
+        }
+    }
+
+    /// 由视图在放大超过预览分辨率时触发：后台解码全分辨率并原位替换
+    private func loadFullResolution() {
+        guard !fullRequested, let url = folder.current?.url else { return }
+        fullRequested = true
+        let gen = generation
+        let loader = self.loader
+        decodeQueue.addOperation { [weak self] in
+            guard self?.generation == gen, let info = loader.info(for: url) else { return }
+            let full = loader.fullImage(for: url)
+            DispatchQueue.main.async {
+                guard let self, self.generation == gen, let full else { return }
+                self.adopt(full, logicalSize: info.pixelSize, resetToFit: false, isNew: false)
+            }
+        }
+    }
+
+    private func adopt(_ image: CGImage, logicalSize: CGSize, resetToFit: Bool, isNew: Bool) {
+        folder.setCurrentPixelSize(logicalSize)
+        imageView.set(image: image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew)
+        if isNew { BenchProbe.adopted() } else { BenchProbe.fullWidth = image.width }
+        if isNew, peekSaved != nil { wrapWindowToImage() }
+        updateHUD()
+    }
+
+    /// --selftest 自检：验证左右箭头的命中测试与点击动作（仅诊断用）
+    func runSelfTest() {
+        NSLog("SELFTEST locale=%@ menu.open=%@", Bundle.main.preferredLocalizations.first ?? "?",
+              L10n.t("menu.open", "打开…"))
+        let p = CGPoint(x: 34, y: view.bounds.midY)
+        let hit = view.hitTest(p)
+        NSLog("SELFTEST hitTest(\(p.x), \(p.y)) -> \(String(describing: type(of: hit)))")
+        if let hit {
+            NSLog("SELFTEST hit frame=\(hit.frame) hidden=\(hit.isHidden) alpha=\(hit.alphaValue)")
+        }
+        NSLog("SELFTEST prevContainer frame=\(prevArrowContainer.frame) hidden=\(prevArrowContainer.isHidden)")
+        NSLog("SELFTEST prevButton frame=\(prevArrowButton.frame) hidden=\(prevArrowButton.isHidden)")
+        if let button = hit as? NSButton {
+            button.performClick(nil)
+            NSLog("SELFTEST performClick 完成")
+        } else {
+            NSLog("SELFTEST 命中的不是按钮！")
+        }
+        // 导出面板 + 预估大小链路自检
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.exportAs(nil)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+            NSLog("SELFTEST estimate=\(self?.exportEstimateLabel?.stringValue ?? "?")")
+            if let panel = self?.exportSavePanel, let sheetParent = panel.sheetParent {
+                sheetParent.endSheet(panel)
+            }
+        }
+        // 动图播放链路自检
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6.5) { [weak self] in
+            self?.open(url: URL(fileURLWithPath: "/tmp/photoview-anim"))
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+            NSLog("SELFTEST animation animated=\(self?.imageView.isAnimated ?? false) size=\(Int(self?.imageView.pixelSize.width ?? 0))x\(Int(self?.imageView.pixelSize.height ?? 0))")
+        }
+    }
+
+    var debugZoomState: String { imageView.fitDiagnostics }
+
+    private func navigate(_ delta: Int) {
+        if CommandLine.arguments.contains("--selftest") {
+            NSLog("SELFTEST navigate delta=\(delta) index \(folder.index) ->")
+        }
+        lastNavDirection = delta
+        showFirstAfterResort = false
+        folder.go(delta)
+        showImage(resetToFit: false)
+    }
+
+    private func goTo(_ index: Int) {
+        lastNavDirection = index >= folder.index ? 1 : -1
+        showFirstAfterResort = false
+        folder.jump(to: index)
+        showImage(resetToFit: false)
+    }
+
+    // MARK: - 排序
+
+    @objc func setSortKey(_ sender: NSMenuItem) {
+        guard let key = SortKey(rawValue: sender.tag), key != folder.sortKey else { return }
+        folder.sortKey = key
+        applySort()
+        loadCaptureDatesIfNeeded()
+    }
+
+    @objc func setWheelAction(_ sender: NSMenuItem) {
+        ZoomableImageView.wheelNavigates = sender.tag == 1
+        flash(sender.tag == 1 ? L10n.t("wheel.navigate.on", "滚轮：切换图片（⌘+滚轮缩放）")
+                              : L10n.t("wheel.zoom.on", "滚轮：缩放图片（⌘+滚轮平移）"))
+    }
+
+    @objc func toggleSortReversed(_ sender: Any?) {
+        folder.sortReversed.toggle()
+        applySort()
+    }
+
+    /// 重排后当前看的图不变，只更新序号、胶片条与预取窗口
+    private func applySort() {
+        guard folder.count > 0 else { return }
+        if showFirstAfterResort {
+            folder.resort(keeping: nil)
+            filmstrip.collectionView.reloadData()
+            showImage(resetToFit: true)
+        } else {
+            folder.resort(keeping: folder.current?.url)
+            filmstrip.collectionView.reloadData()
+            updateHUD()
+            updateSmartCache()
+            syncFilmstripSelection()
+        }
+        filmstrip.scrollTo(index: folder.index)
+    }
+
+    /// 按拍摄时间排序时在后台并发读 EXIF（只读文件头），读完一次性重排
+    private func loadCaptureDatesIfNeeded() {
+        guard folder.needsCaptureDates else { return }
+        let gen = folderGeneration
+        let fallbacks = Dictionary(folder.items.filter { $0.captureDate == nil }.map { ($0.url, $0.modified) },
+                                   uniquingKeysWith: { a, _ in a })
+        let urls = Array(fallbacks.keys)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var dates = [Date](repeating: .distantPast, count: urls.count)
+            dates.withUnsafeMutableBufferPointer { buf in
+                DispatchQueue.concurrentPerform(iterations: urls.count) { i in
+                    buf[i] = FolderModel.readCaptureDate(url: urls[i], fallback: fallbacks[urls[i]] ?? nil)
+                }
+            }
+            let map = Dictionary(uniqueKeysWithValues: zip(urls, dates))
+            DispatchQueue.main.async {
+                guard let self, self.folderGeneration == gen else { return }
+                self.folder.setCaptureDates(map)
+                if self.folder.sortKey == .captureDate { self.applySort() }
+            }
+        }
+    }
+
+    /// 缓存窗口随浏览方向滑动：顺翻时前方多备、后方留少量；窗口外显式淘汰，内存有界。
+    /// 每次翻页重排预取队列：离当前最近的先解，快速连翻时过期任务直接取消
+    private func updateSmartCache() {
+        let i = folder.index
+        guard folder.items.indices.contains(i) else { return }
+        let loader = self.loader
+        let n = folder.count
+
+        func distance(_ j: Int) -> Int {
+            let d = abs(j - i)
+            return min(d, n - d)   // 翻页是循环的，首尾相邻
+        }
+        var keep = Set<URL>()
+        for j in folder.items.indices where distance(j) <= CachePolicy.evictPreviewOutside {
+            keep.insert(folder.items[j].url)
+        }
+        for stale in prefetchedURLs.subtracting(keep) {
+            loader.evictPreview(url: stale)
+        }
+        prefetchedURLs.formIntersection(keep)
+
+        let ahead = lastNavDirection >= 0 ? CachePolicy.previewAhead : CachePolicy.previewBehind
+        let behind = lastNavDirection >= 0 ? CachePolicy.previewBehind : CachePolicy.previewAhead
+        var order: [URL] = []
+        for step in 1...max(ahead, behind) {
+            if step <= ahead { order.append(folder.items[(i + step) % n].url) }
+            if step <= behind { order.append(folder.items[((i - step) % n + n) % n].url) }
+        }
+        let current = folder.items[i].url
+        let fitPx = previewPixelTarget
+        prefetchQueue.cancelAllOperations()
+        for url in order where url != current {
+            prefetchedURLs.insert(url)
+            if loader.cachedPreview(for: url, maxPixel: fitPx) != nil { continue }
+            prefetchQueue.addOperation {
+                _ = loader.info(for: url)
+                _ = loader.preview(for: url, maxPixel: fitPx)
+            }
+        }
+    }
+
+    /// 后台低速预热当前图前后共 100 张的缩略图（每张 ~50KB），胶片条随时秒开；
+    /// 换文件夹即作废重来，不与前台抢 CPU
+    private func startFolderWarmup() {
+        warmupGeneration += 1
+        let gen = warmupGeneration
+        var urls: [URL] = []
+        var next = 1
+        while urls.count < CachePolicy.warmupLimit {
+            var expanded = false
+            for offset in [next, -next] {
+                let idx = folder.index + offset
+                if urls.count < CachePolicy.warmupLimit, folder.items.indices.contains(idx) {
+                    urls.append(folder.items[idx].url)
+                    expanded = true
+                }
+            }
+            if !expanded { break }
+            next += 1
+        }
+        let loader = self.loader
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            for url in urls {
+                guard let self, self.warmupGeneration == gen else { return }
+                _ = loader.thumb(for: url)
+                Thread.sleep(forTimeInterval: 0.03)
+            }
+        }
+    }
+
+    // MARK: - HUD / EXIF / 胶片条
+
+    private func updateHUD() {
+        guard !isFlashing else { return }
+        guard peekSaved == nil else {
+            hudView.isHidden = true
+            return
+        }
+        guard let item = folder.current else {
+            hudView.isHidden = true
+            hudNameLabel.stringValue = ""
+            return
+        }
+        hudNameLabel.stringValue = "\(folder.index + 1) / \(folder.count) · \(item.url.lastPathComponent)"
+
+        var parts: [String] = []
+        let zoom = "\(Int((imageView.displayedScale * 100).rounded()))%"
+        if let s = item.pixelSize, s.width > 0 {
+            parts.append("\(Int(s.width)) × \(Int(s.height))")
+            if let size = currentFileSize {
+                parts.append(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
+            }
+            parts.append(item.url.pathExtension.uppercased())
+        }
+        parts.append(zoom)
+        hudDimsLabel.stringValue = parts.joined(separator: " · ")
+
+        if let s = currentSummary {
+            var l1 = [String]()
+            if let c = s.camera { l1.append(c) }
+            if let l = s.lens { l1.append(l) }
+            hudExifLabel1.stringValue = l1.joined(separator: " · ")
+            hudExifLabel1.isHidden = l1.isEmpty
+            var l2 = [String]()
+            if let p = s.params { l2.append(p) }
+            if let d = s.date { l2.append(d) }
+            hudExifLabel2.stringValue = l2.joined(separator: " · ")
+            hudExifLabel2.isHidden = l2.isEmpty
+        } else {
+            hudExifLabel1.isHidden = true
+            hudExifLabel2.isHidden = true
+        }
+        hudView.isHidden = false
+    }
+
+    /// 异步读取当前图的 EXIF 摘要与文件大小，读完后刷新信息条
+    private func refreshInfoCard(for url: URL, gen: Int) {
+        currentSummary = nil
+        currentFileSize = nil
+        if let cached = summaryCache[url] {
+            currentSummary = cached
+            updateHUD()
+            return
+        }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let summary = ExifReader.summary(url: url)
+            let size = ((try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int64) ?? 0
+            DispatchQueue.main.async {
+                guard let self, self.generation == gen else { return }
+                self.summaryCache[url] = summary
+                self.currentSummary = summary
+                self.currentFileSize = size
+                self.updateHUD()
+            }
+        }
+    }
+
+    /// 面板打开时才读完整 EXIF，在后台读完再回主线程排版
+    private func updateExifPanel() {
+        guard !exifPanel.isHidden, let item = folder.current else { return }
+        let gen = generation
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let entries = ExifReader.read(url: item.url)
+            DispatchQueue.main.async {
+                guard let self, self.generation == gen, !self.exifPanel.isHidden else { return }
+                self.renderExifPanel(entries)
+            }
+        }
+    }
+
+    private func renderExifPanel(_ entries: [ExifEntry]) {
+        for v in exifStack.arrangedSubviews { v.removeFromSuperview() }
+
+        let title = NSTextField(labelWithString: L10n.t("ui.exifTitle", "照片信息"))
+        title.font = .boldSystemFont(ofSize: 13)
+        title.textColor = .secondaryLabelColor
+        exifStack.addArrangedSubview(title)
+
+        if entries.isEmpty {
+            let none = NSTextField(labelWithString: L10n.t("ui.noExif", "此文件没有 EXIF 信息"))
+            none.font = .systemFont(ofSize: 12)
+            none.textColor = .secondaryLabelColor
+            exifStack.addArrangedSubview(none)
+        }
+        for e in entries {
+            let l = NSTextField(labelWithString: e.label)
+            l.font = .systemFont(ofSize: 11)
+            l.textColor = .secondaryLabelColor
+            let v = NSTextField(labelWithString: e.value)
+            v.font = .systemFont(ofSize: 12)
+            v.textColor = .labelColor
+            v.maximumNumberOfLines = 2
+            v.lineBreakMode = .byWordWrapping
+            v.setAccessibilityLabel(e.label)
+            v.preferredMaxLayoutWidth = 260
+            exifStack.addArrangedSubview(l)
+            exifStack.addArrangedSubview(v)
+        }
+    }
+
+    /// 只改选中态，不 reloadData（整条重建会让所有可见格子重新取缩略图）
+    private func syncFilmstripSelection() {
+        let cv = filmstrip.collectionView
+        guard !folder.items.isEmpty else { return }
+        let target = IndexPath(item: folder.index, section: 0)
+        if cv.selectionIndexPaths == [target] { return }
+        cv.deselectAll(nil)
+        cv.selectItems(at: Set([IndexPath(item: folder.index, section: 0)]),
+                       scrollPosition: [.centeredHorizontally])
+    }
+
+    // MARK: - 菜单动作
+
+    @objc func openFolderPanel(_ sender: Any?) {
+        guard let window = view.window else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = folder.current?.url.deletingLastPathComponent()
+        panel.message = "选择一个图片文件夹，或其中任意一张图片"
+        panel.beginSheetModal(for: window) { [weak self] resp in
+            guard let self else { return }
+            if resp == .OK, let url = panel.url {
+                self.open(url: url)
+            } else {
+                window.makeFirstResponder(self.imageView)
+            }
+        }
+    }
+
+    @objc func revealInFinder(_ sender: Any?) {
+        guard let item = folder.current else { return }
+        NSWorkspace.shared.activateFileViewerSelecting([item.url])
+    }
+
+    @objc func trashCurrent(_ sender: Any?) {
+        guard let item = folder.current else { return }
+        let gen = generation
+        NSWorkspace.shared.recycle([item.url]) { [weak self] _, _ in
+            DispatchQueue.main.async {
+                guard let self, self.generation == gen else { return }
+                self.loader.evict(url: item.url)
+                if self.folder.removeCurrent() {
+                    self.filmstrip.collectionView.reloadData()
+                    self.showImage(resetToFit: false)
+                } else {
+                    self.imageView.set(image: nil, resetToFit: true, isNew: true)
+                    self.emptyState.isHidden = false
+                    self.updateControlsPresence()
+                    self.emptyHint.stringValue = L10n.t("ui.noMore", "文件夹里没有更多图片了")
+                    self.filmstrip.collectionView.reloadData()
+                    self.updateHUD()
+                }
+            }
+        }
+    }
+
+    @objc func zoomIn(_ sender: Any?) { imageView.zoomIn() }
+    @objc func zoomOut(_ sender: Any?) { imageView.zoomOut() }
+    @objc func zoomFit(_ sender: Any?) { imageView.fit(animate: true) }
+    @objc func zoomActual(_ sender: Any?) { imageView.actualSize() }
+
+    @objc func toggleInfoPanel(_ sender: Any?) {
+        exifPanel.isHidden.toggle()
+        if !exifPanel.isHidden { updateExifPanel() }
+    }
+
+    @objc func toggleFilmstrip(_ sender: Any?) {
+        let show = filmstrip.isHidden
+        filmstrip.isHidden = !show
+        filmstripHeight.constant = show ? 76 : 0
+    }
+
+    @objc func navigateForward(_ sender: Any?) { navigate(1) }
+    @objc func navigateBackward(_ sender: Any?) { navigate(-1) }
+    @objc func goFirst(_ sender: Any?) { goTo(0) }
+    @objc func goLast(_ sender: Any?) { goTo(max(folder.count - 1, 0)) }
+
+    @objc func showShortcuts(_ sender: Any?) {
+        let alert = NSAlert()
+        alert.messageText = L10n.t("sc.title", "快捷键")
+        alert.informativeText = L10n.t("sc.body", "← / →  上一张 / 下一张（循环）")
+        alert.alertStyle = .informational
+        alert.runModal()
+    }
+
+    // MARK: - 清理模式
+
+    @objc func toggleCleanup(_ sender: Any?) {
+        if let cleanup {
+            cleanup.finish(nil)
+            return
+        }
+        guard let current = folder.current else { return }
+        stopSlideshow()
+        imageView.endPeek()
+        let folderURL = current.url.deletingLastPathComponent()
+        let c = CleanupController(folderURL: folderURL, items: folder.items) { [weak self] changed in
+            self?.exitCleanup(changed: changed, folderURL: folderURL)
+        }
+        addChild(c)
+        c.view.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(c.view)
+        NSLayoutConstraint.activate([
+            c.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            c.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            c.view.topAnchor.constraint(equalTo: view.topAnchor),
+            c.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        ])
+        cleanup = c
+        view.window?.makeFirstResponder(c.grid)
+    }
+
+    private func exitCleanup(changed: Bool, folderURL: URL) {
+        guard let c = cleanup else { return }
+        c.view.removeFromSuperview()
+        c.removeFromParent()
+        cleanup = nil
+        if changed {
+            // 删过照片：重新列目录，尽量停在原来那张
+            let cur = folder.current?.url
+            let keep = cur.flatMap { FileManager.default.fileExists(atPath: $0.path) ? $0 : nil }
+            open(url: keep ?? folderURL)
+        }
+        view.window?.makeFirstResponder(imageView)
+    }
+
+    /// 第一次打开 50 张以上的文件夹时提示一次清理模式
+    private func showCleanupHintIfNeeded() {
+        let key = "cleanupHintShown"
+        guard folder.count >= 50, !UserDefaults.standard.bool(forKey: key),
+              !CommandLine.arguments.contains(where: { $0.hasPrefix("--") }) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            self?.flash(L10n.t("cleanup.tip", "照片很多？⌘⇧K 进入清理模式，找出重复、闭眼和模糊的照片"), seconds: 6)
+        }
+    }
+
+    // MARK: - HUD 临时提示
+
+    private func flash(_ msg: String, seconds: Double = 2) {
+        isFlashing = true
+        hudNameLabel.stringValue = msg
+        hudDimsLabel.isHidden = true
+        hudExifLabel1.isHidden = true
+        hudExifLabel2.isHidden = true
+        hudView.isHidden = false
+        flashItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            self?.isFlashing = false
+            self?.updateHUD()
+        }
+        flashItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: item)
+    }
+
+    // MARK: - 旋转
+
+    @objc func rotateCW(_ sender: Any?) {
+        imageView.rotate(clockwise: 1)
+        flash(L10n.t("msg.rotHint", "已旋转视图 · ⌘⌥S 可保存到文件"))
+    }
+
+    @objc func rotateCCW(_ sender: Any?) {
+        imageView.rotate(clockwise: -1)
+        flash(L10n.t("msg.rotHint", "已旋转视图 · ⌘⌥S 可保存到文件"))
+    }
+
+    // MARK: - 幻灯片放映
+
+    @objc func toggleSlideshow(_ sender: Any?) {
+        if slideshowTimer != nil {
+            stopSlideshow()
+        } else {
+            startSlideshow()
+        }
+    }
+
+    private func startSlideshow() {
+        guard folder.count > 1 else {
+            flash(L10n.t("msg.oneImage", "文件夹里只有一张图片"))
+            return
+        }
+        if let window = view.window, !window.styleMask.contains(.fullScreen) {
+            window.toggleFullScreen(window)
+        }
+        let timer = Timer(timeInterval: 3.0, repeats: true) { [weak self] _ in
+            self?.navigate(1)
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        slideshowTimer = timer
+        updateSlideshowButton()
+        flash(L10n.t("msg.slideshowOn", "幻灯片放映中 · 3 秒/张 · S 或退出全屏停止"), seconds: 3)
+    }
+
+    private func stopSlideshow() {
+        guard slideshowTimer != nil else { return }
+        slideshowTimer?.invalidate()
+        slideshowTimer = nil
+        updateSlideshowButton()
+        flash(L10n.t("msg.slideshowOff", "已停止幻灯片放映"))
+    }
+
+    @objc private func windowDidExitFullScreen(_ note: Notification) {
+        guard (note.object as? NSWindow) === view.window else { return }
+        stopSlideshow()
+    }
+
+    @objc private func windowWillClose(_ note: Notification) {
+        guard (note.object as? NSWindow) === view.window else { return }
+        stopSlideshow()
+    }
+
+    // MARK: - 设为桌面壁纸
+
+    @objc func setWallpaper(_ sender: Any?) {
+        guard let item = folder.current, let screen = NSScreen.main else { return }
+        do {
+            try NSWorkspace.shared.setDesktopImageURL(item.url, for: screen, options: [:])
+            flash(L10n.f("msg.wallpaperSet", "已设为桌面壁纸： %@", item.url.lastPathComponent))
+        } catch {
+            flash(L10n.f("msg.wallpaperFailed", "设置壁纸失败： %@", error.localizedDescription))
+        }
+    }
+
+    // MARK: - 批量转换格式
+
+    @objc private func qualityChanged(_ sender: NSSlider) {
+        qualityLabel?.stringValue = L10n.f("bc.quality", "质量 %d", Int(sender.doubleValue))
+    }
+
+    @objc private func batchFormatChanged(_ sender: NSPopUpButton) {
+        batchQualitySlider?.isEnabled = sender.indexOfSelectedItem != 1   // PNG 无损，质量滑杆禁用
+    }
+
+    private func buildBatchAlert() -> (NSAlert, NSPopUpButton, NSSlider) {
+        let alert = NSAlert()
+        alert.messageText = L10n.t("bc.title", "批量转换格式")
+        alert.informativeText = L10n.f("bc.info", "将当前文件夹 %d 张图片转换后存入子文件夹 Converted-*（同名不同扩展名）。", folder.count)
+        let popup = NSPopUpButton(frame: NSRect(x: 0, y: 54, width: 240, height: 26))
+        popup.addItems(withTitles: ["JPEG", "PNG", "HEIC"])
+        popup.target = self
+        popup.action = #selector(batchFormatChanged(_:))
+        let slider = NSSlider(value: 85, minValue: 40, maxValue: 100, target: self,
+                              action: #selector(qualityChanged(_:)))
+        batchQualitySlider = slider
+        slider.frame = NSRect(x: 0, y: 26, width: 240, height: 24)
+        let label = NSTextField(labelWithString: L10n.f("bc.quality", "质量 %d", 85))
+        label.font = .systemFont(ofSize: 11)
+        label.frame = NSRect(x: 0, y: 4, width: 240, height: 18)
+        qualityLabel = label
+        let box = NSView(frame: NSRect(x: 0, y: 0, width: 240, height: 84))
+        box.addSubview(popup)
+        box.addSubview(slider)
+        box.addSubview(label)
+        alert.accessoryView = box
+        alert.addButton(withTitle: L10n.t("bc.start", "开始转换"))
+        alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
+        return (alert, popup, slider)
+    }
+
+    @objc func batchConvert(_ sender: Any?) {
+        guard !folder.items.isEmpty, !isProcessing else { return }
+        let (alert, popup, slider) = buildBatchAlert()
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        convertAll(popup.indexOfSelectedItem, quality: slider.doubleValue)
+    }
+
+    /// --shot 模式专用：以 sheet 弹出批量转换对话框（本进程渲染，可真实截取）
+    private var shotBatchAlert: NSAlert?
+    func presentBatchSheetForShot() {
+        guard let window = view.window else { return }
+        let (alert, _, _) = buildBatchAlert()
+        shotBatchAlert = alert
+        alert.beginSheetModal(for: window) { _ in }
+    }
+
+    private func convertAll(_ index: Int, quality: Double) {
+        guard let current = folder.current else { return }
+        let table = [("public.jpeg", "jpg"), ("public.png", "png"), ("public.heic", "heic")]
+        let (uti, ext) = table[index]
+        let srcItems = folder.items
+        let outDir = current.url.deletingLastPathComponent().appendingPathComponent("Converted-\(ext)")
+        try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+        isProcessing = true
+        flash("转换中 0/\(srcItems.count)", seconds: 3600)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var ok = 0, fail = 0
+            for (i, item) in srcItems.enumerated() {
+                autoreleasepool {
+                    guard item.url.pathExtension.lowercased() != ext,
+                          let img = ImageLoader.decodedFull(url: item.url) else {
+                        fail += 1
+                        return
+                    }
+                    let outURL = outDir.appendingPathComponent(
+                        item.url.deletingPathExtension().lastPathComponent + "." + ext)
+                    guard let dest = CGImageDestinationCreateWithURL(outURL as CFURL, uti as CFString, 1, nil) else {
+                        fail += 1
+                        return
+                    }
+                    CGImageDestinationAddImage(dest, img,
+                                               [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
+                    if CGImageDestinationFinalize(dest) { ok += 1 } else { fail += 1 }
+                }
+                DispatchQueue.main.async { [weak self] in
+                    self?.flash(L10n.f("msg.converting", "转换中 %1$d/%2$d", i + 1, srcItems.count), seconds: 3600)
+                }
+            }
+            DispatchQueue.main.async { [weak self] in
+                self?.isProcessing = false
+                self?.flash(L10n.f("msg.convertDone", "转换完成：成功 %1$d，失败 %2$d，输出在 Converted-%3$@/", ok, fail, ext), seconds: 4)
+            }
+        }
+    }
+
+    // MARK: - 重命名当前图片
+
+    @objc func renameCurrent(_ sender: Any?) {
+        guard let item = folder.current, !isProcessing else { return }
+        let ext = item.url.pathExtension
+        let base = item.url.deletingPathExtension().lastPathComponent
+        let alert = NSAlert()
+        alert.messageText = L10n.t("alert.rename", "重命名")
+        alert.informativeText = ext.isEmpty
+            ? L10n.t("alert.renameNoExt", "输入新的名称")
+            : L10n.f("alert.renameKeepExt", "输入新的名称（保留 .%@ 扩展名）", ext)
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.stringValue = base
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        alert.addButton(withTitle: L10n.t("alert.renameButton", "重命名"))
+        alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let newName = field.stringValue.trimmingCharacters(in: .whitespaces)
+        guard !newName.isEmpty else {
+            flash(L10n.t("msg.prefixEmpty", "前缀不能为空"))
+            return
+        }
+        if newName == base {
+            view.window?.makeFirstResponder(imageView)
+            return
+        }
+        let sanitized = newName.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
+        let folderURL = item.url.deletingLastPathComponent()
+        let fm = FileManager.default
+        var candidate = ext.isEmpty ? sanitized : "\(sanitized).\(ext)"
+        var n = 2
+        while candidate != item.url.lastPathComponent,
+              fm.fileExists(atPath: folderURL.appendingPathComponent(candidate).path) {
+            candidate = ext.isEmpty ? "\(sanitized) \(n)" : "\(sanitized) \(n).\(ext)"
+            n += 1
+        }
+        do {
+            try fm.moveItem(at: item.url, to: folderURL.appendingPathComponent(candidate))
+        } catch {
+            flash(L10n.f("msg.renameFailed", "重命名失败： %@", error.localizedDescription))
+            return
+        }
+        folder.renameCurrent(to: candidate)
+        loader.evict(url: folderURL.appendingPathComponent(candidate))  // 无害；确保旧键不残留
+        updateHUD()
+        view.window?.makeFirstResponder(imageView)
+        flash(L10n.f("msg.renamedTo", "已重命名为 %@", candidate))
+    }
+
+    // MARK: - 导出
+
+    /// 后台把当前图（已含旋转）编码写入目标位置，完成后回主线程提示
+    private func runExport(sourceURL: URL, turns: Int, destURL: URL, uti: String, quality: Double,
+                           currentBytes: Int64, completion: @escaping (String) -> Void) {
+        isProcessing = true
+        flash(L10n.t("msg.exporting", "导出中…"), seconds: 3600)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let image = ImageLoader.decodedFull(url: sourceURL)
+                .flatMap { ImageLoader.rotated($0, quarterTurns: turns) }
+            var result: String
+            if let image, let bytes = ImageExporter.write(image, to: destURL, uti: uti, quality: quality) {
+                let fmt = { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) }
+                result = L10n.f("msg.exported", "已导出 %1$@：%2$@ → %3$@",
+                                destURL.lastPathComponent, fmt(currentBytes), fmt(bytes))
+            } else {
+                result = L10n.f("msg.exportFailed", "导出失败： %@", destURL.lastPathComponent)
+            }
+            DispatchQueue.main.async {
+                self?.isProcessing = false
+                completion(result)
+            }
+        }
+    }
+
+    /// ⌘S：导出压缩副本（保存面板交给用户选择位置、文件名、格式与质量）
+    @objc func exportAs(_ sender: Any?) {
+        guard let item = folder.current, !isProcessing, let window = view.window else { return }
+        let panel = NSSavePanel()
+        panel.title = L10n.t("exp.title", "导出压缩图片")
+        panel.message = L10n.t("exp.message", "选择保存位置、文件名与格式")
+        panel.directoryURL = item.url.deletingLastPathComponent()
+        panel.nameFieldStringValue = item.url.deletingPathExtension().lastPathComponent + "-compressed.jpg"
+
+        let popup = NSPopUpButton(frame: NSRect(x: 0, y: 62, width: 280, height: 26))
+        popup.addItems(withTitles: Self.exportFormats.map { $0.name })
+        popup.target = self
+        popup.action = #selector(exportFormatChanged(_:))
+
+        let qualityLabel = NSTextField(labelWithString: L10n.f("exp.quality", "质量 %d", 85))
+        qualityLabel.font = .systemFont(ofSize: 12)
+        qualityLabel.frame = NSRect(x: 0, y: 38, width: 90, height: 18)
+        let slider = NSSlider(value: 85, minValue: 40, maxValue: 100, target: self, action: #selector(exportQualityChanged(_:)))
+        slider.isContinuous = true
+        slider.frame = NSRect(x: 92, y: 34, width: 188, height: 24)
+
+        let estimateLabel = NSTextField(labelWithString: L10n.f("exp.estimating", "预计大小：计算中…"))
+        estimateLabel.font = .systemFont(ofSize: 12)
+        estimateLabel.textColor = .secondaryLabelColor
+        estimateLabel.frame = NSRect(x: 0, y: 8, width: 280, height: 18)
+
+        let box = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: 92))
+        box.addSubview(popup)
+        box.addSubview(qualityLabel)
+        box.addSubview(slider)
+        box.addSubview(estimateLabel)
+        panel.accessoryView = box
+
+        exportFormatPopup = popup
+        exportQualitySlider = slider
+        exportQualityLabel = qualityLabel
+        exportEstimateLabel = estimateLabel
+        exportSavePanel = panel
+
+        syncExportFormat()
+        scheduleExportEstimate()
+
+        panel.beginSheetModal(for: window) { [weak self] resp in
+            guard let self else { return }
+            defer {
+                self.exportFormatPopup = nil
+                self.exportQualitySlider = nil
+                self.exportQualityLabel = nil
+                self.exportEstimateLabel = nil
+                self.exportSavePanel = nil
+                self.exportEstimateWork?.cancel()
+            }
+            guard resp == .OK, let url = panel.url else { return }
+            let f = Self.exportFormats[self.exportFormatPopup?.indexOfSelectedItem ?? 0]
+            let currentBytes = ((try? FileManager.default.attributesOfItem(atPath: item.url.path))?[.size] as? Int64) ?? 0
+            self.runExport(sourceURL: item.url, turns: self.imageView.rotationTurns, destURL: url,
+                           uti: f.uti.identifier, quality: self.exportQualitySlider?.doubleValue ?? 85,
+                           currentBytes: currentBytes) { msg in
+                self.flash(msg, seconds: 4)
+            }
+        }
+    }
+
+    // MARK: - 导出面板：格式联动 + 大小预估
+
+    private func syncExportFormat() {
+        guard let popup = exportFormatPopup,
+              let panel = exportSavePanel,
+              Self.exportFormats.indices.contains(popup.indexOfSelectedItem) else { return }
+        let f = Self.exportFormats[popup.indexOfSelectedItem]
+        panel.allowedContentTypes = [f.uti]
+        let base = (panel.nameFieldStringValue as NSString).deletingPathExtension
+        panel.nameFieldStringValue = base + "." + f.ext
+        exportQualitySlider?.isEnabled = f.uti != .png
+    }
+
+    @objc private func exportFormatChanged(_ sender: NSPopUpButton) {
+        syncExportFormat()
+        scheduleExportEstimate()
+    }
+
+    @objc private func exportQualityChanged(_ sender: NSSlider) {
+        exportQualityLabel?.stringValue = L10n.f("exp.quality", "质量 %d", Int(sender.doubleValue))
+        scheduleExportEstimate()
+    }
+
+    /// 防抖 0.3s 后在后台真实编码一次，给出预估文件大小（带缓存）
+    private func scheduleExportEstimate() {
+        guard let popup = exportFormatPopup, let slider = exportQualitySlider,
+              let label = exportEstimateLabel, let item = folder.current,
+              Self.exportFormats.indices.contains(popup.indexOfSelectedItem) else { return }
+        let f = Self.exportFormats[popup.indexOfSelectedItem]
+        exportEstimateWork?.cancel()
+        exportEstimateGeneration += 1
+        let gen = exportEstimateGeneration
+        let key = "\(item.url.path)#\(imageView.rotationTurns)#\(f.uti.identifier)#\(Int(slider.doubleValue))"
+        let fmt = { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) }
+        if let cached = exportEstimateCache[key] {
+            label.stringValue = L10n.f("exp.estimate", "预计大小： %@", fmt(cached))
+            return
+        }
+        label.stringValue = L10n.f("exp.estimating", "预计大小：计算中…")
+        let turns = imageView.rotationTurns
+        let loader = self.loader
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("pixdeck-estimate.\(f.ext)")
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.exportEstimateGeneration == gen else { return }
+            let image = loader.fullImage(for: item.url).flatMap { ImageLoader.rotated($0, quarterTurns: turns) }
+            var bytes: Int64?
+            if let image { bytes = ImageExporter.write(image, to: tmp, uti: f.uti.identifier, quality: slider.doubleValue) }
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.exportEstimateGeneration == gen else { return }
+                if let bytes {
+                    self.exportEstimateCache[key] = bytes
+                    self.exportEstimateLabel?.stringValue = L10n.f("exp.estimate", "预计大小： %@", fmt(bytes))
+                } else {
+                    self.exportEstimateLabel?.stringValue = L10n.f("exp.estimate", "预计大小： %@", "--")
+                }
+            }
+        }
+        exportEstimateWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+    }
+
+    /// ⌘⌥S：把视图旋转无损写回文件
+    @objc func saveRotation(_ sender: Any?) {
+        guard let item = folder.current, !isProcessing else { return }
+        guard !imageView.isAnimated else {
+            flash(L10n.t("msg.rotAnimated", "动图不支持写回旋转"))
+            return
+        }
+        let turns = ((imageView.rotationTurns % 4) + 4) % 4
+        guard turns != 0 else {
+            flash(L10n.t("msg.rotNone", "当前没有待保存的旋转"))
+            return
+        }
+        isProcessing = true
+        flash(L10n.t("msg.rotSaving", "保存旋转中…"), seconds: 3600)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result = ImageLoader.writeRotation(url: item.url, clockwiseTurns: turns)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isProcessing = false
+                switch result {
+                case .lossless:
+                    self.flash(L10n.t("msg.rotSaved", "已保存旋转（无损）"), seconds: 3)
+                case .reencoded:
+                    self.flash(L10n.t("msg.rotSavedReencoded", "已保存旋转（该格式重新编码）"), seconds: 3)
+                case .failed:
+                    self.flash(L10n.f("msg.rotFailed", "保存旋转失败： %@", " "), seconds: 3)
+                    return
+                }
+                self.loader.evict(url: item.url)
+                self.showImage(resetToFit: false)
+            }
+        }
+    }
+
+    // MARK: - 关于窗口（简介 / 使用方式 / 快捷键，多语言）
+
+    @objc func showAbout(_ sender: Any?) {
+        if let wc = aboutWindowController {
+            wc.showWindow(nil)
+            wc.window?.makeKeyAndOrderFront(nil)
+            return
+        }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 580, height: 680),
+                              styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        window.title = L10n.t("menu.about", "关于 PixDeck")
+        window.appearance = NSAppearance(named: .darkAqua)
+
+        let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 580, height: 680))
+        scroll.hasVerticalScroller = true
+        scroll.autohidesScrollers = true
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 580, height: 680))
+        textView.isEditable = false
+        textView.drawsBackground = false
+        textView.textContainerInset = NSSize(width: 26, height: 26)
+        textView.autoresizingMask = [.width]
+        textView.textStorage?.setAttributedString(aboutContent())
+        scroll.documentView = textView
+        window.contentView = scroll
+        window.center()
+
+        let wc = NSWindowController(window: window)
+        aboutWindowController = wc
+        wc.showWindow(nil)
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    private func aboutContent() -> NSAttributedString {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        let body = L10n.t("about.body", "")
+        let shortcuts = L10n.t("sc.body", "")
+        let full = body + "\n\n■ " + L10n.t("about.shortcutsTitle", "快捷键") + "\n" + shortcuts
+
+        let para = NSMutableParagraphStyle()
+        para.lineSpacing = 4
+        para.paragraphSpacing = 6
+
+        let out = NSMutableAttributedString()
+        out.append(NSAttributedString(string: "PixDeck \(version)\n\n", attributes: [
+            .font: NSFont.systemFont(ofSize: 22, weight: .bold),
+            .foregroundColor: NSColor.labelColor,
+            .paragraphStyle: para,
+        ]))
+        for line in full.components(separatedBy: "\n") {
+            let isHeading = line.hasPrefix("■")
+            out.append(NSAttributedString(string: line + "\n", attributes: [
+                .font: isHeading ? NSFont.systemFont(ofSize: 14.5, weight: .semibold)
+                                 : NSFont.systemFont(ofSize: 12.5),
+                .foregroundColor: isHeading ? NSColor.labelColor : NSColor.secondaryLabelColor,
+                .paragraphStyle: para,
+            ]))
+        }
+        return out
+    }
+
+    // MARK: - 真实界面截图（--shot 自拍模式，抓取自身窗口，无需屏幕录制权限）
+
+    /// --peektest：用真实的空格按键事件驱动「按住预览」与「点按切换」，记录窗口尺寸并截图（仅诊断用）
+    func runPeekTest(outDir: String) {
+        guard let window = view.window else { return }
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        func key(_ down: Bool, _ chars: String, repeatFlag: Bool = false) {
+            let code: UInt16 = chars == " " ? 49 : 124
+            let e = NSEvent.keyEvent(with: down ? .keyDown : .keyUp, location: .zero, modifierFlags: [],
+                                     timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window.windowNumber,
+                                     context: nil, characters: chars, charactersIgnoringModifiers: chars,
+                                     isARepeat: repeatFlag, keyCode: code)!
+            if down { imageView.keyDown(with: e) } else { imageView.keyUp(with: e) }
+        }
+        func report(_ tag: String) {
+            let f = window.frame, c = window.contentLayoutRect, px = imageView.pixelSize
+            NSLog("PEEK %@ window=%.0fx%.0f windowRatio=%.4f imageRatio=%.4f filmstripHidden=%d hudHidden=%d toolbarHidden=%d %@",
+                  tag, f.width, f.height, f.width / f.height, px.width / max(px.height, 1),
+                  filmstrip.isHidden ? 1 : 0, hudView.isHidden ? 1 : 0, toolbarView.isHidden ? 1 : 0, imageView.fitDiagnostics)
+            _ = c
+            captureWindow(to: URL(fileURLWithPath: outDir).appendingPathComponent("\(tag).png").path, raw: true)
+        }
+        var t = 0.5
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0) { report("0-before") }
+        at(0.5) { key(true, " "); key(false, " ") }             // 点一下空格：进入预览
+        at(0.9) { report("1-peek") }
+        at(0.3) { key(true, "\u{F703}"); key(false, "\u{F703}") }   // 预览中按 →
+        at(1.4) { report("2-peek-next") }
+        at(0.3) { key(true, " ", repeatFlag: true) }            // 系统重复事件不应切换
+        at(0.5) { report("3-repeat-ignored") }
+        at(0.3) { key(true, " "); key(false, " ") }             // 再点一下：退出
+        at(1.0) { report("4-exited") }
+        at(0.3) { key(true, " "); key(false, " ") }             // 再进入
+        at(1.0) { key(true, "\u{1B}"); key(false, "\u{1B}") }       // Esc 退出
+        at(1.0) { report("5-esc-exited") }
+        at(0.5) { NSApp.terminate(nil) }
+    }
+
+    /// --shot-browse：按当前排序依次抓拍文件夹里每一张的浏览视图（官网翻页演示用）
+    /// --cleanup-shot <输出目录> <文件夹>：进入清理模式，等扫描完，逐个分类截图，再试放大检查；
+    /// 文件夹名含 trash-test 时再走一遍移到废纸篓 + 撤销
+    func runCleanupTest(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        let folderURL = folder.current?.url.deletingLastPathComponent()
+        func fileCount() -> Int {
+            guard let folderURL else { return -1 }
+            return ((try? FileManager.default.contentsOfDirectory(atPath: folderURL.path)) ?? [])
+                .filter { ImageLoader.isSupportedExtension($0) }.count
+        }
+        let started = Date()
+        toggleCleanup(nil)
+        func waitScan(_ then: @escaping () -> Void) {
+            if cleanup?.isScanFinished == true { then(); return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { waitScan(then) }
+        }
+        waitScan { [self] in
+            NSLog("CLEANUP scan finished in %.2fs: %@", Date().timeIntervalSince(started), cleanup?.debugSummary ?? "-")
+            var t = 0.6
+            func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+            for c in CleanupCategory.allCases {
+                at(0.1) { self.cleanup?.debugSelect(c) }
+                at(0.9) { self.captureWindow(to: "\(outDir)/cat-\(c).png", raw: true) }
+            }
+            for c in [CleanupCategory.closedEyes, .similar] {
+                at(0.1) { self.cleanup?.debugSelect(c); self.cleanup?.debugFocusFirst(); self.cleanup?.debugTogglePreview() }
+                at(1.2) { self.captureWindow(to: "\(outDir)/preview-\(c).png", raw: true) }
+                at(1.5) { self.captureWindow(to: "\(outDir)/preview2-\(c).png", raw: true); self.cleanup?.debugTogglePreview() }
+            }
+            // 真实按键：→ 移到第二张，回车切换勾选，空格放大，再空格关闭
+            func key(_ code: UInt16, _ chars: String) {
+                guard let w = self.view.window, let grid = self.cleanup?.grid,
+                      let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+                                               windowNumber: w.windowNumber, context: nil, characters: chars,
+                                               charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) else { return }
+                grid.keyDown(with: e)
+            }
+            at(0.2) { self.cleanup?.debugSelect(.similar); self.cleanup?.debugFocusFirst(); NSLog("CLEANUP keys start %@", self.cleanup?.debugSummary ?? "-") }
+            at(0.2) { key(124, String(UnicodeScalar(NSRightArrowFunctionKey)!)) }
+            at(0.2) { key(36, "\r"); NSLog("CLEANUP after return %@", self.cleanup?.debugSummary ?? "-") }
+            at(0.2) { key(49, " ") }
+            at(1.0) { self.captureWindow(to: "\(outDir)/keys-preview.png", raw: true); key(49, " ") }
+            at(0.3) { key(36, "\r"); NSLog("CLEANUP after 2nd return %@", self.cleanup?.debugSummary ?? "-") }
+            if folderURL?.path.contains("trash-test") == true {
+                at(0.3) { NSLog("CLEANUP before trash files=%d %@", fileCount(), self.cleanup?.debugSummary ?? "-"); self.cleanup?.debugTrash() }
+                at(2.0) {
+                    NSLog("CLEANUP after trash files=%d %@", fileCount(), self.cleanup?.debugSummary ?? "-")
+                    self.captureWindow(to: "\(outDir)/after-trash.png", raw: true)
+                    self.cleanup?.debugUndo()
+                }
+                at(1.0) { NSLog("CLEANUP after undo files=%d %@", fileCount(), self.cleanup?.debugSummary ?? "-") }
+            }
+            at(0.3) { self.cleanup?.finish(nil) }
+            at(1.0) {
+                NSLog("CLEANUP viewer after exit count=%d", self.folder.count)
+                self.captureWindow(to: "\(outDir)/viewer-after.png", raw: true)
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    /// --wheeltest <文件夹>：用合成的滚轮 / 触控板事件验证「滚轮缩放 / 滚轮翻页」两种设置
+    func runWheelTest() {
+        let saved = ZoomableImageView.wheelNavigates
+        func wheel(_ dy: Int32, precise: Bool = false, phase: Int64 = 0, momentum: Int64 = 0, cmd: Bool = false) {
+            guard let w = view.window,
+                  let cg = CGEvent(scrollWheelEvent2Source: nil, units: precise ? .pixel : .line,
+                                   wheelCount: 1, wheel1: dy, wheel2: 0, wheel3: 0) else { return }
+            cg.setIntegerValueField(.scrollWheelEventIsContinuous, value: precise ? 1 : 0)
+            cg.setIntegerValueField(.scrollWheelEventScrollPhase, value: phase)
+            cg.setIntegerValueField(.scrollWheelEventMomentumPhase, value: momentum)
+            if cmd { cg.flags = .maskCommand }
+            let p = imageView.convert(NSPoint(x: imageView.bounds.midX, y: imageView.bounds.midY), to: nil)
+            cg.location = CGPoint(x: w.frame.minX + p.x, y: (w.screen?.frame.maxY ?? 0) - (w.frame.minY + p.y))
+            if let e = NSEvent(cgEvent: cg) { imageView.scrollWheel(with: e) }
+        }
+        func state(_ tag: String) {
+            NSLog("WHEEL %@ index=%d %@", tag, folder.index, imageView.fitDiagnostics)
+        }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.5) { ZoomableImageView.wheelNavigates = false; state("0-start zoom-mode") }
+        at(0.3) { wheel(-1); wheel(-1); state("1-zoom-mode wheel down x2 (expect same index, zoomed)") }
+        at(0.3) { self.imageView.fit(); ZoomableImageView.wheelNavigates = true; state("2-nav-mode fitted") }
+        at(0.3) { wheel(-1); state("3-wheel down (expect +1)") }
+        at(0.3) { wheel(-1); wheel(-1); wheel(-1); state("4-three ticks same instant (expect +1 only)") }
+        at(0.3) { wheel(1); state("5-wheel up (expect -1)") }
+        at(0.3) {
+            // 触控板一次滑动：began + 多个 changed，总量远超阈值，只翻一张；随后的惯性不翻
+            wheel(-4, precise: true, phase: 1)
+            for _ in 0..<8 { wheel(-12, precise: true, phase: 2) }
+            wheel(0, precise: true, phase: 4)
+            for _ in 0..<5 { wheel(-20, precise: true, momentum: 2) }
+            state("6-trackpad swipe (expect +1)")
+        }
+        at(0.3) { wheel(-1, cmd: true); wheel(-1, cmd: true); state("7-cmd+wheel (expect zoomed, same index)") }
+        at(0.3) { wheel(-1); state("8-wheel while zoomed (expect pan, same index)") }
+        at(0.3) { self.imageView.fit(); wheel(-1); state("9-fit again, wheel down (expect +1)") }
+        at(0.3) { ZoomableImageView.wheelNavigates = saved; NSApp.terminate(nil) }
+    }
+
+    func runBrowseShots(outDir: String) {
+        guard let window = view.window else { return }
+        window.setFrame(CGRect(x: 0, y: 0, width: 1440, height: 900), display: true)
+        window.center()
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        let total = folder.count
+        for i in 0..<total {
+            let t = 0.4 + Double(i) * 1.6
+            DispatchQueue.main.asyncAfter(deadline: .now() + t) { [weak self] in self?.goTo(i) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + t + 1.0) { [weak self] in self?.pokeControls() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + t + 1.35) { [weak self] in
+                self?.captureWindow(to: URL(fileURLWithPath: outDir)
+                    .appendingPathComponent(String(format: "browse-%02d.png", i + 1)).path)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(total) * 1.6 + 0.5) { NSApp.terminate(nil) }
+    }
+
+    func runShotSequence(outDir: String) {
+        guard let window = view.window else { return }
+        window.setFrame(CGRect(x: 0, y: 0, width: 1440, height: 900), display: true)
+        window.center()
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+
+        func shot(_ name: String, at actionTime: Double, capture captureTime: Double,
+                  showControls: Bool = true, include: (() -> NSWindow?)? = nil,
+                  _ action: @escaping () -> Void = {}) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + actionTime) { [weak self] in
+                guard let self else { return }
+                action()
+            }
+            // 抓拍前唤醒控件（静默 3 秒会触发自动隐藏），留 0.35s 淡入
+            if showControls {
+                DispatchQueue.main.asyncAfter(deadline: .now() + captureTime - 0.35) { [weak self] in
+                    self?.pokeControls()
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + captureTime) { [weak self] in
+                guard let self else { return }
+                self.captureWindow(to: URL(fileURLWithPath: outDir).appendingPathComponent(name).path,
+                                   includePanel: include?())
+            }
+        }
+
+        // 1 浏览主视图（全景 + 信息卡）
+        shot("01-browse.png", at: 0.4, capture: 2.6) { self.goTo(4) }
+        // 2 EXIF 面板（带 EXIF 的 HEIC）
+        shot("02-exif.png", at: 3.2, capture: 6.6) {
+            self.goTo(2)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { self.toggleInfoPanel(nil) }
+        }
+        // 3 100% 细节
+        shot("03-zoom.png", at: 7.0, capture: 8.8) {
+            self.toggleInfoPanel(nil)
+            self.imageView.actualSize()
+        }
+        // 4 全屏沉浸（控件自动隐藏）
+        shot("04-slideshow.png", at: 9.2, capture: 13.4, showControls: false) {
+            self.imageView.fit()
+            self.view.window?.toggleFullScreen(nil)
+            self.scheduleControlsHide()
+        }
+        // 5 导出面板（sheet 打开 + 预估大小就绪）
+        shot("05-export.png", at: 13.8, capture: 19.6, include: { self.shotBatchAlert?.window }) {
+            if let window = self.view.window, window.styleMask.contains(.fullScreen) {
+                window.toggleFullScreen(nil)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { self.presentBatchSheetForShot() }
+        }
+        // 收尾退出
+        DispatchQueue.main.asyncAfter(deadline: .now() + 22.0) {
+            if let panel = self.exportSavePanel, let parent = panel.sheetParent {
+                parent.endSheet(panel)
+            }
+            exit(0)
+        }
+    }
+
+    /// 抓取自身窗口（.optionIncludingWindow 只渲染窗口自身内容，不受遮挡影响）；
+    /// sheet 弹窗单独抓取后合成到相对位置。系统允许应用抓取自己的窗口，无需 TCC 授权
+    /// raw：按窗口原尺寸保存，不规格化到商店截图尺寸
+    private func captureWindow(to path: String, includePanel: NSWindow? = nil, raw: Bool = false) {
+        guard let window = view.window, let screen = window.screen ?? NSScreen.main else { return }
+        let wid = CGWindowID(window.windowNumber)
+        // AppKit 坐标（左下原点）→ CG 坐标（左上原点），限定只抓窗口矩形
+        let f = window.frame
+        let cgRect = CGRect(x: f.minX, y: screen.frame.maxY - f.maxY, width: f.width, height: f.height)
+        guard let img = CGWindowListCreateImage(cgRect, [.optionIncludingWindow],
+                                                wid, .bestResolution) else {
+            NSLog("SHOT capture failed")
+            return
+        }
+        if raw {
+            if let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: path) as CFURL,
+                                                          "public.png" as CFString, 1, nil) {
+                CGImageDestinationAddImage(dest, img, nil)
+                CGImageDestinationFinalize(dest)
+            }
+            return
+        }
+        var sheetImg: CGImage?
+        var sheetRel = CGPoint.zero   // sheet 左上角相对窗口左上角（点）
+        if let sw = includePanel {
+            let sf = sw.frame
+            let sRect = CGRect(x: sf.minX, y: screen.frame.maxY - sf.maxY, width: sf.width, height: sf.height)
+            sheetImg = CGWindowListCreateImage(sRect, [.optionIncludingWindow],
+                                               CGWindowID(sw.windowNumber), .bestResolution)
+            sheetRel = CGPoint(x: sf.minX - f.minX, y: f.maxY - sf.maxY)
+        }
+        // 统一规格化到 2880×1800（aspect-cover、无 alpha）
+        let tw = 2880, th = 1800
+        let ctx = CGContext(data: nil, width: tw, height: th, bitsPerComponent: 8, bytesPerRow: 0,
+                            space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+        ctx.setFillColor(CGColor(srgbRed: 0.04, green: 0.04, blue: 0.05, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: tw, height: th))
+        let s: CGFloat = max(CGFloat(tw) / CGFloat(img.width), CGFloat(th) / CGFloat(img.height))
+        let w: CGFloat = CGFloat(img.width) * s
+        let h: CGFloat = CGFloat(img.height) * s
+        ctx.interpolationQuality = .high
+        ctx.draw(img, in: CGRect(x: (CGFloat(tw) - w) / 2, y: (CGFloat(th) - h) / 2, width: w, height: h))
+        // 点 → 画布像素换算：img 像素宽 / 窗口点宽 = backingScale，再乘画布缩放 s
+        let backing = f.width > 0 ? CGFloat(img.width) / f.width : 2
+        let k = s * backing
+        if let sheetImg {
+            let sheetW = CGFloat(sheetImg.width) * s
+            let sheetH = CGFloat(sheetImg.height) * s
+            let sheetX = sheetRel.x * k
+            let sheetY = CGFloat(th) - sheetRel.y * k - sheetH
+            ctx.draw(sheetImg, in: CGRect(x: sheetX, y: sheetY, width: sheetW, height: sheetH))
+        }
+        guard let out = ctx.makeImage(),
+              let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: path) as CFURL,
+                                                         "public.png" as CFString, 1, nil) else { return }
+        CGImageDestinationAddImage(dest, out, nil)
+        CGImageDestinationFinalize(dest)
+        NSLog("SHOT saved \(path)")
+    }
+
+    // MARK: - 批量重命名
+
+    @objc func batchRename(_ sender: Any?) {
+        guard !folder.items.isEmpty, !isProcessing, let current = folder.current else { return }
+        let alert = NSAlert()
+        alert.messageText = L10n.t("br.title", "批量重命名")
+        alert.informativeText = L10n.f("br.info", "将当前文件夹 %d 张图片重命名为「前缀-001.扩展名」格式。", folder.count)
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 220, height: 24))
+        field.stringValue = current.url.deletingLastPathComponent().lastPathComponent
+        field.placeholderString = L10n.t("br.field", "前缀")
+        alert.accessoryView = field
+        alert.addButton(withTitle: L10n.t("br.button", "重命名"))
+        alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let prefix = field.stringValue.trimmingCharacters(in: .whitespaces)
+        guard !prefix.isEmpty else {
+            flash(L10n.t("msg.prefixEmpty", "前缀不能为空"))
+            return
+        }
+        let oldCurrentURL = current.url
+        let folderURL = oldCurrentURL.deletingLastPathComponent()
+        let fm = FileManager.default
+        var renamedCount = 0
+        var newNameOfCurrent: String?
+        var seq = 1
+        for item in folder.items {
+            let ext = item.url.pathExtension
+            var candidate = "\(prefix)-\(String(format: "%03d", seq)).\(ext)"
+            while candidate != item.url.lastPathComponent,
+                  fm.fileExists(atPath: folderURL.appendingPathComponent(candidate).path) {
+                seq += 1
+                candidate = "\(prefix)-\(String(format: "%03d", seq)).\(ext)"
+            }
+            if candidate != item.url.lastPathComponent {
+                if (try? fm.moveItem(at: item.url, to: folderURL.appendingPathComponent(candidate))) != nil {
+                    renamedCount += 1
+                    if item.url == oldCurrentURL { newNameOfCurrent = candidate }
+                }
+            }
+            seq += 1
+        }
+        folderGeneration += 1
+        folder.open(url: folderURL)
+        if let newName = newNameOfCurrent {
+            folder.jump(to: folder.items.firstIndex { $0.url.lastPathComponent == newName } ?? 0)
+        }
+        prefetchedURLs.removeAll()
+        filmstrip.collectionView.reloadData()
+        showImage(resetToFit: true)
+        showFirstAfterResort = false
+        loadCaptureDatesIfNeeded()
+        view.window?.makeFirstResponder(imageView)
+        flash(L10n.f("msg.renamedCount", "已重命名 %d 张图片", renamedCount))
+    }
+}
+
+// MARK: - 胶片条数据源
+
+extension ViewerViewController: NSCollectionViewDataSource, NSCollectionViewDelegate {
+    func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
+        folder.count
+    }
+
+    func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath) -> NSCollectionViewItem {
+        let item = collectionView.makeItem(withIdentifier: Self.filmstripID, for: indexPath) as! FilmstripItem
+        let idx = indexPath.item
+        item.itemIndex = idx
+        guard idx < folder.count else { return item }
+        let url = folder.items[idx].url
+        if let cached = loader.cachedThumb(for: url) {
+            item.setThumbnail(cached)
+        } else {
+            item.setThumbnail(nil)
+            thumbQueue.addOperation { [loader] in
+                let t = loader.thumb(for: url)
+                DispatchQueue.main.async {
+                    if item.itemIndex == idx {
+                        item.setThumbnail(t)
+                    }
+                }
+            }
+        }
+        return item
+    }
+
+    func collectionView(_ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>) {
+        guard let ip = indexPaths.first else { return }
+        folder.jump(to: ip.item)
+        showImage(resetToFit: false)
+        view.window?.makeFirstResponder(imageView)
+    }
+}
+
+// MARK: - 工具条按钮（不抢第一响应者；悬停/按压有圆角高亮，仿系统 HUD 控件）
+
+private final class ToolbarButton: NSButton {
+    private static let hoverColor = NSColor.labelColor.withAlphaComponent(0.09).cgColor
+    private static let pressedColor = NSColor.labelColor.withAlphaComponent(0.18).cgColor
+    private var trackingArea: NSTrackingArea?
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        layer?.cornerRadius = 7
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override var acceptsFirstResponder: Bool { false }
+
+    /// NSButton 会为内容生成必需优先级的宽高约束，顶掉外部尺寸约束——设置完图标后调用
+    func stripInternalSizeConstraints() {
+        for c in constraints where c.firstAttribute == .width || c.firstAttribute == .height {
+            c.isActive = false
+        }
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea { removeTrackingArea(trackingArea) }
+        let area = NSTrackingArea(rect: .zero,
+                                  options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                  owner: self)
+        addTrackingArea(area)
+        trackingArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        layer?.backgroundColor = Self.hoverColor
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        layer?.backgroundColor = nil
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        layer?.backgroundColor = Self.pressedColor
+        super.mouseDown(with: event)
+        layer?.backgroundColor = Self.hoverColor
+    }
+}
+
+// MARK: - 拖放
+
+private final class DropView: NSView {
+    var onDrop: ([URL]) -> Void = { _ in }
+    var onMouseMoved: (() -> Void)?
+    var onMouseExited: (() -> Void)?
+    private var tracking: NSTrackingArea?
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        registerForDraggedTypes([.fileURL])
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let tracking { removeTrackingArea(tracking) }
+        let area = NSTrackingArea(rect: .zero,
+                                  options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                  owner: self)
+        addTrackingArea(area)
+        tracking = area
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        onMouseMoved?()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        onMouseExited?()
+    }
+
+    override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation { .copy }
+
+    override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard let urls = sender.draggingPasteboard.readObjects(
+            forClasses: [NSURL.self],
+            options: [.urlReadingFileURLsOnly: true]) as? [URL], !urls.isEmpty else {
+            return false
+        }
+        onDrop(urls)
+        return true
+    }
+}
+
+// MARK: - 菜单勾选状态
+
+extension ViewerViewController: NSMenuItemValidation {
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if cleanup != nil {
+            // 清理模式里只留退出清理和打开别的文件夹，其余看图操作都停用
+            return menuItem.action == #selector(toggleCleanup(_:))
+                || menuItem.action == #selector(showAbout(_:)) || menuItem.action == #selector(showShortcuts(_:))
+        }
+        if menuItem.action == #selector(toggleCleanup(_:)) {
+            menuItem.state = .off
+            return folder.count > 0
+        }
+        if menuItem.action == #selector(setSortKey(_:)) {
+            menuItem.state = menuItem.tag == folder.sortKey.rawValue ? .on : .off
+        } else if menuItem.action == #selector(setWheelAction(_:)) {
+            menuItem.state = (menuItem.tag == 1) == ZoomableImageView.wheelNavigates ? .on : .off
+        } else if menuItem.action == #selector(toggleSortReversed(_:)) {
+            menuItem.state = folder.sortReversed ? .on : .off
+        }
+        return true
+    }
+}

@@ -1,0 +1,203 @@
+/* PixDeck — 简体中文 */
+
+"menu.about" = "关于 PixDeck";
+"menu.hide" = "隐藏 PixDeck";
+"menu.hideOthers" = "隐藏其他";
+"menu.showAll" = "全部显示";
+"menu.quit" = "退出 PixDeck";
+
+"menu.file" = "文件";
+"menu.open" = "打开…";
+"menu.reveal" = "在 Finder 中显示";
+"menu.rename" = "重命名…";
+"menu.exportAs" = "导出为…";
+"menu.trash" = "移到废纸篓";
+"menu.close" = "关闭窗口";
+
+"menu.view" = "显示";
+"menu.zoomIn" = "放大";
+"menu.zoomOut" = "缩小";
+"menu.actualSize" = "实际大小 (100%)";
+"menu.fit" = "适应窗口";
+"menu.rotateCW" = "向右旋转 90°";
+"menu.rotateCCW" = "向左旋转 90°";
+"menu.info" = "照片信息";
+"menu.filmstrip" = "缩略图栏";
+"menu.slideshow" = "幻灯片放映";
+"menu.fullscreen" = "进入全屏";
+
+"menu.go" = "前往";
+"menu.prev" = "上一张";
+"menu.next" = "下一张";
+"menu.first" = "第一张";
+"menu.last" = "最后一张";
+
+"menu.tools" = "工具";
+"menu.batchConvert" = "批量转换格式…";
+"menu.batchRename" = "批量重命名…";
+"menu.wallpaper" = "设为桌面壁纸";
+
+"menu.window" = "窗口";
+"menu.miniaturize" = "最小化";
+"menu.windowZoom" = "缩放";
+"menu.front" = "前置全部窗口";
+
+"menu.help" = "帮助";
+"menu.shortcuts" = "快捷键说明";
+
+"tip.prev" = "上一张（←）";
+"tip.next" = "下一张（→）";
+"tip.zoomIn" = "放大（↑）";
+"tip.zoomOut" = "缩小（↓）";
+"tip.fit" = "适应窗口（0 / 双击）";
+"tip.actual" = "实际大小（1）";
+"tip.rotateCCW" = "向左旋转 90°（L）";
+"tip.rotateCW" = "向右旋转 90°（R）";
+"tip.slideshow" = "幻灯片放映（S）";
+"tip.info" = "照片信息（I）";
+"tip.strip" = "底部缩略图栏开关（T）";
+"tip.export" = "快速导出压缩副本（⌘S）";
+"tip.rename" = "重命名（回车）";
+"tip.trash" = "移到废纸篓（⌘⌫）";
+
+"ui.emptyHint" = "把文件夹或图片拖进这个窗口，或点击「打开…」";
+"ui.openButton" = "打开…";
+"ui.noImages" = "这里没有可识别的图片文件";
+"ui.noMore" = "文件夹里没有更多图片了";
+"ui.exifTitle" = "照片信息";
+"ui.noExif" = "此文件没有 EXIF 信息";
+
+"msg.exporting" = "导出中…";
+"msg.exported" = "已导出 %1$@：%2$@ → %3$@";
+"msg.exportFailed" = "导出失败： %@";
+"msg.slideshowOn" = "幻灯片放映中 · 3 秒/张 · S 或退出全屏停止";
+"msg.slideshowOff" = "已停止幻灯片放映";
+"msg.oneImage" = "文件夹里只有一张图片";
+"msg.wallpaperSet" = "已设为桌面壁纸： %@";
+"msg.wallpaperFailed" = "设置壁纸失败： %@";
+"msg.renamedTo" = "已重命名为 %@";
+"msg.renameFailed" = "重命名失败： %@";
+"msg.converting" = "转换中 %1$d/%2$d";
+"msg.convertDone" = "转换完成：成功 %1$d，失败 %2$d，输出在 Converted-%3$@/";
+"msg.renamedCount" = "已重命名 %d 张图片";
+"msg.prefixEmpty" = "前缀不能为空";
+
+"alert.rename" = "重命名";
+"alert.renameKeepExt" = "输入新的名称（保留 .%@ 扩展名）";
+"alert.renameNoExt" = "输入新的名称";
+"alert.renameButton" = "重命名";
+"alert.cancel" = "取消";
+"bc.title" = "批量转换格式";
+"bc.info" = "将当前文件夹 %d 张图片转换后存入子文件夹 Converted-*（同名不同扩展名）。";
+"bc.start" = "开始转换";
+"bc.quality" = "质量 %d";
+"br.title" = "批量重命名";
+"br.info" = "将当前文件夹 %d 张图片重命名为「前缀-001.扩展名」格式。";
+"br.field" = "前缀";
+"br.button" = "重命名";
+"exp.title" = "导出压缩图片";
+"exp.message" = "选择保存位置、文件名与格式";
+"exp.quality" = "质量 %d";
+
+"exp.format" = "格式";
+"exp.estimate" = "预计大小： %@";
+"exp.estimating" = "预计大小：计算中…";
+
+"menu.saveRotation" = "保存旋转";
+"msg.rotSaved" = "已保存旋转（无损）";
+"msg.rotSavedReencoded" = "已保存旋转（该格式重新编码）";
+"msg.rotFailed" = "保存旋转失败： %@";
+"msg.rotNone" = "当前没有待保存的旋转";
+"msg.rotAnimated" = "动图不支持写回旋转";
+"msg.rotSaving" = "保存旋转中…";
+"msg.rotHint" = "已旋转视图 · ⌘⌥S 可保存到文件";
+"about.body" = "■ 简介
+macOS 原生看图器：秒开大图、顺滑翻页、手势缩放、EXIF 随手看。完全本机运行——无网络请求、无数据收集、无账号。
+
+■ 使用方式
+把文件夹或图片拖进窗口即可浏览；也可以在 Finder 里右键图片选择用 PixDeck 打开。
+← → 翻页；滚动 / 捏合 / ↑↓ 缩放；拖拽平移；双击在适应窗口与 100% 间切换；Esc 一键回正。
+R / L 旋转视图；⌘⌥S 把旋转无损写回文件；回车重命名；⌘⌫ 移到废纸篓。
+⌘S 导出压缩副本（位置 / 格式 / 质量可选）；工具菜单支持批量转换与批量重命名。
+S 幻灯片放映；I 照片信息；T 缩略图栏；F 全屏。控件几秒不动会自动隐藏，动一下鼠标即回。
+界面与全部提示自动跟随系统语言（支持 14 种）。";
+"about.shortcutsTitle" = "快捷键说明";
+"sc.title" = "快捷键";
+"sc.body" = "← / →  上一张 / 下一张（循环）
+↑ / ↓  放大 / 缩小（按住连续）
+R / L  向右 / 向左旋转 90°
+S  幻灯片放映（3 秒/张，S 停止）
+空格  贴合图片比例预览（再按一次退出）
+双击  适应窗口 ⇄ 100%
+Esc  回到适应窗口（全屏时退出全屏）
+1 / 0  实际大小 / 适应窗口
+双指捏合 / 滚动  缩放，拖拽或 ⌘+滚动平移
+显示 › 鼠标滚轮  可改为滚轮切换图片
+I  照片信息    T  缩略图栏    F  全屏
+⌘⇧C  批量转换格式    ⌘⇧B  批量重命名    ⌘⇧D  设为壁纸
+⌘⇧K  清理模式 Beta：重复、闭眼、模糊
+⌘S  快速导出压缩副本    ⌘⇧E  导出为…
+回车 
+⌘⌥S  保存旋转到文件 重命名当前图片
+⌘⌫  移到废纸篓    ⌘R  在 Finder 中显示
+拖入文件夹或图片即可打开";
+
+"exif.camera" = "相机";
+"exif.lens" = "镜头";
+"exif.params" = "拍摄参数";
+"exif.bias" = "曝光补偿";
+"exif.date" = "拍摄时间";
+"exif.size" = "尺寸";
+"exif.profile" = "色彩描述";
+"exif.file" = "文件";
+
+/* 排序 */
+"menu.sort" = "排序方式";
+"sort.name" = "文件名";
+"sort.captureDate" = "拍摄时间";
+"sort.modified" = "修改时间";
+"sort.created" = "创建时间";
+"sort.size" = "文件大小";
+"sort.descending" = "倒序";
+
+/* 清理模式 */
+"menu.cleanup" = "清理模式 Beta";
+"cleanup.title" = "清理模式";
+"cleanup.similar" = "相似连拍";
+"cleanup.duplicate" = "完全重复";
+"cleanup.closedEyes" = "闭眼";
+"cleanup.blurry" = "模糊 / 虚焦";
+"cleanup.empty.similar" = "没有发现相似的连拍";
+"cleanup.empty.duplicate" = "没有内容完全相同的文件";
+"cleanup.empty.closedEyes" = "没有发现闭眼的照片";
+"cleanup.empty.blurry" = "没有发现模糊的照片";
+"cleanup.selectAll" = "全选";
+"cleanup.selectNone" = "全不选";
+"cleanup.done" = "完成";
+"cleanup.hint" = "点击 勾选 / 取消 · 空格 放大检查";
+"cleanup.trash" = "移到废纸篓";
+"cleanup.trashN" = "移到废纸篓 (%d)";
+"cleanup.scanned" = "已检查 %d 张，用时 %d 秒";
+"cleanup.scanning" = "正在检查 %d / %d";
+"cleanup.waiting" = "正在检查…";
+"cleanup.detail.groups" = "%d 组 · %d 张";
+"cleanup.detail.copies" = "%d 份内容相同 · %d 张";
+"cleanup.detail.count" = "%d 张";
+"cleanup.noneSelected" = "没有勾选照片";
+"cleanup.selected" = "已选 %d 张 · %@";
+"cleanup.keep" = "推荐保留";
+"cleanup.state.checked" = "已勾选，回车取消";
+"cleanup.state.unchecked" = "未勾选，回车勾选";
+"cleanup.trashed" = "已移到废纸篓 %d 张 · ⌘Z 撤销";
+"cleanup.restored" = "已恢复 %d 个文件";
+"cleanup.header.copies" = "%d 份相同";
+"cleanup.header.betterInBurst" = "同一组连拍里有更好的一张";
+"cleanup.header.burst" = "%d 张 · %@";
+"cleanup.tip" = "照片很多？⌘⇧K 进入清理模式，找出重复、闭眼和模糊的照片";
+
+/* 滚轮 */
+"menu.wheel" = "鼠标滚轮";
+"wheel.zoom" = "缩放图片";
+"wheel.navigate" = "切换上一张 / 下一张";
+"wheel.navigate.on" = "滚轮：切换图片（⌘+滚轮缩放）";
+"wheel.zoom.on" = "滚轮：缩放图片（⌘+滚轮平移）";

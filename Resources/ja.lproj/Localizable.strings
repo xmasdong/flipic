@@ -1,0 +1,191 @@
+/* PixDeck — 日本語 */
+
+"menu.about" = "PixDeck について";
+"menu.hide" = "PixDeck を隠す";
+"menu.hideOthers" = "ほかを隠す";
+"menu.showAll" = "すべてを表示";
+"menu.quit" = "PixDeck を終了";
+"menu.file" = "ファイル";
+"menu.open" = "開く…";
+"menu.reveal" = "Finder で表示";
+"menu.rename" = "名称変更…";
+"menu.exportAs" = "書き出し…";
+"menu.trash" = "ゴミ箱に入れる";
+"menu.close" = "ウインドウを閉じる";
+"menu.view" = "表示";
+"menu.zoomIn" = "拡大";
+"menu.zoomOut" = "縮小";
+"menu.actualSize" = "実際のサイズ (100%)";
+"menu.fit" = "ウインドウに合わせる";
+"menu.rotateCW" = "90° 時計回りに回転";
+"menu.rotateCCW" = "90° 反時計回りに回転";
+"menu.info" = "写真の情報";
+"menu.filmstrip" = "サムネイルバー";
+"menu.slideshow" = "スライドショー";
+"menu.fullscreen" = "フルスクリーンにする";
+"menu.go" = "移動";
+"menu.prev" = "前へ";
+"menu.next" = "次へ";
+"menu.first" = "最初へ";
+"menu.last" = "最後へ";
+"menu.tools" = "ツール";
+"menu.batchConvert" = "形式を一括変換…";
+"menu.batchRename" = "一括リネーム…";
+"menu.wallpaper" = "デスクトップピクチャに設定";
+"menu.window" = "ウインドウ";
+"menu.miniaturize" = "しまう";
+"menu.windowZoom" = "拡大 / 縮小";
+"menu.front" = "すべてを手前に移動";
+"menu.help" = "ヘルプ";
+"menu.shortcuts" = "キーボードショートカット";
+"tip.prev" = "前へ（←）";
+"tip.next" = "次へ（→）";
+"tip.zoomIn" = "拡大（↑）";
+"tip.zoomOut" = "縮小（↓）";
+"tip.fit" = "ウインドウに合わせる（0 / ダブルクリック）";
+"tip.actual" = "実際のサイズ（1）";
+"tip.rotateCCW" = "90° 反時計回り（L）";
+"tip.rotateCW" = "90° 時計回り（R）";
+"tip.slideshow" = "スライドショー（S）";
+"tip.info" = "写真の情報（I）";
+"tip.strip" = "サムネイルバー切替（T）";
+"tip.export" = "圧縮コピーを書き出す（⌘S）";
+"tip.rename" = "名称変更（Return）";
+"tip.trash" = "ゴミ箱に入れる（⌘⌫）";
+"ui.emptyHint" = "フォルダか画像をこのウインドウにドラッグするか、「開く…」をクリック";
+"ui.openButton" = "開く…";
+"ui.noImages" = "認識できる画像ファイルがありません";
+"ui.noMore" = "このフォルダに画像はもうありません";
+"ui.exifTitle" = "写真の情報";
+"ui.noExif" = "このファイルには EXIF データがありません";
+"msg.exporting" = "書き出し中…";
+"msg.exported" = "%1$@を書き出しました：%2$@ → %3$@";
+"msg.exportFailed" = "書き出しに失敗しました： %@";
+"msg.slideshowOn" = "スライドショー再生中 · 3秒/枚 · S またはフルスクリーン解除で停止";
+"msg.slideshowOff" = "スライドショーを停止しました";
+"msg.oneImage" = "このフォルダの画像は 1 枚だけです";
+"msg.wallpaperSet" = "デスクトップピクチャに設定しました： %@";
+"msg.wallpaperFailed" = "デスクトップピクチャの設定に失敗： %@";
+"msg.renamedTo" = "%@ に名称変更しました";
+"msg.renameFailed" = "名称変更に失敗しました： %@";
+"msg.converting" = "変換中 %1$d/%2$d";
+"msg.convertDone" = "変換完了：成功 %1$d、失敗 %2$d、Converted-%3$@/ に出力";
+"msg.renamedCount" = "%d 枚の名称変更が完了しました";
+"msg.prefixEmpty" = "接頭辞を入力してください";
+"alert.rename" = "名称変更";
+"alert.renameKeepExt" = "新しい名前を入力（拡張子 .%@ は保持されます）";
+"alert.renameNoExt" = "新しい名前を入力";
+"alert.renameButton" = "名称変更";
+"alert.cancel" = "キャンセル";
+"bc.title" = "形式を一括変換";
+"bc.info" = "このフォルダの %d 枚の画像をサブフォルダ Converted-* に変換します（同じ名前、別の拡張子）。";
+"bc.start" = "変換を開始";
+"bc.quality" = "品質 %d";
+"br.title" = "一括リネーム";
+"br.info" = "このフォルダの %d 枚の画像を「接頭辞-001.拡張子」形式にリネームします。";
+"br.field" = "接頭辞";
+"br.button" = "リネーム";
+"exp.title" = "圧縮画像を書き出す";
+"exp.message" = "保存場所・ファイル名・形式を選択してください";
+"exp.quality" = "品質 %d";
+"exp.format" = "フォーマット";
+"exp.estimate" = "推定サイズ： %@";
+"exp.estimating" = "推定サイズ：計算中…";
+
+"menu.saveRotation" = "回転を保存";
+"msg.rotSaved" = "回転を保存しました（劣化なし）";
+"msg.rotSavedReencoded" = "回転を保存しました（この形式は再エンコード）";
+"msg.rotFailed" = "回転の保存に失敗： %@";
+"msg.rotNone" = "未保存の回転はありません";
+"msg.rotAnimated" = "アニメーション画像は回転の保存に対応していません";
+"msg.rotSaving" = "回転を保存中…";
+"msg.rotHint" = "表示を回転しました · ⌘⌥S でファイルに保存";
+"about.body" = "■ 概要
+ネイティブ macOS 画像ビューア：即時表示、軽快なフォルダナビゲーション、ジェスチャーズーム、EXIF をひと目で確認。完全オフライン動作——ネットワーク通信なし、データ収集なし、アカウント不要。
+
+■ 使い方
+フォルダか画像をこのウインドウにドラッグして閲覧。Finder で画像を右クリックして PixDeck で開くこともできます。
+← → で切り替え、スクロール / ピンチ / ↑↓ でズーム、ドラッグでパン、ダブルクリックで「ウインドウに合わせる ⇄ 100%」、Esc でリセット。
+R / L で回転、⌘⌥S で回転をファイルに劣化なしで書き戻し、Return で名称変更、⌘⌫ でゴミ箱へ。
+⌘S で圧縮コピーを書き出し（場所 / 形式 / 品質を選択可）、ツールメニューで一括変換・一括リネーム。
+S でスライドショー、I で写真の情報、T でサムネイルバー、F でフルスクリーン。操作しないとコントロールは自動で隠れ、マウスを動かすと戻ります。
+インターフェースと表示はすべてシステム言語に自動追従（14 言語対応）。";
+"about.shortcutsTitle" = "キーボードショートカット";
+"sc.title" = "キーボードショートカット";
+"sc.body" = "← / →  前へ / 次へ（ループ）
+↑ / ↓  拡大 / 縮小（押し続けで連続）
+R / L  90° 時計回り / 反時計回りに回転
+S  スライドショー（3秒/枚、S で停止）
+スペース  画像の比率に合わせてプレビュー（もう一度押すと終了）
+ダブルクリック  ウインドウに合わせる ⇄ 100%
+Esc  ウインドウに合わせる（フルスクリーン中は解除）
+1 / 0  実際のサイズ / ウインドウに合わせる
+ピンチ / スクロール  カーソル位置を基準に拡大縮小、ドラッグまたは ⌘+スクロールでパン
+表示 › スクロールホイール  写真の切り替えに変更可能
+I  写真の情報    T  サムネイルバー    F  フルスクリーン
+⌘⇧C  一括変換    ⌘⇧B  一括リネーム    ⌘⇧D  壁紙に設定
+⌘⇧K  整理モード Beta：重複・目つぶり・ブレ
+⌘S  圧縮コピーを書き出す    ⌘⇧E  書き出し…
+Return  表示中の画像を名称変更
+⌘⌥S  回転をファイルに保存
+⌘⌫  ゴミ箱に入れる    ⌘R  Finder で表示
+フォルダか画像をドラッグして開けます";
+"exif.camera" = "カメラ";
+"exif.lens" = "レンズ";
+"exif.params" = "撮影情報";
+"exif.bias" = "露出補正";
+"exif.date" = "撮影日時";
+"exif.size" = "サイズ";
+"exif.profile" = "カラープロファイル";
+"exif.file" = "ファイル";
+
+/* 排序 */
+"menu.sort" = "並び順";
+"sort.name" = "ファイル名";
+"sort.captureDate" = "撮影日時";
+"sort.modified" = "変更日";
+"sort.created" = "作成日";
+"sort.size" = "ファイルサイズ";
+"sort.descending" = "降順";
+
+/* 清理模式 */
+"menu.cleanup" = "整理モード Beta";
+"cleanup.title" = "整理モード";
+"cleanup.similar" = "似た連写";
+"cleanup.duplicate" = "完全な重複";
+"cleanup.closedEyes" = "目つぶり";
+"cleanup.blurry" = "ブレ / ピンボケ";
+"cleanup.empty.similar" = "似た連写は見つかりませんでした";
+"cleanup.empty.duplicate" = "内容が同じファイルはありません";
+"cleanup.empty.closedEyes" = "目つぶりの写真は見つかりませんでした";
+"cleanup.empty.blurry" = "ブレた写真は見つかりませんでした";
+"cleanup.selectAll" = "すべて選択";
+"cleanup.selectNone" = "選択解除";
+"cleanup.done" = "完了";
+"cleanup.hint" = "クリックで選択 / 解除 · スペースで拡大確認";
+"cleanup.trash" = "ゴミ箱に入れる";
+"cleanup.trashN" = "ゴミ箱に入れる (%d)";
+"cleanup.scanned" = "%d 枚を確認（%d 秒）";
+"cleanup.scanning" = "確認中 %d / %d";
+"cleanup.waiting" = "確認中…";
+"cleanup.detail.groups" = "%d グループ · %d 枚";
+"cleanup.detail.copies" = "同一内容 %d 組 · %d 枚";
+"cleanup.detail.count" = "%d 枚";
+"cleanup.noneSelected" = "選択された写真はありません";
+"cleanup.selected" = "%d 枚を選択 · %@";
+"cleanup.keep" = "おすすめ";
+"cleanup.state.checked" = "選択済み、Return で解除";
+"cleanup.state.unchecked" = "未選択、Return で選択";
+"cleanup.trashed" = "%d 枚をゴミ箱に入れました · ⌘Z で取り消し";
+"cleanup.restored" = "%d 個のファイルを戻しました";
+"cleanup.header.copies" = "同一 %d 枚";
+"cleanup.header.betterInBurst" = "同じ連写にもっと良い一枚があります";
+"cleanup.header.burst" = "%d 枚 · %@";
+"cleanup.tip" = "写真が多いときは ⌘⇧K の整理モードで重複・目つぶり・ブレを探せます";
+
+/* 滚轮 */
+"menu.wheel" = "スクロールホイール";
+"wheel.zoom" = "拡大縮小";
+"wheel.navigate" = "前 / 次の写真";
+"wheel.navigate.on" = "ホイール：写真を切り替え（⌘+ホイールで拡大縮小）";
+"wheel.zoom.on" = "ホイール：拡大縮小（⌘+ホイールでパン）";

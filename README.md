@@ -6,7 +6,7 @@ Mac 上的看图工具，只管看图这一件事。双击任意一张图，就�
 
 ## 下载
 
-**[下载 PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)**（不到 1MB）
+**[下载 PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)**（1.2 MB）
 
 - 系统要求：macOS 13 或更新版本，Apple 芯片和 Intel 芯片的 Mac 都能用
 - 已通过 Apple 公证，使用 Developer ID 签名
@@ -61,11 +61,34 @@ PixDeck 不联网，没有账号，不收集任何数据。只读取你打开的
 
 用着有不顺手的地方，欢迎在 [Issues](https://github.com/xmasdong/macphoto/issues) 里告诉我。
 
+## 从源码构建
+
+PixDeck 用 Swift 和 AppKit 写成，没有第三方依赖。需要 macOS 13 或更新版本和 Xcode 15 或更新版本（或 Swift 5.9 命令行工具）。
+
+```bash
+git clone https://github.com/xmasdong/macphoto.git
+cd macphoto
+./build.sh                       # 产出 build/PixDeck.app（本机临时签名）
+open build/PixDeck.app
+```
+
+想用 Xcode 打开：装好 [XcodeGen](https://github.com/yonaskolb/XcodeGen) 后运行 `xcodegen generate`，生成 `PixDeck.xcodeproj`。
+
+带 Developer ID 签名和公证的发布包用 `scripts/build_devid.sh` 构建，签名凭据按 `scripts/devid.env.example` 填在 `scripts/devid.env` 里（不进版本库）。
+
+目录说明：`Sources/Photoview` 是全部源码，`Resources` 是 Info.plist、图标和 14 种语言的文案，`docs` 是官网。
+
+## 开源协议
+
+[GPL-3.0](LICENSE)。可以自由使用、修改和再发布；发布修改后的版本时，也需要以 GPL-3.0 开源。
+
 ---
 
 ## English
 
 PixDeck is a lightweight image viewer for macOS. Double-click any image and browse the whole folder with the arrow keys: pinch-to-zoom that follows your fingers, 100% view with full-resolution decoding, EXIF details, batch format conversion, a Cleanup Mode (Beta) that finds similar bursts, exact duplicates, closed eyes and blurry shots, and 14 interface languages. No network access, no account, no data collection.
+
+Open source under [GPL-3.0](LICENSE). Build from source with `./build.sh` (macOS 13+, Swift 5.9+, no third-party dependencies).
 
 **[Download PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)** — macOS 13 or later, Apple silicon and Intel, notarized by Apple.
 
