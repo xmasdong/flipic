@@ -135,6 +135,7 @@ Pinch / scroll  Zoom at cursor, drag or ⌘+scroll to pan
 View › Scroll Wheel  switch to paging through photos
 I  Photo info    T  Thumbnail strip    F  Full screen
 ⌘⇧H  Show / hide the info overlay    Esc  Closes the photo info panel first
+With View › Esc Closes Window on: Esc closes when fitted, and returns to fit first when zoomed
 ⌘⇧C  Batch convert    ⌘⇧B  Batch rename    ⌘⇧D  Set wallpaper
 ⌘E  Edit in your photo editor (opens the RAW if one has the same name)
 ⌘⇧K  Cleanup Mode Beta: duplicates, closed eyes, blur
@@ -225,3 +226,8 @@ Drop a folder or image to open";
 
 /* 信息浮层 */
 "menu.hud" = "Info Overlay";
+
+/* Esc 关闭 */
+"menu.escCloses" = "Esc Closes Window";
+"msg.escClosesOn" = "Esc now closes Flipic when the photo fits the window";
+"msg.escClosesOff" = "Esc no longer closes the window";

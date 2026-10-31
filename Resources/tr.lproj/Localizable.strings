@@ -124,6 +124,7 @@ Tutup açma / kaydırma  İmleçte yakınlaştır, taşıma için sürükle veya
 Görüntü › Kaydırma tekerleği  fotoğraf değiştirmeye ayarlanabilir
 I  Fotoğraf bilgisi    T  Küçük resim şeridi    F  Tam ekran
 ⌘⇧H  Bilgi katmanını göster / gizle    Esc  Önce fotoğraf bilgi panelini kapatır
+Görüntü › Esc pencereyi kapatır açıkken: sığdırılmışken Esc kapatır, yakınlaştırılmışken önce sığdırır
 ⌘⇧C  Toplu dönüştürme    ⌘⇧B  Toplu yeniden adlandırma    ⌘⇧D  Duvar kağıdı
 ⌘E  Fotoğraf düzenleyicide düzenle (aynı adlı RAW varsa onu açar)
 ⌘⇧K  Temizlik modu Beta: kopyalar, kapalı gözler, bulanıklık
@@ -213,3 +214,8 @@ Açmak için klasör veya resim sürükleyin";
 
 /* 信息浮层 */
 "menu.hud" = "Bilgi katmanı";
+
+/* Esc 关闭 */
+"menu.escCloses" = "Esc pencereyi kapatır";
+"msg.escClosesOn" = "Fotoğraf pencereye sığdırılmışken Esc artık Flipic'i kapatır";
+"msg.escClosesOff" = "Esc artık pencereyi kapatmaz";

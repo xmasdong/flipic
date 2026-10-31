@@ -38,6 +38,8 @@ Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed
 
 To make Flipic your default viewer: in Finder, select an image, choose File › Get Info, pick Flipic under "Open with" and click "Change All". Repeat once for each format you use (JPEG, PNG, HEIC and so on).
 
+Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, page with the arrow keys, and press Esc to close (turn on View › Esc Closes Window first). The Space key in Finder belongs to the system's Quick Look and can't be taken over by another app.
+
 ## Features
 
 **Viewing**
@@ -84,6 +86,7 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and
 | Double-click | Fit to window / 100% |
 | I | Photo info panel (Esc also closes it) |
 | ⌘⇧H | Show / hide the info overlay |
+| Esc | Back to fit; with View › Esc Closes Window on, closes the window when fitted |
 | T | Thumbnail strip |
 | R / L | Rotate right / left |
 | S | Slideshow |

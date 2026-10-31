@@ -405,6 +405,7 @@ final class ZoomableImageView: NSView {
     // MARK: - 键盘
 
     var isPeeking: Bool { spacePeeking }
+    var isFit: Bool { mode == .fit }
     var debugHasImage: Bool { image != nil }
     var debugContentsAnimating: Bool { imageLayer.animation(forKey: "contents") != nil }
     func debugToggle(at p: CGPoint) { toggleFitActual(at: p) }

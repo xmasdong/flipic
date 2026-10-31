@@ -124,6 +124,7 @@ Pinçar / rolar  Zoom no cursor, arraste ou ⌘+rolar para mover
 Visualizar › Roda do mouse  pode trocar de foto
 I  Informações    T  Tira de miniaturas    F  Tela cheia
 ⌘⇧H  Mostrar / ocultar as informações sobrepostas    Esc  Fecha primeiro o painel de informações
+Com Visualizar › Esc fecha a janela: Esc fecha quando a foto está ajustada e, com zoom, primeiro volta a ajustar
 ⌘⇧C  Conversão em lote    ⌘⇧B  Renomear em lote    ⌘⇧D  Imagem de fundo
 ⌘E  Editar no editor de fotos (abre o RAW de mesmo nome, se houver)
 ⌘⇧K  Modo limpeza Beta: duplicatas, olhos fechados, desfoque
@@ -213,3 +214,8 @@ Arraste uma pasta ou imagem para abrir";
 
 /* 信息浮层 */
 "menu.hud" = "Informações sobrepostas";
+
+/* Esc 关闭 */
+"menu.escCloses" = "Esc fecha a janela";
+"msg.escClosesOn" = "Esc fecha o Flipic quando a foto está ajustada";
+"msg.escClosesOff" = "Esc não fecha mais a janela";

@@ -131,6 +131,9 @@ final class ViewerViewController: NSViewController {
                 self.imageView.endPeek()
             } else if !self.exifPanel.isHidden {
                 self.exifPanel.isHidden = true   // 右上角的照片信息面板开着时，Esc 先关它
+            } else if Self.escCloses {
+                // 像快速查看一样用：放大时先回到适应窗口，已经适应窗口再按就关掉回访达
+                if self.imageView.isFit { window.performClose(nil) } else { self.imageView.fit(animate: true) }
             } else if window.styleMask.contains(.fullScreen) {
                 window.toggleFullScreen(window)
             } else {
@@ -682,6 +685,18 @@ final class ViewerViewController: NSViewController {
     static var hudEnabled: Bool {
         get { !UserDefaults.standard.bool(forKey: "hudHidden") }
         set { UserDefaults.standard.set(!newValue, forKey: "hudHidden") }
+    }
+
+    /// 适应窗口时按 Esc 直接关闭窗口（退出），默认关
+    static var escCloses: Bool {
+        get { UserDefaults.standard.bool(forKey: "escCloses") }
+        set { UserDefaults.standard.set(newValue, forKey: "escCloses") }
+    }
+
+    @objc func toggleEscCloses(_ sender: Any?) {
+        Self.escCloses.toggle()
+        flash(Self.escCloses ? L10n.t("msg.escClosesOn", "适应窗口时按 Esc 关闭 Flipic")
+                             : L10n.t("msg.escClosesOff", "Esc 不再关闭窗口"))
     }
 
     @objc func toggleHUD(_ sender: Any?) {
@@ -1938,6 +1953,35 @@ final class ViewerViewController: NSViewController {
         }
     }
 
+    /// --esctest <文件夹>：Esc 关闭开着时，放大先回适应窗口，再按关窗口；关着时不关窗口
+    func runEscTest() {
+        let saved = Self.escCloses
+        func esc() {
+            guard let w = view.window, let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+                windowNumber: w.windowNumber, context: nil, characters: "\u{1B}", charactersIgnoringModifiers: "\u{1B}",
+                isARepeat: false, keyCode: 53) else { return }
+            imageView.keyDown(with: e)
+        }
+        Self.escCloses = false
+        esc()
+        NSLog("ESC off: window visible=%d", view.window?.isVisible == true ? 1 : 0)
+        Self.escCloses = true
+        imageView.actualSize()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+            esc()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+                NSLog("ESC on, zoomed -> fit=%d window visible=%d", imageView.isFit ? 1 : 0, view.window?.isVisible == true ? 1 : 0)
+                Self.escCloses = saved   // 关窗口会退出进程，先恢复设置
+                Self.escCloses = true
+                NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: nil) { _ in
+                    Self.escCloses = saved
+                    NSLog("ESC on, fit -> app terminating (window closed)")
+                }
+                esc()
+            }
+        }
+    }
+
     func runBrowseShots(outDir: String) {
         guard let window = view.window else { return }
         window.setFrame(CGRect(x: 0, y: 0, width: 1440, height: 900), display: true)
@@ -2280,6 +2324,8 @@ extension ViewerViewController: NSMenuItemValidation {
         }
         if menuItem.action == #selector(setSortKey(_:)) {
             menuItem.state = menuItem.tag == folder.sortKey.rawValue ? .on : .off
+        } else if menuItem.action == #selector(toggleEscCloses(_:)) {
+            menuItem.state = Self.escCloses ? .on : .off
         } else if menuItem.action == #selector(toggleHUD(_:)) {
             menuItem.state = Self.hudEnabled ? .on : .off
         } else if menuItem.action == #selector(toggleFadeTransition(_:)) {

@@ -14,7 +14,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         windowController.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
 
-        if let i = CommandLine.arguments.firstIndex(of: "--hudtest"), i + 2 < CommandLine.arguments.count {
+        if let i = CommandLine.arguments.firstIndex(of: "--esctest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runEscTest() }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--hudtest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
             let folder = CommandLine.arguments[i + 2]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -194,6 +200,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
             item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
             item(m, L10n.t("menu.fadeTransition", "翻页渐变"), #selector(ViewerViewController.toggleFadeTransition(_:)))
+            item(m, L10n.t("menu.escCloses", "按 Esc 关闭窗口"), #selector(ViewerViewController.toggleEscCloses(_:)))
             let intervalItem = NSMenuItem(title: L10n.t("menu.slideInterval", "幻灯片间隔"), action: nil, keyEquivalent: "")
             let intervalMenu = NSMenu(title: intervalItem.title)
             for sec in ViewerViewController.slideshowIntervals {
