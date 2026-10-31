@@ -2791,18 +2791,46 @@ final class ViewerViewController: NSViewController {
     func runListTest() {
         NSLog("LIST opened=%@ count=%d items=%@", folder.current?.url.lastPathComponent ?? "-", folder.count,
               folder.items.map(\.url.lastPathComponent).joined(separator: ","))
+        // 打开时就开始计时，直到画面出来（最多等 15 秒），量的是用户看到的等待时间
+        let opened = Date()
         var i = 0
+        func waitShown(_ start: Date, _ done: @escaping () -> Void) {
+            // 当前这张的尺寸对上了才算显示出来，免得把上一张的画面当成这一张
+            let want = folder.current.flatMap { loader.cachedInfo(for: $0.url)?.pixelSize }
+            let shown = imageView.debugHasImage && want != nil && imageView.pixelSize == want
+            if shown || Date().timeIntervalSince(start) > 15 { done(); return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) { waitShown(start, done) }
+        }
         func step() {
             guard i < folder.count else { NSApp.terminate(nil); return }
-            goTo(i)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [self] in
+            let start = i == 0 ? opened : Date()
+            if i > 0 { goTo(i) }
+            waitShown(start) { [self] in
                 let px = imageView.pixelSize
-                NSLog("LIST %@ shown=%d size=%.0fx%.0f", folder.current?.url.lastPathComponent ?? "-", imageView.debugHasImage ? 1 : 0, px.width, px.height)
+                NSLog("LIST %@ shown=%d size=%.0fx%.0f after=%.2fs", folder.current?.url.lastPathComponent ?? "-", imageView.debugHasImage ? 1 : 0,
+                      px.width, px.height, Date().timeIntervalSince(start))
                 i += 1
+                if CommandLine.arguments.contains("--zoom-full"), i == 1 {
+                    // 放大到 100%，等全分辨率图换上来，记录用了多久
+                    let z = Date()
+                    let before = imageView.debugImage?.width ?? 0
+                    zoomActual(nil)
+                    func waitFull() {
+                        let w = imageView.debugImage?.width ?? 0
+                        if w > before || Date().timeIntervalSince(z) > 20 {
+                            NSLog("LIST zoom 100%%: backing %d -> %d after=%.2fs", before, w, Date().timeIntervalSince(z))
+                            NSApp.terminate(nil)
+                            return
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { waitFull() }
+                    }
+                    waitFull()
+                    return
+                }
                 step()
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { step() }
+        step()
     }
 
     /// --esctest <文件夹>：Esc 关闭开着时，放大先回适应窗口，再按关窗口；关着时不关窗口

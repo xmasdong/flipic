@@ -126,11 +126,30 @@ final class ImageLoader {
     /// 适配窗口用的快速预览图
     func preview(for url: URL, maxPixel: CGFloat) -> CGImage? {
         if let hit = cachedPreview(for: url, maxPixel: maxPixel) { return hit }
-        guard let decoded = Self.renderThumbnail(url: url, maxPixel: maxPixel, hdr: Self.hdrActive) else { return nil }
+        guard let decoded = Self.rawEmbeddedPreview(url: url, maxPixel: maxPixel)
+                ?? Self.renderThumbnail(url: url, maxPixel: maxPixel, hdr: Self.hdrActive) else { return nil }
         let img = Self.displayReady(decoded)
         previewCache.setObject(CGBox(image: img, px: CGFloat(max(img.width, img.height))),
                                forKey: url as NSURL, cost: pixelBytes(img))
         return img
+    }
+
+    /// RAW 先用相机内嵌的 JPEG 预览：4000 万像素的 RAF 冷启动解码要 4 秒，内嵌预览不到 0.1 秒。
+    /// 内嵌预览太小（有的相机只存几百像素）就不用，照常解码 RAW；放大到需要细节时由 fullImage 解码 RAW 原图
+    static func rawEmbeddedPreview(url: URL, maxPixel: CGFloat) -> CGImage? {
+        guard CleanupUnit.isRaw(url),
+              let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixel,
+            kCGImageSourceShouldCacheImmediately: true,
+        ]
+        guard let img = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
+        let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any]
+        let full = CGFloat(max(props?["PixelWidth"] as? Int ?? 0, props?["PixelHeight"] as? Int ?? 0))
+        let need = min(maxPixel, full > 0 ? full : maxPixel)
+        return CGFloat(max(img.width, img.height)) >= need * 0.9 ? img : nil
     }
 
     /// 全分辨率解码（带 EXIF 方向校正），不写缓存；maxPixel 给出时最长边不超过它
