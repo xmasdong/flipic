@@ -4,6 +4,8 @@
 
 <h1 align="center">PixDeck</h1>
 
+<p align="center"><b>简体中文</b> · <a href="README.en.md">English</a></p>
+
 <p align="center">
   Mac 上的轻量看图工具。双击一张图，用左右键把整个文件夹翻一遍。
 </p>
@@ -13,13 +15,13 @@
   ·
   <a href="https://xmasdong.github.io/macphoto/">官网</a>
   ·
-  <a href="#english">English</a>
+  <a href="https://github.com/xmasdong/macphoto/releases">历史版本</a>
 </p>
 
 <p align="center">
   <a href="https://github.com/xmasdong/macphoto/releases/latest"><img src="https://img.shields.io/github/v/release/xmasdong/macphoto?label=%E7%89%88%E6%9C%AC&color=444" alt="最新版本"></a>
   <img src="https://img.shields.io/badge/macOS-13%2B-444" alt="macOS 13 或更新">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-444" alt="GPL-3.0"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-444" alt="MIT"></a>
 </p>
 
 ![PixDeck 浏览照片](docs/screenshot-browse.jpg)
@@ -135,29 +137,8 @@ $PixDeck --cleanup-report <文件夹>   # 清理模式逐张指标与分类结�
 
 ## 协议
 
-[GPL-3.0](LICENSE)。可以自由使用、修改和再发布；发布修改后的版本，也要以 GPL-3.0 开源。
-
----
-
-<h2 id="english">English</h2>
-
-PixDeck is a lightweight image viewer for macOS. Double-click any image and page through the whole folder with the arrow keys. It is a 1.2 MB download, makes no network connections, and needs no account.
-
-**[Download PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)** (macOS 13 or later, Apple silicon and Intel, notarized by Apple)
-
-- Browse a folder with ← →, sorted by name, date taken, date modified, date created or file size
-- Space opens a Quick Look style preview that wraps the window to the photo
-- Pinch to zoom, double-click to toggle fit and 100%; the full-resolution original is decoded only when you need it
-- Scroll wheel zooms by default, or pages through photos (View › Scroll Wheel)
-- EXIF at a glance: camera, lens, shutter, aperture, ISO, date taken
-- **Cleanup Mode (Beta, ⇧⌘K)** finds similar bursts, exact duplicates, closed eyes and blurry shots on your Mac. It suggests the best frame of each burst; nothing is deleted until you press Move to Trash, and ⌘Z undoes it
-- Batch convert to JPEG, PNG or HEIC, batch rename, lossless rotation for JPEG and HEIC
-- JPEG, PNG, HEIC, WebP, GIF, TIFF, AVIF, JPEG XL and common camera RAW formats; 14 interface languages
-
-Build from source with `./build.sh` (Swift 5.9+, no third-party dependencies). Licensed under [GPL-3.0](LICENSE).
+[MIT](LICENSE)。个人和商业项目都可以自由使用、修改和再发布，保留原作者的版权声明即可。
 
 ---
 
 截图中的风景照来自 Wikimedia Commons：喀纳斯湖 Muye Ma、那拉提草原 Yoshi Canopus、沙漠星空 thomas shellberg（CC0）；天山天池 David Stanley、库尔德宁 George Lu、博斯腾湖 liuxingy2015（CC BY 2.0）；果子沟大桥 Timothytyy、将军山 Pazakui（CC BY 4.0）。
-
-Landscape photos in the screenshots are from Wikimedia Commons under CC0, CC BY 2.0 and CC BY 4.0; see the credits above.

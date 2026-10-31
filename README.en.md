@@ -1,0 +1,144 @@
+<p align="center">
+  <img src="docs/icon-256.png" width="128" height="128" alt="PixDeck icon">
+</p>
+
+<h1 align="center">PixDeck</h1>
+
+<p align="center"><a href="README.md">简体中文</a> · <b>English</b></p>
+
+<p align="center">
+  A lightweight image viewer for macOS. Double-click one photo, then page through the whole folder with the arrow keys.
+</p>
+
+<p align="center">
+  <a href="https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg"><b>Download PixDeck.dmg</b></a>
+  ·
+  <a href="https://xmasdong.github.io/macphoto/en/">Website</a>
+  ·
+  <a href="https://github.com/xmasdong/macphoto/releases">All releases</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/xmasdong/macphoto/releases/latest"><img src="https://img.shields.io/github/v/release/xmasdong/macphoto?label=release&color=444" alt="Latest release"></a>
+  <img src="https://img.shields.io/badge/macOS-13%2B-444" alt="macOS 13 or later">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-444" alt="MIT"></a>
+</p>
+
+![PixDeck browsing a folder](docs/screenshot-browse.jpg)
+
+Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. PixDeck is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 1.2 MB, the app makes no network connections, and there is no account to create.
+
+## Install
+
+1. Download [PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)
+2. Open the disk image and drag PixDeck into Applications
+3. The first time you launch it, macOS reminds you the app came from the internet; click Open
+
+Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Older versions are on the [Releases](https://github.com/xmasdong/macphoto/releases) page.
+
+To make PixDeck your default viewer: in Finder, select an image, choose File › Get Info, pick PixDeck under "Open with" and click "Change All". Repeat once for each format you use (JPEG, PNG, HEIC and so on).
+
+## Features
+
+**Viewing**
+
+- Page through every image in the folder with ← →, sorted by name, date taken, date modified, date created or file size. Your sort order is remembered.
+- Press Space for a Quick Look style preview: the window wraps itself to the photo's aspect ratio. Press Space again to go back.
+- Pinch to zoom on the trackpad; double-click toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.
+- The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, switch View › Scroll Wheel to Previous / Next Photo; ⌘ + scroll then zooms.
+- The corner overlay shows size, file size, camera, lens, shutter speed, aperture, ISO and date taken. Press I for the full info panel, including color profile.
+
+**Culling (Cleanup Mode, Beta)**
+
+After an event or a conference shoot with hundreds of frames, press ⇧⌘K. PixDeck checks the whole folder on your Mac and sorts the results into four groups: similar bursts, exact duplicates, closed eyes, and blurry or out-of-focus shots. In every burst it suggests the sharpest frame where nobody is blinking as the keeper and checks the rest; for closed eyes, it outlines the face it flagged.
+
+Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. A RAW file and the JPEG with the same name are treated as one photo. Detection can be wrong, so give the selection a quick look before you delete.
+
+![Cleanup Mode](docs/shots/cleanup-en.webp)
+
+**Batch tools and more**
+
+- Convert a whole folder to JPEG, PNG or HEIC; converted files go into a subfolder and the originals stay untouched
+- Batch rename
+- Rotate and save back to the file; for JPEG and HEIC only the orientation tag changes, so there is no quality loss
+- Export compressed copies, slideshow, set as desktop picture, move to Trash
+
+**Formats and languages**
+
+JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and common camera RAW formats (ARW, CR2, CR3, NEF, RAF, DNG and more). The interface is available in 14 languages and follows your system setting.
+
+## Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| ← → | Previous / next photo |
+| ↑ ↓, scroll wheel | Zoom in / out (the wheel can be switched to paging) |
+| Space | Preview fitted to the photo; press again to exit |
+| Double-click | Fit to window / 100% |
+| I | Photo info |
+| T | Thumbnail strip |
+| R / L | Rotate right / left |
+| S | Slideshow |
+| Return | Rename |
+| ⌘S | Export a compressed copy |
+| ⌘⌫ | Move to Trash |
+| ⇧⌘K | Cleanup Mode |
+| ⇧⌘C / ⇧⌘B | Batch convert / batch rename |
+
+## Privacy
+
+PixDeck makes no network connections, has no account and collects no data. It only reads the images you open. Cleanup Mode keeps its analysis in `~/Library/Caches/PixDeck` and never writes anything into your photo folders. All the code is in this repository, so you can check for yourself.
+
+## Building from source
+
+PixDeck is written in Swift and AppKit with no third-party dependencies. You need macOS 13 or later and Xcode 15 or the Swift 5.9 command line tools.
+
+```bash
+git clone https://github.com/xmasdong/macphoto.git
+cd macphoto
+./build.sh                 # builds build/PixDeck.app with an ad-hoc signature
+open build/PixDeck.app
+```
+
+To work in Xcode, install [XcodeGen](https://github.com/yonaskolb/XcodeGen) and run `xcodegen generate` to create the project.
+
+Signed and notarized release builds come from `scripts/build_devid.sh`. Put your signing credentials in `scripts/devid.env`, following `scripts/devid.env.example`; that file is ignored by git.
+
+### Code layout
+
+```
+Sources/Photoview/
+  AppDelegate.swift            Menu bar and launch arguments
+  ViewerViewController.swift   Main viewer: paging, prefetch, HUD, toolbar, export and batch tools
+  ZoomableImageView.swift      Zoom, pan, gestures, keyboard and scroll wheel
+  ImageLoader.swift            ImageIO downsampled decoding and memory-aware caches
+  FolderModel.swift            File list and sorting
+  Filmstrip.swift              Thumbnail strip
+  ExifReader.swift             Photo info
+  CleanupScanner.swift         Per-photo analysis for Cleanup Mode: sharpness, faces and eyes, feature prints, hashes
+  CleanupResult.swift          Grouping, suggested keepers and default selection
+  CleanupController.swift      Cleanup Mode interface
+Resources/                     Info.plist, icon, strings for 14 languages
+docs/                          Website (GitHub Pages)
+scripts/                       Release packaging and test image generators
+```
+
+A few launch arguments help with debugging without touching the UI:
+
+```bash
+PixDeck=build/PixDeck.app/Contents/MacOS/PixDeck
+$PixDeck --bench <folder>            # paging latency, memory, main-thread stalls
+$PixDeck --cleanup-report <folder>   # per-photo Cleanup Mode metrics and groups
+```
+
+## Contributing
+
+Found a bug, something that feels off, or a feature you want? Open an [issue](https://github.com/xmasdong/macphoto/issues). Pull requests are welcome, translations especially: every language other than Simplified Chinese can be improved by a native speaker.
+
+## License
+
+[MIT](LICENSE). Use, modify and redistribute it freely, in personal or commercial projects, as long as the copyright notice is kept.
+
+---
+
+Landscape photos in the screenshots are from Wikimedia Commons: Kanas Lake by Muye Ma, Nalati Grassland by Yoshi Canopus and starry desert by thomas shellberg (CC0); Tianchi by David Stanley, Kuerdening by George Lu and Bosten Lake by liuxingy2015 (CC BY 2.0); Guozigou Bridge by Timothytyy and Jiangjunshan by Pazakui (CC BY 4.0).
