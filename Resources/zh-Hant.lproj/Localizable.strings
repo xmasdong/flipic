@@ -293,3 +293,11 @@ Return  重新命名目前圖片
 "set.hdrUnsupported" = "需要 macOS 14 或以上版本，以及支援 HDR 的螢幕（如 MacBook Pro 的 XDR 螢幕）。";
 "msg.slidePaused" = "已暫停 · 按一下繼續";
 "msg.slideResumed" = "繼續播放";
+"wheel.invertNav" = "反轉翻頁方向";
+"set.navDirection" = "翻頁方向：";
+"set.invertNavNote" = "預設手指往下滑是下一張。勾選後照片跟著手指走，往下滑回到上一張、往上滑是下一張，和滑手機一樣。滑鼠滾輪和觸控板都適用。";
+"set.thumbs" = "縮圖：";
+"set.thumbSmall" = "小";
+"set.thumbMedium" = "中";
+"set.thumbLarge" = "大";
+"set.thumbXL" = "特大";

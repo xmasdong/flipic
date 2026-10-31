@@ -169,7 +169,7 @@ final class ViewerViewController: NSViewController {
         ratingBadgeBottom = ratingBadge.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: ratingBadgeOffset(controls: false))
         refreshShortcutTips()
 
-        filmstripHeight = filmstrip.heightAnchor.constraint(equalToConstant: 76)
+        filmstripHeight = filmstrip.heightAnchor.constraint(equalToConstant: FilmstripView.stripHeight)
         imageAboveFilmstrip = imageView.bottomAnchor.constraint(equalTo: filmstrip.topAnchor)
         imageToBottom = imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
 
@@ -305,7 +305,7 @@ final class ViewerViewController: NSViewController {
         window.setFrame(saved.frame, display: true, animate: true)
         window.minSize = saved.minSize
         filmstrip.isHidden = saved.filmstripHidden
-        filmstripHeight.constant = saved.filmstripHidden ? 0 : 76
+        filmstripHeight.constant = saved.filmstripHidden ? 0 : FilmstripView.stripHeight
         exifPanel.isHidden = saved.infoHidden
         if !saved.infoHidden { updateExifPanel() }
         updateHUD()
@@ -985,7 +985,7 @@ final class ViewerViewController: NSViewController {
     @objc func toggleFilmstrip(_ sender: Any?) {
         let show = filmstrip.isHidden
         filmstrip.isHidden = !show
-        filmstripHeight.constant = show ? 76 : 0
+        filmstripHeight.constant = show ? FilmstripView.stripHeight : 0
     }
 
     @objc func navigateForward(_ sender: Any?) { navigate(1) }
@@ -1026,6 +1026,14 @@ final class ViewerViewController: NSViewController {
             if slideshowTimer != nil { scheduleSlideshowTimer() }
         case "rating":
             updateRatingLabel()
+        case "thumbs":
+            // 缩略图大小变了：格子、栏高一起改，按新尺寸重新取缩略图
+            filmstrip.applyThumbSize()
+            if filmstripHeight.constant > 0 { filmstripHeight.constant = FilmstripView.stripHeight }
+            ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible)
+            filmstrip.collectionView.reloadData()
+            syncFilmstripSelection()
+            if imageView.isFit { imageView.fit() }
         case "hdr":
             // 解码方式变了，缓存里的图作废，当前这张重新解码
             loader.purge()
@@ -2156,7 +2164,17 @@ final class ViewerViewController: NSViewController {
         let savedInv = ZoomableImageView.wheelZoomInverted
         at(0.3) { ZoomableImageView.wheelNavigates = false; ZoomableImageView.wheelZoomInverted = false; self.imageView.fit(); wheel(1); wheel(1); state("10-normal wheel up x2") }
         at(0.3) { ZoomableImageView.wheelZoomInverted = true; self.imageView.fit(); wheel(1); wheel(1); state("11-inverted wheel up x2 (expect opposite of 10)") }
-        at(0.3) { ZoomableImageView.wheelNavigates = saved; ZoomableImageView.wheelZoomInverted = savedInv; NSApp.terminate(nil) }
+        let savedNavInv = ZoomableImageView.wheelNavInverted
+        at(0.3) { ZoomableImageView.wheelNavigates = true; ZoomableImageView.wheelNavInverted = false; self.imageView.fit(); state("12-nav normal before") }
+        at(0.3) { wheel(-1); state("13-nav normal wheel down (expect +1)") }
+        at(0.3) { ZoomableImageView.wheelNavInverted = true; wheel(-1); state("14-nav inverted wheel down (expect -1)") }
+        at(0.3) {
+            wheel(-4, precise: true, phase: 1)
+            for _ in 0..<8 { wheel(-12, precise: true, phase: 2) }
+            wheel(0, precise: true, phase: 4)
+            state("15-nav inverted trackpad swipe down (expect -1)")
+        }
+        at(0.3) { ZoomableImageView.wheelNavigates = saved; ZoomableImageView.wheelZoomInverted = savedInv; ZoomableImageView.wheelNavInverted = savedNavInv; NSApp.terminate(nil) }
     }
 
     /// --slidetest <文件夹> <应用路径>：幻灯片 1 秒间隔 + 交给后期软件
@@ -2617,6 +2635,65 @@ final class ViewerViewController: NSViewController {
             if let savedInterval { d.set(savedInterval, forKey: "slideshowInterval") } else { d.removeObject(forKey: "slideshowInterval") }
             if w.styleMask.contains(.fullScreen) { w.toggleFullScreen(nil) }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { NSApp.terminate(nil) }
+        }
+    }
+
+    /// --pantest <文件夹>：放大后往各方向拖很远，图片边缘应贴住窗口边缘不再移动；比窗口小的方向居中
+    func runPanTest() {
+        guard let w = view.window else { return }
+        func drag(_ dx: CGFloat, _ dy: CGFloat) {
+            let c = imageView.convert(NSPoint(x: imageView.bounds.midX, y: imageView.bounds.midY), to: nil)
+            for (type, p) in [(NSEvent.EventType.leftMouseDown, c), (.leftMouseDragged, NSPoint(x: c.x + dx, y: c.y + dy)), (.leftMouseUp, NSPoint(x: c.x + dx, y: c.y + dy))] {
+                guard let e = NSEvent.mouseEvent(with: type, location: p, modifierFlags: [], timestamp: 0, windowNumber: w.windowNumber,
+                                                 context: nil, eventNumber: 0, clickCount: 1, pressure: 1) else { continue }
+                switch type {
+                case .leftMouseDown: imageView.mouseDown(with: e)
+                case .leftMouseDragged: imageView.mouseDragged(with: e)
+                default: imageView.mouseUp(with: e)
+                }
+            }
+        }
+        func state(_ tag: String) {
+            let f = imageView.debugImageFrame, b = imageView.bounds
+            NSLog("PAN %@ frame=(%.0f,%.0f %.0fx%.0f) view=%.0fx%.0f left=%.0f right=%.0f bottom=%.0f top=%.0f", tag, f.minX, f.minY, f.width, f.height,
+                  b.width, b.height, f.minX, f.maxX - b.width, f.minY, f.maxY - b.height)
+        }
+        imageView.actualSize()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+            state("0-100%")
+            drag(0, -5000); state("1-dragged far up (expect top=0)")
+            drag(0, 10000); state("2-dragged far down (expect bottom=0)")
+            drag(-8000, 0); state("3-dragged far left (expect right=0)")
+            drag(8000, 0); state("4-dragged far right (expect left=0)")
+            imageView.fit()
+            imageView.debugToggle(at: CGPoint(x: 5, y: 5))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+                state("5-zoom at corner (expect no gap: left<=0 bottom<=0)")
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    /// --thumbtest <输出目录> <文件夹>：缩略图大小切换后，栏高、格子大小、缩略图像素跟着变，照片区域让出空间
+    func runThumbTest(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        let saved = UserDefaults.standard.object(forKey: "thumbSize")
+        func state(_ tag: String) {
+            let layout = filmstrip.collectionView.collectionViewLayout as? NSCollectionViewFlowLayout
+            let px = folder.items.first.flatMap { loader.cachedThumb(for: $0.url) }.map { max($0.width, $0.height) } ?? 0
+            NSLog("THUMB %@ size=%.0f stripHeight=%.0f item=%.0f thumbPx=%d imageBottom=%.0f", tag, FilmstripView.thumbSize,
+                  filmstrip.frame.height, layout?.itemSize.width ?? 0, px, imageView.frame.minY)
+        }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.5) { state("0-default") }
+        for size in [128.0, 48.0] {
+            at(0.2) { FilmstripView.thumbSize = size; SettingsWindowController.notify("thumbs") }
+            at(1.5) { state("size \(Int(size))"); self.captureWindow(to: "\(outDir)/thumb-\(Int(size)).png", raw: true) }
+        }
+        at(0.3) {
+            if let saved { UserDefaults.standard.set(saved, forKey: "thumbSize") } else { UserDefaults.standard.removeObject(forKey: "thumbSize") }
+            NSApp.terminate(nil)
         }
     }
 

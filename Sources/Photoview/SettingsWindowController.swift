@@ -332,6 +332,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let descending = NSButton(checkboxWithTitle: L10n.t("sort.descending", "倒序"), target: nil, action: nil)
     private let fade = NSButton(checkboxWithTitle: L10n.t("menu.fadeTransition", "翻页渐变"), target: nil, action: nil)
     private let intervalPopup = NSPopUpButton()
+    private let thumbPopup = NSPopUpButton()
     private let slideFade = NSButton(checkboxWithTitle: L10n.t("set.slideFade", "切换时渐变"), target: nil, action: nil)
     private let fadePopup = NSPopUpButton()
     private let escCloses = NSButton(checkboxWithTitle: L10n.t("menu.escCloses", "按 Esc 关闭窗口"), target: nil, action: nil)
@@ -355,7 +356,13 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             fadePopup.addItem(withTitle: L10n.f("slide.fadeSeconds", "%@ 秒", Self.secondsText(d)))
             fadePopup.lastItem?.representedObject = d
         }
-        for c in [sortPopup, intervalPopup, fadePopup] as [NSControl] { c.target = self }
+        let thumbNames = [L10n.t("set.thumbSmall", "小"), L10n.t("set.thumbMedium", "中"), L10n.t("set.thumbLarge", "大"), L10n.t("set.thumbXL", "特大")]
+        for (name, size) in zip(thumbNames, FilmstripView.thumbSizes) {
+            thumbPopup.addItem(withTitle: name)
+            thumbPopup.lastItem?.tag = Int(size)
+        }
+        thumbPopup.action = #selector(thumbSizeChanged)
+        for c in [sortPopup, intervalPopup, fadePopup, thumbPopup] as [NSControl] { c.target = self }
         fadePopup.action = #selector(slideFadeChanged)
         slideFade.target = self; slideFade.action = #selector(slideFadeChanged)
         sortPopup.action = #selector(sortChanged)
@@ -390,6 +397,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.sort", "排序方式：")), sortRow],
             [label(L10n.t("set.paging", "翻页：")), fade],
             [label(L10n.t("set.rating", "评分：")), ratingBadge],
+            [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
             [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
             [label(L10n.t("set.slideFadeLabel", "幻灯片渐变：")), slideFadeRow],
             [label(L10n.t("set.esc", "Esc 键：")), escCloses],
@@ -402,10 +410,10 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             spacerRow(note(L10n.t("set.updateNote", "Flipic 默认不联网。打开后每天最多查一次，只向官网请求最新版本号，不发送任何数据。"))),
         ])
         g.row(at: 1).topPadding = -4
-        g.row(at: 8).topPadding = -4
-        g.row(at: 10).topPadding = -4
-        g.row(at: 12).topPadding = -4
-        g.row(at: 14).topPadding = -4
+        g.row(at: 9).topPadding = -4
+        g.row(at: 11).topPadding = -4
+        g.row(at: 13).topPadding = -4
+        g.row(at: 15).topPadding = -4
         view = host(g)
         reload()
     }
@@ -418,6 +426,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         intervalPopup.selectItem(withTag: ViewerViewController.slideshowIntervals.contains(sec) ? sec : 3)
         escCloses.state = ViewerViewController.escCloses ? .on : .off
         ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
+        thumbPopup.selectItem(withTag: Int(FilmstripView.thumbSize))
         slideFade.state = ViewerViewController.slideshowFade ? .on : .off
         autoUpdate.state = UpdateChecker.autoCheck ? .on : .off
         let hdrOK = ImageLoader.hdrSupported
@@ -489,6 +498,11 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         return f.string(from: NSNumber(value: v)) ?? "\(v)"
     }
 
+    @objc private func thumbSizeChanged() {
+        FilmstripView.thumbSize = CGFloat(thumbPopup.selectedTag())
+        SettingsWindowController.notify("thumbs")
+    }
+
     @objc private func ratingBadgeChanged() {
         ViewerViewController.showRatingBadge = ratingBadge.state == .on
         SettingsWindowController.notify("rating")
@@ -524,11 +538,13 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
     private let wheelZoom = NSButton(radioButtonWithTitle: L10n.t("wheel.zoom", "缩放图片"), target: nil, action: nil)
     private let wheelNav = NSButton(radioButtonWithTitle: L10n.t("wheel.navigate", "切换上一张 / 下一张"), target: nil, action: nil)
     private let invert = NSButton(checkboxWithTitle: L10n.t("wheel.invert", "反转缩放方向"), target: nil, action: nil)
+    private let invertNav = NSButton(checkboxWithTitle: L10n.t("wheel.invertNav", "反转翻页方向"), target: nil, action: nil)
     private let wheelNote = note("")
 
     override func loadView() {
         for b in [wheelZoom, wheelNav] { b.target = self; b.action = #selector(wheelChanged(_:)) }
         invert.target = self; invert.action = #selector(invertChanged)
+        invertNav.target = self; invertNav.action = #selector(invertNavChanged)
         let radios = NSStackView(views: [wheelZoom, wheelNav])
         radios.orientation = .vertical
         radios.alignment = .leading
@@ -536,6 +552,8 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
         let g = grid([
             [label(L10n.t("set.wheel", "鼠标滚轮：")), radios],
             spacerRow(wheelNote),
+            [label(L10n.t("set.navDirection", "翻页方向：")), invertNav],
+            spacerRow(note(L10n.t("set.invertNavNote", "默认手指往下滑是下一张。勾上后照片跟着手指走，往下滑回到上一张、往上滑是下一张，和刷手机一样。鼠标滚轮和触控板都适用。"))),
             [label(L10n.t("set.zoomDirection", "缩放方向：")), invert],
             spacerRow(note(L10n.t("set.invertNote", "用 Mos 之类的工具改过滚轮方向后，如果滚轮缩放反了，就勾上这一项。只影响滚轮缩放，不影响触控板捏合和滚轮翻页。"))),
             [label(L10n.t("set.trackpad", "触控板：")), note(L10n.t("set.trackpadNote", "双指捏合缩放，双指轻点两下在适应窗口和 100% 之间切换，拖动平移。"))],
@@ -544,6 +562,7 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
         g.cell(atColumnIndex: 0, rowIndex: 0).yPlacement = .top
         g.row(at: 1).topPadding = -4
         g.row(at: 3).topPadding = -4
+        g.row(at: 5).topPadding = -4
         view = host(g)
         reload()
     }
@@ -553,6 +572,8 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
         wheelZoom.state = nav ? .off : .on
         wheelNav.state = nav ? .on : .off
         invert.state = ZoomableImageView.wheelZoomInverted ? .on : .off
+        invertNav.state = ZoomableImageView.wheelNavInverted ? .on : .off
+        invertNav.isEnabled = nav
         wheelNote.stringValue = nav ? L10n.t("wheel.navigate.on", "滚轮：切换图片（⌘+滚轮缩放）")
                                     : L10n.t("wheel.zoom.on", "滚轮：缩放图片（⌘+滚轮平移）")
     }
@@ -561,6 +582,8 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
         ZoomableImageView.wheelNavigates = sender === wheelNav
         reload()
     }
+
+    @objc private func invertNavChanged() { ZoomableImageView.wheelNavInverted = invertNav.state == .on }
 
     @objc private func invertChanged() { ZoomableImageView.wheelZoomInverted = invert.state == .on }
 }

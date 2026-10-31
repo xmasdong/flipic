@@ -305,3 +305,11 @@ Esc  先关掉右上角的照片信息
 "set.hdrUnsupported" = "需要 macOS 14 或更新版本，以及支持 HDR 的屏幕（如 MacBook Pro 的 XDR 屏）。";
 "msg.slidePaused" = "已暂停 · 点一下继续";
 "msg.slideResumed" = "继续播放";
+"wheel.invertNav" = "反转翻页方向";
+"set.navDirection" = "翻页方向：";
+"set.invertNavNote" = "默认手指往下滑是下一张。勾上后照片跟着手指走，往下滑回到上一张、往上滑是下一张，和刷手机一样。鼠标滚轮和触控板都适用。";
+"set.thumbs" = "缩略图：";
+"set.thumbSmall" = "小";
+"set.thumbMedium" = "中";
+"set.thumbLarge" = "大";
+"set.thumbXL" = "特大";

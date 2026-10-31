@@ -4,12 +4,31 @@ import AppKit
 final class FilmstripView: NSScrollView {
     let collectionView = NSCollectionView()
 
+    /// 缩略图大小（点），设置里可选；格子是正方形，缩略图栏高度 = 格子 + 上下各 6
+    static let thumbSizes: [CGFloat] = [48, 64, 96, 128]
+    static var thumbSize: CGFloat {
+        get {
+            let v = CGFloat(UserDefaults.standard.double(forKey: "thumbSize"))
+            return thumbSizes.contains(v) ? v : 64
+        }
+        set { UserDefaults.standard.set(Double(newValue), forKey: "thumbSize") }
+    }
+    static var stripHeight: CGFloat { thumbSize + 12 }
+    /// 解码缩略图用的像素尺寸：Retina 两倍，最少 128
+    static var thumbPixel: CGFloat { max(128, thumbSize * 2) }
+
+    func applyThumbSize() {
+        (collectionView.collectionViewLayout as? NSCollectionViewFlowLayout)?.itemSize =
+            NSSize(width: Self.thumbSize, height: Self.thumbSize)
+        collectionView.collectionViewLayout?.invalidateLayout()
+    }
+
     init() {
         super.init(frame: .zero)
 
         let layout = NSCollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
-        layout.itemSize = NSSize(width: 64, height: 64)
+        layout.itemSize = NSSize(width: Self.thumbSize, height: Self.thumbSize)
         layout.minimumLineSpacing = 8
         layout.sectionInset = NSEdgeInsets(top: 6, left: 10, bottom: 6, right: 10)
 

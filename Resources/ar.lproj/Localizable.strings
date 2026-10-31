@@ -293,3 +293,11 @@ Return  إعادة تسمية الصورة الحالية
 "set.hdrUnsupported" = "يتطلب macOS 14 أو أحدث وشاشة تدعم HDR، مثل شاشة XDR في MacBook Pro.";
 "msg.slidePaused" = "متوقف مؤقتًا · انقر للمتابعة";
 "msg.slideResumed" = "تم الاستئناف";
+"wheel.invertNav" = "عكس اتجاه التنقل";
+"set.navDirection" = "اتجاه التنقل:";
+"set.invertNavNote" = "افتراضيًا يؤدي السحب لأسفل إلى الصورة التالية. عند التفعيل تتبع الصورة أصابعك كما في الهاتف: لأسفل للسابقة ولأعلى للتالية. يسري على العجلة ولوحة التعقب.";
+"set.thumbs" = "الصور المصغرة:";
+"set.thumbSmall" = "صغيرة";
+"set.thumbMedium" = "متوسطة";
+"set.thumbLarge" = "كبيرة";
+"set.thumbXL" = "كبيرة جدًا";

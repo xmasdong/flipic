@@ -293,3 +293,11 @@ Return  현재 이미지 이름 변경
 "set.hdrUnsupported" = "macOS 14 이상과 HDR 지원 디스플레이(MacBook Pro의 XDR 디스플레이 등)가 필요합니다.";
 "msg.slidePaused" = "일시 정지됨 · 클릭하면 계속";
 "msg.slideResumed" = "다시 재생";
+"wheel.invertNav" = "넘기기 방향 반전";
+"set.navDirection" = "넘기기 방향:";
+"set.invertNavNote" = "기본은 아래로 쓸면 다음 사진입니다. 켜면 사진이 손가락을 따라 움직여, 휴대폰처럼 아래로 쓸면 이전 사진, 위로 쓸면 다음 사진입니다. 마우스 휠과 트랙패드 모두에 적용됩니다.";
+"set.thumbs" = "썸네일:";
+"set.thumbSmall" = "작게";
+"set.thumbMedium" = "보통";
+"set.thumbLarge" = "크게";
+"set.thumbXL" = "아주 크게";

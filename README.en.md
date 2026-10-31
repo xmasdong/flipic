@@ -48,7 +48,8 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 - Press Space for a Quick Look style preview: the window wraps itself to the photo's aspect ratio. Press Space again to go back.
 - Rest the pointer on any detail and press 0 to zoom to 100% right there; press 0 again to go back. Pinch to zoom on the trackpad; double-click also toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.
 - Photos switch instantly when you page; if you like a crossfade, turn on Fade Between Photos in Settings.
-- The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, change it in Settings; ⌘ + scroll then zooms. If you reversed your wheel with a tool like Mos, you can reverse the zoom direction too.
+- The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, change it in Settings; ⌘ + scroll then zooms. If you reversed your wheel with a tool like Mos, you can reverse the zoom direction too, and paging can be reversed so a downward swipe goes back, like on a phone.
+- Panning a zoomed photo stops at its edges, so no empty space slides in. Thumbnails come in small, medium, large and extra large.
 - HDR photos (iPhone HEIC, JPEGs with a gain map and more) can be shown in HDR, with highlights brighter than regular white, as in Preview. Turn it on in Settings; it is off by default and needs macOS 14 and an HDR-capable display.
 - Nothing but the photo by default. Press I for camera, lens, shutter speed, aperture, ISO, date taken, size and color profile; Esc closes it.
 

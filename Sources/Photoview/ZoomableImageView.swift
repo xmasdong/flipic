@@ -328,7 +328,11 @@ final class ZoomableImageView: NSView {
         guard let image, c.width > 0 else { return }
         let w = c.width * scale
         let h = c.height * scale
-        // 自由拖动：不做边缘钳制，可把图片任意角落拖到窗口中央；Esc / 0 / 双击复位
+        // 拖到照片边缘就停：比窗口大的方向不留黑边，比窗口小的方向居中；捏合过程中放开，松手后再归位
+        if mode != .fit && !isPinching {
+            origin.x = w <= bounds.width ? (bounds.width - w) / 2 : min(0, max(bounds.width - w, origin.x))
+            origin.y = h <= bounds.height ? (bounds.height - h) / 2 : min(0, max(bounds.height - h, origin.y))
+        }
         CATransaction.begin()
         if animated {
             CATransaction.setAnimationDuration(0.22)
@@ -378,6 +382,8 @@ final class ZoomableImageView: NSView {
                 zoom(to: minScale, anchor: gestureAnchor, animated: true)
             } else if scale > maxScale {
                 zoom(to: maxScale, anchor: gestureAnchor, animated: true)
+            } else {
+                apply(animated: true)   // 捏合时拖出边缘的部分平滑归位
             }
             return
         }
@@ -403,6 +409,11 @@ final class ZoomableImageView: NSView {
     static var wheelZoomInverted: Bool {
         get { UserDefaults.standard.bool(forKey: "wheelZoomInverted") }
         set { UserDefaults.standard.set(newValue, forKey: "wheelZoomInverted") }
+    }
+    /// 滚轮 / 触控板翻页方向反转：默认手指往下 = 下一张；反转后像刷手机，照片跟着手指走，往下滑回到上一张
+    static var wheelNavInverted: Bool {
+        get { UserDefaults.standard.bool(forKey: "wheelNavInverted") }
+        set { UserDefaults.standard.set(newValue, forKey: "wheelNavInverted") }
     }
     private var wheelAccum: CGFloat = 0
     private var wheelFlippedInGesture = false
@@ -454,6 +465,7 @@ final class ZoomableImageView: NSView {
         if event.phase == .began { wheelAccum = 0; wheelFlippedInGesture = false }
         var dy = event.scrollingDeltaY
         if event.isDirectionInvertedFromDevice { dy = -dy }
+        if Self.wheelNavInverted { dy = -dy }
         guard dy != 0 else { return }
         if event.hasPreciseScrollingDeltas {
             // 触控板 / 妙控鼠标：同一次滑动累计够距离翻一张，手指抬起前不再翻

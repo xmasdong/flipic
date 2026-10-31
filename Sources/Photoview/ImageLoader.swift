@@ -250,14 +250,17 @@ final class ImageLoader {
         return ctx.makeImage() ?? src
     }
 
+    /// 缩略图按当前缩略图栏的格子大小解码（Retina 两倍像素）；格子调大后旧的小图不算命中
     func cachedThumb(for url: URL) -> CGImage? {
-        thumbCache.object(forKey: url as NSURL)?.image
+        guard let hit = thumbCache.object(forKey: url as NSURL), hit.px >= FilmstripView.thumbPixel else { return nil }
+        return hit.image
     }
 
     func thumb(for url: URL) -> CGImage? {
-        if let hit = thumbCache.object(forKey: url as NSURL) { return hit.image }
-        guard let img = Self.renderThumbnail(url: url, maxPixel: 128, allowEmbedded: true) else { return nil }
-        thumbCache.setObject(CGBox(image: img, px: 128), forKey: url as NSURL, cost: pixelBytes(img))
+        if let hit = cachedThumb(for: url) { return hit }
+        let px = FilmstripView.thumbPixel
+        guard let img = Self.renderThumbnail(url: url, maxPixel: px, allowEmbedded: px <= 160) else { return nil }
+        thumbCache.setObject(CGBox(image: img, px: px), forKey: url as NSURL, cost: pixelBytes(img))
         return img
     }
 
