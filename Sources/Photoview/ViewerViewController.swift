@@ -2170,10 +2170,10 @@ final class ViewerViewController: NSViewController {
     /// --wheeltest <文件夹>：用合成的滚轮 / 触控板事件验证「滚轮缩放 / 滚轮翻页」两种设置
     func runWheelTest() {
         let saved = ZoomableImageView.wheelNavigates
-        func wheel(_ dy: Int32, precise: Bool = false, phase: Int64 = 0, momentum: Int64 = 0, cmd: Bool = false) {
+        func wheel(_ dy: Int32, dx: Int32 = 0, precise: Bool = false, phase: Int64 = 0, momentum: Int64 = 0, cmd: Bool = false) {
             guard let w = view.window,
                   let cg = CGEvent(scrollWheelEvent2Source: nil, units: precise ? .pixel : .line,
-                                   wheelCount: 1, wheel1: dy, wheel2: 0, wheel3: 0) else { return }
+                                   wheelCount: 2, wheel1: dy, wheel2: dx, wheel3: 0) else { return }
             cg.setIntegerValueField(.scrollWheelEventIsContinuous, value: precise ? 1 : 0)
             cg.setIntegerValueField(.scrollWheelEventScrollPhase, value: phase)
             cg.setIntegerValueField(.scrollWheelEventMomentumPhase, value: momentum)
@@ -2216,6 +2216,28 @@ final class ViewerViewController: NSViewController {
             for _ in 0..<8 { wheel(-12, precise: true, phase: 2) }
             wheel(0, precise: true, phase: 4)
             state("15-nav inverted trackpad swipe down (expect -1)")
+        }
+        // 触控板左右滑：适应窗口时翻页（不管滚轮是缩放还是翻页），放大后平移；上下滑照旧
+        func hswipe(_ dx: Int32) {
+            wheel(0, dx: dx / 3, precise: true, phase: 1)
+            for _ in 0..<8 { wheel(0, dx: dx, precise: true, phase: 2) }
+            wheel(0, precise: true, phase: 4)
+            for _ in 0..<5 { wheel(0, dx: dx, precise: true, momentum: 2) }
+        }
+        at(0.3) { ZoomableImageView.wheelNavigates = false; ZoomableImageView.wheelNavInverted = false; self.imageView.fit(); state("16-zoom mode fitted before swipe") }
+        at(0.3) { hswipe(12); state("17-swipe fingers left (expect +1, scale unchanged)") }
+        at(0.3) { hswipe(-12); state("18-swipe fingers right (expect -1)") }
+        at(0.3) { ZoomableImageView.wheelNavigates = true; hswipe(12); state("19-nav mode swipe left (expect +1)") }
+        at(0.3) { self.imageView.actualSize() }
+        at(0.5) { state("20-zoomed before swipe") }
+        at(0.1) { hswipe(12); state("21-zoomed swipe (expect same index, pan x)") }
+        at(0.3) {
+            ZoomableImageView.wheelNavigates = false
+            self.imageView.fit()
+            wheel(-4, precise: true, phase: 1)
+            for _ in 0..<6 { wheel(-10, precise: true, phase: 2) }
+            wheel(0, precise: true, phase: 4)
+            state("22-vertical swipe in zoom mode (expect zoom, same index)")
         }
         at(0.3) { ZoomableImageView.wheelNavigates = saved; ZoomableImageView.wheelZoomInverted = savedInv; ZoomableImageView.wheelNavInverted = savedNavInv; NSApp.terminate(nil) }
     }

@@ -240,7 +240,7 @@ Açmak için klasör veya resim sürükleyin";
 "set.zoomDirection" = "Yakınlaştırma yönü:";
 "set.invertNote" = "Tekerlek yönünü Mos gibi bir araçla değiştirdiyseniz ve tekerlekle yakınlaştırma ters çalışıyorsa bunu açın. Yalnızca tekerlekle yakınlaştırmayı etkiler; izleme dörtgeninde kıstırmayı ve tekerlekle sayfa geçişini etkilemez.";
 "set.trackpad" = "İzleme dörtgeni:";
-"set.trackpadNote" = "İki parmakla kıstırarak yakınlaştırın, iki parmakla çift dokunarak sığdır ve %100 arasında geçin, sürükleyerek kaydırın.";
+"set.trackpadNote" = "Fotoğraf değiştirmek için iki parmakla sola veya sağa kaydırın (sola sonraki), yakınlaştırmak için kıstırın, iki parmakla çift dokunarak sığdır ve %100 arasında geçin, sürükleyerek kaydırın.";
 "sc.group.browse" = "Gezinme";
 "sc.group.view" = "Görüntü";
 "sc.group.file" = "Dosya";

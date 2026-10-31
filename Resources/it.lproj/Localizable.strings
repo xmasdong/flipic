@@ -240,7 +240,7 @@ Trascina una cartella o un'immagine per aprire";
 "set.zoomDirection" = "Direzione dello zoom:";
 "set.invertNote" = "Se hai cambiato la direzione della rotella con uno strumento come Mos e ora lo zoom con la rotella va al contrario, attiva questa opzione. Vale solo per lo zoom con la rotella, non per il pizzico sul trackpad né per lo scorrimento con la rotella.";
 "set.trackpad" = "Trackpad:";
-"set.trackpadNote" = "Pizzica per lo zoom, tocca due volte con due dita per passare tra adatta e 100%, trascina per spostare.";
+"set.trackpadNote" = "Scorri con due dita a sinistra o a destra per cambiare foto (a sinistra la successiva), pizzica per lo zoom, tocca due volte con due dita per passare tra adatta e 100%, trascina per spostare.";
 "sc.group.browse" = "Navigazione";
 "sc.group.view" = "Vista";
 "sc.group.file" = "File";

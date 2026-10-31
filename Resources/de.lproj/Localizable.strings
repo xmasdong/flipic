@@ -240,7 +240,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.zoomDirection" = "Zoomrichtung:";
 "set.invertNote" = "Wenn Sie die Radrichtung mit einem Tool wie Mos geändert haben und der Zoom mit dem Rad jetzt falsch herum läuft, aktivieren Sie diese Option. Sie wirkt nur auf den Rad-Zoom, nicht auf Trackpad-Zoom oder Blättern mit dem Rad.";
 "set.trackpad" = "Trackpad:";
-"set.trackpadNote" = "Mit zwei Fingern zoomen, mit zwei Fingern doppelt tippen wechselt zwischen Anpassen und 100 %, ziehen verschiebt.";
+"set.trackpadNote" = "Mit zwei Fingern nach links oder rechts wischen wechselt das Foto (links zum nächsten), mit zwei Fingern zoomen, zweimal mit zwei Fingern tippen wechselt zwischen Anpassen und 100 %, ziehen verschiebt.";
 "sc.group.browse" = "Blättern";
 "sc.group.view" = "Darstellung";
 "sc.group.file" = "Ablage";

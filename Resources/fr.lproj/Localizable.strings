@@ -240,7 +240,7 @@ Déposez un dossier ou une image pour ouvrir";
 "set.zoomDirection" = "Sens du zoom :";
 "set.invertNote" = "Si vous avez inversé la molette avec un outil comme Mos et que le zoom à la molette va dans le mauvais sens, cochez cette option. Elle ne touche que le zoom à la molette, pas le pincement sur le trackpad ni la navigation à la molette.";
 "set.trackpad" = "Trackpad :";
-"set.trackpadNote" = "Pincez pour zoomer, touchez deux fois avec deux doigts pour passer de l’ajustement à 100 %, faites glisser pour déplacer.";
+"set.trackpadNote" = "Balayez à deux doigts vers la gauche ou la droite pour changer de photo (à gauche pour la suivante), pincez pour zoomer, touchez deux fois à deux doigts pour passer de l’ajustement à 100 %, faites glisser pour déplacer.";
 "sc.group.browse" = "Navigation";
 "sc.group.view" = "Présentation";
 "sc.group.file" = "Fichier";

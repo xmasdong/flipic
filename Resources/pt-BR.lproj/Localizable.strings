@@ -240,7 +240,7 @@ Arraste uma pasta ou imagem para abrir";
 "set.zoomDirection" = "Direção do zoom:";
 "set.invertNote" = "Se você mudou a direção da roda com uma ferramenta como o Mos e o zoom pela roda ficou invertido, ative esta opção. Só afeta o zoom pela roda, não a pinça do trackpad nem a navegação pela roda.";
 "set.trackpad" = "Trackpad:";
-"set.trackpadNote" = "Faça pinça para zoom, toque duas vezes com dois dedos para alternar entre ajustar e 100%, arraste para mover.";
+"set.trackpadNote" = "Deslize dois dedos para a esquerda ou direita para trocar de foto (esquerda para a próxima), faça pinça para zoom, toque duas vezes com dois dedos para alternar entre ajustar e 100%, arraste para mover.";
 "sc.group.browse" = "Navegar";
 "sc.group.view" = "Visualizar";
 "sc.group.file" = "Arquivo";

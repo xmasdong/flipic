@@ -252,7 +252,7 @@ Esc  先关掉右上角的照片信息
 "set.zoomDirection" = "缩放方向：";
 "set.invertNote" = "用 Mos 之类的工具改过滚轮方向后，如果滚轮缩放反了，就勾上这一项。只影响滚轮缩放，不影响触控板捏合和滚轮翻页。";
 "set.trackpad" = "触控板：";
-"set.trackpadNote" = "双指捏合缩放，双指轻点两下在适应窗口和 100% 之间切换，拖动平移。";
+"set.trackpadNote" = "双指左右滑翻页（往左滑是下一张），双指捏合缩放，双指轻点两下在适应窗口和 100% 之间切换，拖动平移。";
 "sc.group.browse" = "浏览";
 "sc.group.view" = "显示";
 "sc.group.file" = "文件";

@@ -240,7 +240,7 @@ Return  重新命名目前圖片
 "set.zoomDirection" = "縮放方向：";
 "set.invertNote" = "用 Mos 之類的工具改過滾輪方向後，如果滾輪縮放反了，就勾選這一項。只影響滾輪縮放，不影響觸控板捏合和滾輪翻頁。";
 "set.trackpad" = "觸控板：";
-"set.trackpadNote" = "雙指捏合縮放，雙指輕點兩下在符合視窗和 100% 之間切換，拖移平移。";
+"set.trackpadNote" = "雙指左右滑翻頁（往左滑是下一張），雙指捏合縮放，雙指輕點兩下在符合視窗和 100% 之間切換，拖移平移。";
 "sc.group.browse" = "瀏覽";
 "sc.group.view" = "顯示";
 "sc.group.file" = "檔案";

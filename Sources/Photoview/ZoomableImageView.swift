@@ -425,6 +425,7 @@ final class ZoomableImageView: NSView {
         if isPinching { return }
         if !event.momentumPhase.isEmpty, Date().timeIntervalSince(pinchEndTime) < 0.35 { return }
         let cmd = event.modifierFlags.contains(.command)
+        if !cmd, handleHorizontalSwipe(event) { return }
         if Self.wheelNavigates {
             if cmd {
                 zoomByWheel(event)
@@ -437,6 +438,52 @@ final class ZoomableImageView: NSView {
         }
         // 对齐 Windows 看图器习惯：滚动即缩放（以光标为锚点）；⌘+滚动 = 平移
         if cmd { panByWheel(event) } else { zoomByWheel(event) }
+    }
+
+    // MARK: - 触控板左右滑翻页
+
+    /// 一次手势只认一个方向：开头几个点的位移看是横向还是纵向，横向就整次手势都当翻页
+    private enum SwipeAxis { case undecided, horizontal, vertical }
+    private var swipeAxis = SwipeAxis.vertical
+    private var swipeStart = CGSize.zero
+    private var swipeAccum: CGFloat = 0
+    private var swipeFlipped = false
+
+    /// 照片在适应窗口时，触控板双指左右滑一次翻一张：往左滑下一张、往右滑上一张（跟着手指走）。
+    /// 放大后横向滑动照常平移；鼠标滚轮没有横向，不受影响。处理了就返回 true
+    private func handleHorizontalSwipe(_ event: NSEvent) -> Bool {
+        guard event.hasPreciseScrollingDeltas else { return false }
+        if event.phase == .began {
+            swipeAxis = mode == .fit ? .undecided : .vertical
+            swipeStart = .zero
+            swipeAccum = 0
+            swipeFlipped = false
+        }
+        // 手指离开后的惯性：横向手势的惯性整段吞掉，避免顺带缩放或平移
+        if !event.momentumPhase.isEmpty { return swipeAxis == .horizontal }
+        switch swipeAxis {
+        case .vertical:
+            return false
+        case .undecided:
+            swipeStart.width += abs(event.scrollingDeltaX)
+            swipeStart.height += abs(event.scrollingDeltaY)
+            // 还没看出方向：「开始」事件照常往下传（上下翻页靠它重置计数），之后的先不动
+            guard max(swipeStart.width, swipeStart.height) >= 6 else { return event.phase != .began }
+            swipeAxis = swipeStart.width > swipeStart.height * 1.5 ? .horizontal : .vertical
+            if swipeAxis == .vertical { return false }
+            fallthrough
+        case .horizontal:
+            // 换算成手指方向：自然滚动时 delta 跟着内容走，反过来就是手指方向
+            var dx = event.scrollingDeltaX
+            if event.isDirectionInvertedFromDevice { dx = -dx }
+            guard !swipeFlipped else { return true }
+            swipeAccum += dx
+            if abs(swipeAccum) >= 40 {
+                swipeFlipped = true
+                onNavigate?(swipeAccum > 0 ? 1 : -1)
+            }
+            return true
+        }
     }
 
     private func panByWheel(_ event: NSEvent) {

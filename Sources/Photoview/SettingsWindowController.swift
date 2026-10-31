@@ -564,7 +564,7 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
             spacerRow(note(L10n.t("set.invertNavNote", "默认手指往下滑是下一张。勾上后照片跟着手指走，往下滑回到上一张、往上滑是下一张，和刷手机一样。鼠标滚轮和触控板都适用。"))),
             [label(L10n.t("set.zoomDirection", "缩放方向：")), invert],
             spacerRow(note(L10n.t("set.invertNote", "用 Mos 之类的工具改过滚轮方向后，如果滚轮缩放反了，就勾上这一项。只影响滚轮缩放，不影响触控板捏合和滚轮翻页。"))),
-            [label(L10n.t("set.trackpad", "触控板：")), note(L10n.t("set.trackpadNote", "双指捏合缩放，双指轻点两下在适应窗口和 100% 之间切换，拖动平移。"))],
+            [label(L10n.t("set.trackpad", "触控板：")), note(L10n.t("set.trackpadNote", "双指左右滑翻页（往左滑是下一张），双指捏合缩放，双指轻点两下在适应窗口和 100% 之间切换，拖动平移。"))],
         ])
         g.row(at: 0).rowAlignment = .none
         g.cell(atColumnIndex: 0, rowIndex: 0).yPlacement = .top

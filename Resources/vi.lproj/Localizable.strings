@@ -240,7 +240,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.zoomDirection" = "Chiều phóng to:";
 "set.invertNote" = "Nếu bạn đã đổi chiều con lăn bằng công cụ như Mos và giờ phóng to bằng con lăn bị ngược, hãy bật mục này. Chỉ ảnh hưởng đến phóng to bằng con lăn, không ảnh hưởng thao tác chụm trên bàn di chuột hay chuyển ảnh bằng con lăn.";
 "set.trackpad" = "Bàn di chuột:";
-"set.trackpadNote" = "Chụm hai ngón để phóng to, chạm hai lần bằng hai ngón để chuyển giữa vừa cửa sổ và 100%, kéo để di chuyển.";
+"set.trackpadNote" = "Vuốt hai ngón sang trái hoặc phải để chuyển ảnh (sang trái là ảnh sau), chụm để phóng to, chạm hai lần bằng hai ngón để chuyển giữa vừa cửa sổ và 100%, kéo để di chuyển.";
 "sc.group.browse" = "Duyệt";
 "sc.group.view" = "Hiển thị";
 "sc.group.file" = "Tệp";

@@ -240,7 +240,7 @@ Arrastra una carpeta o imagen para abrir";
 "set.zoomDirection" = "Dirección del zoom:";
 "set.invertNote" = "Si cambiaste la dirección de la rueda con una herramienta como Mos y ahora el zoom con la rueda va al revés, activa esta opción. Solo afecta al zoom con la rueda, no al pellizco del trackpad ni a pasar fotos con la rueda.";
 "set.trackpad" = "Trackpad:";
-"set.trackpadNote" = "Pellizca para hacer zoom, toca dos veces con dos dedos para alternar entre ajustar y 100 %, arrastra para desplazar.";
+"set.trackpadNote" = "Desliza dos dedos a izquierda o derecha para cambiar de foto (a la izquierda la siguiente), pellizca para hacer zoom, toca dos veces con dos dedos para alternar entre ajustar y 100 %, arrastra para desplazar.";
 "sc.group.browse" = "Navegar";
 "sc.group.view" = "Visualización";
 "sc.group.file" = "Archivo";

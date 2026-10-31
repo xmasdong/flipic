@@ -252,7 +252,7 @@ Drop a folder or image to open";
 "set.zoomDirection" = "Zoom direction:";
 "set.invertNote" = "If you changed the wheel direction with a tool like Mos and wheel zoom now goes the wrong way, turn this on. Only wheel zoom is affected, not trackpad pinch or wheel paging.";
 "set.trackpad" = "Trackpad:";
-"set.trackpadNote" = "Pinch to zoom, double-tap with two fingers to switch between fit and 100%, drag to pan.";
+"set.trackpadNote" = "Swipe left or right with two fingers to change photos (left for the next one), pinch to zoom, double-tap with two fingers to switch between fit and 100%, drag to pan.";
 "sc.group.browse" = "Browse";
 "sc.group.view" = "View";
 "sc.group.file" = "File";
