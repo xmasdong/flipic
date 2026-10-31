@@ -1,4 +1,5 @@
 import CoreGraphics
+import IOSurface
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
@@ -22,12 +23,13 @@ final class ImageLoader {
     static let displayMaxPixel: CGFloat = 16384
 
     private init() {
-        // 内存天花板按物理内存取比例：预览 1/32（128~320MB）；全图只留当前与上一张
+        // 内存天花板按物理内存取比例：预览 1/48（96~320MB），全图 1/24（192~640MB），全图只留当前与上一张。
+        // 8GB 的 Mac 上约 170MB + 340MB，16GB 起才到上限
         let mem = Int(min(ProcessInfo.processInfo.physicalMemory, UInt64(Int.max)))
         previewCache.countLimit = 12
-        previewCache.totalCostLimit = min(max(mem / 32, 128 << 20), 320 << 20)
+        previewCache.totalCostLimit = min(max(mem / 48, 96 << 20), 320 << 20)
         fullCache.countLimit = 2
-        fullCache.totalCostLimit = min(max(mem / 12, 256 << 20), 640 << 20)
+        fullCache.totalCostLimit = min(max(mem / 24, 192 << 20), 640 << 20)
         thumbCache.countLimit = 800
         infoCache.countLimit = 4000
 
@@ -104,7 +106,8 @@ final class ImageLoader {
     /// 适配窗口用的快速预览图
     func preview(for url: URL, maxPixel: CGFloat) -> CGImage? {
         if let hit = cachedPreview(for: url, maxPixel: maxPixel) { return hit }
-        guard let img = Self.renderThumbnail(url: url, maxPixel: maxPixel) else { return nil }
+        guard let decoded = Self.renderThumbnail(url: url, maxPixel: maxPixel) else { return nil }
+        let img = Self.displayReady(decoded)
         previewCache.setObject(CGBox(image: img, px: CGFloat(max(img.width, img.height))),
                                forKey: url as NSURL, cost: pixelBytes(img))
         return img
@@ -133,10 +136,64 @@ final class ImageLoader {
     /// 全分辨率图（带 EXIF 方向校正），供放大查看；只在预览分辨率不够时才解码
     func fullImage(for url: URL) -> CGImage? {
         if let hit = fullCache.object(forKey: url as NSURL) { return hit.image }
-        guard let image = Self.decodedFull(url: url, maxPixel: Self.displayMaxPixel) else { return nil }
+        guard let decoded = Self.decodedFull(url: url, maxPixel: Self.displayMaxPixel) else { return nil }
+        let image = Self.displayReady(decoded)
         fullCache.setObject(CGBox(image: image, px: CGFloat(max(image.width, image.height))),
                             forKey: url as NSURL, cost: pixelBytes(image))
         return image
+    }
+
+    // MARK: - 上屏前准备
+
+    /// 后台把像素画进 IOSurface（显卡能直接读的内存），返回以同一块内存为底的 CGImage：
+    /// 主线程设图层时直接交 IOSurface，Core Animation 不必再把几十 MB 像素拷一遍上传，
+    /// 放大到 100% 换原图时的主线程卡顿主要就来自那次上传。像素只存一份，内存不增加
+    private static let surfaces = NSMapTable<AnyObject, IOSurface>.weakToStrongObjects()
+    private static let surfacesLock = NSLock()
+    private static let displaySpace = CGColorSpace(name: CGColorSpace.displayP3)!
+
+    static func displayReady(_ src: CGImage) -> CGImage {
+        let w = src.width, h = src.height
+        guard w > 0, h > 0,
+              let surface = IOSurface(properties: [
+                .width: w, .height: h, .bytesPerElement: 4,
+                .pixelFormat: UInt32(0x42475241),   // 'BGRA'
+              ]) else { return src }
+        surface.lock(options: [], seed: nil)
+        let bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        guard let ctx = CGContext(data: surface.baseAddress, width: w, height: h, bitsPerComponent: 8,
+                                  bytesPerRow: surface.bytesPerRow, space: displaySpace, bitmapInfo: bitmapInfo) else {
+            surface.unlock(options: [], seed: nil)
+            return src
+        }
+        ctx.interpolationQuality = .none
+        ctx.draw(src, in: CGRect(x: 0, y: 0, width: w, height: h))
+        surface.unlock(options: [], seed: nil)
+        IOSurfaceSetValue(surface, kIOSurfaceColorSpace, CGColorSpace.displayP3)
+        // CGImage 直接引用 IOSurface 的内存，数据提供者持有 surface，图在 surface 就在
+        let length = surface.bytesPerRow * h
+        let provider = CGDataProvider(dataInfo: Unmanaged.passRetained(surface).toOpaque(),
+                                      data: surface.baseAddress, size: length) { info, _, _ in
+            guard let info else { return }
+            Unmanaged<IOSurface>.fromOpaque(info).release()
+        }
+        guard let provider,
+              let image = CGImage(width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 32,
+                                  bytesPerRow: surface.bytesPerRow, space: displaySpace,
+                                  bitmapInfo: CGBitmapInfo(rawValue: bitmapInfo), provider: provider,
+                                  decode: nil, shouldInterpolate: true, intent: .defaultIntent) else { return src }
+        surfacesLock.lock()
+        surfaces.setObject(surface, forKey: image)
+        surfacesLock.unlock()
+        return image
+    }
+
+    /// 图层能直接用的 IOSurface；旋转过的图等没有准备过的返回 nil，照常交 CGImage
+    static func surface(for image: CGImage?) -> IOSurface? {
+        guard let image else { return nil }
+        surfacesLock.lock()
+        defer { surfacesLock.unlock() }
+        return surfaces.object(forKey: image)
     }
 
     /// 旋转 90° 的整数倍。quarterTurns 为正 = 顺时针（方向已经像素级测试验证）

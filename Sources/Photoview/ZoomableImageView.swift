@@ -98,7 +98,7 @@ final class ZoomableImageView: NSView {
         // 换图默认直接切换；只有在「显示 › 翻页渐变」打开时才保留图层自带的淡入淡出
         CATransaction.begin()
         CATransaction.setDisableActions(!(Self.fadeTransition && isNew))
-        imageLayer.contents = displayed
+        imageLayer.contents = ImageLoader.surface(for: displayed) ?? displayed
         CATransaction.commit()
         imageLayer.isHidden = (displayed == nil)
         // 换了新图一律适应窗口并居中；只有预览换原图（isNew = false）时保持当前缩放

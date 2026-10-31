@@ -42,10 +42,14 @@ enum BenchProbe {
         enabled = true
         var peak = 0.0
         var maxGap = 0.0
+        var phase = "open"
+        var phaseGap: [String: Double] = [:]
         var last = CFAbsoluteTimeGetCurrent()
         let sampler = Timer(timeInterval: 0.016, repeats: true) { _ in
             let now = CFAbsoluteTimeGetCurrent()
-            maxGap = max(maxGap, (now - last) * 1000)
+            let gap = (now - last) * 1000
+            maxGap = max(maxGap, gap)
+            phaseGap[phase] = max(phaseGap[phase] ?? 0, gap)
             last = now
             peak = max(peak, footprintMB())
         }
@@ -59,6 +63,7 @@ enum BenchProbe {
         var openMB = 0.0
         DispatchQueue.main.asyncAfter(deadline: .now() + t) { openMB = afterOpen() }
         // 快速连翻 40 次（120ms 一张，模拟按住方向键）
+        DispatchQueue.main.asyncAfter(deadline: .now() + t) { phase = "fast" }
         for _ in 0..<40 {
             t += 0.12
             DispatchQueue.main.asyncAfter(deadline: .now() + t) { navigated(); forward() }
@@ -67,6 +72,7 @@ enum BenchProbe {
         var fastMB = 0.0
         DispatchQueue.main.asyncAfter(deadline: .now() + t) { fastMB = footprintMB() }
         // 正常浏览 10 次（800ms 一张）
+        DispatchQueue.main.asyncAfter(deadline: .now() + t) { phase = "slow" }
         for _ in 0..<10 {
             t += 0.8
             DispatchQueue.main.asyncAfter(deadline: .now() + t) { navigated(); forward() }
@@ -77,12 +83,13 @@ enum BenchProbe {
         DispatchQueue.main.asyncAfter(deadline: .now() + t) {
             slowMB = footprintMB()
             slowLat = Array(latencies.suffix(10))
+            phase = "zoom"
             zoomActual()
         }
         // 放大到 1:1 后翻到下一张：应回到适应窗口并居中
         var navState = ""
         t += 2.0
-        DispatchQueue.main.asyncAfter(deadline: .now() + t) { print("BENCH zoomed: " + state()); forward() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + t) { print("BENCH zoomed: " + state()); phase = "navFromZoom"; forward() }
         t += 1.0
         DispatchQueue.main.asyncAfter(deadline: .now() + t) { navState = state(); print("BENCH afterNav: " + navState) }
         t += 1.0
@@ -96,6 +103,7 @@ enum BenchProbe {
                               openMB, fastMB, slowMB, zoomMB, peak, p(0.5), sorted.last ?? -1,
                               fast.count, latencies.first ?? -1, maxGap, cpuSeconds() - cpu0, fullWidth)
             print(line)
+            print("BENCH stallByPhase " + phaseGap.sorted { $0.key < $1.key }.map { "\($0.key)=\(Int($0.value))ms" }.joined(separator: " "))
             fflush(stdout)
             NSApp.terminate(nil)
         }
