@@ -327,3 +327,5 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.openPeek" = "Beim Öffnen eines Fotos:";
 "set.openPeekCheck" = "Fenster ans Foto anpassen (wie Leertaste)";
 "set.openPeekNote" = "Doppelklicken Sie im Finder auf ein Foto, nimmt das Fenster die Form des Fotos an; Leertaste oder Esc für das normale Fenster. Ordner öffnen weiterhin das normale Fenster.";
+"menu.newWindow" = "Neues Fenster";
+"set.newWindowCheck" = "In neuem Fenster öffnen, mehrere gleichzeitig möglich";

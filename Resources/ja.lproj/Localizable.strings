@@ -327,3 +327,5 @@ Return  表示中の画像を名称変更
 "set.openPeek" = "写真を開いたとき：";
 "set.openPeekCheck" = "ウインドウを写真の比率に合わせる（スペースと同じ）";
 "set.openPeekNote" = "Finder で写真をダブルクリックすると、ウインドウが写真の比率になります。スペースか Esc で通常のウインドウに戻ります。フォルダを開いたときは通常のウインドウです。";
+"menu.newWindow" = "新規ウインドウ";
+"set.newWindowCheck" = "新しいウインドウで開く（同時に複数開けます）";

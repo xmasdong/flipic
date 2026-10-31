@@ -257,8 +257,8 @@ enum Shortcuts {
         if c.keyCode == 53 { return true }   // Esc
         let m = c.modifiers
         if m == .command {
-            // ⌘Q ⌘W ⌘O ⌘H ⌘M ⌘, ⌘/ ⌘= ⌘- ⌘0 ⌘1
-            return [12, 13, 31, 4, 46, 43, 44, 24, 27, 29, 18].contains(c.keyCode)
+            // ⌘Q ⌘W ⌘O ⌘N ⌘H ⌘M ⌘, ⌘/ ⌘= ⌘- ⌘0 ⌘1
+            return [12, 13, 31, 45, 4, 46, 43, 44, 24, 27, 29, 18].contains(c.keyCode)
         }
         if m == [.command, .option] && c.keyCode == 4 { return true }   // ⌥⌘H
         if m == [.command, .control] && c.keyCode == 3 { return true }  // ⌃⌘F 全屏菜单

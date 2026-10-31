@@ -333,6 +333,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let fade = NSButton(checkboxWithTitle: L10n.t("menu.fadeTransition", "翻页渐变"), target: nil, action: nil)
     private let intervalPopup = NSPopUpButton()
     private let thumbPopup = NSPopUpButton()
+    private let newWindow = NSButton(checkboxWithTitle: L10n.t("set.newWindowCheck", "在新窗口里打开，可以同时开几个"), target: nil, action: nil)
     private let openPeek = NSButton(checkboxWithTitle: L10n.t("set.openPeekCheck", "窗口贴合照片比例（和按空格一样）"), target: nil, action: nil)
     private let slideFade = NSButton(checkboxWithTitle: L10n.t("set.slideFade", "切换时渐变"), target: nil, action: nil)
     private let fadePopup = NSPopUpButton()
@@ -373,6 +374,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         escCloses.target = self; escCloses.action = #selector(escChanged)
         ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
         openPeek.target = self; openPeek.action = #selector(openPeekChanged)
+        newWindow.target = self; newWindow.action = #selector(newWindowChanged)
         autoUpdate.target = self; autoUpdate.action = #selector(autoUpdateChanged)
         hdr.target = self; hdr.action = #selector(hdrChanged)
         let checkNow = pillButton(L10n.t("set.checkNow", "现在检查"), self, #selector(checkNow))
@@ -396,7 +398,8 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         let g = grid([
             [label(L10n.t("set.default", "默认看图：")), defaultRow],
             spacerRow(note(L10n.t("set.defaultNote", "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相机 RAW 双击都用 Flipic 打开。也可以在访达里右键一张图，按住 ⌥ 键，选「始终以此打开」› Flipic。"))),
-            [label(L10n.t("set.openPeek", "打开照片时：")), openPeek],
+            [label(L10n.t("set.openPeek", "打开照片时：")), newWindow],
+            [NSGridCell.emptyContentView, openPeek],
             spacerRow(note(L10n.t("set.openPeekNote", "从访达双击照片打开时，窗口直接收成照片的比例；按空格或 Esc 回到普通窗口。打开文件夹时还是普通窗口。"))),
             [label(L10n.t("set.sort", "排序方式：")), sortRow],
             [label(L10n.t("set.paging", "翻页：")), fade],
@@ -414,11 +417,11 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             spacerRow(note(L10n.t("set.updateNote", "Flipic 默认不联网。打开后每天最多查一次，只向官网请求最新版本号，不发送任何数据。"))),
         ])
         g.row(at: 1).topPadding = -4
-        g.row(at: 3).topPadding = -4
-        g.row(at: 11).topPadding = -4
-        g.row(at: 13).topPadding = -4
-        g.row(at: 15).topPadding = -4
-        g.row(at: 17).topPadding = -4
+        g.row(at: 4).topPadding = -4
+        g.row(at: 12).topPadding = -4
+        g.row(at: 14).topPadding = -4
+        g.row(at: 16).topPadding = -4
+        g.row(at: 18).topPadding = -4
         view = host(g)
         reload()
     }
@@ -433,6 +436,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
         thumbPopup.selectItem(withTag: Int(FilmstripView.thumbSize))
         openPeek.state = ViewerViewController.openInPeek ? .on : .off
+        newWindow.state = AppDelegate.openInNewWindow ? .on : .off
         slideFade.state = ViewerViewController.slideshowFade ? .on : .off
         autoUpdate.state = UpdateChecker.autoCheck ? .on : .off
         let hdrOK = ImageLoader.hdrSupported
@@ -503,6 +507,8 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         f.maximumFractionDigits = 1
         return f.string(from: NSNumber(value: v)) ?? "\(v)"
     }
+
+    @objc private func newWindowChanged() { AppDelegate.openInNewWindow = newWindow.state == .on }
 
     @objc private func openPeekChanged() { ViewerViewController.openInPeek = openPeek.state == .on }
 

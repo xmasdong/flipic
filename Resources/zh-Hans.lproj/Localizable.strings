@@ -339,3 +339,5 @@ Esc  先关掉右上角的照片信息
 "set.openPeek" = "打开照片时：";
 "set.openPeekCheck" = "窗口贴合照片比例（和按空格一样）";
 "set.openPeekNote" = "从访达双击照片打开时，窗口直接收成照片的比例；按空格或 Esc 回到普通窗口。打开文件夹时还是普通窗口。";
+"menu.newWindow" = "新建窗口";
+"set.newWindowCheck" = "在新窗口里打开，可以同时开几个";

@@ -44,6 +44,7 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 
 **Viewing**
 
+- Open several windows at once: opening another photo from Finder while one is showing starts a new window (Settings can switch back to replacing it), and File › New Window is ⌘N.
 - Page through every image in the folder with ← →, sorted by name, date taken, date modified, date created or file size. Your sort order is remembered.
 - Press Space for a Quick Look style preview: the window wraps itself to the photo's aspect ratio. Press Space again to go back. Turn on wrapping when opening a photo in Settings and photos opened from Finder start this way, with every photo you page to wrapped as well.
 - Rest the pointer on any detail and press 0 to zoom to 100% right there; press 0 again to go back. Swipe left or right with two fingers on the trackpad to change photos (left for the next one). Pinch to zoom on the trackpad; double-click also toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.

@@ -327,3 +327,5 @@ Açmak için klasör veya resim sürükleyin";
 "set.openPeek" = "Fotoğraf açılınca:";
 "set.openPeekCheck" = "Pencereyi fotoğrafa uydur (Boşluk gibi)";
 "set.openPeekNote" = "Finder'da bir fotoğrafa çift tıklayınca pencere fotoğrafın oranını alır; normal pencere için Boşluk veya Esc'e basın. Klasörler normal pencerede açılır.";
+"menu.newWindow" = "Yeni Pencere";
+"set.newWindowCheck" = "Yeni pencerede aç, aynı anda birkaç tane açılabilir";

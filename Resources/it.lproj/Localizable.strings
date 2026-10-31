@@ -327,3 +327,5 @@ Trascina una cartella o un'immagine per aprire";
 "set.openPeek" = "Quando apri una foto:";
 "set.openPeekCheck" = "Adatta la finestra alla foto (come Spazio)";
 "set.openPeekNote" = "Con un doppio clic su una foto nel Finder la finestra prende la forma della foto; Spazio o Esc per la finestra normale. Le cartelle si aprono nella finestra normale.";
+"menu.newWindow" = "Nuova finestra";
+"set.newWindowCheck" = "Apri in una nuova finestra, anche più di una";

@@ -561,6 +561,9 @@ final class ViewerViewController: NSViewController {
     /// 这次贴合预览是打开照片时自动进的：开着「按 Esc 关闭窗口」时，Esc 直接关窗口
     private var peekFromOpen = false
 
+    var isEmpty: Bool { folder.count == 0 }
+    var debugFilmstripHeight: CGFloat { filmstrip.frame.height }
+
     func open(url: URL) {
         prefetchedURLs.removeAll()
         decodeQueue.cancelAllOperations()
@@ -605,6 +608,8 @@ final class ViewerViewController: NSViewController {
         fullRequested = false
         guard let item = folder.current else { return }
         let url = item.url
+        // 「窗口」菜单里按文件名区分多个窗口（标题栏本身是隐藏的）
+        view.window?.title = url.lastPathComponent
         decodeQueue.cancelAllOperations()
         updateSmartCache()
         updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)

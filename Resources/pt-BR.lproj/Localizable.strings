@@ -327,3 +327,5 @@ Arraste uma pasta ou imagem para abrir";
 "set.openPeek" = "Ao abrir uma foto:";
 "set.openPeekCheck" = "Ajustar a janela à foto (como Espaço)";
 "set.openPeekNote" = "Ao clicar duas vezes numa foto no Finder, a janela assume a forma da foto; Espaço ou Esc volta à janela normal. Pastas abrem na janela normal.";
+"menu.newWindow" = "Nova Janela";
+"set.newWindowCheck" = "Abrir em nova janela, várias ao mesmo tempo";

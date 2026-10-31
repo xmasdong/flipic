@@ -327,3 +327,5 @@ Return  重新命名目前圖片
 "set.openPeek" = "打開照片時：";
 "set.openPeekCheck" = "視窗貼合照片比例（和按空白鍵一樣）";
 "set.openPeekNote" = "從 Finder 按兩下照片打開時，視窗直接收成照片的比例；按空白鍵或 Esc 回到一般視窗。打開資料夾時還是一般視窗。";
+"menu.newWindow" = "新增視窗";
+"set.newWindowCheck" = "在新視窗裡打開，可以同時開好幾個";

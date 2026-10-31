@@ -327,3 +327,5 @@ Arrastra una carpeta o imagen para abrir";
 "set.openPeek" = "Al abrir una foto:";
 "set.openPeekCheck" = "Ajustar la ventana a la foto (como Espacio)";
 "set.openPeekNote" = "Al hacer doble clic en una foto en el Finder, la ventana toma la forma de la foto; pulsa Espacio o Esc para la ventana normal. Las carpetas se abren en la ventana normal.";
+"menu.newWindow" = "Nueva ventana";
+"set.newWindowCheck" = "Abrir en una ventana nueva, varias a la vez";

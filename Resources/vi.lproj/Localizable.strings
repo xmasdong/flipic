@@ -327,3 +327,5 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.openPeek" = "Khi mở ảnh:";
 "set.openPeekCheck" = "Khớp cửa sổ theo tỷ lệ ảnh (giống phím cách)";
 "set.openPeekNote" = "Bấm đúp ảnh trong Finder thì cửa sổ thu theo tỷ lệ ảnh; nhấn phím cách hoặc Esc để về cửa sổ thường. Mở thư mục vẫn dùng cửa sổ thường.";
+"menu.newWindow" = "Cửa sổ mới";
+"set.newWindowCheck" = "Mở trong cửa sổ mới, mở được nhiều cái cùng lúc";

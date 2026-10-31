@@ -1,7 +1,52 @@
 import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    /// 最近一个在前面的看图窗口（测试入口和只需要一个窗口的地方用它）
     var windowController: ViewerWindowController!
+    /// 所有打开着的看图窗口；关掉的从这里移除
+    private var controllers: [ViewerWindowController] = []
+
+    /// 从访达打开照片时开新窗口（可以同时开几个），关掉就换掉当前窗口的内容；默认开
+    static var openInNewWindow: Bool {
+        get { !UserDefaults.standard.bool(forKey: "openInSameWindow") }
+        set { UserDefaults.standard.set(!newValue, forKey: "openInSameWindow") }
+    }
+
+    /// 当前在前面的看图窗口
+    private var activeController: ViewerWindowController? {
+        (NSApp.keyWindow?.windowController as? ViewerWindowController)
+            ?? (NSApp.mainWindow?.windowController as? ViewerWindowController)
+            ?? windowController
+    }
+
+    var activeViewer: ViewerViewController? { activeController?.contentViewController as? ViewerViewController }
+
+    /// 新开一个看图窗口：从当前窗口错开一点叠在上面，第一个窗口沿用记住的位置
+    @discardableResult
+    func newViewerWindow() -> ViewerWindowController {
+        let wc = ViewerWindowController()
+        if let ref = activeController?.window, ref.isVisible, let w = wc.window {
+            w.setFrame(ref.frame, display: false)
+            w.setFrameTopLeftPoint(w.cascadeTopLeft(from: NSPoint(x: ref.frame.minX, y: ref.frame.maxY)))
+        }
+        controllers.append(wc)
+        NotificationCenter.default.addObserver(self, selector: #selector(viewerWindowWillClose(_:)),
+                                               name: NSWindow.willCloseNotification, object: wc.window)
+        wc.showWindow(nil)
+        windowController = wc
+        return wc
+    }
+
+    @objc private func viewerWindowWillClose(_ note: Notification) {
+        guard let w = note.object as? NSWindow else { return }
+        NotificationCenter.default.removeObserver(self, name: NSWindow.willCloseNotification, object: w)
+        controllers.removeAll { $0.window === w }
+        if windowController?.window === w { windowController = controllers.last }
+    }
+
+    @objc func newWindowAction(_ sender: Any?) {
+        newViewerWindow().openFolderPanel()
+    }
     private var pendingURL: URL?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -40,6 +85,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     NSLog("PEEKOPEN after Space: %@", vc?.debugPeekState ?? "-")
                     NSApp.terminate(nil)
                 }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--multiwintest"), i + 1 < CommandLine.arguments.count {
+            // --multiwintest <文件...>：模拟从访达逐个打开、一次打开多张、关掉一个、改设置、关掉开关后替换
+            let files = CommandLine.arguments[(i + 1)...].filter { !$0.hasPrefix("-") && !$0.hasPrefix("(") }.map { URL(fileURLWithPath: $0) }
+            buildMenu()
+            newViewerWindow()
+            let saved = UserDefaults.standard.object(forKey: "openInSameWindow")
+            let savedThumb = UserDefaults.standard.object(forKey: "thumbSize")
+            AppDelegate.openInNewWindow = true
+            func report(_ tag: String) {
+                let ws = controllers.compactMap { $0.window }.filter { $0.isVisible }
+                NSLog("MULTI %@ windows=%d titles=[%@]", tag, ws.count, ws.map { $0.title }.joined(separator: " | "))
+            }
+            var t = 0.0
+            func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+            at(1.0) { self.application(NSApp, open: [files[0]]); }
+            at(1.0) { report("1-open first (expect 1, reuses empty window)") }
+            at(0.2) { self.application(NSApp, open: [files[1]]) }
+            at(1.0) { report("2-open second (expect 2)") }
+            at(0.2) { self.application(NSApp, open: Array(files[2...])) }
+            at(1.5) { report("3-open several at once (expect 2 + rest)") }
+            at(0.2) { self.controllers.first?.window?.performClose(nil) }
+            at(0.6) { report("4-closed one (expect one fewer)") }
+            at(0.2) { FilmstripView.thumbSize = 96; SettingsWindowController.notify("thumbs") }
+            at(0.8) {
+                let heights = self.controllers.compactMap { ($0.contentViewController as? ViewerViewController)?.debugFilmstripHeight }
+                NSLog("MULTI 5-thumb size 96 in every window: heights=%@", heights.map { "\(Int($0))" }.joined(separator: ","))
+            }
+            at(0.2) { AppDelegate.openInNewWindow = false; self.application(NSApp, open: [files[0]]) }
+            at(1.0) { report("6-setting off: open replaces (expect same count)") }
+            at(0.3) {
+                if let saved { UserDefaults.standard.set(saved, forKey: "openInSameWindow") } else { UserDefaults.standard.removeObject(forKey: "openInSameWindow") }
+                if let savedThumb { UserDefaults.standard.set(savedThumb, forKey: "thumbSize") } else { UserDefaults.standard.removeObject(forKey: "thumbSize") }
+                NSApp.terminate(nil)
             }
             return
         }
@@ -98,8 +179,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         buildMenu()
-        windowController = ViewerWindowController()
-        windowController.showWindow(nil)
+        newViewerWindow()
         NSApp.activate(ignoringOtherApps: true)
 
         if let i = CommandLine.arguments.firstIndex(of: "--xhs-shots"), i + 2 < CommandLine.arguments.count {
@@ -371,19 +451,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    /// 从访达打开：空窗口直接用；已经在看照片时开新窗口（选中几张一起打开就是几个窗口，太多只开第一张）
     func application(_ application: NSApplication, open urls: [URL]) {
-        guard let url = urls.first else { return }
-        if let wc = windowController {
-            wc.showWindow(nil)
-            wc.open(url)
-        } else {
-            pendingURL = url
+        guard let first = urls.first else { return }
+        guard windowController != nil else {
+            pendingURL = first
+            return
+        }
+        let batch = urls.count <= 6 ? urls : [first]
+        for url in batch {
+            if let wc = activeController, (wc.contentViewController as? ViewerViewController)?.isEmpty ?? true {
+                wc.showWindow(nil)
+                wc.open(url)
+            } else if Self.openInNewWindow {
+                newViewerWindow().open(url)
+            } else {
+                activeController?.showWindow(nil)
+                activeController?.open(url)
+            }
         }
     }
 
     /// 「打开方式」子菜单每次展开时按当前照片现列可用的软件
     func menuNeedsUpdate(_ menu: NSMenu) {
-        (windowController?.contentViewController as? ViewerViewController)?.populateOpenWithMenu(menu)
+        activeViewer?.populateOpenWithMenu(menu)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
@@ -419,7 +510,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func scheduleAutoUpdateCheck() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
             UpdateChecker.checkIfDue { release in
-                (self?.windowController?.contentViewController as? ViewerViewController)?.showUpdateBanner(release)
+                self?.activeViewer?.showUpdateBanner(release)
             }
         }
     }
@@ -447,11 +538,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// 全局快捷键：Flipic 在最前面就收起来（回到刚才的软件），否则叫到最前面
     func toggleAppVisibility() {
-        if NSApp.isActive && !NSApp.isHidden, windowController?.window?.isVisible == true {
+        if NSApp.isActive && !NSApp.isHidden, controllers.contains(where: { $0.window?.isVisible == true }) {
             NSApp.hide(nil)
         } else {
             NSApp.unhide(nil)
-            windowController?.showWindow(nil)
+            if let wc = activeController { wc.showWindow(nil) } else { newViewerWindow() }
             NSApp.activate(ignoringOtherApps: true)
         }
     }
@@ -508,6 +599,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.quit", "退出 Flipic"), #selector(NSApplication.terminate(_:)), "q")
         }
         addMenu(L10n.t("menu.file", "文件")) { m in
+            item(m, L10n.t("menu.newWindow", "新建窗口"), #selector(AppDelegate.newWindowAction(_:)), "n").target = self
             item(m, L10n.t("menu.open", "打开…"), #selector(ViewerViewController.openFolderPanel(_:)), "o")
             item(m, L10n.t("menu.reveal", "在 Finder 中显示"), #selector(ViewerViewController.revealInFinder(_:)))
             m.addItem(.separator())

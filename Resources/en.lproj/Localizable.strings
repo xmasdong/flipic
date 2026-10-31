@@ -339,3 +339,5 @@ Drop a folder or image to open";
 "set.openPeek" = "When opening a photo:";
 "set.openPeekCheck" = "Wrap the window to the photo (like Space)";
 "set.openPeekNote" = "Double-click a photo in Finder and the window takes the photo's shape; press Space or Esc for the regular window. Opening a folder still uses the regular window.";
+"menu.newWindow" = "New Window";
+"set.newWindowCheck" = "Open in a new window, so several can be open at once";

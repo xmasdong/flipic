@@ -327,3 +327,5 @@ Déposez un dossier ou une image pour ouvrir";
 "set.openPeek" = "À l’ouverture d’une photo :";
 "set.openPeekCheck" = "Ajuster la fenêtre à la photo (comme Espace)";
 "set.openPeekNote" = "Un double-clic sur une photo dans le Finder donne à la fenêtre la forme de la photo ; Espace ou Échap pour la fenêtre normale. Un dossier s’ouvre toujours dans la fenêtre normale.";
+"menu.newWindow" = "Nouvelle fenêtre";
+"set.newWindowCheck" = "Ouvrir dans une nouvelle fenêtre (plusieurs à la fois)";
