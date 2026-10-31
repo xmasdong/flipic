@@ -21,6 +21,68 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in self?.windowController?.runXhsShots(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--ratingshot"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runRatingShot(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--ratingtest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runRatingTest() }
+            }
+        } else if CommandLine.arguments.contains("--defaulttest") {
+            // 设为默认看图：改之前、改之后各记一次，最后把这些格式改回「预览」
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                NSLog("DEFAULT before isDefault=%d current=%@", DefaultViewer.isDefault ? 1 : 0, DefaultViewer.currentName)
+                DefaultViewer.make {
+                    let flipic = DefaultViewer.types.filter(DefaultViewer.isFlipic).count
+                    NSLog("DEFAULT after isDefault=%d types=%d/%d", DefaultViewer.isDefault ? 1 : 0, flipic, DefaultViewer.types.count)
+                    let preview = URL(fileURLWithPath: "/System/Applications/Preview.app")
+                    let g = DispatchGroup()
+                    for t in DefaultViewer.types { g.enter(); NSWorkspace.shared.setDefaultApplication(at: preview, toOpen: t) { _ in g.leave() } }
+                    g.notify(queue: .main) {
+                        NSLog("DEFAULT restored current=%@", DefaultViewer.currentName)
+                        NSApp.terminate(nil)
+                    }
+                }
+            }
+        } else if CommandLine.arguments.contains("--hotkeytest") {
+            // 全局快捷键：从系统层面发两次 ⌃⌥⌘P，第一次应收起，第二次应回到最前面
+            let saved = Shortcuts.combo(for: .toggleApp)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                Shortcuts.set(KeyCombo(keyCode: 35, mods: [.control, .option, .command], chars: "p"), for: .toggleApp)
+                NSLog("HOTKEY registered=%d active=%d hidden=%d", HotKey.isRegistered ? 1 : 0, NSApp.isActive ? 1 : 0, NSApp.isHidden ? 1 : 0)
+                func post() {
+                    for down in [true, false] {
+                        let e = CGEvent(keyboardEventSource: nil, virtualKey: 35, keyDown: down)
+                        e?.flags = [.maskControl, .maskAlternate, .maskCommand]
+                        e?.post(tap: .cghidEventTap)
+                    }
+                }
+                post()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    NSLog("HOTKEY after 1st press active=%d hidden=%d", NSApp.isActive ? 1 : 0, NSApp.isHidden ? 1 : 0)
+                    post()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        NSLog("HOTKEY after 2nd press active=%d hidden=%d windowVisible=%d", NSApp.isActive ? 1 : 0, NSApp.isHidden ? 1 : 0,
+                              self.windowController?.window?.isVisible == true ? 1 : 0)
+                        Shortcuts.set(saved, for: .toggleApp)
+                        NSLog("HOTKEY restored registered=%d", HotKey.isRegistered ? 1 : 0)
+                        NSApp.terminate(nil)
+                    }
+                }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--settingstest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runSettingsTest(outDir: outDir) }
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--esctest"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -142,6 +204,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // MARK: - 菜单栏
 
+    /// 可自定义快捷键对应的菜单项
+    private static let shortcutMenuActions: [Selector: ShortcutAction] = [
+        #selector(ViewerViewController.navigateBackward(_:)): .prev,
+        #selector(ViewerViewController.navigateForward(_:)): .next,
+        #selector(ViewerViewController.goFirst(_:)): .first,
+        #selector(ViewerViewController.goLast(_:)): .last,
+        #selector(ViewerViewController.rotateCW(_:)): .rotateCW,
+        #selector(ViewerViewController.rotateCCW(_:)): .rotateCCW,
+        #selector(ViewerViewController.toggleInfoPanel(_:)): .info,
+        #selector(ViewerViewController.toggleFilmstrip(_:)): .filmstrip,
+        #selector(ViewerViewController.toggleSlideshow(_:)): .slideshow,
+        #selector(ViewerViewController.revealInFinder(_:)): .reveal,
+        #selector(ViewerViewController.openInEditor(_:)): .edit,
+        #selector(ViewerViewController.renameCurrent(_:)): .rename,
+        #selector(ViewerViewController.saveRotation(_:)): .saveRotation,
+        #selector(ViewerViewController.exportAs(_:)): .exportAs,
+        #selector(ViewerViewController.trashCurrent(_:)): .trash,
+        #selector(ViewerViewController.batchConvert(_:)): .batchConvert,
+        #selector(ViewerViewController.batchRename(_:)): .batchRename,
+        #selector(ViewerViewController.toggleCleanup(_:)): .cleanup,
+        #selector(ViewerViewController.setWallpaper(_:)): .wallpaper,
+    ]
+
+    /// 全局快捷键：Flipic 在最前面就收起来（回到刚才的软件），否则叫到最前面
+    func toggleAppVisibility() {
+        if NSApp.isActive && !NSApp.isHidden, windowController?.window?.isVisible == true {
+            NSApp.hide(nil)
+        } else {
+            NSApp.unhide(nil)
+            windowController?.showWindow(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
+    /// 带 ⌘ / ⌥ / ⌃ 的自定义快捷键挂到菜单项上；单键由看图界面自己处理，菜单上不显示
+    @objc private func applyShortcuts() {
+        HotKey.update()
+        func walk(_ menu: NSMenu) {
+            for it in menu.items {
+                if let sub = it.submenu { walk(sub) }
+                guard let sel = it.action, let action = Self.shortcutMenuActions[sel] else { continue }
+                if let c = Shortcuts.combo(for: action), c.isMenuCombo {
+                    it.keyEquivalent = c.menuKey
+                    it.keyEquivalentModifierMask = c.modifiers
+                } else {
+                    it.keyEquivalent = ""
+                    it.keyEquivalentModifierMask = []
+                }
+            }
+        }
+        if let main = NSApp.mainMenu { walk(main) }
+    }
+
     private func buildMenu() {
         let main = NSMenu()
 
@@ -164,6 +279,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         addMenu(L10n.t("menu.about", "关于 Flipic")) { m in
             item(m, L10n.t("menu.about", "关于 Flipic"), #selector(ViewerViewController.showAbout(_:)))
             m.addItem(.separator())
+            item(m, L10n.t("menu.settings", "设置…"), #selector(ViewerViewController.showSettings(_:)), ",")
+            m.addItem(.separator())
             item(m, L10n.t("menu.hide", "隐藏 Flipic"), #selector(NSApplication.hide(_:)), "h")
             let hideOthers = item(m, L10n.t("menu.hideOthers", "隐藏其他"), #selector(NSApplication.hideOtherApplications(_:)), "h")
             hideOthers.keyEquivalentModifierMask = [.command, .option]
@@ -173,22 +290,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         addMenu(L10n.t("menu.file", "文件")) { m in
             item(m, L10n.t("menu.open", "打开…"), #selector(ViewerViewController.openFolderPanel(_:)), "o")
-            item(m, L10n.t("menu.reveal", "在 Finder 中显示"), #selector(ViewerViewController.revealInFinder(_:)), "r")
+            item(m, L10n.t("menu.reveal", "在 Finder 中显示"), #selector(ViewerViewController.revealInFinder(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.editChoose", "在后期软件中编辑…"), #selector(ViewerViewController.openInEditor(_:)), "e")
+            item(m, L10n.t("menu.editChoose", "在后期软件中编辑…"), #selector(ViewerViewController.openInEditor(_:)))
             let openWith = NSMenuItem(title: L10n.t("menu.openWith", "打开方式"), action: nil, keyEquivalent: "")
             let openWithMenu = NSMenu(title: openWith.title)
             openWithMenu.delegate = self
             openWith.submenu = openWithMenu
             m.addItem(openWith)
-            item(m, L10n.t("menu.setEditor", "设置后期软件…"), #selector(ViewerViewController.chooseEditor(_:)))
+            let ratingItem = NSMenuItem(title: L10n.t("menu.rating", "评分"), action: nil, keyEquivalent: "")
+            let ratingMenu = NSMenu(title: ratingItem.title)
+            for n in stride(from: 5, through: 1, by: -1) {
+                item(ratingMenu, Rating.stars(n), #selector(ViewerViewController.setRatingMenu(_:))).tag = n
+            }
+            ratingMenu.addItem(.separator())
+            item(ratingMenu, L10n.t("rating.none", "未评分"), #selector(ViewerViewController.setRatingMenu(_:))).tag = 0
+            ratingItem.submenu = ratingMenu
+            m.addItem(ratingItem)
             m.addItem(.separator())
-            item(m, L10n.t("menu.rename", "重命名…"), #selector(ViewerViewController.renameCurrent(_:)), "\r")
-            item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)), "S", [.command, .option])
+            item(m, L10n.t("menu.rename", "重命名…"), #selector(ViewerViewController.renameCurrent(_:)))
+            item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.exportAs", "导出为…"), #selector(ViewerViewController.exportAs(_:)), "s")
+            item(m, L10n.t("menu.exportAs", "导出为…"), #selector(ViewerViewController.exportAs(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)), "\u{8}")
+            item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.close", "关闭窗口"), #selector(NSWindow.performClose(_:)), "w")
         }
@@ -205,15 +330,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.info", "照片信息"), #selector(ViewerViewController.toggleInfoPanel(_:)))
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
             item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
-            item(m, L10n.t("menu.fadeTransition", "翻页渐变"), #selector(ViewerViewController.toggleFadeTransition(_:)))
-            item(m, L10n.t("menu.escCloses", "按 Esc 关闭窗口"), #selector(ViewerViewController.toggleEscCloses(_:)))
-            let intervalItem = NSMenuItem(title: L10n.t("menu.slideInterval", "幻灯片间隔"), action: nil, keyEquivalent: "")
-            let intervalMenu = NSMenu(title: intervalItem.title)
-            for sec in ViewerViewController.slideshowIntervals {
-                item(intervalMenu, L10n.f("slide.seconds", "%d 秒", sec), #selector(ViewerViewController.setSlideshowInterval(_:))).tag = sec
-            }
-            intervalItem.submenu = intervalMenu
-            m.addItem(intervalItem)
             m.addItem(.separator())
             let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")
             let sortMenu = NSMenu(title: sortItem.title)
@@ -224,12 +340,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(sortMenu, L10n.t("sort.descending", "倒序"), #selector(ViewerViewController.toggleSortReversed(_:)))
             sortItem.submenu = sortMenu
             m.addItem(sortItem)
-            let wheelItem = NSMenuItem(title: L10n.t("menu.wheel", "鼠标滚轮"), action: nil, keyEquivalent: "")
-            let wheelMenu = NSMenu(title: wheelItem.title)
-            item(wheelMenu, L10n.t("wheel.zoom", "缩放图片"), #selector(ViewerViewController.setWheelAction(_:))).tag = 0
-            item(wheelMenu, L10n.t("wheel.navigate", "切换上一张 / 下一张"), #selector(ViewerViewController.setWheelAction(_:))).tag = 1
-            wheelItem.submenu = wheelMenu
-            m.addItem(wheelItem)
             m.addItem(.separator())
             item(m, L10n.t("menu.fullscreen", "进入全屏"), #selector(NSWindow.toggleFullScreen(_:)), "f", [.control, .command])
         }
@@ -241,12 +351,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.last", "最后一张"), #selector(ViewerViewController.goLast(_:)))
         }
         addMenu(L10n.t("menu.tools", "工具")) { m in
-            item(m, L10n.t("menu.batchConvert", "批量转换格式…"), #selector(ViewerViewController.batchConvert(_:)), "c", [.command, .shift])
-            item(m, L10n.t("menu.batchRename", "批量重命名…"), #selector(ViewerViewController.batchRename(_:)), "b", [.command, .shift])
+            item(m, L10n.t("menu.batchConvert", "批量转换格式…"), #selector(ViewerViewController.batchConvert(_:)))
+            item(m, L10n.t("menu.batchRename", "批量重命名…"), #selector(ViewerViewController.batchRename(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.cleanup", "清理模式 Beta"), #selector(ViewerViewController.toggleCleanup(_:)), "k", [.command, .shift])
+            item(m, L10n.t("menu.cleanup", "清理模式 Beta"), #selector(ViewerViewController.toggleCleanup(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.wallpaper", "设为桌面壁纸"), #selector(ViewerViewController.setWallpaper(_:)), "d", [.command, .shift])
+            item(m, L10n.t("menu.wallpaper", "设为桌面壁纸"), #selector(ViewerViewController.setWallpaper(_:)))
         }
         addMenu(L10n.t("menu.window", "窗口")) { m in
             item(m, L10n.t("menu.miniaturize", "最小化"), #selector(NSWindow.performMiniaturize(_:)), "m")
@@ -264,6 +374,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         helpItem.submenu = helpMenu
 
         NSApp.mainMenu = main
+        applyShortcuts()
+        NotificationCenter.default.addObserver(self, selector: #selector(applyShortcuts),
+                                               name: Shortcuts.didChange, object: nil)
+        HotKey.onPress = { [weak self] in self?.toggleAppVisibility() }
         NSApp.windowsMenu = main.item(at: 5)?.submenu
         NSApp.helpMenu = helpMenu
     }

@@ -26,7 +26,7 @@
 
 ![Flipic browsing a folder](docs/screenshot-browse.jpg)
 
-Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 1.5 MB, the app makes no network connections, and there is no account to create.
+Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 1.8 MB, the app makes no network connections, and there is no account to create.
 
 ## Install
 
@@ -36,9 +36,9 @@ Open a single image in Preview and that is all you get: to see the next one, you
 
 Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Older versions are on the [Releases](https://github.com/xmasdong/macphoto/releases) page.
 
-To make Flipic your default viewer: in Finder, select an image, choose File › Get Info, pick Flipic under "Open with" and click "Change All". Repeat once for each format you use (JPEG, PNG, HEIC and so on).
+To make Flipic your default viewer, open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go. You can also Control-click an image in Finder, hold ⌥ and choose Always Open With › Flipic.
 
-Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, page with the arrow keys, and press Esc to close (turn on View › Esc Closes Window first). The Space key in Finder belongs to the system's Quick Look and can't be taken over by another app.
+Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, page with the arrow keys, and press Esc to close (turn on Esc Closes Window in Settings first). The Space key in Finder belongs to the system's Quick Look and can't be taken over by another app.
 
 ## Features
 
@@ -47,9 +47,13 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 - Page through every image in the folder with ← →, sorted by name, date taken, date modified, date created or file size. Your sort order is remembered.
 - Press Space for a Quick Look style preview: the window wraps itself to the photo's aspect ratio. Press Space again to go back.
 - Rest the pointer on any detail and press 0 to zoom to 100% right there; press 0 again to go back. Pinch to zoom on the trackpad; double-click also toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.
-- Photos switch instantly when you page; if you like a crossfade, turn on View › Fade Between Photos.
-- The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, switch View › Scroll Wheel to Previous / Next Photo; ⌘ + scroll then zooms.
+- Photos switch instantly when you page; if you like a crossfade, turn on Fade Between Photos in Settings.
+- The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, change it in Settings; ⌘ + scroll then zooms. If you reversed your wheel with a tool like Mos, you can reverse the zoom direction too.
 - Nothing but the photo by default. Press I for camera, lens, shutter speed, aperture, ISO, date taken, size and color profile; Esc closes it.
+
+**Star ratings**
+
+Press 1 to 5 to give a photo one to five stars; the Rating submenu in the right-click menu has No Rating to clear it. Rated photos show their stars at the bottom center of the window. Ratings are written as standard XMP: into the file itself for JPEG, HEIC and TIFF (metadata only, no recompression), and into a same-name .xmp sidecar for proprietary RAW formats such as Sony, Canon and Nikon, so the RAW file is never touched. Lightroom, Bridge and Capture One read them. A RAW and the JPEG with the same name are rated together.
 
 **Culling (Cleanup Mode, Beta)**
 
@@ -64,12 +68,18 @@ Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. 
 - Convert a whole folder to JPEG, PNG or HEIC; converted files go into a subfolder and the originals stay untouched
 - Batch rename
 - Rotate and save back to the file; for JPEG and HEIC only the orientation tag changes, so there is no quality loss
-- Slideshow with 1, 2, 3, 5 or 10 seconds per photo (View › Slideshow Interval)
+- Slideshow with 1, 2, 3, 5 or 10 seconds per photo (set in Settings)
 - Export compressed copies, set as desktop picture, move to Trash
 
 **Hand off to your editor**
 
-Pick Photoshop, Lightroom, Capture One or any other app in File › Set Photo Editor, then press ⌘E to open the current photo in it. If a RAW file with the same name sits next to the JPEG, the RAW is what gets opened. File › Open With and the right-click menu let you pick a different app on the fly.
+Pick Photoshop, Lightroom, Capture One or any other app in Settings, then press ⌘E to open the current photo in it. If a RAW file with the same name sits next to the JPEG, the RAW is what gets opened. File › Open With and the right-click menu let you pick a different app on the fly.
+
+To jump between your editor and Flipic, record a global shortcut in Settings › Shortcuts: press it in any app to bring Flipic to the front, and again to hide it.
+
+**Settings and shortcuts**
+
+Every setting lives in one window (⌘,): sorting, crossfade, slideshow interval, Esc behavior, photo editor, scroll wheel and default viewer. Every shortcut can be changed there, and combinations with ⌘ show up in the menus.
 
 **Formats and languages**
 
@@ -84,8 +94,9 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and
 | Space | Preview fitted to the photo; press again to exit |
 | 0 | Zoom to 100% at the pointer; press again to fit |
 | Double-click | Fit to window / 100% |
+| 1–5 | Rate one to five stars |
 | I | Photo info panel (Esc also closes it) |
-| Esc | Back to fit; with View › Esc Closes Window on, closes the window when fitted |
+| Esc | Back to fit; with Esc Closes Window on in Settings, closes the window when fitted |
 | T | Thumbnail strip |
 | R / L | Rotate right / left |
 | S | Slideshow |
@@ -95,10 +106,11 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and
 | ⌘E | Edit in your photo editor |
 | ⇧⌘K | Cleanup Mode |
 | ⇧⌘C / ⇧⌘B | Batch convert / batch rename |
+| ⌘, | Settings (change any shortcut here) |
 
 ## Privacy
 
-Flipic makes no network connections, has no account and collects no data. It only reads the images you open. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. All the code is in this repository, so you can check for yourself.
+Flipic makes no network connections, has no account and collects no data. It only reads the images you open. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. Only when you rate a photo does Flipic write the rating into its metadata or a same-name .xmp file. All the code is in this repository, so you can check for yourself.
 
 ## Building from source
 
@@ -129,6 +141,10 @@ Sources/Photoview/
   CleanupScanner.swift         Per-photo analysis for Cleanup Mode: sharpness, faces and eyes, feature prints, hashes
   CleanupResult.swift          Grouping, suggested keepers and default selection
   CleanupController.swift      Cleanup Mode interface
+  SettingsWindowController.swift  Settings window
+  Shortcuts.swift              Customizable shortcuts
+  HotKey.swift                 Global shortcut to show / hide Flipic
+  Rating.swift                 Star ratings (XMP)
 Resources/                     Info.plist, icon, strings for 14 languages
 docs/                          Website (GitHub Pages)
 scripts/                       Release packaging and test image generators

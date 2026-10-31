@@ -30,6 +30,9 @@ final class ViewerWindowController: NSWindowController {
     func runZoomFadeTest() { viewerVC?.runZoomFadeTest() }
     func runHUDTest(outDir: String) { viewerVC?.runHUDTest(outDir: outDir) }
     func runEscTest() { viewerVC?.runEscTest() }
+    func runRatingTest() { viewerVC?.runRatingTest() }
+    func runRatingShot(outDir: String) { viewerVC?.runRatingShot(outDir: outDir) }
+    func runSettingsTest(outDir: String) { viewerVC?.runSettingsTest(outDir: outDir) }
     func runXhsShots(outDir: String) { viewerVC?.runXhsShots(outDir: outDir) }
     func runSlideAndEditorTest(appPath: String) { viewerVC?.runSlideAndEditorTest(appPath: appPath) }
 

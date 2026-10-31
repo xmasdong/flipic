@@ -17,6 +17,8 @@ final class ZoomableImageView: NSView {
     var onEscape: (() -> Void)?
     var onSlideshow: (() -> Void)?
     var onRename: (() -> Void)?
+    /// 其余自定义快捷键交给看图界面处理
+    var onCommand: ((ShortcutAction) -> Void)?
     var onActivity: (() -> Void)?
     var onFirstFrame: ((CGSize) -> Void)?
     /// 放大到当前图层图片分辨率不够用时触发一次（每张图最多一次），由上层去解码全分辨率图
@@ -314,6 +316,11 @@ final class ZoomableImageView: NSView {
         get { UserDefaults.standard.bool(forKey: "wheelNavigates") }
         set { UserDefaults.standard.set(newValue, forKey: "wheelNavigates") }
     }
+    /// 滚轮缩放方向反转（用 Mos 之类工具改过滚轮方向的用户需要）
+    static var wheelZoomInverted: Bool {
+        get { UserDefaults.standard.bool(forKey: "wheelZoomInverted") }
+        set { UserDefaults.standard.set(newValue, forKey: "wheelZoomInverted") }
+    }
     private var wheelAccum: CGFloat = 0
     private var wheelFlippedInGesture = false
     private var lastWheelFlip = Date.distantPast
@@ -350,8 +357,9 @@ final class ZoomableImageView: NSView {
         if event.momentumPhase.isEmpty {
             gestureAnchor = convert(event.locationInWindow, from: nil)
         }
-        let dy = event.scrollingDeltaY
+        var dy = event.scrollingDeltaY
         guard dy != 0 else { return }
+        if Self.wheelZoomInverted { dy = -dy }
         let step: Double = event.hasPreciseScrollingDeltas ? 1.004 : 1.25
         let factor = CGFloat(pow(step, -Double(dy)))
         zoom(to: scale * factor, anchor: gestureAnchor)
@@ -423,22 +431,30 @@ final class ZoomableImageView: NSView {
 
     override func keyDown(with event: NSEvent) {
         onActivity?()
-        let chars = event.charactersIgnoringModifiers ?? ""
-        let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        if mods == .command && chars == "\u{7F}" {
-            onTrash?()
+        if let action = Shortcuts.action(for: event) {
+            perform(action, event)
             return
         }
-        // 方向键等特殊键用系统 specialKey 判定，不手写字面量
-        let sk = event.specialKey
-        if sk == .upArrow { zoomIn(); return }          // ↑
-        if sk == .downArrow { zoomOut(); return }       // ↓
-        if sk == .leftArrow { onNavigate?(-1); return } // ←
-        if sk == .rightArrow { onNavigate?(1); return } // →
-        if sk == .home { onFirst?(); return }
-        if sk == .end { onLast?(); return }
-        switch chars {
-        case " ":
+        // 固定按键：= / - 同 ↑ / ↓ 缩放，Esc 逐级退出
+        switch event.charactersIgnoringModifiers ?? "" {
+        case "=", "+": zoomIn()
+        case "-", "_": zoomOut()
+        case "\u{1B}": onEscape?()
+        default: super.keyDown(with: event)
+        }
+    }
+
+    private func perform(_ action: ShortcutAction, _ event: NSEvent) {
+        switch action {
+        case .prev: onNavigate?(-1)
+        case .next: onNavigate?(1)
+        case .first: onFirst?()
+        case .last: onLast?()
+        case .zoomIn: zoomIn()
+        case .zoomOut: zoomOut()
+        case .zoomAtPointer: toggleFitActual(at: mouseInView)   // 同 Lyn：在鼠标处放大到 100%，再按恢复
+        case .actualSize: actualSize()
+        case .peek:
             // 按住不放时系统会连发重复事件，只认第一次按下
             guard !event.isARepeat else { return }
             if spacePeeking {
@@ -446,19 +462,15 @@ final class ZoomableImageView: NSView {
             } else {
                 spacePeeking = onPeekBegin?() ?? false
             }
-        case "f", "F": onToggleFullscreen?()
-        case "i", "I": onToggleInfo?()
-        case "t", "T": onToggleFilmstrip?()
-        case "r", "R": rotate(clockwise: 1)
-        case "l", "L": rotate(clockwise: -1)
-        case "s", "S": onSlideshow?()
-        case "\r": onRename?()   // 回车重命名，与 Finder 一致
-        case "0": toggleFitActual(at: mouseInView)   // 同 Lyn：在鼠标处放大到 100%，再按恢复
-        case "1": actualSize()
-        case "=", "+": zoomIn()
-        case "-", "_": zoomOut()
-        case "\u{1B}": onEscape?()
-        default: super.keyDown(with: event)
+        case .fullscreen: onToggleFullscreen?()
+        case .info: onToggleInfo?()
+        case .filmstrip: onToggleFilmstrip?()
+        case .slideshow: onSlideshow?()
+        case .rotateCW: rotate(clockwise: 1)
+        case .rotateCCW: rotate(clockwise: -1)
+        case .rename: onRename?()
+        case .trash: onTrash?()
+        default: onCommand?(action)
         }
     }
 }

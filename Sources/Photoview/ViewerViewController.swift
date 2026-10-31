@@ -115,6 +115,7 @@ final class ViewerViewController: NSViewController {
         imageView.onTrash = { [weak self] in self?.trashCurrent(nil) }
         imageView.onSlideshow = { [weak self] in self?.toggleSlideshow(nil) }
         imageView.onRename = { [weak self] in self?.renameCurrent(nil) }
+        imageView.onCommand = { [weak self] action in self?.perform(action) }
         imageView.onFirstFrame = { [weak self] size in
             self?.folder.setCurrentPixelSize(size)
             self?.updateHUD()
@@ -144,6 +145,10 @@ final class ViewerViewController: NSViewController {
                                                name: NSWindow.didExitFullScreenNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowWillClose(_:)),
                                                name: NSWindow.willCloseNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(settingsDidChange(_:)),
+                                               name: SettingsWindowController.didChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(refreshShortcutTips),
+                                               name: Shortcuts.didChange, object: nil)
 
         filmstrip.translatesAutoresizingMaskIntoConstraints = false
         filmstrip.collectionView.dataSource = self
@@ -156,6 +161,9 @@ final class ViewerViewController: NSViewController {
         buildEmptyState()
         buildToolbar()
         buildArrows()
+        buildRatingBadge()
+        ratingBadgeBottom = ratingBadge.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: ratingBadgeOffset(controls: false))
+        refreshShortcutTips()
 
         filmstripHeight = filmstrip.heightAnchor.constraint(equalToConstant: 76)
 
@@ -176,6 +184,9 @@ final class ViewerViewController: NSViewController {
             exifPanel.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
             exifPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
             exifPanel.widthAnchor.constraint(equalToConstant: 300),
+
+            ratingBadge.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            ratingBadgeBottom,
 
             toolbarView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             toolbarView.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: -8),
@@ -200,6 +211,7 @@ final class ViewerViewController: NSViewController {
             let (container, button) = iconButton(symbol: d.symbol, tip: d.tip, action: d.action,
                                                  size: NSSize(width: 44, height: 56), cornerRadius: 11,
                                                  symbolSize: 20, symbolWeight: .semibold)
+            if let a = Self.shortcutAction(for: d.action) { shortcutTips.append((button, d.tip, a)) }
             if i == 0 {
                 prevArrowContainer = container
                 prevArrowButton = button
@@ -242,9 +254,11 @@ final class ViewerViewController: NSViewController {
         }
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = visible ? 0.15 : 0.4
+            ctx.allowsImplicitAnimation = true
             for t in targets {
                 t.animator().alphaValue = visible ? 1 : 0
             }
+            ratingBadgeBottom?.animator().constant = ratingBadgeOffset(controls: visible)
         }, completionHandler: {
             for t in targets {
                 t.isHidden = t.alphaValue < 0.01
@@ -270,6 +284,7 @@ final class ViewerViewController: NSViewController {
         hudView.isHidden = true
         exifPanel.isHidden = true
         filmstrip.isHidden = true
+        ratingBadge.isHidden = true
         filmstripHeight.constant = 0
         window.minSize = NSSize(width: 160, height: 120)
         imageView.fit()
@@ -287,6 +302,7 @@ final class ViewerViewController: NSViewController {
         exifPanel.isHidden = saved.infoHidden
         if !saved.infoHidden { updateExifPanel() }
         updateHUD()
+        updateRatingLabel()
         pokeControls()
         imageView.fit()
     }
@@ -332,6 +348,11 @@ final class ViewerViewController: NSViewController {
         stack.spacing = 3
         stack.edgeInsets = NSEdgeInsets(top: 7, left: 10, bottom: 7, right: 10)
         stack.translatesAutoresizingMaskIntoConstraints = false
+        ratingLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        ratingLabel.textColor = NSColor(calibratedRed: 1.0, green: 0.8, blue: 0.25, alpha: 1)
+        ratingLabel.isHidden = true
+        stack.insertArrangedSubview(ratingLabel, at: 0)
+        stack.setCustomSpacing(10, after: ratingLabel)
         toolbarView.addSubview(stack)
 
         // 按功能分组，组间插入分隔线
@@ -360,6 +381,7 @@ final class ViewerViewController: NSViewController {
                                                      size: NSSize(width: 36, height: 32), cornerRadius: 7,
                                                      tint: d.symbol == "trash" ? .systemRed : .labelColor)
                 if d.symbol == "play.fill" { slideshowButton = button }
+                if let a = Self.shortcutAction(for: d.action) { shortcutTips.append((button, d.tip, a)) }
                 stack.addArrangedSubview(container)
             }
         }
@@ -563,7 +585,7 @@ final class ViewerViewController: NSViewController {
         let url = item.url
         decodeQueue.cancelAllOperations()
         updateSmartCache()
-        updateHUD(); updateExifPanel(); syncFilmstripSelection()
+        updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)
 
         let fitPx = previewPixelTarget
         if let info = loader.cachedInfo(for: url),
@@ -696,6 +718,12 @@ final class ViewerViewController: NSViewController {
         ZoomableImageView.wheelNavigates = sender.tag == 1
         flash(sender.tag == 1 ? L10n.t("wheel.navigate.on", "滚轮：切换图片（⌘+滚轮缩放）")
                               : L10n.t("wheel.zoom.on", "滚轮：缩放图片（⌘+滚轮平移）"))
+    }
+
+    @objc func toggleWheelZoomInverted(_ sender: Any?) {
+        ZoomableImageView.wheelZoomInverted.toggle()
+        flash(ZoomableImageView.wheelZoomInverted ? L10n.t("wheel.inverted.on", "滚轮缩放方向已反转")
+                                                   : L10n.t("wheel.inverted.off", "滚轮缩放方向已恢复默认"))
     }
 
     @objc func toggleSortReversed(_ sender: Any?) {
@@ -844,6 +872,16 @@ final class ViewerViewController: NSViewController {
         title.textColor = .secondaryLabelColor
         exifStack.addArrangedSubview(title)
 
+        if currentRating > 0 {
+            let l = NSTextField(labelWithString: L10n.t("menu.rating", "评分"))
+            l.font = .systemFont(ofSize: 11)
+            l.textColor = .secondaryLabelColor
+            let v = NSTextField(labelWithString: Rating.stars(currentRating))
+            v.font = .systemFont(ofSize: 12)
+            v.textColor = NSColor(calibratedRed: 1.0, green: 0.8, blue: 0.25, alpha: 1)
+            exifStack.addArrangedSubview(l)
+            exifStack.addArrangedSubview(v)
+        }
         if entries.isEmpty {
             let none = NSTextField(labelWithString: L10n.t("ui.noExif", "此文件没有 EXIF 信息"))
             none.font = .systemFont(ofSize: 12)
@@ -946,11 +984,66 @@ final class ViewerViewController: NSViewController {
     @objc func goLast(_ sender: Any?) { goTo(max(folder.count - 1, 0)) }
 
     @objc func showShortcuts(_ sender: Any?) {
-        let alert = NSAlert()
-        alert.messageText = L10n.t("sc.title", "快捷键")
-        alert.informativeText = L10n.t("sc.body", "← / →  上一张 / 下一张（循环）")
-        alert.alertStyle = .informational
-        alert.runModal()
+        SettingsWindowController.shared.show(.shortcuts)
+    }
+
+    @objc func showSettings(_ sender: Any?) {
+        SettingsWindowController.shared.show()
+    }
+
+    /// 自定义快捷键里那些看图界面不直接处理的操作（改成单键后菜单不再接管，由这里转发）
+    private func perform(_ action: ShortcutAction) {
+        switch action {
+        case .edit: openInEditor(nil)
+        case .reveal: revealInFinder(nil)
+        case .exportAs: exportAs(nil)
+        case .saveRotation: saveRotation(nil)
+        case .cleanup: if folder.count > 0 { toggleCleanup(nil) }
+        case .batchConvert: batchConvert(nil)
+        case .batchRename: batchRename(nil)
+        case .wallpaper: setWallpaper(nil)
+        case .rate0, .rate1, .rate2, .rate3, .rate4, .rate5: setRating(action.stars ?? 0)
+        default: break
+        }
+    }
+
+    @objc private func settingsDidChange(_ note: Notification) {
+        switch note.userInfo?["what"] as? String {
+        case "sort":
+            applySort()
+            loadCaptureDatesIfNeeded()
+        case "slideshow":
+            if slideshowTimer != nil { scheduleSlideshowTimer() }
+        case "rating":
+            updateRatingLabel()
+        default: break
+        }
+    }
+
+    /// 工具条按钮的提示跟着自定义快捷键走
+    private var shortcutTips: [(button: NSButton, base: String, action: ShortcutAction)] = []
+
+    @objc private func refreshShortcutTips() {
+        for t in shortcutTips { t.button.toolTip = Shortcuts.tooltip(t.base, t.action) }
+    }
+
+    private static func shortcutAction(for selector: Selector) -> ShortcutAction? {
+        switch selector {
+        case #selector(navigateBackward(_:)): return .prev
+        case #selector(navigateForward(_:)): return .next
+        case #selector(zoomIn(_:)): return .zoomIn
+        case #selector(zoomOut(_:)): return .zoomOut
+        case #selector(zoomActual(_:)): return .actualSize
+        case #selector(rotateCCW(_:)): return .rotateCCW
+        case #selector(rotateCW(_:)): return .rotateCW
+        case #selector(toggleSlideshow(_:)): return .slideshow
+        case #selector(toggleInfoPanel(_:)): return .info
+        case #selector(toggleFilmstrip(_:)): return .filmstrip
+        case #selector(exportAs(_:)): return .exportAs
+        case #selector(renameCurrent(_:)): return .rename
+        case #selector(trashCurrent(_:)): return .trash
+        default: return nil
+        }
     }
 
     // MARK: - 清理模式
@@ -1106,13 +1199,17 @@ final class ViewerViewController: NSViewController {
     // MARK: - 交给后期软件
 
     /// 设好的后期软件；被删了就当没设
-    private var editorAppURL: URL? {
+    static var storedEditorAppURL: URL? {
         get {
             guard let path = UserDefaults.standard.string(forKey: "editorAppPath"),
                   FileManager.default.fileExists(atPath: path) else { return nil }
             return URL(fileURLWithPath: path)
         }
         set { UserDefaults.standard.set(newValue?.path, forKey: "editorAppPath") }
+    }
+    private var editorAppURL: URL? {
+        get { Self.storedEditorAppURL }
+        set { Self.storedEditorAppURL = newValue }
     }
 
     /// 中文句子里夹英文名时两侧加空格（在 Photoshop 中编辑），中文名不加（在预览中编辑）
@@ -1243,8 +1340,131 @@ final class ViewerViewController: NSViewController {
         openWith.submenu = sub
         menu.addItem(openWith)
         menu.addItem(.separator())
+        let rating = NSMenuItem(title: L10n.t("menu.rating", "评分"), action: nil, keyEquivalent: "")
+        let ratingMenu = buildRatingMenu()
+        for it in ratingMenu.items { it.target = self }
+        rating.submenu = ratingMenu
+        menu.addItem(rating)
+        menu.addItem(.separator())
         add(L10n.t("menu.reveal", "在 Finder 中显示"), #selector(revealInFinder(_:)))
         add(L10n.t("menu.trash", "移到废纸篓"), #selector(trashCurrent(_:)))
+        return menu
+    }
+
+    // MARK: - 评分
+
+    /// 读过的评分；写入后同步更新，避免每次翻页都去读文件
+    private var ratingCache: [URL: Int] = [:]
+    private let ratingQueue = DispatchQueue(label: "flipic.rating", qos: .userInitiated)
+
+    var currentRating: Int { folder.current.flatMap { ratingCache[$0.url] } ?? 0 }
+
+    private func loadRating(for url: URL) {
+        if ratingCache[url] != nil { updateRatingLabel(); return }
+        updateRatingLabel()
+        ratingQueue.async { [weak self] in
+            let r = Rating.read(url)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.ratingCache[url] = r
+                if self.folder.current?.url == url { self.updateRatingLabel() }
+            }
+        }
+    }
+
+    /// 同名的 RAW 和 JPG 当成一张照片，一起打分
+    private func ratingTargets(for url: URL) -> [URL] {
+        let base = url.deletingPathExtension().lastPathComponent
+        let dir = url.deletingLastPathComponent()
+        let siblings = folder.items.map(\.url).filter {
+            $0 != url && $0.deletingLastPathComponent() == dir && $0.deletingPathExtension().lastPathComponent == base
+        }
+        return [url] + siblings
+    }
+
+    func setRating(_ stars: Int) {
+        guard cleanup == nil, let url = folder.current?.url else { return }
+        let targets = ratingTargets(for: url)
+        for t in targets { ratingCache[t] = stars }
+        updateRatingLabel()
+        flash(stars == 0 ? L10n.t("rating.cleared", "已取消评分") : Rating.stars(stars), seconds: 1.2)
+        if !exifPanel.isHidden { updateExifPanel() }
+        ratingQueue.async { [weak self] in
+            let failed = targets.filter { !Rating.write(stars, to: $0) }
+            guard !failed.isEmpty else { return }
+            DispatchQueue.main.async {
+                for t in failed { self?.ratingCache[t] = nil }
+                self?.updateRatingLabel()
+                self?.flash(L10n.f("rating.failed", "评分没能写入：%@", failed.map(\.lastPathComponent).joined(separator: "、")), seconds: 4)
+            }
+        }
+    }
+
+    @objc func setRatingMenu(_ sender: NSMenuItem) { setRating(sender.tag) }
+
+    /// 工具条左侧的星星：随控件一起出现，没评分不显示
+    private let ratingLabel = NSTextField(labelWithString: "")
+
+    /// 底部居中常驻的星级：评过分的照片一直显示。工具条出来时它往上让到工具条上方，工具条隐藏后落回原位；
+    /// 设置里可以关掉，关掉后改在工具条里显示
+    private let ratingBadge = NSVisualEffectView()
+    private var ratingBadgeBottom: NSLayoutConstraint!
+
+    private func ratingBadgeOffset(controls: Bool) -> CGFloat {
+        controls ? -(8 + max(toolbarView.fittingSize.height, 44) + 8) : -14
+    }
+    private let ratingBadgeLabel = NSTextField(labelWithString: "")
+
+    static var showRatingBadge: Bool {
+        get { !UserDefaults.standard.bool(forKey: "ratingBadgeHidden") }
+        set { UserDefaults.standard.set(!newValue, forKey: "ratingBadgeHidden") }
+    }
+
+    private func buildRatingBadge() {
+        ratingBadge.material = .hudWindow
+        ratingBadge.blendingMode = .withinWindow
+        ratingBadge.state = .active
+        ratingBadge.wantsLayer = true
+        ratingBadge.layer?.cornerRadius = 8
+        ratingBadge.layer?.masksToBounds = true
+        ratingBadge.translatesAutoresizingMaskIntoConstraints = false
+        ratingBadge.isHidden = true
+        ratingBadgeLabel.font = .systemFont(ofSize: 16, weight: .medium)
+        ratingBadgeLabel.textColor = Self.starColor
+        ratingBadgeLabel.translatesAutoresizingMaskIntoConstraints = false
+        ratingBadge.addSubview(ratingBadgeLabel)
+        NSLayoutConstraint.activate([
+            ratingBadgeLabel.leadingAnchor.constraint(equalTo: ratingBadge.leadingAnchor, constant: 10),
+            ratingBadgeLabel.trailingAnchor.constraint(equalTo: ratingBadge.trailingAnchor, constant: -10),
+            ratingBadgeLabel.topAnchor.constraint(equalTo: ratingBadge.topAnchor, constant: 5),
+            ratingBadgeLabel.bottomAnchor.constraint(equalTo: ratingBadge.bottomAnchor, constant: -5),
+        ])
+        view.addSubview(ratingBadge)
+    }
+
+    static let starColor = NSColor(calibratedRed: 1.0, green: 0.8, blue: 0.25, alpha: 1)
+
+    private func updateRatingLabel() {
+        let r = currentRating
+        let badge = Self.showRatingBadge
+        ratingBadgeLabel.stringValue = String(repeating: "★", count: r)
+        ratingBadge.isHidden = r == 0 || !badge || peekSaved != nil || cleanup != nil
+        ratingLabel.stringValue = Rating.stars(r)
+        ratingLabel.isHidden = r == 0 || badge
+    }
+
+    /// 「评分」子菜单：5 星到 1 星，最后是未评分，当前评分打勾
+    func buildRatingMenu() -> NSMenu {
+        let menu = NSMenu(title: L10n.t("menu.rating", "评分"))
+        for n in stride(from: 5, through: 1, by: -1) {
+            let it = NSMenuItem(title: Rating.stars(n), action: #selector(setRatingMenu(_:)), keyEquivalent: "")
+            it.tag = n
+            menu.addItem(it)
+        }
+        menu.addItem(.separator())
+        let none = NSMenuItem(title: L10n.t("rating.none", "未评分"), action: #selector(setRatingMenu(_:)), keyEquivalent: "")
+        none.tag = 0
+        menu.addItem(none)
         return menu
     }
 
@@ -1782,7 +2002,10 @@ final class ViewerViewController: NSViewController {
         at(0.3) { wheel(-1, cmd: true); wheel(-1, cmd: true); state("7-cmd+wheel (expect zoomed, same index)") }
         at(0.3) { wheel(-1); state("8-wheel while zoomed (expect pan, same index)") }
         at(0.3) { self.imageView.fit(); wheel(-1); state("9-fit again, wheel down (expect +1)") }
-        at(0.3) { ZoomableImageView.wheelNavigates = saved; NSApp.terminate(nil) }
+        let savedInv = ZoomableImageView.wheelZoomInverted
+        at(0.3) { ZoomableImageView.wheelNavigates = false; ZoomableImageView.wheelZoomInverted = false; self.imageView.fit(); wheel(1); wheel(1); state("10-normal wheel up x2") }
+        at(0.3) { ZoomableImageView.wheelZoomInverted = true; self.imageView.fit(); wheel(1); wheel(1); state("11-inverted wheel up x2 (expect opposite of 10)") }
+        at(0.3) { ZoomableImageView.wheelNavigates = saved; ZoomableImageView.wheelZoomInverted = savedInv; NSApp.terminate(nil) }
     }
 
     /// --slidetest <文件夹> <应用路径>：幻灯片 1 秒间隔 + 交给后期软件
@@ -1876,6 +2099,186 @@ final class ViewerViewController: NSViewController {
         }
     }
 
+    /// --settingstest <输出目录> <文件夹>：设置窗口三页截图；自定义快捷键改键、菜单同步、冲突与保留键
+    func runSettingsTest(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        let savedShortcuts = UserDefaults.standard.data(forKey: "customShortcuts")
+        Shortcuts.resetAll()
+        func key(_ code: UInt16, _ chars: String, _ mods: NSEvent.ModifierFlags = []) -> NSEvent? {
+            NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: mods, timestamp: 0,
+                             windowNumber: view.window?.windowNumber ?? 0, context: nil, characters: chars,
+                             charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code)
+        }
+        func press(_ code: UInt16, _ chars: String) { if let e = key(code, chars) { imageView.keyDown(with: e) } }
+        func infoOpen() -> Int { exifPanel.isHidden ? 0 : 1 }
+        func menuItem(_ sel: Selector) -> NSMenuItem? {
+            func find(_ m: NSMenu) -> NSMenuItem? {
+                for it in m.items {
+                    if it.action == sel { return it }
+                    if let sub = it.submenu, let f = find(sub) { return f }
+                }
+                return nil
+            }
+            return NSApp.mainMenu.flatMap(find)
+        }
+        func shot(_ w: NSWindow?, _ name: String) {
+            guard let w, let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber),
+                                                           [.bestResolution, .boundsIgnoreFraming]),
+                  let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/\(name).png") as CFURL,
+                                                             "public.png" as CFString, 1, nil) else { return }
+            CGImageDestinationAddImage(dest, img, nil)
+            CGImageDestinationFinalize(dest)
+        }
+        let settings = SettingsWindowController.shared
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.3) { [self] in
+            press(34, "i"); NSLog("SET 1-default I opens info=%d", infoOpen())
+            press(34, "i"); NSLog("SET 2-default I closes info=%d", infoOpen())
+            let edit = menuItem(#selector(openInEditor(_:)))
+            NSLog("SET 3-default edit menu key=%@ mods=%lu", edit?.keyEquivalent ?? "-", edit?.keyEquivalentModifierMask.rawValue ?? 0)
+            Shortcuts.set(KeyCombo(keyCode: 40, chars: "k"), for: .info)
+            press(34, "i"); NSLog("SET 4-after remap I does nothing info=%d", infoOpen())
+            press(40, "k"); NSLog("SET 5-K opens info=%d", infoOpen())
+            press(40, "k")
+            Shortcuts.set(KeyCombo(keyCode: 14, mods: [.command, .option], chars: "e"), for: .edit)
+            NSLog("SET 6-edit menu key=%@ optcmd=%d", edit?.keyEquivalent ?? "-",
+                  edit?.keyEquivalentModifierMask == [.command, .option] ? 1 : 0)
+            NSLog("SET 7-owner of R=%@ reserved cmdW=%d", Shortcuts.owner(of: KeyCombo(keyCode: 15, chars: "r"))?.rawValue ?? "-",
+                  Shortcuts.isReserved(KeyCombo(keyCode: 13, mods: .command, chars: "w")) ? 1 : 0)
+            NSLog("SET 8-info tooltip=%@", shortcutTips.first { $0.action == .info }?.button.toolTip ?? "-")
+            settings.show(.general)
+        }
+        at(0.8) { shot(settings.window, "general") }
+        at(0.2) { settings.show(.mouse) }
+        at(0.6) { shot(settings.window, "mouse") }
+        at(0.2) { settings.show(.shortcuts) }
+        at(0.6) { shot(settings.window, "shortcuts") }
+        at(0.2) {
+            // 模拟在录制按钮上操作：点一下，按 ⇧⌘I 录下；再录 ⌘W（保留键，应拒绝）；再录 R（被向右旋转占用，应转移）；⌫ 清除
+            guard let rec = settings.debugRecorder(for: .info), let w = settings.window else { NSLog("SET rec missing"); return }
+            func rkey(_ code: UInt16, _ ch: String, _ mods: NSEvent.ModifierFlags) {
+                rec.performClick(nil)
+                guard let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: mods, timestamp: 0, windowNumber: w.windowNumber,
+                                               context: nil, characters: ch, charactersIgnoringModifiers: ch, isARepeat: false, keyCode: code) else { return }
+                if !rec.performKeyEquivalent(with: e) { rec.keyDown(with: e) }
+            }
+            rkey(34, "i", [.command, .shift])
+            NSLog("SET R1-recorded info=%@", Shortcuts.combo(for: .info)?.display ?? "nil")
+            rkey(13, "w", .command)
+            NSLog("SET R2-cmdW rejected info=%@ status=%@", Shortcuts.combo(for: .info)?.display ?? "nil", settings.debugStatus())
+        }
+        at(0.3) {
+            guard let rec = settings.debugRecorder(for: .info), let w = settings.window else { return }
+            func rkey(_ code: UInt16, _ ch: String) {
+                rec.performClick(nil)
+                guard let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: w.windowNumber,
+                                               context: nil, characters: ch, charactersIgnoringModifiers: ch, isARepeat: false, keyCode: code) else { return }
+                rec.keyDown(with: e)
+            }
+            rkey(15, "r")
+            NSLog("SET R3-R moved info=%@ rotateCW=%@ status=%@", Shortcuts.combo(for: .info)?.display ?? "nil",
+                  Shortcuts.combo(for: .rotateCW)?.display ?? "nil", settings.debugStatus())
+            shot(settings.window, "shortcuts-moved")
+        }
+        at(0.3) {
+            guard let rec = settings.debugRecorder(for: .info), let w = settings.window else { return }
+            rec.performClick(nil)
+            if let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: w.windowNumber,
+                                        context: nil, characters: "\u{7F}", charactersIgnoringModifiers: "\u{7F}", isARepeat: false, keyCode: 51) {
+                rec.keyDown(with: e)
+            }
+            NSLog("SET R4-backspace cleared info=%@", Shortcuts.combo(for: .info)?.display ?? "nil")
+        }
+        at(0.2) { [self] in
+            let before = folder.sortKey.rawValue
+            UserDefaults.standard.set(SortKey.size.rawValue, forKey: "sortKey")
+            SettingsWindowController.notify("sort")
+            NSLog("SET 9-sort %d -> %d", before, folder.sortKey.rawValue)
+            UserDefaults.standard.set(before, forKey: "sortKey")
+            SettingsWindowController.notify("sort")
+            Shortcuts.resetAll()
+            press(34, "i"); NSLog("SET 10-after reset I opens info=%d", infoOpen())
+            let edit = menuItem(#selector(openInEditor(_:)))
+            NSLog("SET 11-after reset edit menu key=%@ cmdOnly=%d", edit?.keyEquivalent ?? "-",
+                  edit?.keyEquivalentModifierMask == .command ? 1 : 0)
+            if let savedShortcuts { UserDefaults.standard.set(savedShortcuts, forKey: "customShortcuts") }
+            NSApp.terminate(nil)
+        }
+    }
+
+    /// --ratingtest <文件夹>：各格式写入 / 读回评分，像素不变；按键 4 给同名 RAW+JPG 一起打分；菜单取消评分
+    func runRatingTest() {
+        func pixelHash(_ url: URL) -> Int {
+            guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
+                  let img = CGImageSourceCreateImageAtIndex(src, 0, nil),
+                  let data = img.dataProvider?.data else { return 0 }
+            return (data as Data).hashValue
+        }
+        for item in folder.items where !CleanupUnit.isRaw(item.url) || item.url.pathExtension.lowercased() == "dng" {
+            let before = pixelHash(item.url)
+            let size0 = (try? FileManager.default.attributesOfItem(atPath: item.url.path)[.size] as? Int) ?? 0
+            let ok = Rating.write(3, to: item.url)
+            let back = Rating.read(item.url)
+            let after = pixelHash(item.url)
+            let size1 = (try? FileManager.default.attributesOfItem(atPath: item.url.path)[.size] as? Int) ?? 0
+            NSLog("RATE %@ write=%d read=%d pixelsSame=%d size %d->%d sidecar=%d", item.url.lastPathComponent, ok ? 1 : 0, back,
+                  before == after ? 1 : 0, size0, size1, FileManager.default.fileExists(atPath: Rating.sidecarURL(for: item.url).path) ? 1 : 0)
+        }
+        guard let pairIndex = folder.items.firstIndex(where: { $0.url.lastPathComponent.hasPrefix("pair") && !CleanupUnit.isRaw($0.url) }) else {
+            NSLog("RATE no pair"); NSApp.terminate(nil); return
+        }
+        goTo(pairIndex)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [self] in
+            if let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: view.window?.windowNumber ?? 0,
+                                        context: nil, characters: "4", charactersIgnoringModifiers: "4", isARepeat: false, keyCode: 21) {
+                imageView.keyDown(with: e)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [self] in
+                let jpg = folder.items[pairIndex].url
+                let raw = jpg.deletingPathExtension().appendingPathExtension("ARW")
+                NSLog("RATE key4 jpg=%d raw=%d label=%@ hidden=%d", Rating.read(jpg), Rating.read(raw), ratingLabel.stringValue, ratingLabel.isHidden ? 1 : 0)
+                pokeControls()
+                captureWindow(to: jpg.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("rating-shot.png").path, raw: true)
+                let probe = NSMenuItem(title: "", action: #selector(setRatingMenu(_:)), keyEquivalent: "")
+                probe.tag = 4
+                _ = validateMenuItem(probe)
+                NSLog("RATE menu 4 checked=%d", probe.state == .on ? 1 : 0)
+                probe.tag = 0
+                setRatingMenu(probe)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [self] in
+                    NSLog("RATE cleared jpg=%d raw=%d hidden=%d", Rating.read(jpg), Rating.read(raw), ratingLabel.isHidden ? 1 : 0)
+                    let side = Rating.sidecarURL(for: raw)
+                    NSLog("RATE sidecar keeps lightroom data=%d", ((try? String(contentsOf: side, encoding: .utf8)) ?? "").contains("crs:Exposure2012") ? 1 : 0)
+                    NSApp.terminate(nil)
+                }
+            }
+        }
+    }
+
+    /// --ratingshot <输出目录> <文件夹>：打开已评分的照片，等控件自动隐藏后截图，星级应仍在；未评分的照片不显示
+    func runRatingShot(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.3) { self.goTo(0) }
+        at(5.0) {
+            NSLog("RSHOT opened rated=%d badgeVisible=%d toolbarHidden=%d", self.currentRating, self.ratingBadge.isHidden ? 0 : 1, self.toolbarView.alphaValue < 0.5 ? 1 : 0)
+            self.captureWindow(to: "\(outDir)/opened-rated.png", raw: true)
+        }
+        at(0.2) { self.pokeControls() }
+        at(0.8) { self.captureWindow(to: "\(outDir)/controls-visible.png", raw: true) }
+        at(0.3) { self.goTo(self.folder.items.firstIndex { $0.url.lastPathComponent == "pair.jpg" } ?? 0) }
+        at(1.5) { NSLog("RSHOT unrated rated=%d badgeVisible=%d", self.currentRating, self.ratingBadge.isHidden ? 0 : 1) }
+        at(0.2) { self.setRating(5) }
+        at(4.5) {
+            NSLog("RSHOT after key5 badge=%@ visible=%d", self.ratingBadgeLabel.stringValue, self.ratingBadge.isHidden ? 0 : 1)
+            self.captureWindow(to: "\(outDir)/after-rate.png", raw: true)
+            self.setRating(0)
+        }
+        at(1.0) { NSApp.terminate(nil) }
+    }
+
     /// --esctest <文件夹>：Esc 关闭开着时，放大先回适应窗口，再按关窗口；关着时不关窗口
     func runEscTest() {
         let saved = Self.escCloses
@@ -1928,7 +2331,8 @@ final class ViewerViewController: NSViewController {
         }
         at(2.4) { self.pokeControls() }
         at(0.4) { cap("zoom") }
-        at(0.2) { self.imageView.fit(); self.goTo(1) }
+        // 贴合预览用最后一张（文件夹里放一张竖图，窗口收窄才看得出效果）
+        at(0.2) { self.imageView.fit(); self.goTo(max(self.folder.count - 1, 0)) }
         at(1.4) { _ = self.beginPeek() }
         at(1.6) { cap("peek") }
         at(0.3) { self.endPeek() }
@@ -2268,7 +2672,7 @@ extension ViewerViewController: NSMenuItemValidation {
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if cleanup != nil {
             // 清理模式里只留退出清理和打开别的文件夹，其余看图操作都停用
-            return menuItem.action == #selector(toggleCleanup(_:))
+            return menuItem.action == #selector(toggleCleanup(_:)) || menuItem.action == #selector(showSettings(_:))
                 || menuItem.action == #selector(showAbout(_:)) || menuItem.action == #selector(showShortcuts(_:))
         }
         if menuItem.action == #selector(toggleCleanup(_:)) {
@@ -2289,6 +2693,11 @@ extension ViewerViewController: NSMenuItemValidation {
             return folder.current != nil
         } else if menuItem.action == #selector(setWheelAction(_:)) {
             menuItem.state = (menuItem.tag == 1) == ZoomableImageView.wheelNavigates ? .on : .off
+        } else if menuItem.action == #selector(toggleWheelZoomInverted(_:)) {
+            menuItem.state = ZoomableImageView.wheelZoomInverted ? .on : .off
+        } else if menuItem.action == #selector(setRatingMenu(_:)) {
+            menuItem.state = menuItem.tag == currentRating ? .on : .off
+            return folder.current != nil
         } else if menuItem.action == #selector(toggleSortReversed(_:)) {
             menuItem.state = folder.sortReversed ? .on : .off
         }

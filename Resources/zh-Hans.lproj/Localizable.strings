@@ -204,6 +204,9 @@ Esc  先关掉右上角的照片信息
 "wheel.navigate" = "切换上一张 / 下一张";
 "wheel.navigate.on" = "滚轮：切换图片（⌘+滚轮缩放）";
 "wheel.zoom.on" = "滚轮：缩放图片（⌘+滚轮平移）";
+"wheel.invert" = "反转缩放方向";
+"wheel.inverted.on" = "滚轮缩放方向已反转";
+"wheel.inverted.off" = "滚轮缩放方向已恢复默认";
 
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "在后期软件中编辑…";
@@ -229,3 +232,55 @@ Esc  先关掉右上角的照片信息
 "menu.escCloses" = "按 Esc 关闭窗口";
 "msg.escClosesOn" = "适应窗口时按 Esc 关闭 Flipic";
 "msg.escClosesOff" = "Esc 不再关闭窗口";
+
+/* 设置窗口、自定义快捷键 */
+"menu.settings" = "设置…";
+"set.tab.general" = "通用";
+"set.tab.mouse" = "鼠标与触控板";
+"set.tab.shortcuts" = "快捷键";
+"set.sort" = "排序方式：";
+"set.paging" = "翻页：";
+"set.slideInterval" = "幻灯片间隔：";
+"set.esc" = "Esc 键：";
+"set.escNote" = "适应窗口时按 Esc 直接关闭，放大时先恢复。配合访达的 ⌘↓ 打开，可以当快速查看用。";
+"set.editor" = "后期软件：";
+"set.editorNote" = "「在后期软件中编辑」用它打开当前照片，同名 RAW 也在时打开 RAW。";
+"set.editorNone" = "未设置";
+"set.choose" = "选择…";
+"set.clear" = "清除";
+"set.wheel" = "鼠标滚轮：";
+"set.zoomDirection" = "缩放方向：";
+"set.invertNote" = "用 Mos 之类的工具改过滚轮方向后，如果滚轮缩放反了，就勾上这一项。只影响滚轮缩放，不影响触控板捏合和滚轮翻页。";
+"set.trackpad" = "触控板：";
+"set.trackpadNote" = "双指捏合缩放，双指轻点两下在适应窗口和 100% 之间切换，拖动平移。";
+"sc.group.browse" = "浏览";
+"sc.group.view" = "显示";
+"sc.group.file" = "文件";
+"sc.group.tools" = "工具";
+"sc.a.zoomAtPointer" = "在鼠标处放大到 100%，再按恢复";
+"sc.a.peek" = "贴合照片比例预览";
+"sc.a.fullscreen" = "全屏";
+"sc.recording" = "按下快捷键…";
+"sc.none" = "无";
+"sc.hint" = "点右侧的按键，再按下新的组合。Esc 取消，⌫ 清除。带 ⌘ 的组合在菜单里也能看到。";
+"sc.fixed" = "固定按键：Esc 关闭照片信息、退出预览和全屏；双击在适应窗口和 100% 之间切换；⌘O 打开，⌘W 关闭窗口，⌘= ⌘- 缩放，⌘0 适应窗口，⌘1 实际大小。";
+"sc.reset" = "全部恢复默认";
+"sc.reserved" = "%@ 是固定按键，不能改给别的操作";
+"sc.moved" = "%1$@ 原来用于「%2$@」，那一项已清空";
+"key.space" = "空格";
+"tip.format" = "%1$@（%2$@）";
+"sc.group.global" = "全局（在其他软件里也能用）";
+"sc.a.toggleApp" = "显示 / 隐藏 Flipic";
+"sc.needsModifier" = "全局快捷键要带 ⌘、⌥ 或 ⌃，单个键会和别的软件冲突";
+"set.default" = "默认看图：";
+"set.makeDefault" = "设为默认看图软件";
+"set.isDefault" = "Flipic 已是默认看图软件";
+"set.currentDefault" = "现在双击照片用「%@」打开";
+"set.defaultNote" = "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相机 RAW 双击都用 Flipic 打开。也可以在访达里右键一张图，按住 ⌥ 键，选「始终以此方式打开」› Flipic。";
+"menu.rating" = "评分";
+"sc.group.rating" = "评分";
+"rating.none" = "未评分";
+"rating.cleared" = "已取消评分";
+"rating.failed" = "评分没能写入：%@";
+"set.rating" = "评分：";
+"set.ratingBadge" = "在照片左下角显示星级";

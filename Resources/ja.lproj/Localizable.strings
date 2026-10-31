@@ -192,6 +192,9 @@ Return  表示中の画像を名称変更
 "wheel.navigate" = "前 / 次の写真";
 "wheel.navigate.on" = "ホイール：写真を切り替え（⌘+ホイールで拡大縮小）";
 "wheel.zoom.on" = "ホイール：拡大縮小（⌘+ホイールでパン）";
+"wheel.invert" = "ズーム方向を反転";
+"wheel.inverted.on" = "ホイールのズーム方向を反転しました";
+"wheel.inverted.off" = "ホイールのズーム方向を標準に戻しました";
 
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "編集アプリで編集…";
@@ -217,3 +220,55 @@ Return  表示中の画像を名称変更
 "menu.escCloses" = "Esc でウインドウを閉じる";
 "msg.escClosesOn" = "ウインドウに合わせた状態で Esc を押すと Flipic を閉じます";
 "msg.escClosesOff" = "Esc でウインドウを閉じなくなりました";
+
+/* 设置窗口、自定义快捷键 */
+"menu.settings" = "設定…";
+"set.tab.general" = "一般";
+"set.tab.mouse" = "マウスとトラックパッド";
+"set.tab.shortcuts" = "ショートカット";
+"set.sort" = "並べ替え：";
+"set.paging" = "ページ送り：";
+"set.slideInterval" = "スライドショーの間隔：";
+"set.esc" = "Esc キー：";
+"set.escNote" = "ウインドウに合わせて表示しているときは Esc で閉じ、拡大中はまず元に戻します。Finder の ⌘↓ で開けばクイックルックのように使えます。";
+"set.editor" = "編集アプリ：";
+"set.editorNote" = "「編集アプリで編集」で現在の写真をこのアプリで開きます。同名の RAW があれば RAW を開きます。";
+"set.editorNone" = "未設定";
+"set.choose" = "選択…";
+"set.clear" = "クリア";
+"set.wheel" = "マウスホイール：";
+"set.zoomDirection" = "ズームの方向：";
+"set.invertNote" = "Mos などでホイールの方向を変えていて、ホイールのズームが逆になる場合はオンにしてください。ホイールのズームだけに効き、トラックパッドのピンチやホイールでのページ送りは変わりません。";
+"set.trackpad" = "トラックパッド：";
+"set.trackpadNote" = "ピンチでズーム、2 本指でダブルタップするとウインドウに合わせる／100% を切り替え、ドラッグで移動。";
+"sc.group.browse" = "ブラウズ";
+"sc.group.view" = "表示";
+"sc.group.file" = "ファイル";
+"sc.group.tools" = "ツール";
+"sc.a.zoomAtPointer" = "ポインタの位置で 100% に拡大、もう一度押すと戻す";
+"sc.a.peek" = "写真の縦横比に合わせてプレビュー";
+"sc.a.fullscreen" = "フルスクリーン";
+"sc.recording" = "キーを押してください…";
+"sc.none" = "なし";
+"sc.hint" = "右のキーをクリックしてから新しい組み合わせを押します。Esc でキャンセル、⌫ で消去。⌘ を含む組み合わせはメニューにも表示されます。";
+"sc.fixed" = "固定キー：Esc で写真情報を閉じ、プレビューとフルスクリーンを終了。ダブルクリックでウインドウに合わせる／100% を切り替え。⌘O 開く、⌘W ウインドウを閉じる、⌘= ⌘- ズーム、⌘0 ウインドウに合わせる、⌘1 実際のサイズ。";
+"sc.reset" = "すべてデフォルトに戻す";
+"sc.reserved" = "%@ は固定キーのため割り当てられません";
+"sc.moved" = "%1$@ は「%2$@」に使われていたため、そちらを空にしました";
+"key.space" = "スペース";
+"tip.format" = "%1$@（%2$@）";
+"sc.group.global" = "グローバル（ほかのアプリでも使えます）";
+"sc.a.toggleApp" = "Flipic を表示／隠す";
+"sc.needsModifier" = "グローバルショートカットには ⌘、⌥、⌃ のいずれかが必要です。単独のキーはほかのアプリと競合します";
+"set.default" = "デフォルトのビューア：";
+"set.makeDefault" = "デフォルトのビューアにする";
+"set.isDefault" = "Flipic がデフォルトの画像ビューアです";
+"set.currentDefault" = "現在、写真は「%@」で開きます";
+"set.defaultNote" = "JPEG、PNG、HEIC、TIFF、GIF、WebP、カメラ RAW をダブルクリックすると Flipic で開きます。Finder で画像を右クリックし、⌥ キーを押しながら「常にこのアプリケーションで開く」› Flipic を選んでも設定できます。";
+"menu.rating" = "評価";
+"sc.group.rating" = "評価";
+"rating.none" = "評価なし";
+"rating.cleared" = "評価を取り消しました";
+"rating.failed" = "評価を保存できませんでした：%@";
+"set.rating" = "評価：";
+"set.ratingBadge" = "写真の左下に星を表示";

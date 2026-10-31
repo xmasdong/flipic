@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Flipic：好用的 Mac 看图软件，双击图片按左右键看下一张</title>
-<meta name="description" content="Flipic 是一款免费的 Mac 看图软件。双击任意图片，用左右方向键翻完整个文件夹；触控板捏合缩放，查看照片尺寸和拍摄参数，HEIC 批量转 JPG。安装包 1.5 MB，已通过 Apple 公证。">
+<meta name="description" content="Flipic 是一款免费的 Mac 看图软件。双击任意图片，用左右方向键翻完整个文件夹；触控板捏合缩放，查看照片尺寸和拍摄参数，HEIC 批量转 JPG。安装包 1.8 MB，已通过 Apple 公证。">
 <link rel="canonical" href="https://xmasdong.github.io/macphoto/">
 <link rel="alternate" hreflang="zh-CN" href="https://xmasdong.github.io/macphoto/">
 <link rel="alternate" hreflang="en" href="https://xmasdong.github.io/macphoto/en/">
@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="icon-256.png">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Flipic：好用的 Mac 看图软件">
-<meta property="og:description" content="双击一张图，左右键翻完整个文件夹。免费开源，安装包 1.5 MB。">
+<meta property="og:description" content="双击一张图，左右键翻完整个文件夹。免费开源，安装包 1.8 MB。">
 <meta property="og:image" content="https://xmasdong.github.io/macphoto/og.jpg">
 <meta property="og:url" content="https://xmasdong.github.io/macphoto/">
 <meta name="twitter:card" content="summary_large_image">
@@ -24,8 +24,8 @@
   "name": "Flipic",
   "operatingSystem": "macOS 13 或更新版本",
   "applicationCategory": "MultimediaApplication",
-  "softwareVersion": "0.5.3",
-  "fileSize": "1.5MB",
+  "softwareVersion": "0.6.0",
+  "fileSize": "1.8MB",
   "downloadUrl": "https://xmasdong.github.io/macphoto/download/Flipic.dmg",
   "image": "https://xmasdong.github.io/macphoto/og.jpg",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" },
@@ -262,7 +262,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
       <ul class="facts">
         <li>macOS 13 或更新版本</li>
         <li>Apple 芯片与 Intel 通用</li>
-        <li>安装包 1.5 MB</li>
+        <li>安装包 1.8 MB</li>
         <li>已通过 Apple 公证</li>
       </ul>
       <div class="on-phone">
@@ -303,7 +303,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
     <section class="feature flip">
       <div class="copytext">
         <h2>放大看细节，跟着手指走</h2>
-        <p>鼠标停在想看的地方，按 <strong>0</strong> 就在那里放大到 100%，再按一次恢复。触控板双指捏合时，缩放跟着手指走，松开有回弹；鼠标滚轮也能以光标为中心缩放。习惯用滚轮翻页的，在「显示 › 鼠标滚轮」里改一下就行。</p>
+        <p>鼠标停在想看的地方，按 <strong>0</strong> 就在那里放大到 100%，再按一次恢复。触控板双指捏合时，缩放跟着手指走，松开有回弹；鼠标滚轮也能以光标为中心缩放。习惯用滚轮翻页的，在设置（⌘,）里改一下就行；用 Mos 改过滚轮方向的，缩放方向也能反过来。</p>
         <p><strong>双击</strong>在适应窗口和 100% 之间切换。平时只解码适合屏幕的尺寸，放大到看得出差别时才换成原图，所以内存占用不高。</p>
       </div>
       <img class="shot" src="shots/zoom.webp" alt="Flipic 以 100% 比例查看照片细节" width="1440" height="900" loading="lazy">
@@ -329,6 +329,15 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
 
     <section class="feature">
       <div class="copytext">
+        <h2>打星、改键，按你的习惯来</h2>
+        <p>按 <strong>1 到 5</strong> 给照片打星，评过分的照片在底部正中一直显示星级，右键菜单里可以取消。评分按 XMP 标准写入，Lightroom、Bridge、Capture One 都能读到：JPEG、HEIC 只改元数据不重新压缩，专有 RAW 写在同名 .xmp 文件里，原始文件不动。</p>
+        <p>所有设置收在一个窗口里（<strong>⌘,</strong>），快捷键都能自己改。还可以录一个全局快捷键，在 Photoshop 里按一下 Flipic 就出来，再按一下收回去。设为默认看图软件也只要点一下。</p>
+      </div>
+      <img class="shot" src="shots/settings.webp" alt="Flipic 设置窗口：自定义快捷键" width="1440" height="900" loading="lazy">
+    </section>
+
+    <section class="feature flip">
+      <div class="copytext">
         <h2>HEIC 批量转 JPG</h2>
         <p>iPhone 拍的 HEIC 照片发给别人打不开，一张张转太慢。Flipic 可以把整个文件夹一次转完，转好的放进子文件夹，原图不动。</p>
         <ol class="steps">
@@ -347,7 +356,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
         <dt>支持格式</dt>
         <dd>JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（需 macOS 14 或更新），以及常见相机 RAW</dd>
         <dt>其他功能</dt>
-        <dd>⌘E 把当前照片交给 Photoshop、Lightroom 等后期软件（有同名 RAW 时打开 RAW）、旋转后写回文件（JPEG、HEIC 只改方向标记，画质无损）、导出压缩副本、批量重命名、幻灯片放映（每张 1 到 10 秒可选）、设为桌面壁纸</dd>
+        <dd>1 到 5 星评分（XMP，Lightroom 能读）、全局快捷键显示 / 隐藏、快捷键自定义、⌘E 把当前照片交给 Photoshop、Lightroom 等后期软件（有同名 RAW 时打开 RAW）、旋转后写回文件（JPEG、HEIC 只改方向标记，画质无损）、导出压缩副本、批量重命名、幻灯片放映（每张 1 到 10 秒可选）、设为桌面壁纸</dd>
         <dt>界面语言</dt>
         <dd>14 种，跟随系统设置</dd>
         <dt>隐私</dt>
@@ -371,6 +380,8 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
           <tr><td>⌘⌫</td><td>移到废纸篓</td></tr>
           <tr><td>⌘E</td><td>在后期软件中编辑</td></tr>
           <tr><td>⇧⌘K</td><td>清理模式 Beta</td></tr>
+          <tr><td>1–5</td><td>打 1 到 5 星</td></tr>
+          <tr><td>⌘,</td><td>设置，快捷键都能改</td></tr>
         </tbody>
       </table>
     </div>
@@ -393,7 +404,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
       </details>
       <details>
         <summary>怎么设为默认看图软件？</summary>
-        <p>在访达里右键一张图片，选「显示简介」，在「打开方式」里选 Flipic，再点「全部更改」。jpg、png、heic 等格式各设置一次。</p>
+        <p>打开设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 一次设好。也可以在访达里右键一张图片，按住 ⌥ 键，选「始终以此方式打开」› Flipic。</p>
       </details>
       <details>
         <summary>Intel 芯片的 Mac 能用吗？</summary>
@@ -413,7 +424,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
         免费下载 Mac 版
       </a>
-      <span class="alt">0.5.3 · 原名 PixDeck · <a href="https://github.com/xmasdong/macphoto/releases">历史版本</a></span>
+      <span class="alt">0.6.0 · 原名 PixDeck · <a href="https://github.com/xmasdong/macphoto/releases">历史版本</a></span>
     </div>
   </section>
 </main>

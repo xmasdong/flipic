@@ -192,6 +192,9 @@ Return  重新命名目前圖片
 "wheel.navigate" = "切換上一張 / 下一張";
 "wheel.navigate.on" = "滾輪：切換圖片（⌘+滾輪縮放）";
 "wheel.zoom.on" = "滾輪：縮放圖片（⌘+滾輪平移）";
+"wheel.invert" = "反轉縮放方向";
+"wheel.inverted.on" = "滾輪縮放方向已反轉";
+"wheel.inverted.off" = "滾輪縮放方向已恢復預設";
 
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "在後製軟體中編輯…";
@@ -217,3 +220,55 @@ Return  重新命名目前圖片
 "menu.escCloses" = "按 Esc 關閉視窗";
 "msg.escClosesOn" = "符合視窗時按 Esc 關閉 Flipic";
 "msg.escClosesOff" = "Esc 不再關閉視窗";
+
+/* 设置窗口、自定义快捷键 */
+"menu.settings" = "設定…";
+"set.tab.general" = "一般";
+"set.tab.mouse" = "滑鼠與觸控板";
+"set.tab.shortcuts" = "快速鍵";
+"set.sort" = "排序方式：";
+"set.paging" = "翻頁：";
+"set.slideInterval" = "幻燈片間隔：";
+"set.esc" = "Esc 鍵：";
+"set.escNote" = "符合視窗時按 Esc 直接關閉，放大時先復原。搭配 Finder 的 ⌘↓ 開啟，可以當快速查看用。";
+"set.editor" = "後製軟體：";
+"set.editorNote" = "「在後製軟體中編輯」用它開啟目前的照片，同名 RAW 也在時開啟 RAW。";
+"set.editorNone" = "未設定";
+"set.choose" = "選擇…";
+"set.clear" = "清除";
+"set.wheel" = "滑鼠滾輪：";
+"set.zoomDirection" = "縮放方向：";
+"set.invertNote" = "用 Mos 之類的工具改過滾輪方向後，如果滾輪縮放反了，就勾選這一項。只影響滾輪縮放，不影響觸控板捏合和滾輪翻頁。";
+"set.trackpad" = "觸控板：";
+"set.trackpadNote" = "雙指捏合縮放，雙指輕點兩下在符合視窗和 100% 之間切換，拖移平移。";
+"sc.group.browse" = "瀏覽";
+"sc.group.view" = "顯示";
+"sc.group.file" = "檔案";
+"sc.group.tools" = "工具";
+"sc.a.zoomAtPointer" = "在滑鼠處放大到 100%，再按復原";
+"sc.a.peek" = "貼合照片比例預覽";
+"sc.a.fullscreen" = "全螢幕";
+"sc.recording" = "按下快速鍵…";
+"sc.none" = "無";
+"sc.hint" = "點右側的按鍵，再按下新的組合。Esc 取消，⌫ 清除。帶 ⌘ 的組合在選單裡也看得到。";
+"sc.fixed" = "固定按鍵：Esc 關閉照片資訊、退出預覽和全螢幕；按兩下在符合視窗和 100% 之間切換；⌘O 開啟，⌘W 關閉視窗，⌘= ⌘- 縮放，⌘0 符合視窗，⌘1 實際大小。";
+"sc.reset" = "全部回復預設";
+"sc.reserved" = "%@ 是固定按鍵，不能改給別的操作";
+"sc.moved" = "%1$@ 原本用於「%2$@」，那一項已清空";
+"key.space" = "空白鍵";
+"tip.format" = "%1$@（%2$@）";
+"sc.group.global" = "全域（在其他軟體裡也能用）";
+"sc.a.toggleApp" = "顯示 / 隱藏 Flipic";
+"sc.needsModifier" = "全域快速鍵要帶 ⌘、⌥ 或 ⌃，單個鍵會和別的軟體衝突";
+"set.default" = "預設看圖：";
+"set.makeDefault" = "設為預設看圖軟體";
+"set.isDefault" = "Flipic 已是預設看圖軟體";
+"set.currentDefault" = "目前按兩下照片會用「%@」打開";
+"set.defaultNote" = "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相機 RAW 按兩下都用 Flipic 打開。也可以在 Finder 裡按右鍵點一張圖，按住 ⌥ 鍵，選「每次都用此應用程式來打開」› Flipic。";
+"menu.rating" = "評分";
+"sc.group.rating" = "評分";
+"rating.none" = "未評分";
+"rating.cleared" = "已取消評分";
+"rating.failed" = "評分無法寫入：%@";
+"set.rating" = "評分：";
+"set.ratingBadge" = "在照片左下角顯示星級";
