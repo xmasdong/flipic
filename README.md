@@ -121,6 +121,7 @@ Sources/Photoview/
 Resources/                     Info.plist、图标、14 种语言的文案
 docs/                          官网（GitHub Pages）
 scripts/                       签名打包、测试图生成等脚本
+scripts/icon/                  图标底稿脚本、山形取材的原图和成品图标
 ```
 
 调试时可以用这些启动参数，不需要点界面：
@@ -140,5 +141,7 @@ $PixDeck --cleanup-report <文件夹>   # 清理模式逐张指标与分类结�
 [MIT](LICENSE)。个人和商业项目都可以自由使用、修改和再发布，保留原作者的版权声明即可。
 
 ---
+
+图标先用 `scripts/icon/make_icon.py` 从桂林阳朔的一张照片（Wikimedia Commons，CC0）里提取真实山脊线画成底稿，再照底稿绘制成插画。
 
 截图中的风景照来自 Wikimedia Commons：喀纳斯湖 Muye Ma、那拉提草原 Yoshi Canopus、沙漠星空 thomas shellberg（CC0）；天山天池 David Stanley、库尔德宁 George Lu、博斯腾湖 liuxingy2015（CC BY 2.0）；果子沟大桥 Timothytyy、将军山 Pazakui（CC BY 4.0）。

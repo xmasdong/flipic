@@ -121,6 +121,7 @@ Sources/Photoview/
 Resources/                     Info.plist, icon, strings for 14 languages
 docs/                          Website (GitHub Pages)
 scripts/                       Release packaging and test image generators
+scripts/icon/                  Icon draft generator, the source photo for its skyline and the final icon
 ```
 
 A few launch arguments help with debugging without touching the UI:
@@ -140,5 +141,7 @@ Found a bug, something that feels off, or a feature you want? Open an [issue](ht
 [MIT](LICENSE). Use, modify and redistribute it freely, in personal or commercial projects, as long as the copyright notice is kept.
 
 ---
+
+The icon started as a draft from `scripts/icon/make_icon.py`, which traces the real skyline of a photo taken in Yangshuo, Guilin (Wikimedia Commons, CC0); the final artwork was illustrated over that draft.
 
 Landscape photos in the screenshots are from Wikimedia Commons: Kanas Lake by Muye Ma, Nalati Grassland by Yoshi Canopus and starry desert by thomas shellberg (CC0); Tianchi by David Stanley, Kuerdening by George Lu and Bosten Lake by liuxingy2015 (CC BY 2.0); Guozigou Bridge by Timothytyy and Jiangjunshan by Pazakui (CC BY 4.0).
