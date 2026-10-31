@@ -301,3 +301,7 @@ Return  현재 이미지 이름 변경
 "set.thumbMedium" = "보통";
 "set.thumbLarge" = "크게";
 "set.thumbXL" = "아주 크게";
+"exif.depth" = "색 심도";
+"exif.bits" = "%d비트";
+"exif.location" = "촬영 위치";
+"exif.openMaps" = "지도에서 열기";

@@ -301,3 +301,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.thumbMedium" = "Vừa";
 "set.thumbLarge" = "Lớn";
 "set.thumbXL" = "Rất lớn";
+"exif.depth" = "Độ sâu màu";
+"exif.bits" = "%d bit";
+"exif.location" = "Vị trí chụp";
+"exif.openMaps" = "Mở trong Bản đồ";

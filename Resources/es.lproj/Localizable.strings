@@ -301,3 +301,7 @@ Arrastra una carpeta o imagen para abrir";
 "set.thumbMedium" = "Medianas";
 "set.thumbLarge" = "Grandes";
 "set.thumbXL" = "Muy grandes";
+"exif.depth" = "Profundidad de color";
+"exif.bits" = "%d bits";
+"exif.location" = "Ubicación";
+"exif.openMaps" = "Abrir en Mapas";

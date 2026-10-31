@@ -301,3 +301,7 @@ Return  إعادة تسمية الصورة الحالية
 "set.thumbMedium" = "متوسطة";
 "set.thumbLarge" = "كبيرة";
 "set.thumbXL" = "كبيرة جدًا";
+"exif.depth" = "عمق الألوان";
+"exif.bits" = "%d بت";
+"exif.location" = "الموقع";
+"exif.openMaps" = "فتح في الخرائط";

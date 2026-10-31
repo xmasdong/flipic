@@ -313,3 +313,7 @@ Drop a folder or image to open";
 "set.thumbMedium" = "Medium";
 "set.thumbLarge" = "Large";
 "set.thumbXL" = "Extra Large";
+"exif.depth" = "Color depth";
+"exif.bits" = "%d-bit";
+"exif.location" = "Location";
+"exif.openMaps" = "Open in Maps";

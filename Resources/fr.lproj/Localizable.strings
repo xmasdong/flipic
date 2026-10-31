@@ -301,3 +301,7 @@ Déposez un dossier ou une image pour ouvrir";
 "set.thumbMedium" = "Moyennes";
 "set.thumbLarge" = "Grandes";
 "set.thumbXL" = "Très grandes";
+"exif.depth" = "Profondeur de couleur";
+"exif.bits" = "%d bits";
+"exif.location" = "Lieu";
+"exif.openMaps" = "Ouvrir dans Plans";

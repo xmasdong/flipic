@@ -313,3 +313,7 @@ Esc  先关掉右上角的照片信息
 "set.thumbMedium" = "中";
 "set.thumbLarge" = "大";
 "set.thumbXL" = "特大";
+"exif.depth" = "色深";
+"exif.bits" = "%d 位";
+"exif.location" = "拍摄地点";
+"exif.openMaps" = "在「地图」中打开";

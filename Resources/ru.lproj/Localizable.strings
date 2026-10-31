@@ -301,3 +301,7 @@ Return  Переименовать текущее изображение
 "set.thumbMedium" = "Средние";
 "set.thumbLarge" = "Большие";
 "set.thumbXL" = "Очень большие";
+"exif.depth" = "Глубина цвета";
+"exif.bits" = "%d бит";
+"exif.location" = "Место съёмки";
+"exif.openMaps" = "Открыть в Картах";

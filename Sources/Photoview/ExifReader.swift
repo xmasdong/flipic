@@ -4,6 +4,8 @@ import ImageIO
 struct ExifEntry {
     let label: String
     let value: String
+    /// 点击后打开的地址（拍摄地点用来在「地图」里打开）
+    var link: URL? = nil
 }
 
 /// 信息条用的摘要
@@ -81,8 +83,14 @@ enum ExifReader {
         if let w = props["PixelWidth"] as? Int, let h = props["PixelHeight"] as? Int {
             entries.append(ExifEntry(label: L10n.t("exif.size", "尺寸"), value: "\(w) × \(h)"))
         }
+        if let depth = depthText(src: src, props: props) {
+            entries.append(ExifEntry(label: L10n.t("exif.depth", "色深"), value: depth))
+        }
         if let profile = props[kCGImagePropertyProfileName as String] as? String, !profile.isEmpty {
             entries.append(ExifEntry(label: L10n.t("exif.profile", "色彩描述"), value: profile))
+        }
+        if let place = location(props) {
+            entries.append(place)
         }
         if let attr = try? FileManager.default.attributesOfItem(atPath: url.path),
            let bytes = attr[.size] as? Int {
@@ -90,6 +98,37 @@ enum ExifReader {
                                      value: url.lastPathComponent + " · " + ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)))
         }
         return entries
+    }
+
+    /// 每个颜色通道的位数；带 HDR 增益图的照片标出 HDR
+    private static func depthText(src: CGImageSource, props: [String: Any]) -> String? {
+        guard let bits = props[kCGImagePropertyDepth as String] as? Int, bits > 0 else { return nil }
+        var text = L10n.f("exif.bits", "%d 位", bits)
+        var hdr = false
+        if #available(macOS 15, *), CGImageSourceCopyAuxiliaryDataInfoAtIndex(src, 0, kCGImageAuxiliaryDataTypeISOGainMap) != nil { hdr = true }
+        if CGImageSourceCopyAuxiliaryDataInfoAtIndex(src, 0, kCGImageAuxiliaryDataTypeHDRGainMap) != nil { hdr = true }
+        if let cs = (props[kCGImagePropertyProfileName as String] as? String), cs.contains("PQ") || cs.contains("HLG") || cs.contains("2100") { hdr = true }
+        if hdr { text += " · HDR" }
+        return text
+    }
+
+    /// GPS 坐标：24.78° N, 118.60° E · 12 m，点击在「地图」里打开
+    private static func location(_ props: [String: Any]) -> ExifEntry? {
+        guard let gps = props[kCGImagePropertyGPSDictionary as String] as? [String: Any],
+              var lat = gps[kCGImagePropertyGPSLatitude as String] as? Double,
+              var lon = gps[kCGImagePropertyGPSLongitude as String] as? Double else { return nil }
+        let latRef = gps[kCGImagePropertyGPSLatitudeRef as String] as? String ?? "N"
+        let lonRef = gps[kCGImagePropertyGPSLongitudeRef as String] as? String ?? "E"
+        if latRef == "S" { lat = -lat }
+        if lonRef == "W" { lon = -lon }
+        guard abs(lat) <= 90, abs(lon) <= 180, !(lat == 0 && lon == 0) else { return nil }
+        var text = String(format: "%.5f° %@, %.5f° %@", abs(lat), lat >= 0 ? "N" : "S", abs(lon), lon >= 0 ? "E" : "W")
+        if var alt = gps[kCGImagePropertyGPSAltitude as String] as? Double {
+            if (gps[kCGImagePropertyGPSAltitudeRef as String] as? Int) == 1 { alt = -alt }
+            text += String(format: " · %.0f m", alt)
+        }
+        let link = URL(string: String(format: "https://maps.apple.com/?ll=%.6f,%.6f&q=%.6f,%.6f", lat, lon, lat, lon))
+        return ExifEntry(label: L10n.t("exif.location", "拍摄地点"), value: text, link: link)
     }
 
     private static func shutterText(_ t: Double) -> String {

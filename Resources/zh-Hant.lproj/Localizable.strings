@@ -301,3 +301,7 @@ Return  重新命名目前圖片
 "set.thumbMedium" = "中";
 "set.thumbLarge" = "大";
 "set.thumbXL" = "特大";
+"exif.depth" = "色彩深度";
+"exif.bits" = "%d 位元";
+"exif.location" = "拍攝地點";
+"exif.openMaps" = "在「地圖」中打開";

@@ -902,6 +902,20 @@ final class ViewerViewController: NSViewController {
             let l = NSTextField(labelWithString: e.label)
             l.font = .systemFont(ofSize: 11)
             l.textColor = .secondaryLabelColor
+            exifStack.addArrangedSubview(l)
+            if let link = e.link {
+                // 拍摄地点：点击在「地图」里打开
+                let b = NSButton(title: e.value + "  ↗", target: self, action: #selector(openExifLink(_:)))
+                b.isBordered = false
+                b.font = .systemFont(ofSize: 12)
+                b.contentTintColor = .linkColor
+                b.alignment = .left
+                b.toolTip = L10n.t("exif.openMaps", "在「地图」中打开")
+                b.identifier = NSUserInterfaceItemIdentifier(link.absoluteString)
+                b.setAccessibilityLabel(e.label)
+                exifStack.addArrangedSubview(b)
+                continue
+            }
             let v = NSTextField(labelWithString: e.value)
             v.font = .systemFont(ofSize: 12)
             v.textColor = .labelColor
@@ -909,9 +923,12 @@ final class ViewerViewController: NSViewController {
             v.lineBreakMode = .byWordWrapping
             v.setAccessibilityLabel(e.label)
             v.preferredMaxLayoutWidth = 260
-            exifStack.addArrangedSubview(l)
             exifStack.addArrangedSubview(v)
         }
+    }
+
+    @objc private func openExifLink(_ sender: NSButton) {
+        if let s = sender.identifier?.rawValue, let url = URL(string: s) { NSWorkspace.shared.open(url) }
     }
 
     /// 只改选中态，不 reloadData（整条重建会让所有可见格子重新取缩略图）

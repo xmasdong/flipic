@@ -301,3 +301,7 @@ Return  表示中の画像を名称変更
 "set.thumbMedium" = "中";
 "set.thumbLarge" = "大";
 "set.thumbXL" = "特大";
+"exif.depth" = "色深度";
+"exif.bits" = "%d ビット";
+"exif.location" = "撮影地";
+"exif.openMaps" = "「マップ」で開く";

@@ -301,3 +301,7 @@ Açmak için klasör veya resim sürükleyin";
 "set.thumbMedium" = "Orta";
 "set.thumbLarge" = "Büyük";
 "set.thumbXL" = "Çok büyük";
+"exif.depth" = "Renk derinliği";
+"exif.bits" = "%d bit";
+"exif.location" = "Konum";
+"exif.openMaps" = "Haritalar'da aç";

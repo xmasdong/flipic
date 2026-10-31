@@ -51,7 +51,7 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 - The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, change it in Settings; ⌘ + scroll then zooms. If you reversed your wheel with a tool like Mos, you can reverse the zoom direction too, and paging can be reversed so a downward swipe goes back, like on a phone.
 - Panning a zoomed photo stops at its edges, so no empty space slides in. Thumbnails come in small, medium, large and extra large.
 - HDR photos (iPhone HEIC, JPEGs with a gain map and more) can be shown in HDR, with highlights brighter than regular white, as in Preview. Turn it on in Settings; it is off by default and needs macOS 14 and an HDR-capable display.
-- Nothing but the photo by default. Press I for camera, lens, shutter speed, aperture, ISO, date taken, size and color profile; Esc closes it.
+- Nothing but the photo by default. Press I for camera, lens, shutter speed, aperture, ISO, date taken, size, color depth, color profile and, when the photo has GPS data, the location, which opens in Maps; Esc closes it.
 
 **Star ratings**
 

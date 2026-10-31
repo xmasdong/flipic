@@ -5,6 +5,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var pendingURL: URL?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if let i = CommandLine.arguments.firstIndex(of: "--exifdump") {
+            // --exifdump <文件...>：打印照片信息面板会显示的各项（诊断用）
+            for path in CommandLine.arguments[(i + 1)...] where !path.hasPrefix("-") && !path.hasPrefix("(") {
+                print("== " + (path as NSString).lastPathComponent)
+                for e in ExifReader.read(url: URL(fileURLWithPath: path)) {
+                    print("  \(e.label): \(e.value)" + (e.link != nil ? "  [link]" : ""))
+                }
+            }
+            exit(0)
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--cleanup-report"), i + 1 < CommandLine.arguments.count {
             CleanupDebug.report(folder: CommandLine.arguments[i + 1])
             return
@@ -20,6 +30,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in self?.windowController?.runXhsShots(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--infoshot"), i + 2 < CommandLine.arguments.count {
+            // --infoshot <截图路径> <文件夹>：打开照片信息面板截图
+            let out = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                    let vc = self?.windowController?.contentViewController as? ViewerViewController
+                    vc?.toggleInfoPanel(nil)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { vc?.debugCapture(to: out); NSApp.terminate(nil) }
+                }
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--thumbtest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]

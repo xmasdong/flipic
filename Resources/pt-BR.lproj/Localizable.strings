@@ -301,3 +301,7 @@ Arraste uma pasta ou imagem para abrir";
 "set.thumbMedium" = "Médias";
 "set.thumbLarge" = "Grandes";
 "set.thumbXL" = "Muito grandes";
+"exif.depth" = "Profundidade de cor";
+"exif.bits" = "%d bits";
+"exif.location" = "Local";
+"exif.openMaps" = "Abrir no Mapas";
