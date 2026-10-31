@@ -291,3 +291,5 @@ Déposez un dossier ou une image pour ouvrir";
 "set.hdrCheck" = "Afficher les hautes lumières HDR";
 "set.hdrNote" = "Les photos HDR de l’iPhone et d’autres appareils affichent des hautes lumières plus vives que le blanc normal, comme dans Aperçu. Elles utilisent deux fois plus de mémoire.";
 "set.hdrUnsupported" = "Nécessite macOS 14 ou ultérieur et un écran compatible HDR, comme l’écran XDR du MacBook Pro.";
+"msg.slidePaused" = "En pause · cliquez pour reprendre";
+"msg.slideResumed" = "Reprise";

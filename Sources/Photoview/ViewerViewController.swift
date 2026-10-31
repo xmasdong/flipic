@@ -119,6 +119,7 @@ final class ViewerViewController: NSViewController {
         imageView.onSlideshow = { [weak self] in self?.toggleSlideshow(nil) }
         imageView.onRename = { [weak self] in self?.renameCurrent(nil) }
         imageView.onCommand = { [weak self] action in self?.perform(action) }
+        imageView.onSingleClick = { [weak self] in self?.toggleSlideshowPause() }
         imageView.onFirstFrame = { [weak self] size in
             self?.folder.setCurrentPixelSize(size)
             self?.updateHUD()
@@ -444,7 +445,7 @@ final class ViewerViewController: NSViewController {
 
     private func updateSlideshowButton() {
         guard let button = slideshowButton else { return }
-        let symbol = slideshowTimer != nil ? "stop.fill" : "play.fill"
+        let symbol = slideshowActive ? "stop.fill" : "play.fill"
         button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 13, weight: .medium))
     }
@@ -1143,8 +1144,26 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 幻灯片放映
 
+    /// 放映中暂停：计时器停掉但仍在放映状态（全屏、缩略图栏自动隐藏），可以翻页、打星，再点一下继续
+    private var slideshowPaused = false
+    private var slideshowActive: Bool { slideshowTimer != nil || slideshowPaused }
+
+    private func toggleSlideshowPause() {
+        guard slideshowActive else { return }
+        if slideshowPaused {
+            slideshowPaused = false
+            scheduleSlideshowTimer()
+            flash(L10n.t("msg.slideResumed", "继续播放"))
+        } else {
+            slideshowTimer?.invalidate()
+            slideshowTimer = nil
+            slideshowPaused = true
+            flash(L10n.t("msg.slidePaused", "已暂停 · 点一下继续"), seconds: 2.5)
+        }
+    }
+
     @objc func toggleSlideshow(_ sender: Any?) {
-        if slideshowTimer != nil {
+        if slideshowActive {
             stopSlideshow()
         } else {
             startSlideshow()
@@ -1239,9 +1258,10 @@ final class ViewerViewController: NSViewController {
     }
 
     private func stopSlideshow() {
-        guard slideshowTimer != nil else { return }
+        guard slideshowActive else { return }
         slideshowTimer?.invalidate()
         slideshowTimer = nil
+        slideshowPaused = false
         updateSlideshowButton()
         setFilmstripFloating(false)
         flash(L10n.t("msg.slideshowOff", "已停止幻灯片放映"))
@@ -2546,6 +2566,57 @@ final class ViewerViewController: NSViewController {
         at(0.3) {
             if let saved { UserDefaults.standard.set(saved, forKey: "hdrEnabled") } else { UserDefaults.standard.removeObject(forKey: "hdrEnabled") }
             NSApp.terminate(nil)
+        }
+    }
+
+    /// --pausetest <文件夹>：放映中单击暂停（不再换图）、再单击继续；双击仍是缩放、不暂停；拖动不暂停
+    func runPauseTest() {
+        let d = UserDefaults.standard
+        let savedInterval = d.object(forKey: "slideshowInterval")
+        slideshowInterval = 2
+        guard let w = view.window else { return }
+        let center = imageView.convert(NSPoint(x: imageView.bounds.midX, y: imageView.bounds.midY), to: nil)
+        // 直接把事件交给图片视图：不抢前台、不进全屏，用户在用别的软件时也能测
+        func mouse(_ type: NSEvent.EventType, _ p: NSPoint, clicks: Int) {
+            guard let e = NSEvent.mouseEvent(with: type, location: p, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                             windowNumber: w.windowNumber, context: nil, eventNumber: 0, clickCount: clicks, pressure: 1) else { return }
+            switch type {
+            case .leftMouseDown: imageView.mouseDown(with: e)
+            case .leftMouseDragged: imageView.mouseDragged(with: e)
+            default: imageView.mouseUp(with: e)
+            }
+        }
+        func click(_ n: Int = 1) { mouse(.leftMouseDown, center, clicks: n); mouse(.leftMouseUp, center, clicks: n) }
+        func state(_ tag: String) {
+            NSLog("PAUSE %@ active=%d paused=%d key=%d appActive=%d front=%@ index=%d scale=%@", tag, slideshowActive ? 1 : 0, slideshowPaused ? 1 : 0,
+                  w.isKeyWindow ? 1 : 0, NSApp.isActive ? 1 : 0, NSWorkspace.shared.frontmostApplication?.localizedName ?? "-", folder.index, imageView.fitDiagnostics)
+        }
+        var t = 0.0
+        var idx = 0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.3) { self.scheduleSlideshowTimer() }
+        at(2.0) { click() }
+        let wait = NSEvent.doubleClickInterval + 0.3
+        NSLog("PAUSE doubleClickInterval=%.2f", NSEvent.doubleClickInterval)
+        at(wait) { state("1-after single click (expect paused)"); idx = self.folder.index }
+        at(3.0) { NSLog("PAUSE 2-3s later indexSame=%d", self.folder.index == idx ? 1 : 0) }
+        at(0.1) { click() }
+        at(wait) { state("3-click again (expect playing)"); idx = self.folder.index }
+        at(2.2) { NSLog("PAUSE 4-advanced after resume=%d", self.folder.index != idx ? 1 : 0) }
+        at(0.1) { click(); DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { click(2) } }
+        at(wait + 0.2) { state("5-double click (expect still playing)") }
+        at(0.2) {
+            self.imageView.fit()
+            mouse(.leftMouseDown, center, clicks: 1)
+            mouse(.leftMouseDragged, NSPoint(x: center.x + 80, y: center.y + 40), clicks: 1)
+            mouse(.leftMouseUp, NSPoint(x: center.x + 80, y: center.y + 40), clicks: 1)
+        }
+        at(wait + 0.1) { state("6-drag (expect still playing)") }
+        at(0.2) {
+            self.stopSlideshow()
+            if let savedInterval { d.set(savedInterval, forKey: "slideshowInterval") } else { d.removeObject(forKey: "slideshowInterval") }
+            if w.styleMask.contains(.fullScreen) { w.toggleFullScreen(nil) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { NSApp.terminate(nil) }
         }
     }
 

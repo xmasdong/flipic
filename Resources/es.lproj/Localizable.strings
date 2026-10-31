@@ -291,3 +291,5 @@ Arrastra una carpeta o imagen para abrir";
 "set.hdrCheck" = "Mostrar luces HDR";
 "set.hdrNote" = "Las fotos HDR del iPhone y otras cámaras muestran luces más brillantes que el blanco normal, como en Vista Previa. Usan el doble de memoria.";
 "set.hdrUnsupported" = "Requiere macOS 14 o posterior y una pantalla compatible con HDR, como la XDR del MacBook Pro.";
+"msg.slidePaused" = "En pausa · haz clic para seguir";
+"msg.slideResumed" = "Reanudado";

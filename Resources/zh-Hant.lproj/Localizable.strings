@@ -291,3 +291,5 @@ Return  重新命名目前圖片
 "set.hdrCheck" = "顯示 HDR 照片的高光";
 "set.hdrNote" = "iPhone 等拍攝的 HDR 照片，亮部會比一般白色更亮，和系統「預覽程式」看到的一樣。HDR 照片佔用的記憶體是一般照片的兩倍。";
 "set.hdrUnsupported" = "需要 macOS 14 或以上版本，以及支援 HDR 的螢幕（如 MacBook Pro 的 XDR 螢幕）。";
+"msg.slidePaused" = "已暫停 · 按一下繼續";
+"msg.slideResumed" = "繼續播放";

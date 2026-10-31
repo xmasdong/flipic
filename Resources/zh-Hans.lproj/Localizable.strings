@@ -303,3 +303,5 @@ Esc  先关掉右上角的照片信息
 "set.hdrCheck" = "显示 HDR 照片的高光";
 "set.hdrNote" = "iPhone 等拍的 HDR 照片，亮部会比普通白更亮，和系统「预览」看到的一样。HDR 照片占用的内存是普通照片的两倍。";
 "set.hdrUnsupported" = "需要 macOS 14 或更新版本，以及支持 HDR 的屏幕（如 MacBook Pro 的 XDR 屏）。";
+"msg.slidePaused" = "已暂停 · 点一下继续";
+"msg.slideResumed" = "继续播放";

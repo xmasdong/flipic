@@ -291,3 +291,5 @@ Return  表示中の画像を名称変更
 "set.hdrCheck" = "HDR 写真のハイライトを表示";
 "set.hdrNote" = "iPhone などで撮った HDR 写真は、明るい部分が通常の白より明るく表示されます（プレビューと同じ）。HDR 写真は通常の写真の 2 倍のメモリを使います。";
 "set.hdrUnsupported" = "macOS 14 以降と、HDR 対応ディスプレイ（MacBook Pro の XDR ディスプレイなど）が必要です。";
+"msg.slidePaused" = "一時停止中 · クリックで再開";
+"msg.slideResumed" = "再開しました";

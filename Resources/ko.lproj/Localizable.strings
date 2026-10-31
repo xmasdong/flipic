@@ -291,3 +291,5 @@ Return  현재 이미지 이름 변경
 "set.hdrCheck" = "HDR 사진의 밝은 영역 표시";
 "set.hdrNote" = "iPhone 등으로 찍은 HDR 사진의 밝은 부분이 일반 흰색보다 밝게 보입니다(미리보기와 동일). HDR 사진은 일반 사진보다 메모리를 두 배 사용합니다.";
 "set.hdrUnsupported" = "macOS 14 이상과 HDR 지원 디스플레이(MacBook Pro의 XDR 디스플레이 등)가 필요합니다.";
+"msg.slidePaused" = "일시 정지됨 · 클릭하면 계속";
+"msg.slideResumed" = "다시 재생";

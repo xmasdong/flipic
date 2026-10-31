@@ -291,3 +291,5 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.hdrCheck" = "HDR-Lichter anzeigen";
 "set.hdrNote" = "HDR-Fotos vom iPhone und anderen Kameras zeigen Lichter heller als normales Weiß, wie in Vorschau. HDR-Fotos brauchen doppelt so viel Speicher.";
 "set.hdrUnsupported" = "Erfordert macOS 14 oder neuer und ein HDR-fähiges Display, etwa das XDR-Display des MacBook Pro.";
+"msg.slidePaused" = "Pausiert · zum Fortsetzen klicken";
+"msg.slideResumed" = "Fortgesetzt";

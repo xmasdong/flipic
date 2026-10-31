@@ -303,3 +303,5 @@ Drop a folder or image to open";
 "set.hdrCheck" = "Show HDR highlights";
 "set.hdrNote" = "HDR photos from iPhone and other cameras show highlights brighter than regular white, as in Preview. HDR photos use twice the memory of regular ones.";
 "set.hdrUnsupported" = "Requires macOS 14 or later and an HDR-capable display, such as the XDR display on MacBook Pro.";
+"msg.slidePaused" = "Paused · click to resume";
+"msg.slideResumed" = "Resumed";

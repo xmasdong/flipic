@@ -291,3 +291,5 @@ Arraste uma pasta ou imagem para abrir";
 "set.hdrCheck" = "Mostrar realces HDR";
 "set.hdrNote" = "Fotos HDR do iPhone e de outras câmeras mostram realces mais claros que o branco normal, como no Pré-Visualização. Usam o dobro de memória.";
 "set.hdrUnsupported" = "Requer macOS 14 ou posterior e uma tela compatível com HDR, como a tela XDR do MacBook Pro.";
+"msg.slidePaused" = "Pausado · clique para continuar";
+"msg.slideResumed" = "Retomado";

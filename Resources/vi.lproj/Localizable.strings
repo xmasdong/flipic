@@ -291,3 +291,5 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.hdrCheck" = "Hiển thị vùng sáng HDR";
 "set.hdrNote" = "Ảnh HDR từ iPhone và máy ảnh khác sẽ có vùng sáng sáng hơn màu trắng thường, giống trong Xem trước. Ảnh HDR dùng gấp đôi bộ nhớ.";
 "set.hdrUnsupported" = "Cần macOS 14 trở lên và màn hình hỗ trợ HDR, như màn hình XDR của MacBook Pro.";
+"msg.slidePaused" = "Đã tạm dừng · bấm để tiếp tục";
+"msg.slideResumed" = "Đang phát tiếp";

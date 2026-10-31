@@ -291,3 +291,5 @@ Açmak için klasör veya resim sürükleyin";
 "set.hdrCheck" = "HDR parlak alanlarını göster";
 "set.hdrNote" = "iPhone ve diğer kameraların HDR fotoğraflarında parlak alanlar normal beyazdan daha parlak görünür (Önizleme'deki gibi). HDR fotoğraflar iki kat bellek kullanır.";
 "set.hdrUnsupported" = "macOS 14 veya sonrası ve HDR destekli bir ekran (MacBook Pro XDR ekranı gibi) gerekir.";
+"msg.slidePaused" = "Duraklatıldı · devam için tıklayın";
+"msg.slideResumed" = "Devam ediyor";

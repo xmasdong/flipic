@@ -69,7 +69,7 @@ Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. 
 - Convert a whole folder to JPEG, PNG or HEIC; converted files go into a subfolder and the originals stay untouched
 - Batch rename
 - Rotate and save back to the file; for JPEG and HEIC only the orientation tag changes, so there is no quality loss
-- Slideshow with 1, 2, 3, 5 or 10 seconds per photo and a 0.5 to 3 second crossfade, set separately from paging; the thumbnail strip and toolbar hide while you leave the mouse alone
+- Slideshow with 1, 2, 3, 5 or 10 seconds per photo and a 0.5 to 3 second crossfade, set separately from paging; click the photo to pause and click again to resume, with paging and rating available while paused; the thumbnail strip and toolbar hide while you leave the mouse alone
 - Export compressed copies, set as desktop picture, move to Trash
 
 **Hand off to your editor**

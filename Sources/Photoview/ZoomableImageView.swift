@@ -59,6 +59,12 @@ final class ZoomableImageView: NSView {
         addGestureRecognizer(doubleClick)
     }
 
+    /// 单击（不是双击、不是拖动）：幻灯片放映时用来暂停 / 继续。
+    /// 松开鼠标后等过系统的双击间隔还没有第二下才算，免得双击缩放时先暂停了
+    var onSingleClick: (() -> Void)?
+    private var pendingSingleClick: DispatchWorkItem?
+    private var mouseMovedSinceDown = false
+
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     /// 当前显示内容的原图像素尺寸（含视图旋转）
@@ -465,6 +471,8 @@ final class ZoomableImageView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
+        mouseMovedSinceDown = false
+        if event.clickCount >= 2 { pendingSingleClick?.cancel(); pendingSingleClick = nil }
         dragStartOrigin = origin
         dragStartPoint = convert(event.locationInWindow, from: nil)
     }
@@ -472,6 +480,7 @@ final class ZoomableImageView: NSView {
     override func mouseDragged(with event: NSEvent) {
         guard let o = dragStartOrigin, let s = dragStartPoint else { return }
         let p = convert(event.locationInWindow, from: nil)
+        if hypot(p.x - s.x, p.y - s.y) > 3 { mouseMovedSinceDown = true }
         origin = CGPoint(x: o.x + (p.x - s.x), y: o.y + (p.y - s.y))
         mode = .free
         onActivity?()
@@ -481,6 +490,16 @@ final class ZoomableImageView: NSView {
     override func mouseUp(with event: NSEvent) {
         dragStartOrigin = nil
         dragStartPoint = nil
+        pendingSingleClick?.cancel()
+        pendingSingleClick = nil
+        if event.clickCount == 1, !mouseMovedSinceDown, onSingleClick != nil {
+            let work = DispatchWorkItem { [weak self] in
+                self?.pendingSingleClick = nil
+                self?.onSingleClick?()
+            }
+            pendingSingleClick = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + NSEvent.doubleClickInterval, execute: work)
+        }
     }
 
     @objc private func doubleClicked(_ recognizer: NSClickGestureRecognizer) {
