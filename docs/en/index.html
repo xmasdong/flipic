@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PixDeck: a free Mac image viewer with arrow-key browsing</title>
-<meta name="description" content="PixDeck is a free image viewer for Mac. Double-click any image and use the arrow keys to browse the whole folder, like on Windows. Pinch to zoom, see EXIF details, batch convert HEIC to JPG. Under 1 MB, notarized by Apple.">
+<title>Flipic: a free Mac image viewer with arrow-key browsing</title>
+<meta name="description" content="Flipic is a free image viewer for Mac. Double-click any image and use the arrow keys to browse the whole folder, like on Windows. Pinch to zoom, see EXIF details, batch convert HEIC to JPG. Under 1 MB, notarized by Apple.">
 <link rel="canonical" href="https://xmasdong.github.io/macphoto/en/">
 <link rel="alternate" hreflang="zh-CN" href="https://xmasdong.github.io/macphoto/">
 <link rel="alternate" hreflang="en" href="https://xmasdong.github.io/macphoto/en/">
@@ -12,7 +12,7 @@
 <link rel="icon" type="image/png" href="../favicon.png">
 <link rel="apple-touch-icon" href="../icon-256.png">
 <meta property="og:type" content="website">
-<meta property="og:title" content="PixDeck: a free Mac image viewer">
+<meta property="og:title" content="Flipic: a free Mac image viewer">
 <meta property="og:description" content="Double-click an image, browse the whole folder with the arrow keys. Free, under 1 MB.">
 <meta property="og:image" content="https://xmasdong.github.io/macphoto/og.jpg">
 <meta property="og:url" content="https://xmasdong.github.io/macphoto/en/">
@@ -21,12 +21,12 @@
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "PixDeck",
+  "name": "Flipic",
   "operatingSystem": "macOS 13 or later",
   "applicationCategory": "MultimediaApplication",
-  "softwareVersion": "0.4.0",
-  "fileSize": "1.2MB",
-  "downloadUrl": "https://xmasdong.github.io/macphoto/download/PixDeck.dmg",
+  "softwareVersion": "0.5.0",
+  "fileSize": "1.5MB",
+  "downloadUrl": "https://xmasdong.github.io/macphoto/download/Flipic.dmg",
   "image": "https://xmasdong.github.io/macphoto/og.jpg",
   "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
   "license": "https://opensource.org/licenses/MIT",
@@ -109,16 +109,16 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
 </head>
 <body>
 <header class="wrap top">
-  <a class="brand" href="./"><img src="../icon-256.png" alt="" width="30" height="30">PixDeck</a>
+  <a class="brand" href="./"><img src="../icon-256.png" alt="" width="30" height="30">Flipic</a>
   <nav><a href="../" hreflang="zh-CN">中文</a></nav>
 </header>
 <main>
   <section class="wrap hero">
     <p class="eyebrow">Image viewer for Mac</p>
     <h1>Double-click a photo. Arrow keys through the whole folder.</h1>
-    <p class="lede">PixDeck does one thing: viewing images. Open a photo, flip to the next one, zoom in for detail. It works the way image viewers on Windows always have.</p>
+    <p class="lede">Flipic does one thing: viewing images. Open a photo, flip to the next one, zoom in for detail. It works the way image viewers on Windows always have.</p>
     <div class="get">
-      <a class="btn" href="../download/PixDeck.dmg" download>
+      <a class="btn" href="../download/Flipic.dmg" download>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
         Download for Mac, free
       </a>
@@ -127,7 +127,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
     <ul class="facts">
       <li>macOS 13 or later</li>
       <li>Apple silicon and Intel</li>
-      <li>1.2 MB download</li>
+      <li>1.5 MB download</li>
       <li>Notarized by Apple</li>
     </ul>
   </section>
@@ -135,10 +135,10 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
   <section class="table" aria-label="Browsing demo">
     <div class="wrap">
       <div class="frame" id="frame">
-        <img class="on" src="../shots/browse-01.webp" alt="PixDeck showing photo 1 of 8 in a folder" width="1440" height="900" fetchpriority="high">
+        <img class="on" src="../shots/browse-01.webp" alt="Flipic showing photo 1 of 8 in a folder" width="1440" height="900" fetchpriority="high">
       </div>
       <div class="deck">
-        <span class="hint-keys">Press <kbd>←</kbd><kbd>→</kbd> on your keyboard. These are real PixDeck screenshots (Chinese UI).</span>
+        <span class="hint-keys">Press <kbd>←</kbd><kbd>→</kbd> on your keyboard. These are real Flipic screenshots (Chinese UI).</span>
         <span class="keys">
           <button type="button" data-step="-1" aria-label="Previous"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
           <span class="count" id="count" aria-live="polite">1 / 8</span>
@@ -153,37 +153,37 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
       <div class="copytext">
         <h2>Next image, one key away</h2>
         <p>Open a single image in Preview and that is all you get. To flip through, you have to go back to Finder and select the whole set first.</p>
-        <p>In PixDeck, <strong>double-click any image and press →</strong> for the next one. Press <strong>Space</strong> and the window wraps to the photo’s aspect ratio, just like Quick Look in Finder; press it again to return. Sort by name, date taken, date modified, date created or file size. Nearby images are prepared in the background, so even 48-megapixel photos keep up.</p>
+        <p>In Flipic, <strong>double-click any image and press →</strong> for the next one. Press <strong>Space</strong> and the window wraps to the photo’s aspect ratio, just like Quick Look in Finder; press it again to return. Sort by name, date taken, date modified, date created or file size. Nearby images are prepared in the background, so even 48-megapixel photos keep up.</p>
       </div>
-      <img class="shot" src="../shots/browse-06.webp" alt="PixDeck thumbnail strip and navigation arrows" width="1440" height="900" loading="lazy">
+      <img class="shot" src="../shots/browse-06.webp" alt="Flipic thumbnail strip and navigation arrows" width="1440" height="900" loading="lazy">
     </section>
     <section class="feature flip">
       <div class="copytext">
         <h2>Zoom that follows your fingers</h2>
-        <p>Pinch on the trackpad and the image scales right under your fingers. <strong>Double-click</strong> to toggle between fit and 100%; the full-resolution original loads only when you zoom in far enough to need it. Prefer the scroll wheel for paging? Switch it in View › Scroll Wheel.</p>
+        <p>Rest the pointer on a detail and press <strong>0</strong> to zoom to 100% right there; press it again to go back. Pinch on the trackpad and the image scales right under your fingers. <strong>Double-click</strong> to toggle between fit and 100%; the full-resolution original loads only when you zoom in far enough to need it. Prefer the scroll wheel for paging? Switch it in View › Scroll Wheel.</p>
       </div>
-      <img class="shot" src="../shots/zoom.webp" alt="PixDeck viewing a photo at 100%" width="1440" height="900" loading="lazy">
+      <img class="shot" src="../shots/zoom.webp" alt="Flipic viewing a photo at 100%" width="1440" height="900" loading="lazy">
     </section>
     <section class="feature">
       <div class="copytext">
         <h2>EXIF at a glance</h2>
         <p>Size, file size, format and zoom level stay in the corner, plus camera, lens, shutter, aperture, ISO and date taken when the photo has them. Press <strong>I</strong> for the full panel.</p>
       </div>
-      <img class="shot" src="../shots/exif.webp" alt="PixDeck photo info panel" width="1440" height="900" loading="lazy">
+      <img class="shot" src="../shots/exif.webp" alt="Flipic photo info panel" width="1440" height="900" loading="lazy">
     </section>
     <section class="feature flip">
       <div class="copytext">
         <h2>Cull an event shoot in minutes</h2>
-        <p>Press <strong>⇧⌘K</strong> for Cleanup Mode (Beta). PixDeck checks the folder on your Mac and sorts out similar bursts, exact duplicates, closed eyes and blurry shots. The best frame of each burst is suggested as a keeper; the rest are checked for you. Nothing is deleted until you press Move to Trash, and ⌘Z brings it back. RAW+JPG pairs are handled together.</p>
+        <p>Press <strong>⇧⌘K</strong> for Cleanup Mode (Beta). Flipic checks the folder on your Mac and sorts out similar bursts, exact duplicates, closed eyes and blurry shots. The best frame of each burst is suggested as a keeper; the rest are checked for you. Nothing is deleted until you press Move to Trash, and ⌘Z brings it back. RAW+JPG pairs are handled together.</p>
       </div>
-      <img class="shot" src="../shots/cleanup-en.webp" alt="PixDeck Cleanup Mode grouping similar bursts" width="1440" height="967" loading="lazy">
+      <img class="shot" src="../shots/cleanup-en.webp" alt="Flipic Cleanup Mode grouping similar bursts" width="1440" height="967" loading="lazy">
     </section>
     <section class="feature">
       <div class="copytext">
         <h2>Batch convert HEIC to JPG</h2>
         <p>Convert a whole folder to JPEG, PNG or HEIC in one go (⇧⌘C). Converted files go into a subfolder; your originals stay untouched.</p>
       </div>
-      <img class="shot" src="../shots/convert.webp" alt="PixDeck batch convert dialog" width="1440" height="900" loading="lazy">
+      <img class="shot" src="../shots/convert.webp" alt="Flipic batch convert dialog" width="1440" height="900" loading="lazy">
     </section>
   </div>
 
@@ -193,9 +193,9 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
         <dt>Formats</dt>
         <dd>JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and common camera RAW formats</dd>
         <dt>Also</dt>
-        <dd>Rotate and save (lossless for JPEG and HEIC), export compressed copies, batch rename, slideshow, set as wallpaper, 14 interface languages</dd>
+        <dd>⌘E hands the current photo to Photoshop, Lightroom or any editor you choose (the RAW, if one has the same name); rotate and save (lossless for JPEG and HEIC), export compressed copies, batch rename, slideshow with 1 to 10 seconds per photo, set as wallpaper, 14 interface languages</dd>
         <dt>Privacy</dt>
-        <dd>No network access, no account, no data collection. PixDeck only reads the images you open.</dd>
+        <dd>No network access, no account, no data collection. Flipic only reads the images you open.</dd>
         <dt>Open source</dt>
         <dd>MIT licensed. The code is on <a href="https://github.com/xmasdong/macphoto">GitHub</a>; read it or build it yourself.</dd>
       </dl>
@@ -215,7 +215,7 @@ footer p { margin: 0 0 .6rem; max-width: 48rem; }
     if (!imgs[n]) {
       const im = new Image(1440, 900);
       im.src = `../shots/browse-${String(n + 1).padStart(2, '0')}.webp`;
-      im.alt = `PixDeck showing photo ${n + 1} of ${total}`;
+      im.alt = `Flipic showing photo ${n + 1} of ${total}`;
       im.decoding = 'async';
       frame.appendChild(im);
       imgs[n] = im;

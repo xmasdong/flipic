@@ -1,10 +1,10 @@
-/* PixDeck — Español */
+/* Flipic — Español */
 
-"menu.about" = "Acerca de PixDeck";
-"menu.hide" = "Ocultar PixDeck";
+"menu.about" = "Acerca de Flipic";
+"menu.hide" = "Ocultar Flipic";
 "menu.hideOthers" = "Ocultar otros";
 "menu.showAll" = "Mostrar todo";
-"menu.quit" = "Salir de PixDeck";
+"menu.quit" = "Salir de Flipic";
 "menu.file" = "Archivo";
 "menu.open" = "Abrir…";
 "menu.reveal" = "Mostrar en el Finder";
@@ -104,7 +104,7 @@
 Un visor de imágenes nativo para macOS: apertura instantánea, navegación fluida por carpetas, zoom por gestos y EXIF de un vistazo. Totalmente sin conexión — sin solicitudes de red, sin recopilación de datos, sin cuentas.
 
 ■ USO
-Arrastra una carpeta o imagen a esta ventana para verla; o clic derecho sobre una imagen en el Finder y abrir con PixDeck.
+Arrastra una carpeta o imagen a esta ventana para verla; o clic derecho sobre una imagen en el Finder y abrir con Flipic.
 ← → navega; rueda / pellizco / ↑↓ zoom; arrastra para mover; doble clic alterna ajustar ⇄ 100 %; Esc restablece.
 R / L giran la vista; ⌘⌥S guarda la rotación en el archivo sin pérdidas; Retorno renombra; ⌘⌫ mueve a la papelera.
 ⌘S exporta una copia comprimida (ubicación / formato / calidad); el menú Herramientas añade conversión y renombrado por lotes.
@@ -115,15 +115,16 @@ La interfaz y todos los mensajes siguen automáticamente el idioma del sistema (
 "sc.body" = "← / →  Anterior / Siguiente (en bucle)
 ↑ / ↓  Ampliar / Reducir (mantener para repetir)
 R / L  Girar 90° horario / antihorario
-S  Presentación (3 s por foto, S para detener)
+S  Presentación (intervalo en Visualización › Intervalo de la presentación; S para detener)
 Espacio  Vista previa ajustada a la imagen (pulsa de nuevo para salir)
 Doble clic  Ajustar ⇄ 100 %
 Esc  Volver a ajustar (sale de pantalla completa)
-1 / 0  Tamaño real / Ajustar a la ventana
+0  Zoom al 100 % en el puntero; pulsa otra vez para ajustar    1  Tamaño real
 Pellizcar / desplazar  Zoom en el cursor, arrastrar o ⌘+desplazar para mover
 Visualización › Rueda del ratón  puede cambiar de foto
 I  Información    T  Tira de miniaturas    F  Pantalla completa
 ⌘⇧C  Conversión por lotes    ⌘⇧B  Renombrar por lotes    ⌘⇧D  Fondo de escritorio
+⌘E  Editar en el editor de fotos (abre el RAW del mismo nombre si existe)
 ⌘⇧K  Modo limpieza Beta: duplicados, ojos cerrados, desenfoque
 ⌘S  Exportación rápida    ⌘⇧E  Exportar como…
 Retorno  Renombrar la imagen actual
@@ -189,3 +190,22 @@ Arrastra una carpeta o imagen para abrir";
 "wheel.navigate" = "Foto anterior / siguiente";
 "wheel.navigate.on" = "Rueda: cambiar de foto (⌘+rueda para zoom)";
 "wheel.zoom.on" = "Rueda: zoom (⌘+rueda para desplazar)";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "Editar en el editor de fotos…";
+"menu.editIn" = "Editar en %@";
+"menu.openWith" = "Abrir con";
+"menu.openWithOther" = "Otra…";
+"menu.setEditor" = "Definir editor de fotos…";
+"panel.chooseEditor" = "Elegir un editor de fotos";
+"panel.choose" = "Elegir";
+"msg.editorSet" = "Editor de fotos: %@ · ⌘E abre la foto actual";
+"msg.openedIn" = "%2$@ abierta en %1$@";
+"msg.openFailed" = "No se pudo abrir en %1$@: %2$@";
+"menu.slideInterval" = "Intervalo de la presentación";
+"slide.seconds" = "%d s";
+"msg.slideshowOnN" = "Presentación · %d s por foto · S o salir de pantalla completa para detener";
+"msg.slideInterval" = "Intervalo de la presentación: %d s por foto";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "Fundido entre fotos";

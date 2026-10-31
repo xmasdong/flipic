@@ -1,10 +1,10 @@
-/* PixDeck — Türkçe */
+/* Flipic — Türkçe */
 
-"menu.about" = "PixDeck Hakkında";
-"menu.hide" = "PixDeck'ü Gizle";
+"menu.about" = "Flipic Hakkında";
+"menu.hide" = "Flipic'i Gizle";
 "menu.hideOthers" = "Diğerlerini Gizle";
 "menu.showAll" = "Tümünü Göster";
-"menu.quit" = "PixDeck'den Çık";
+"menu.quit" = "Flipic'ten Çık";
 "menu.file" = "Dosya";
 "menu.open" = "Aç…";
 "menu.reveal" = "Finder'da Göster";
@@ -104,7 +104,7 @@
 macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Tamamen çevrimdışı — ağ isteği yok, veri toplama yok, hesap yok.
 
 ■ KULLANIM
-Gezinmek için bir klasörü veya resmi bu pencereye sürükleyin; ya da Finder'da bir resme sağ tıklayıp PixDeck ile açın.
+Gezinmek için bir klasörü veya resmi bu pencereye sürükleyin; ya da Finder'da bir resme sağ tıklayıp Flipic ile açın.
 ← / → gezinme; kaydırma / tutup açma / ↑↓ zoom; taşıma için sürükleme; çift tık sığdır ⇄ %100; Esc sıfırlar.
 R / L görünümü döndürür; ⌘⌥S döndürmeyi dosyaya kayıpsız yazar; Return yeniden adlandırır; ⌘⌫ Çöp Kutusu'na taşır.
 ⌘S sıkıştırılmış kopya dışa aktarır (konum / biçim / kalite); Araçlar menüsünde toplu dönüştürme ve yeniden adlandırma var.
@@ -115,15 +115,16 @@ Arayüz ve tüm mesajlar otomatik olarak sistem dilini izler (14 dil).";
 "sc.body" = "← / →  Önceki / Sonraki (döngüsel)
 ↑ / ↓  Büyüt / Küçült (basılı tutun)
 R / L  90° saat yönü / tersi döndür
-S  Slayt gösterisi (fotoğraf başına 3 sn, S ile durdur)
+S  Slayt gösterisi (aralık: Görüntü › Slayt gösterisi aralığı; S durdurur)
 Boşluk  Görsel oranında önizleme (çıkmak için tekrar basın)
 Çift tık  Pencereye sığdır ⇄ %100
 Esc  Sığdırmaya dön (tam ekrandan çıkış)
-1 / 0  Gerçek boyut / Pencereye sığdır
+0  İmlecin olduğu yerde %100 yakınlaştır, tekrar basınca sığdır    1  Gerçek boyut
 Tutup açma / kaydırma  İmleçte yakınlaştır, taşıma için sürükle veya ⌘+kaydır
 Görüntü › Kaydırma tekerleği  fotoğraf değiştirmeye ayarlanabilir
 I  Fotoğraf bilgisi    T  Küçük resim şeridi    F  Tam ekran
 ⌘⇧C  Toplu dönüştürme    ⌘⇧B  Toplu yeniden adlandırma    ⌘⇧D  Duvar kağıdı
+⌘E  Fotoğraf düzenleyicide düzenle (aynı adlı RAW varsa onu açar)
 ⌘⇧K  Temizlik modu Beta: kopyalar, kapalı gözler, bulanıklık
 ⌘S  Hızlı dışa aktarma    ⌘⇧E  Farklı dışa aktar…
 Return  Geçerli resmi yeniden adlandır
@@ -189,3 +190,22 @@ Açmak için klasör veya resim sürükleyin";
 "wheel.navigate" = "Önceki / sonraki fotoğraf";
 "wheel.navigate.on" = "Tekerlek: fotoğraf değiştir (⌘+tekerlek yakınlaştırır)";
 "wheel.zoom.on" = "Tekerlek: yakınlaştır (⌘+tekerlek kaydırır)";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "Fotoğraf düzenleyicide düzenle…";
+"menu.editIn" = "%@ ile düzenle";
+"menu.openWith" = "Birlikte aç";
+"menu.openWithOther" = "Diğer…";
+"menu.setEditor" = "Fotoğraf düzenleyiciyi ayarla…";
+"panel.chooseEditor" = "Bir fotoğraf düzenleyici seçin";
+"panel.choose" = "Seç";
+"msg.editorSet" = "Fotoğraf düzenleyici: %@ · ⌘E geçerli fotoğrafı açar";
+"msg.openedIn" = "%2$@, %1$@ ile açıldı";
+"msg.openFailed" = "%1$@ ile açılamadı: %2$@";
+"menu.slideInterval" = "Slayt gösterisi aralığı";
+"slide.seconds" = "%d sn";
+"msg.slideshowOnN" = "Slayt gösterisi · fotoğraf başına %d sn · durdurmak için S veya tam ekrandan çık";
+"msg.slideInterval" = "Slayt gösterisi aralığı: fotoğraf başına %d sn";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "Fotoğraflar arasında geçiş efekti";

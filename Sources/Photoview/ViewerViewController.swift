@@ -71,7 +71,7 @@ final class ViewerViewController: NSViewController {
 
     private static func makeQueue(_ name: String, width: Int, qos: QualityOfService) -> OperationQueue {
         let q = OperationQueue()
-        q.name = "pixdeck.\(name)"
+        q.name = "flipic.\(name)"
         q.maxConcurrentOperationCount = width
         q.qualityOfService = qos
         return q
@@ -135,6 +135,7 @@ final class ViewerViewController: NSViewController {
                 self.imageView.fit(animate: true)
             }
         }
+        imageView.menu = buildContextMenu()
         view.addSubview(imageView)
 
         NotificationCenter.default.addObserver(self, selector: #selector(windowDidExitFullScreen(_:)),
@@ -497,7 +498,7 @@ final class ViewerViewController: NSViewController {
         emptyState.spacing = 12
         emptyState.translatesAutoresizingMaskIntoConstraints = false
 
-        let title = NSTextField(labelWithString: "PixDeck")
+        let title = NSTextField(labelWithString: "Flipic")
         title.font = .systemFont(ofSize: 30, weight: .semibold)
         title.textColor = .tertiaryLabelColor
         emptyHint.stringValue = L10n.t("ui.emptyHint", "把文件夹或图片拖进这个窗口，或点击「打开…」")
@@ -673,6 +674,10 @@ final class ViewerViewController: NSViewController {
         folder.sortKey = key
         applySort()
         loadCaptureDatesIfNeeded()
+    }
+
+    @objc func toggleFadeTransition(_ sender: Any?) {
+        ZoomableImageView.fadeTransition.toggle()
     }
 
     @objc func setWheelAction(_ sender: NSMenuItem) {
@@ -1093,13 +1098,36 @@ final class ViewerViewController: NSViewController {
         if let window = view.window, !window.styleMask.contains(.fullScreen) {
             window.toggleFullScreen(window)
         }
-        let timer = Timer(timeInterval: 3.0, repeats: true) { [weak self] _ in
+        scheduleSlideshowTimer()
+        updateSlideshowButton()
+        flash(L10n.f("msg.slideshowOnN", "幻灯片放映中 · 每张 %d 秒 · S 或退出全屏停止", slideshowInterval), seconds: 3)
+    }
+
+    static let slideshowIntervals = [1, 2, 3, 5, 10]
+
+    /// 每张停留秒数，跨启动记住，默认 3 秒
+    private var slideshowInterval: Int {
+        get {
+            let v = UserDefaults.standard.integer(forKey: "slideshowInterval")
+            return Self.slideshowIntervals.contains(v) ? v : 3
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "slideshowInterval") }
+    }
+
+    private func scheduleSlideshowTimer() {
+        slideshowTimer?.invalidate()
+        let timer = Timer(timeInterval: TimeInterval(slideshowInterval), repeats: true) { [weak self] _ in
             self?.navigate(1)
         }
         RunLoop.main.add(timer, forMode: .common)
         slideshowTimer = timer
-        updateSlideshowButton()
-        flash(L10n.t("msg.slideshowOn", "幻灯片放映中 · 3 秒/张 · S 或退出全屏停止"), seconds: 3)
+    }
+
+    @objc func setSlideshowInterval(_ sender: NSMenuItem) {
+        slideshowInterval = sender.tag
+        // 放映中改间隔立即生效
+        if slideshowTimer != nil { scheduleSlideshowTimer() }
+        flash(L10n.f("msg.slideInterval", "幻灯片间隔：每张 %d 秒", sender.tag))
     }
 
     private func stopSlideshow() {
@@ -1118,6 +1146,151 @@ final class ViewerViewController: NSViewController {
     @objc private func windowWillClose(_ note: Notification) {
         guard (note.object as? NSWindow) === view.window else { return }
         stopSlideshow()
+    }
+
+    // MARK: - 交给后期软件
+
+    /// 设好的后期软件；被删了就当没设
+    private var editorAppURL: URL? {
+        get {
+            guard let path = UserDefaults.standard.string(forKey: "editorAppPath"),
+                  FileManager.default.fileExists(atPath: path) else { return nil }
+            return URL(fileURLWithPath: path)
+        }
+        set { UserDefaults.standard.set(newValue?.path, forKey: "editorAppPath") }
+    }
+
+    /// 中文句子里夹英文名时两侧加空格（在 Photoshop 中编辑），中文名不加（在预览中编辑）
+    private static func spaced(_ name: String) -> String {
+        guard L10n.t("menu.editIn", "在%@中编辑").hasPrefix("在"), name.contains(where: { $0.isASCII && $0.isLetter }) else { return name }
+        return " \(name) "
+    }
+
+    private static func appName(_ url: URL) -> String {
+        FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+    }
+
+    /// 交给后期软件的文件：当前是 JPG 等、同名 RAW 也在时用 RAW，后期一般修 RAW
+    private func editTargetURL() -> URL? {
+        guard let url = folder.current?.url else { return nil }
+        if CleanupUnit.isRaw(url) { return url }
+        let base = url.deletingPathExtension()
+        for ext in CleanupUnit.rawExtensions.sorted() {
+            for candidate in [base.appendingPathExtension(ext), base.appendingPathExtension(ext.uppercased())]
+            where FileManager.default.fileExists(atPath: candidate.path) {
+                return candidate
+            }
+        }
+        return url
+    }
+
+    private func open(_ file: URL, with app: URL) {
+        let config = NSWorkspace.OpenConfiguration()
+        config.activates = true
+        NSWorkspace.shared.open([file], withApplicationAt: app, configuration: config) { [weak self] _, error in
+            DispatchQueue.main.async {
+                if let error {
+                    self?.flash(L10n.f("msg.openFailed", "无法用 %1$@ 打开：%2$@", Self.appName(app), error.localizedDescription), seconds: 4)
+                } else {
+                    self?.flash(L10n.f("msg.openedIn", "已用 %1$@ 打开 %2$@", Self.appName(app), file.lastPathComponent))
+                }
+            }
+        }
+    }
+
+    /// ⌘E：用设好的后期软件打开当前照片；还没设就先选一个
+    @objc func openInEditor(_ sender: Any?) {
+        guard let file = editTargetURL() else { return }
+        if let app = editorAppURL {
+            open(file, with: app)
+        } else {
+            pickApplication { [weak self] app in
+                self?.editorAppURL = app
+                self?.open(file, with: app)
+            }
+        }
+    }
+
+    @objc func chooseEditor(_ sender: Any?) {
+        pickApplication { [weak self] app in
+            self?.editorAppURL = app
+            self?.flash(L10n.f("msg.editorSet", "后期软件：%@ · ⌘E 打开当前照片", Self.appName(app)), seconds: 3)
+        }
+    }
+
+    private func pickApplication(_ done: @escaping (URL) -> Void) {
+        let panel = NSOpenPanel()
+        panel.title = L10n.t("panel.chooseEditor", "选择后期软件")
+        panel.prompt = L10n.t("panel.choose", "选择")
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowedContentTypes = [.application]
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        guard let window = view.window else { return }
+        panel.beginSheetModal(for: window) { response in
+            if response == .OK, let url = panel.url { done(url) }
+        }
+    }
+
+    /// 打开方式：当前照片能用哪些软件打开，默认软件排第一，设好的后期软件打勾
+    func populateOpenWithMenu(_ menu: NSMenu) {
+        menu.removeAllItems()
+        guard cleanup == nil, let file = editTargetURL() else { return }
+        let ws = NSWorkspace.shared
+        let defaultApp = ws.urlForApplication(toOpen: file)
+        var apps = ws.urlsForApplications(toOpen: file)
+            .filter { $0.lastPathComponent != Bundle.main.bundleURL.lastPathComponent }
+        var seen = Set<String>()
+        apps = apps.filter { seen.insert(Self.appName($0)).inserted }
+            .sorted { a, b in
+                if a == defaultApp { return true }
+                if b == defaultApp { return false }
+                return Self.appName(a).localizedStandardCompare(Self.appName(b)) == .orderedAscending
+            }
+        for app in apps {
+            let it = NSMenuItem(title: Self.appName(app), action: #selector(openWithMenuItem(_:)), keyEquivalent: "")
+            it.target = self
+            it.representedObject = app
+            let icon = ws.icon(forFile: app.path)
+            icon.size = NSSize(width: 16, height: 16)
+            it.image = icon
+            if app.path == editorAppURL?.path { it.state = .on }
+            menu.addItem(it)
+        }
+        menu.addItem(.separator())
+        let other = NSMenuItem(title: L10n.t("menu.openWithOther", "其他…"), action: #selector(openWithOther(_:)), keyEquivalent: "")
+        other.target = self
+        menu.addItem(other)
+    }
+
+    @objc private func openWithMenuItem(_ sender: NSMenuItem) {
+        guard let app = sender.representedObject as? URL, let file = editTargetURL() else { return }
+        open(file, with: app)
+    }
+
+    @objc private func openWithOther(_ sender: Any?) {
+        guard let file = editTargetURL() else { return }
+        pickApplication { [weak self] app in self?.open(file, with: app) }
+    }
+
+    /// 图片上的右键菜单：交给后期软件、打开方式，以及常用的几项
+    private func buildContextMenu() -> NSMenu {
+        let menu = NSMenu()
+        func add(_ title: String, _ action: Selector) {
+            let it = NSMenuItem(title: title, action: action, keyEquivalent: "")
+            it.target = self
+            menu.addItem(it)
+        }
+        add(L10n.t("menu.editChoose", "在后期软件中编辑…"), #selector(openInEditor(_:)))
+        let openWith = NSMenuItem(title: L10n.t("menu.openWith", "打开方式"), action: nil, keyEquivalent: "")
+        let sub = NSMenu(title: openWith.title)
+        sub.delegate = self
+        openWith.submenu = sub
+        menu.addItem(openWith)
+        menu.addItem(.separator())
+        add(L10n.t("menu.reveal", "在 Finder 中显示"), #selector(revealInFinder(_:)))
+        add(L10n.t("menu.trash", "移到废纸篓"), #selector(trashCurrent(_:)))
+        return menu
     }
 
     // MARK: - 设为桌面壁纸
@@ -1402,7 +1575,7 @@ final class ViewerViewController: NSViewController {
         label.stringValue = L10n.f("exp.estimating", "预计大小：计算中…")
         let turns = imageView.rotationTurns
         let loader = self.loader
-        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("pixdeck-estimate.\(f.ext)")
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("flipic-estimate.\(f.ext)")
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.exportEstimateGeneration == gen else { return }
             let image = loader.fullImage(for: item.url).flatMap { ImageLoader.rotated($0, quarterTurns: turns) }
@@ -1466,7 +1639,7 @@ final class ViewerViewController: NSViewController {
         }
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 580, height: 680),
                               styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
-        window.title = L10n.t("menu.about", "关于 PixDeck")
+        window.title = L10n.t("menu.about", "关于 Flipic")
         window.appearance = NSAppearance(named: .darkAqua)
 
         let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 580, height: 680))
@@ -1499,7 +1672,7 @@ final class ViewerViewController: NSViewController {
         para.paragraphSpacing = 6
 
         let out = NSMutableAttributedString()
-        out.append(NSAttributedString(string: "PixDeck \(version)\n\n", attributes: [
+        out.append(NSAttributedString(string: "Flipic \(version)\n\n", attributes: [
             .font: NSFont.systemFont(ofSize: 22, weight: .bold),
             .foregroundColor: NSColor.labelColor,
             .paragraphStyle: para,
@@ -1655,6 +1828,71 @@ final class ViewerViewController: NSViewController {
         at(0.3) { wheel(-1); state("8-wheel while zoomed (expect pan, same index)") }
         at(0.3) { self.imageView.fit(); wheel(-1); state("9-fit again, wheel down (expect +1)") }
         at(0.3) { ZoomableImageView.wheelNavigates = saved; NSApp.terminate(nil) }
+    }
+
+    /// --slidetest <文件夹> <应用路径>：幻灯片 1 秒间隔 + 交给后期软件
+    func runSlideAndEditorTest(appPath: String) {
+        let savedInterval = UserDefaults.standard.object(forKey: "slideshowInterval")
+        let savedEditor = UserDefaults.standard.object(forKey: "editorAppPath")
+        let item = NSMenuItem(); item.tag = 1
+        setSlideshowInterval(item)
+        let start = folder.index
+        var shown: [String] = []
+        let t0 = Date()
+        startSlideshow()
+        for k in 1...5 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(k) + 0.5) { [self] in
+                shown.append("\(self.folder.index):\(self.imageView.debugHasImage ? "img" : "EMPTY")")
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.8) { [self] in
+            stopSlideshow()
+            NSLog("SLIDE interval=1 start=%d after %.1fs: %@", start, Date().timeIntervalSince(t0), shown.joined(separator: " "))
+            NSLog("EDIT target=%@", editTargetURL()?.lastPathComponent ?? "-")
+            editorAppURL = URL(fileURLWithPath: appPath)
+            let probe = NSMenuItem(title: "", action: #selector(openInEditor(_:)), keyEquivalent: "")
+            _ = validateMenuItem(probe)
+            NSLog("EDIT menu title=%@", probe.title)
+            let m = NSMenu(); populateOpenWithMenu(m)
+            NSLog("EDIT openWith items=%d first=%@ checked=%@", m.items.count, m.items.first?.title ?? "-",
+                  m.items.first { $0.state == .on }?.title ?? "-")
+            openInEditor(nil)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                NSLog("EDIT hud=%@", self.hudNameLabel.stringValue)
+                if let v = savedInterval { UserDefaults.standard.set(v, forKey: "slideshowInterval") } else { UserDefaults.standard.removeObject(forKey: "slideshowInterval") }
+                if let v = savedEditor { UserDefaults.standard.set(v, forKey: "editorAppPath") } else { UserDefaults.standard.removeObject(forKey: "editorAppPath") }
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    /// --zoomtest <文件夹>：0 键在指定点放大到 100%（该点下的像素不动）、再按恢复；翻页渐变开关
+    func runZoomFadeTest() {
+        let saved = ZoomableImageView.fadeTransition
+        let b = imageView.bounds
+        let p = CGPoint(x: b.width * 0.75, y: b.height * 0.3)
+        let before = imageView.debugImagePoint(p)
+        imageView.debugToggle(at: p)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+            let after = imageView.debugImagePoint(p)
+            NSLog("ZOOM press0 %@ | point (%.0f,%.0f) image px before=(%.1f,%.1f) after=(%.1f,%.1f)", imageView.fitDiagnostics, p.x, p.y, before.x, before.y, after.x, after.y)
+            imageView.debugToggle(at: p)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+                NSLog("ZOOM press0 again %@", imageView.fitDiagnostics)
+                ZoomableImageView.fadeTransition = false
+                navigate(1)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [self] in
+                    NSLog("FADE off -> animating=%d", imageView.debugContentsAnimating ? 1 : 0)
+                    ZoomableImageView.fadeTransition = true
+                    navigate(1)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [self] in
+                        NSLog("FADE on -> animating=%d", imageView.debugContentsAnimating ? 1 : 0)
+                        ZoomableImageView.fadeTransition = saved
+                        NSApp.terminate(nil)
+                    }
+                }
+            }
+        }
     }
 
     func runBrowseShots(outDir: String) {
@@ -1999,6 +2237,14 @@ extension ViewerViewController: NSMenuItemValidation {
         }
         if menuItem.action == #selector(setSortKey(_:)) {
             menuItem.state = menuItem.tag == folder.sortKey.rawValue ? .on : .off
+        } else if menuItem.action == #selector(toggleFadeTransition(_:)) {
+            menuItem.state = ZoomableImageView.fadeTransition ? .on : .off
+        } else if menuItem.action == #selector(setSlideshowInterval(_:)) {
+            menuItem.state = menuItem.tag == slideshowInterval ? .on : .off
+        } else if menuItem.action == #selector(openInEditor(_:)) {
+            menuItem.title = editorAppURL.map { L10n.f("menu.editIn", "在%@中编辑", Self.spaced(Self.appName($0))) }
+                ?? L10n.t("menu.editChoose", "在后期软件中编辑…")
+            return folder.current != nil
         } else if menuItem.action == #selector(setWheelAction(_:)) {
             menuItem.state = (menuItem.tag == 1) == ZoomableImageView.wheelNavigates ? .on : .off
         } else if menuItem.action == #selector(toggleSortReversed(_:)) {
@@ -2006,4 +2252,10 @@ extension ViewerViewController: NSMenuItemValidation {
         }
         return true
     }
+}
+
+// MARK: - 右键「打开方式」子菜单
+
+extension ViewerViewController: NSMenuDelegate {
+    func menuNeedsUpdate(_ menu: NSMenu) { populateOpenWithMenu(menu) }
 }

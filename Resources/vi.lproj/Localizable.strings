@@ -1,10 +1,10 @@
-/* PixDeck — Tiếng Việt */
+/* Flipic — Tiếng Việt */
 
-"menu.about" = "Giới thiệu PixDeck";
-"menu.hide" = "Ẩn PixDeck";
+"menu.about" = "Giới thiệu Flipic";
+"menu.hide" = "Ẩn Flipic";
 "menu.hideOthers" = "Ẩn các ứng dụng khác";
 "menu.showAll" = "Hiện tất cả";
-"menu.quit" = "Thoát PixDeck";
+"menu.quit" = "Thoát Flipic";
 "menu.file" = "Tệp";
 "menu.open" = "Mở…";
 "menu.reveal" = "Hiện trong Finder";
@@ -104,7 +104,7 @@
 Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Hoạt động hoàn toàn ngoại tuyến — không gọi mạng, không thu thập dữ liệu, không tài khoản.
 
 ■ CÁCH DÙNG
-Kéo thư mục hoặc ảnh vào cửa sổ để duyệt; hoặc nhấp phải ảnh trong Finder và mở bằng PixDeck.
+Kéo thư mục hoặc ảnh vào cửa sổ để duyệt; hoặc nhấp phải ảnh trong Finder và mở bằng Flipic.
 ← / → chuyển ảnh; cuộn / chụm / ↑↓ thu phóng; kéo để di chuyển; nhấp đúp chuyển vừa cửa sổ ⇄ 100%; Esc đặt lại.
 R / L xoay ảnh; ⌘⌥S ghi kiểu xoay vào tệp không mất dữ liệu; Return đổi tên; ⌘⌫ chuyển vào Thùng rác.
 ⌘S xuất bản nén (vị trí / định dạng / chất lượng); menu Công cụ có chuyển đổi và đổi tên hàng loạt.
@@ -115,15 +115,16 @@ Giao diện và mọi thông báo tự theo ngôn ngữ hệ thống (hỗ trợ
 "sc.body" = "← / →  Trước / Sau (vòng lặp)
 ↑ / ↓  Phóng to / Thu nhỏ (giữ để lặp)
 R / L  Xoay 90° theo / ngược chiều kim đồng hồ
-S  Trình chiếu (3 giây/ảnh, S để dừng)
+S  Trình chiếu (đặt khoảng thời gian ở Hiển thị › Khoảng thời gian trình chiếu; S để dừng)
 Dấu cách  Xem trước vừa khít tỉ lệ ảnh (nhấn lại để thoát)
 Nhấp đúp  Vừa cửa sổ ⇄ 100%
 Esc  Về vừa cửa sổ (thoát toàn màn hình trước)
-1 / 0  Kích thước thực / Vừa cửa sổ
+0  Phóng 100% tại vị trí con trỏ, nhấn lần nữa để vừa cửa sổ    1  Kích thước thật
 Chụm / cuộn  Thu phóng tại con trỏ, kéo hoặc ⌘+cuộn để di chuyển
 Hiển thị › Con lăn chuột  có thể đổi sang chuyển ảnh
 I  Thông tin ảnh    T  Thanh hình thu nhỏ    F  Toàn màn hình
 ⌘⇧C  Chuyển đổi hàng loạt    ⌘⇧B  Đổi tên hàng loạt    ⌘⇧D  Hình nền
+⌘E  Sửa trong trình chỉnh ảnh (mở RAW cùng tên nếu có)
 ⌘⇧K  Chế độ dọn dẹp Beta: trùng lặp, nhắm mắt, ảnh mờ
 ⌘S  Xuất nhanh    ⌘⇧E  Xuất thành…
 Return  Đổi tên ảnh đang xem
@@ -189,3 +190,22 @@ Kéo thư mục hoặc ảnh vào để mở";
 "wheel.navigate" = "Ảnh trước / sau";
 "wheel.navigate.on" = "Con lăn: chuyển ảnh (⌘+con lăn để phóng to)";
 "wheel.zoom.on" = "Con lăn: phóng to / thu nhỏ (⌘+con lăn để kéo)";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "Sửa trong trình chỉnh ảnh…";
+"menu.editIn" = "Sửa trong %@";
+"menu.openWith" = "Mở bằng";
+"menu.openWithOther" = "Khác…";
+"menu.setEditor" = "Đặt trình chỉnh ảnh…";
+"panel.chooseEditor" = "Chọn trình chỉnh ảnh";
+"panel.choose" = "Chọn";
+"msg.editorSet" = "Trình chỉnh ảnh: %@ · ⌘E mở ảnh hiện tại";
+"msg.openedIn" = "Đã mở %2$@ bằng %1$@";
+"msg.openFailed" = "Không mở được bằng %1$@: %2$@";
+"menu.slideInterval" = "Khoảng thời gian trình chiếu";
+"slide.seconds" = "%d giây";
+"msg.slideshowOnN" = "Đang trình chiếu · %d giây mỗi ảnh · S hoặc thoát toàn màn hình để dừng";
+"msg.slideInterval" = "Khoảng thời gian trình chiếu: %d giây mỗi ảnh";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "Hiệu ứng mờ dần khi chuyển ảnh";

@@ -1,6 +1,6 @@
 import AppKit
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var windowController: ViewerWindowController!
     private var pendingURL: URL?
 
@@ -14,7 +14,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowController.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
 
-        if let i = CommandLine.arguments.firstIndex(of: "--wheeltest"), i + 1 < CommandLine.arguments.count {
+        if let i = CommandLine.arguments.firstIndex(of: "--zoomtest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runZoomFadeTest() }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--slidetest"), i + 2 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            let app = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in self?.windowController?.runSlideAndEditorTest(appPath: app) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--wheeltest"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
@@ -100,6 +113,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// 「打开方式」子菜单每次展开时按当前照片现列可用的软件
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        (windowController?.contentViewController as? ViewerViewController)?.populateOpenWithMenu(menu)
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
     // MARK: - 菜单栏
@@ -123,19 +141,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return it
         }
 
-        addMenu(L10n.t("menu.about", "关于 PixDeck")) { m in
-            item(m, L10n.t("menu.about", "关于 PixDeck"), #selector(ViewerViewController.showAbout(_:)))
+        addMenu(L10n.t("menu.about", "关于 Flipic")) { m in
+            item(m, L10n.t("menu.about", "关于 Flipic"), #selector(ViewerViewController.showAbout(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.hide", "隐藏 PixDeck"), #selector(NSApplication.hide(_:)), "h")
+            item(m, L10n.t("menu.hide", "隐藏 Flipic"), #selector(NSApplication.hide(_:)), "h")
             let hideOthers = item(m, L10n.t("menu.hideOthers", "隐藏其他"), #selector(NSApplication.hideOtherApplications(_:)), "h")
             hideOthers.keyEquivalentModifierMask = [.command, .option]
             item(m, L10n.t("menu.showAll", "全部显示"), #selector(NSApplication.unhideAllApplications(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.quit", "退出 PixDeck"), #selector(NSApplication.terminate(_:)), "q")
+            item(m, L10n.t("menu.quit", "退出 Flipic"), #selector(NSApplication.terminate(_:)), "q")
         }
         addMenu(L10n.t("menu.file", "文件")) { m in
             item(m, L10n.t("menu.open", "打开…"), #selector(ViewerViewController.openFolderPanel(_:)), "o")
             item(m, L10n.t("menu.reveal", "在 Finder 中显示"), #selector(ViewerViewController.revealInFinder(_:)), "r")
+            m.addItem(.separator())
+            item(m, L10n.t("menu.editChoose", "在后期软件中编辑…"), #selector(ViewerViewController.openInEditor(_:)), "e")
+            let openWith = NSMenuItem(title: L10n.t("menu.openWith", "打开方式"), action: nil, keyEquivalent: "")
+            let openWithMenu = NSMenu(title: openWith.title)
+            openWithMenu.delegate = self
+            openWith.submenu = openWithMenu
+            m.addItem(openWith)
+            item(m, L10n.t("menu.setEditor", "设置后期软件…"), #selector(ViewerViewController.chooseEditor(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.rename", "重命名…"), #selector(ViewerViewController.renameCurrent(_:)), "\r")
             item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)), "S", [.command, .option])
@@ -159,6 +185,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item(m, L10n.t("menu.info", "照片信息"), #selector(ViewerViewController.toggleInfoPanel(_:)))
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
             item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
+            item(m, L10n.t("menu.fadeTransition", "翻页渐变"), #selector(ViewerViewController.toggleFadeTransition(_:)))
+            let intervalItem = NSMenuItem(title: L10n.t("menu.slideInterval", "幻灯片间隔"), action: nil, keyEquivalent: "")
+            let intervalMenu = NSMenu(title: intervalItem.title)
+            for sec in ViewerViewController.slideshowIntervals {
+                item(intervalMenu, L10n.f("slide.seconds", "%d 秒", sec), #selector(ViewerViewController.setSlideshowInterval(_:))).tag = sec
+            }
+            intervalItem.submenu = intervalMenu
+            m.addItem(intervalItem)
             m.addItem(.separator())
             let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")
             let sortMenu = NSMenu(title: sortItem.title)

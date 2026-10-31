@@ -1,17 +1,17 @@
 <p align="center">
-  <img src="docs/icon-256.png" width="128" height="128" alt="PixDeck icon">
+  <img src="docs/icon-256.png" width="128" height="128" alt="Flipic icon">
 </p>
 
-<h1 align="center">PixDeck</h1>
+<h1 align="center">Flipic</h1>
 
 <p align="center"><a href="README.md">简体中文</a> · <b>English</b></p>
 
 <p align="center">
-  A lightweight image viewer for macOS. Double-click one photo, then page through the whole folder with the arrow keys.
+  A lightweight image viewer for macOS. Double-click one photo, then page through the whole folder with the arrow keys.<br>Formerly PixDeck; renamed Flipic in 0.5.0.
 </p>
 
 <p align="center">
-  <a href="https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg"><b>Download PixDeck.dmg</b></a>
+  <a href="https://github.com/xmasdong/macphoto/releases/latest/download/Flipic.dmg"><b>Download Flipic.dmg</b></a>
   ·
   <a href="https://xmasdong.github.io/macphoto/en/">Website</a>
   ·
@@ -24,19 +24,19 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-444" alt="MIT"></a>
 </p>
 
-![PixDeck browsing a folder](docs/screenshot-browse.jpg)
+![Flipic browsing a folder](docs/screenshot-browse.jpg)
 
-Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. PixDeck is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 1.2 MB, the app makes no network connections, and there is no account to create.
+Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 1.5 MB, the app makes no network connections, and there is no account to create.
 
 ## Install
 
-1. Download [PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)
-2. Open the disk image and drag PixDeck into Applications
+1. Download [Flipic.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/Flipic.dmg)
+2. Open the disk image and drag Flipic into Applications
 3. The first time you launch it, macOS reminds you the app came from the internet; click Open
 
 Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Older versions are on the [Releases](https://github.com/xmasdong/macphoto/releases) page.
 
-To make PixDeck your default viewer: in Finder, select an image, choose File › Get Info, pick PixDeck under "Open with" and click "Change All". Repeat once for each format you use (JPEG, PNG, HEIC and so on).
+To make Flipic your default viewer: in Finder, select an image, choose File › Get Info, pick Flipic under "Open with" and click "Change All". Repeat once for each format you use (JPEG, PNG, HEIC and so on).
 
 ## Features
 
@@ -44,13 +44,14 @@ To make PixDeck your default viewer: in Finder, select an image, choose File ›
 
 - Page through every image in the folder with ← →, sorted by name, date taken, date modified, date created or file size. Your sort order is remembered.
 - Press Space for a Quick Look style preview: the window wraps itself to the photo's aspect ratio. Press Space again to go back.
-- Pinch to zoom on the trackpad; double-click toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.
+- Rest the pointer on any detail and press 0 to zoom to 100% right there; press 0 again to go back. Pinch to zoom on the trackpad; double-click also toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.
+- Photos switch instantly when you page; if you like a crossfade, turn on View › Fade Between Photos.
 - The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, switch View › Scroll Wheel to Previous / Next Photo; ⌘ + scroll then zooms.
 - The corner overlay shows size, file size, camera, lens, shutter speed, aperture, ISO and date taken. Press I for the full info panel, including color profile.
 
 **Culling (Cleanup Mode, Beta)**
 
-After an event or a conference shoot with hundreds of frames, press ⇧⌘K. PixDeck checks the whole folder on your Mac and sorts the results into four groups: similar bursts, exact duplicates, closed eyes, and blurry or out-of-focus shots. In every burst it suggests the sharpest frame where nobody is blinking as the keeper and checks the rest; for closed eyes, it outlines the face it flagged.
+After an event or a conference shoot with hundreds of frames, press ⇧⌘K. Flipic checks the whole folder on your Mac and sorts the results into four groups: similar bursts, exact duplicates, closed eyes, and blurry or out-of-focus shots. In every burst it suggests the sharpest frame where nobody is blinking as the keeper and checks the rest; for closed eyes, it outlines the face it flagged.
 
 Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. A RAW file and the JPEG with the same name are treated as one photo. Detection can be wrong, so give the selection a quick look before you delete.
 
@@ -61,7 +62,12 @@ Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. 
 - Convert a whole folder to JPEG, PNG or HEIC; converted files go into a subfolder and the originals stay untouched
 - Batch rename
 - Rotate and save back to the file; for JPEG and HEIC only the orientation tag changes, so there is no quality loss
-- Export compressed copies, slideshow, set as desktop picture, move to Trash
+- Slideshow with 1, 2, 3, 5 or 10 seconds per photo (View › Slideshow Interval)
+- Export compressed copies, set as desktop picture, move to Trash
+
+**Hand off to your editor**
+
+Pick Photoshop, Lightroom, Capture One or any other app in File › Set Photo Editor, then press ⌘E to open the current photo in it. If a RAW file with the same name sits next to the JPEG, the RAW is what gets opened. File › Open With and the right-click menu let you pick a different app on the fly.
 
 **Formats and languages**
 
@@ -74,6 +80,7 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and
 | ← → | Previous / next photo |
 | ↑ ↓, scroll wheel | Zoom in / out (the wheel can be switched to paging) |
 | Space | Preview fitted to the photo; press again to exit |
+| 0 | Zoom to 100% at the pointer; press again to fit |
 | Double-click | Fit to window / 100% |
 | I | Photo info |
 | T | Thumbnail strip |
@@ -82,22 +89,23 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and
 | Return | Rename |
 | ⌘S | Export a compressed copy |
 | ⌘⌫ | Move to Trash |
+| ⌘E | Edit in your photo editor |
 | ⇧⌘K | Cleanup Mode |
 | ⇧⌘C / ⇧⌘B | Batch convert / batch rename |
 
 ## Privacy
 
-PixDeck makes no network connections, has no account and collects no data. It only reads the images you open. Cleanup Mode keeps its analysis in `~/Library/Caches/PixDeck` and never writes anything into your photo folders. All the code is in this repository, so you can check for yourself.
+Flipic makes no network connections, has no account and collects no data. It only reads the images you open. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. All the code is in this repository, so you can check for yourself.
 
 ## Building from source
 
-PixDeck is written in Swift and AppKit with no third-party dependencies. You need macOS 13 or later and Xcode 15 or the Swift 5.9 command line tools.
+Flipic is written in Swift and AppKit with no third-party dependencies. You need macOS 13 or later and Xcode 15 or the Swift 5.9 command line tools.
 
 ```bash
 git clone https://github.com/xmasdong/macphoto.git
 cd macphoto
-./build.sh                 # builds build/PixDeck.app with an ad-hoc signature
-open build/PixDeck.app
+./build.sh                 # builds build/Flipic.app with an ad-hoc signature
+open build/Flipic.app
 ```
 
 To work in Xcode, install [XcodeGen](https://github.com/yonaskolb/XcodeGen) and run `xcodegen generate` to create the project.
@@ -127,9 +135,9 @@ scripts/icon/                  Icon draft generator, the source photo for its sk
 A few launch arguments help with debugging without touching the UI:
 
 ```bash
-PixDeck=build/PixDeck.app/Contents/MacOS/PixDeck
-$PixDeck --bench <folder>            # paging latency, memory, main-thread stalls
-$PixDeck --cleanup-report <folder>   # per-photo Cleanup Mode metrics and groups
+Flipic=build/Flipic.app/Contents/MacOS/Flipic
+$Flipic --bench <folder>            # paging latency, memory, main-thread stalls
+$Flipic --cleanup-report <folder>   # per-photo Cleanup Mode metrics and groups
 ```
 
 ## Contributing

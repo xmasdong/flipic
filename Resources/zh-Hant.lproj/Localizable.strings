@@ -1,10 +1,10 @@
-/* PixDeck — 繁體中文 */
+/* Flipic — 繁體中文 */
 
-"menu.about" = "關於 PixDeck";
-"menu.hide" = "隱藏 PixDeck";
+"menu.about" = "關於 Flipic";
+"menu.hide" = "隱藏 Flipic";
 "menu.hideOthers" = "隱藏其他";
 "menu.showAll" = "全部顯示";
-"menu.quit" = "離開 PixDeck";
+"menu.quit" = "離開 Flipic";
 "menu.file" = "檔案";
 "menu.open" = "開啟…";
 "menu.reveal" = "在 Finder 中顯示";
@@ -104,7 +104,7 @@
 macOS 原生看圖器：秒開大圖、順暢翻頁、手勢縮放、EXIF 隨手看。完全本機執行——無網路請求、無資料收集、無帳號。
 
 ■ 使用方式
-把資料夾或圖片拖進視窗即可瀏覽；也可以在 Finder 裡右鍵圖片選擇用 PixDeck 開啟。
+把資料夾或圖片拖進視窗即可瀏覽；也可以在 Finder 裡右鍵圖片選擇用 Flipic 開啟。
 ← → 翻頁；捲動 / 捏合 / ↑↓ 縮放；拖曳平移；雙擊在符合視窗與 100% 間切換；Esc 一鍵回正。
 R / L 旋轉檢視；⌘⌥S 把旋轉無損寫回檔案；Return 重新命名；⌘⌫ 移到垃圾桶。
 ⌘S 匯出壓縮副本（位置 / 格式 / 品質可選）；工具選單支援批次轉換與批次重新命名。
@@ -115,15 +115,16 @@ S 幻燈片播放；I 照片資訊；T 縮圖列；F 全螢幕。控制項幾秒
 "sc.body" = "← / →  上一張 / 下一張（循環）
 ↑ / ↓  放大 / 縮小（按住連續）
 R / L  向右 / 向左旋轉 90°
-S  幻燈片播放（每張 3 秒，S 停止）
+S  幻燈片播放（間隔在 顯示 › 幻燈片間隔 設定，S 停止）
 空白鍵  貼合圖片比例預覽（再按一次退出）
 雙擊  符合視窗 ⇄ 100%
 Esc  回到符合視窗（全螢幕時先離開）
-1 / 0  實際大小 / 符合視窗
+0  在滑鼠位置放大到 100%，再按一次恢復    1  實際大小
 雙指捏合 / 滾動  縮放，拖曳或 ⌘+滾動平移
 顯示 › 滑鼠滾輪  可改為滾輪切換圖片
 I  照片資訊    T  縮圖列    F  全螢幕
 ⌘⇧C  批次轉換    ⌘⇧B  批次重新命名    ⌘⇧D  設為背景
+⌘E  在後製軟體中編輯（有同名 RAW 時打開 RAW）
 ⌘⇧K  清理模式 Beta：重複、閉眼、模糊
 ⌘S  快速匯出    ⌘⇧E  匯出為…
 Return  重新命名目前圖片
@@ -189,3 +190,22 @@ Return  重新命名目前圖片
 "wheel.navigate" = "切換上一張 / 下一張";
 "wheel.navigate.on" = "滾輪：切換圖片（⌘+滾輪縮放）";
 "wheel.zoom.on" = "滾輪：縮放圖片（⌘+滾輪平移）";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "在後製軟體中編輯…";
+"menu.editIn" = "在%@中編輯";
+"menu.openWith" = "打開方式";
+"menu.openWithOther" = "其他…";
+"menu.setEditor" = "設定後製軟體…";
+"panel.chooseEditor" = "選擇後製軟體";
+"panel.choose" = "選擇";
+"msg.editorSet" = "後製軟體：%@ · ⌘E 打開目前照片";
+"msg.openedIn" = "已用 %1$@ 打開 %2$@";
+"msg.openFailed" = "無法用 %1$@ 打開：%2$@";
+"menu.slideInterval" = "幻燈片間隔";
+"slide.seconds" = "%d 秒";
+"msg.slideshowOnN" = "幻燈片播放中 · 每張 %d 秒 · S 或退出全螢幕停止";
+"msg.slideInterval" = "幻燈片間隔：每張 %d 秒";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "翻頁漸變";

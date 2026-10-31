@@ -2,11 +2,11 @@
 import PackageDescription
 
 let package = Package(
-    name: "PixDeck",
+    name: "Flipic",
     platforms: [.macOS(.v13)],
     targets: [
         .executableTarget(
-            name: "PixDeck",
+            name: "Flipic",
             path: "Sources/Photoview",
             swiftSettings: [
                 .unsafeFlags(["-Osize", "-cross-module-optimization"], .when(configuration: .release))

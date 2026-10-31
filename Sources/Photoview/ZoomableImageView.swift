@@ -93,7 +93,11 @@ final class ZoomableImageView: NSView {
         }
         baseImage = newSrc
         image = displayed
+        // 换图默认直接切换；只有在「显示 › 翻页渐变」打开时才保留图层自带的淡入淡出
+        CATransaction.begin()
+        CATransaction.setDisableActions(!(Self.fadeTransition && isNew))
         imageLayer.contents = displayed
+        CATransaction.commit()
         imageLayer.isHidden = (displayed == nil)
         // 换了新图一律适应窗口并居中；只有预览换原图（isNew = false）时保持当前缩放
         if resetToFit || isNew || mode == .fit || displayed == nil {
@@ -196,13 +200,28 @@ final class ZoomableImageView: NSView {
         zoom(to: scale / 1.3, anchor: CGPoint(x: bounds.midX, y: bounds.midY), animated: true)
     }
 
+    /// 翻页时新旧两张图淡入淡出，默认关
+    static var fadeTransition: Bool {
+        get { UserDefaults.standard.bool(forKey: "fadeTransition") }
+        set { UserDefaults.standard.set(newValue, forKey: "fadeTransition") }
+    }
+
+    /// 适应窗口 ⇄ 100%，以 point 为中心放大；小图本来就不到窗口大小时放大到 200%
     func toggleFitActual(at point: CGPoint?) {
         guard image != nil else { return }
         if mode == .fit {
-            zoom(to: 1, anchor: point ?? CGPoint(x: bounds.midX, y: bounds.midY), animated: true)
+            let target: CGFloat = fitScale >= 0.999 ? 2 : 1
+            zoom(to: target, anchor: point ?? CGPoint(x: bounds.midX, y: bounds.midY), animated: true)
         } else {
             fit(animate: true)
         }
+    }
+
+    /// 鼠标在图片区域里就返回它的位置，否则 nil（按窗口中心）
+    private var mouseInView: CGPoint? {
+        guard let window else { return nil }
+        let p = convert(window.mouseLocationOutsideOfEventStream, from: nil)
+        return bounds.contains(p) ? p : nil
     }
 
     private var maxScale: CGFloat { 12 }
@@ -386,6 +405,12 @@ final class ZoomableImageView: NSView {
     // MARK: - 键盘
 
     var isPeeking: Bool { spacePeeking }
+    var debugHasImage: Bool { image != nil }
+    var debugContentsAnimating: Bool { imageLayer.animation(forKey: "contents") != nil }
+    func debugToggle(at p: CGPoint) { toggleFitActual(at: p) }
+    func debugImagePoint(_ p: CGPoint) -> CGPoint {
+        CGPoint(x: (p.x - origin.x) / scale, y: (p.y - origin.y) / scale)
+    }
 
     /// Esc、进入全屏等需要先退出预览时由上层调用
     func endPeek() {
@@ -427,7 +452,7 @@ final class ZoomableImageView: NSView {
         case "l", "L": rotate(clockwise: -1)
         case "s", "S": onSlideshow?()
         case "\r": onRename?()   // 回车重命名，与 Finder 一致
-        case "0": fit()
+        case "0": toggleFitActual(at: mouseInView)   // 同 Lyn：在鼠标处放大到 100%，再按恢复
         case "1": actualSize()
         case "=", "+": zoomIn()
         case "-", "_": zoomOut()

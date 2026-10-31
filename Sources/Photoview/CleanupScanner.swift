@@ -82,7 +82,7 @@ final class CleanupScanner {
 
     private let queue: OperationQueue = {
         let q = OperationQueue()
-        q.name = "PixDeck.cleanup"
+        q.name = "Flipic.cleanup"
         q.maxConcurrentOperationCount = 2
         q.qualityOfService = .utility
         return q
@@ -277,11 +277,11 @@ final class CleanupScanner {
         return hasher.finalize().map { String(format: "%02x", $0) }.joined()
     }
 
-    // MARK: - 缓存（放在 PixDeck 自己的缓存目录，不往照片文件夹写任何东西）
+    // MARK: - 缓存（放在 Flipic 自己的缓存目录，不往照片文件夹写任何东西）
 
     private static func cacheFile(for folder: URL) -> URL? {
         guard let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return nil }
-        let dir = base.appendingPathComponent("PixDeck/Cleanup", isDirectory: true)
+        let dir = base.appendingPathComponent("Flipic/Cleanup", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let digest = SHA256.hash(data: Data(folder.standardizedFileURL.path.utf8))
         let name = digest.prefix(12).map { String(format: "%02x", $0) }.joined()

@@ -1,10 +1,10 @@
-/* PixDeck — Italiano */
+/* Flipic — Italiano */
 
-"menu.about" = "Informazioni su PixDeck";
-"menu.hide" = "Nascondi PixDeck";
+"menu.about" = "Informazioni su Flipic";
+"menu.hide" = "Nascondi Flipic";
 "menu.hideOthers" = "Nascondi gli altri";
 "menu.showAll" = "Mostra tutti";
-"menu.quit" = "Esci da PixDeck";
+"menu.quit" = "Esci da Flipic";
 "menu.file" = "File";
 "menu.open" = "Apri…";
 "menu.reveal" = "Mostra nel Finder";
@@ -104,7 +104,7 @@
 Un visualizzatore di immagini nativo per macOS: apertura immediata, navigazione fluida tra cartelle, zoom a gesti ed EXIF a colpo d'occhio. Completamente offline — nessuna richiesta di rete, nessuna raccolta dati, nessun account.
 
 ■ UTILIZZO
-Trascina una cartella o un'immagine nella finestra per sfogliare; oppure clic destro su un'immagine nel Finder e apri con PixDeck.
+Trascina una cartella o un'immagine nella finestra per sfogliare; oppure clic destro su un'immagine nel Finder e apri con Flipic.
 ← / → sfoglia; rotella / pizzico / ↑↓ per lo zoom; trascina per spostare; doppio clic alterna adatta ⇄ 100%; Esc ripristina.
 R / L ruotano la vista; ⌘⌥S riscrive la rotazione nel file senza perdita; Return rinomina; ⌘⌫ sposta nel Cestino.
 ⌘S esporta una copia compressa (posizione / formato / qualità); il menu Strumenti aggiunge conversione e rinomina in blocco.
@@ -115,15 +115,16 @@ Interfaccia e messaggi seguono automaticamente la lingua di sistema (14 lingue).
 "sc.body" = "← / →  Precedente / Successiva (in ciclo)
 ↑ / ↓  Ingrandisci / Riduci (tieni premuto per ripetere)
 R / L  Ruota di 90° orario / antiorario
-S  Presentazione (3 s per foto, S per fermare)
+S  Presentazione (intervallo in Vista › Intervallo presentazione; S per fermare)
 Spazio  Anteprima adattata all’immagine (premi di nuovo per uscire)
 Doppio clic  Adatta ⇄ 100%
 Esc  Torna ad adatta (esce da schermo intero)
-1 / 0  Dimensioni reali / Adatta alla finestra
+0  Zoom al 100% sul puntatore; premi di nuovo per adattare    1  Dimensioni reali
 Pizzica / scorri  Zoom sul cursore, trascina o ⌘+scorri per spostare
 Vista › Rotella  può servire a cambiare foto
 I  Info foto    T  Striscia miniature    F  Schermo intero
 ⌘⇧C  Conversione in blocco    ⌘⇧B  Rinomina in blocco    ⌘⇧D  Immagine scrivania
+⌘E  Modifica nell’editor foto (apre il RAW con lo stesso nome se c’è)
 ⌘⇧K  Modalità pulizia Beta: duplicati, occhi chiusi, sfocature
 ⌘S  Esportazione rapida    ⌘⇧E  Esporta come…
 Return  Rinomina l'immagine attuale
@@ -189,3 +190,22 @@ Trascina una cartella o un'immagine per aprire";
 "wheel.navigate" = "Foto precedente / successiva";
 "wheel.navigate.on" = "Rotella: cambia foto (⌘+rotella per lo zoom)";
 "wheel.zoom.on" = "Rotella: zoom (⌘+rotella per spostare)";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "Modifica nell’editor foto…";
+"menu.editIn" = "Modifica in %@";
+"menu.openWith" = "Apri con";
+"menu.openWithOther" = "Altro…";
+"menu.setEditor" = "Imposta editor foto…";
+"panel.chooseEditor" = "Scegli un editor foto";
+"panel.choose" = "Scegli";
+"msg.editorSet" = "Editor foto: %@ · ⌘E apre la foto attuale";
+"msg.openedIn" = "%2$@ aperta in %1$@";
+"msg.openFailed" = "Impossibile aprire in %1$@: %2$@";
+"menu.slideInterval" = "Intervallo presentazione";
+"slide.seconds" = "%d s";
+"msg.slideshowOnN" = "Presentazione · %d s per foto · S o esci da schermo intero per fermare";
+"msg.slideInterval" = "Intervallo presentazione: %d s per foto";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "Dissolvenza tra le foto";

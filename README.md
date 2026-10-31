@@ -1,17 +1,17 @@
 <p align="center">
-  <img src="docs/icon-256.png" width="128" height="128" alt="PixDeck 图标">
+  <img src="docs/icon-256.png" width="128" height="128" alt="Flipic 图标">
 </p>
 
-<h1 align="center">PixDeck</h1>
+<h1 align="center">Flipic</h1>
 
 <p align="center"><b>简体中文</b> · <a href="README.en.md">English</a></p>
 
 <p align="center">
-  Mac 上的轻量看图工具。双击一张图，用左右键把整个文件夹翻一遍。
+  Mac 上的轻量看图工具。双击一张图，用左右键把整个文件夹翻一遍。<br>原名 PixDeck，0.5.0 起改名 Flipic。
 </p>
 
 <p align="center">
-  <a href="https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg"><b>下载 PixDeck.dmg</b></a>
+  <a href="https://github.com/xmasdong/macphoto/releases/latest/download/Flipic.dmg"><b>下载 Flipic.dmg</b></a>
   ·
   <a href="https://xmasdong.github.io/macphoto/">官网</a>
   ·
@@ -24,19 +24,19 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-444" alt="MIT"></a>
 </p>
 
-![PixDeck 浏览照片](docs/screenshot-browse.jpg)
+![Flipic 浏览照片](docs/screenshot-browse.jpg)
 
-用系统自带的「预览」打开一张图，它就只显示这一张，想看下一张得回访达全选再打开。PixDeck 就是为这件事做的：双击任意一张，按 → 就是下一张，同一个文件夹的图片都能翻到。安装包 1.2 MB，不联网，不要账号。
+用系统自带的「预览」打开一张图，它就只显示这一张，想看下一张得回访达全选再打开。Flipic 就是为这件事做的：双击任意一张，按 → 就是下一张，同一个文件夹的图片都能翻到。安装包 1.5 MB，不联网，不要账号。
 
 ## 下载安装
 
-1. 下载 [PixDeck.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/PixDeck.dmg)，国内下载慢可以从[官网](https://xmasdong.github.io/macphoto/)下
-2. 打开 dmg，把 PixDeck 拖进「应用程序」
+1. 下载 [Flipic.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/Flipic.dmg)，国内下载慢可以从[官网](https://xmasdong.github.io/macphoto/)下
+2. 打开 dmg，把 Flipic 拖进「应用程序」
 3. 第一次打开时系统会提示这是从互联网下载的 App，点「打开」
 
 需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片都能用。安装包用 Developer ID 签名并通过了 Apple 公证。历史版本在 [Releases](https://github.com/xmasdong/macphoto/releases)。
 
-想设成默认看图软件：在访达里右键一张图，选「显示简介」，「打开方式」选 PixDeck，再点「全部更改」。jpg、png、heic 这些格式要各设一次。
+想设成默认看图软件：在访达里右键一张图，选「显示简介」，「打开方式」选 Flipic，再点「全部更改」。jpg、png、heic 这些格式要各设一次。
 
 ## 功能
 
@@ -44,13 +44,14 @@
 
 - 同一个文件夹里左右翻页，可以按文件名、拍摄时间、修改时间、创建时间或文件大小排序，会记住上次的选择
 - 按空格，窗口贴合照片比例预览，跟访达的空格预览一样，再按一次回到原窗口
-- 触控板双指捏合缩放；双击在适应窗口和 100% 之间切换，放大到需要时才解码原图
+- 触控板双指捏合缩放；鼠标停在想看的地方按 0，就在那里放大到 100%，再按一次恢复；双击也能在适应窗口和 100% 之间切换，放大到需要时才解码原图
+- 翻页默认直接切换，没有渐变；喜欢淡入淡出可以在「显示 › 翻页渐变」打开
 - 鼠标滚轮默认缩放，也可以在「显示 › 鼠标滚轮」改成翻页
 - 左上角显示尺寸、文件大小、相机、镜头、快门、光圈、ISO 和拍摄时间，按 I 看完整的照片信息
 
 **挑片（清理模式，Beta）**
 
-活动、会议一拍几百张时，按 ⇧⌘K 进入清理模式。PixDeck 在本机检查整个文件夹，分成相似连拍、内容完全相同的文件、闭眼、模糊或虚焦四类。连拍组里推荐保留最清楚、没人闭眼的那张，其余默认勾上，闭眼的照片会框出是哪张脸。
+活动、会议一拍几百张时，按 ⇧⌘K 进入清理模式。Flipic 在本机检查整个文件夹，分成相似连拍、内容完全相同的文件、闭眼、模糊或虚焦四类。连拍组里推荐保留最清楚、没人闭眼的那张，其余默认勾上，闭眼的照片会框出是哪张脸。
 
 删除只在你按下「移到废纸篓」时发生，⌘Z 可以撤销。RAW 和同名 JPG 算一张，一起处理。检测会有误判，删之前过一眼。
 
@@ -61,7 +62,12 @@
 - 整个文件夹批量转换格式（JPEG、PNG、HEIC），输出到子文件夹，原图不动
 - 批量重命名
 - 旋转后写回文件，JPEG 和 HEIC 只改方向标记，画质无损
-- 导出压缩副本、幻灯片放映、设为桌面壁纸、移到废纸篓
+- 幻灯片放映，每张停留 1、2、3、5 或 10 秒（「显示 › 幻灯片间隔」）
+- 导出压缩副本、设为桌面壁纸、移到废纸篓
+
+**交给后期软件**
+
+在「文件 › 设置后期软件」选好 Photoshop、Lightroom、Capture One 之类的软件，之后看到想修的照片按 ⌘E 就用它打开。同名的 RAW 文件也在时，打开的是 RAW。右键菜单和「文件 › 打开方式」里能临时换别的软件。
 
 **格式和语言**
 
@@ -74,6 +80,7 @@ JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（需 macOS 14 或
 | ← → | 上一张 / 下一张 |
 | ↑ ↓、滚轮 | 放大 / 缩小（滚轮可改成翻页） |
 | 空格 | 贴合图片比例预览，再按一次退出 |
+| 0 | 在鼠标位置放大到 100%，再按一次恢复 |
 | 双击 | 适应窗口 / 100% |
 | I | 照片信息 |
 | T | 缩略图栏 |
@@ -82,12 +89,13 @@ JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（需 macOS 14 或
 | 回车 | 重命名 |
 | ⌘S | 导出压缩副本 |
 | ⌘⌫ | 移到废纸篓 |
+| ⌘E | 在后期软件中编辑 |
 | ⇧⌘K | 清理模式 |
 | ⇧⌘C / ⇧⌘B | 批量转换 / 批量重命名 |
 
 ## 隐私
 
-PixDeck 不联网，没有账号，不收集任何数据，只读取你打开的图片。清理模式的检测结果存在 `~/Library/Caches/PixDeck`，不会往你的照片文件夹里写文件。代码都在这个仓库里，可以自己查。
+Flipic 不联网，没有账号，不收集任何数据，只读取你打开的图片。清理模式的检测结果存在 `~/Library/Caches/Flipic`，不会往你的照片文件夹里写文件。代码都在这个仓库里，可以自己查。
 
 ## 从源码构建
 
@@ -96,8 +104,8 @@ PixDeck 不联网，没有账号，不收集任何数据，只读取你打开的
 ```bash
 git clone https://github.com/xmasdong/macphoto.git
 cd macphoto
-./build.sh                 # 产出 build/PixDeck.app，本机临时签名
-open build/PixDeck.app
+./build.sh                 # 产出 build/Flipic.app，本机临时签名
+open build/Flipic.app
 ```
 
 想用 Xcode 打开，先装 [XcodeGen](https://github.com/yonaskolb/XcodeGen)，再运行 `xcodegen generate` 生成工程。
@@ -127,9 +135,9 @@ scripts/icon/                  图标底稿脚本、山形取材的原图和成�
 调试时可以用这些启动参数，不需要点界面：
 
 ```bash
-PixDeck=build/PixDeck.app/Contents/MacOS/PixDeck
-$PixDeck --bench <文件夹>            # 翻页延迟、内存、主线程卡顿
-$PixDeck --cleanup-report <文件夹>   # 清理模式逐张指标与分类结果
+Flipic=build/Flipic.app/Contents/MacOS/Flipic
+$Flipic --bench <文件夹>            # 翻页延迟、内存、主线程卡顿
+$Flipic --cleanup-report <文件夹>   # 清理模式逐张指标与分类结果
 ```
 
 ## 参与

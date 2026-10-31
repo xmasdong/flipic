@@ -1,16 +1,16 @@
-name: PixDeck
+name: Flipic
 options:
   bundleIdPrefix: com.opc
   deploymentTarget:
     macOS: "13.0"
   createIntermediateGroups: true
 targets:
-  PixDeck:
+  Flipic:
     type: application
     platform: macOS
     sources:
       - path: Sources/Photoview
-      - path: Resources/PixDeck.icns
+      - path: Resources/Flipic.icns
         buildPhase: resources
       - path: Resources/zh-Hans.lproj
         buildPhase: resources
@@ -43,11 +43,11 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.xmasdong.photoview
-        MARKETING_VERSION: "0.4.0"
+        MARKETING_VERSION: "0.5.0"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: Resources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: PixDeck.entitlements
+        CODE_SIGN_ENTITLEMENTS: Flipic.entitlements
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_VERSION: "5.9"
         MACOSX_DEPLOYMENT_TARGET: "13.0"

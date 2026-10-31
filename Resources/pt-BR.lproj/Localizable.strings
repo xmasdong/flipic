@@ -1,10 +1,10 @@
-/* PixDeck — Português (Brasil) */
+/* Flipic — Português (Brasil) */
 
-"menu.about" = "Sobre o PixDeck";
-"menu.hide" = "Ocultar PixDeck";
+"menu.about" = "Sobre o Flipic";
+"menu.hide" = "Ocultar Flipic";
 "menu.hideOthers" = "Ocultar outros";
 "menu.showAll" = "Mostrar todos";
-"menu.quit" = "Encerrar PixDeck";
+"menu.quit" = "Encerrar Flipic";
 "menu.file" = "Arquivo";
 "menu.open" = "Abrir…";
 "menu.reveal" = "Revelar no Finder";
@@ -104,7 +104,7 @@
 Um visualizador de imagens nativo para macOS: abertura instantânea, navegação fluida por pastas, zoom por gestos e EXIF num relance. Totalmente offline — sem requisições de rede, sem coleta de dados, sem contas.
 
 ■ COMO USAR
-Arraste uma pasta ou imagem para esta janela para navegar; ou clique direito numa imagem no Finder e abra com o PixDeck.
+Arraste uma pasta ou imagem para esta janela para navegar; ou clique direito numa imagem no Finder e abra com o Flipic.
 ← / → navega; rolagem / pinça / ↑↓ amplia; arraste para mover; clique duplo alterna ajustar ⇄ 100%; Esc reseta.
 R / L giram a visualização; ⌘⌥S grava a rotação no arquivo sem perdas; Return renomeia; ⌘⌫ move para o Lixo.
 ⌘S exporta uma cópia comprimida (local / formato / qualidade); o menu Ferramentas tem conversão e renomeação em lote.
@@ -115,15 +115,16 @@ A interface e todas as mensagens seguem automaticamente o idioma do sistema (14 
 "sc.body" = "← / →  Anterior / Próxima (em loop)
 ↑ / ↓  Ampliar / Reduzir (segure para repetir)
 R / L  Girar 90° horário / anti-horário
-S  Apresentação (3 s por foto, S para parar)
+S  Apresentação (intervalo em Visualizar › Intervalo da apresentação; S para parar)
 Espaço  Pré-visualização ajustada à imagem (pressione de novo para sair)
 Clique duplo  Ajustar ⇄ 100%
 Esc  Voltar ao ajuste (sai da tela cheia)
-1 / 0  Tamanho real / Ajustar à janela
+0  Zoom de 100% no ponteiro; pressione de novo para ajustar    1  Tamanho real
 Pinçar / rolar  Zoom no cursor, arraste ou ⌘+rolar para mover
 Visualizar › Roda do mouse  pode trocar de foto
 I  Informações    T  Tira de miniaturas    F  Tela cheia
 ⌘⇧C  Conversão em lote    ⌘⇧B  Renomear em lote    ⌘⇧D  Imagem de fundo
+⌘E  Editar no editor de fotos (abre o RAW de mesmo nome, se houver)
 ⌘⇧K  Modo limpeza Beta: duplicatas, olhos fechados, desfoque
 ⌘S  Exportação rápida    ⌘⇧E  Exportar como…
 Return  Renomear a imagem atual
@@ -189,3 +190,22 @@ Arraste uma pasta ou imagem para abrir";
 "wheel.navigate" = "Foto anterior / seguinte";
 "wheel.navigate.on" = "Roda: trocar de foto (⌘+roda para zoom)";
 "wheel.zoom.on" = "Roda: zoom (⌘+roda para mover)";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "Editar no editor de fotos…";
+"menu.editIn" = "Editar no %@";
+"menu.openWith" = "Abrir com";
+"menu.openWithOther" = "Outro…";
+"menu.setEditor" = "Definir editor de fotos…";
+"panel.chooseEditor" = "Escolha um editor de fotos";
+"panel.choose" = "Escolher";
+"msg.editorSet" = "Editor de fotos: %@ · ⌘E abre a foto atual";
+"msg.openedIn" = "%2$@ aberta no %1$@";
+"msg.openFailed" = "Não foi possível abrir no %1$@: %2$@";
+"menu.slideInterval" = "Intervalo da apresentação";
+"slide.seconds" = "%d s";
+"msg.slideshowOnN" = "Apresentação · %d s por foto · S ou sair da tela cheia para parar";
+"msg.slideInterval" = "Intervalo da apresentação: %d s por foto";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "Transição suave entre fotos";

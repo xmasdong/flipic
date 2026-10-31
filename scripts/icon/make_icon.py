@@ -1,7 +1,7 @@
-# PixDeck 图标：一叠照片，最上面一张右上角折起露出下一张。
+# Flipic 图标：一叠照片，最上面一张右上角折起露出下一张。
 # 风景剪影的山脊线和树线逐列取自真实照片 yangshuo.jpg（桂林阳朔，Wikimedia Commons，CC0）。
 # 用法：python3 scripts/icon/make_icon.py <输出 1024 PNG>（默认蓝灰底）
-# 这里生成的是构图底稿；成品 PixDeck-icon-1024.png 是照底稿绘制的插画版。
+# 这里生成的是构图底稿；成品 Flipic-icon-1024.png 是照底稿绘制的插画版。
 import os, sys, math
 from PIL import Image, ImageDraw, ImageFilter, ImageOps, ImageEnhance
 SS=2; W=1024*SS
@@ -142,5 +142,5 @@ def make(out, bg_top, bg_bot, mode='photo'):
     canvas.resize((1024, 1024), Image.LANCZOS).save(out)
 
 if __name__ == '__main__':
-    out = sys.argv[1] if len(sys.argv) > 1 else 'PixDeck-icon-1024.png'
+    out = sys.argv[1] if len(sys.argv) > 1 else 'Flipic-icon-1024.png'
     make(out, (92, 110, 130), (56, 68, 84), 'ridge')

@@ -1,10 +1,10 @@
-/* PixDeck — English */
+/* Flipic — English */
 
-"menu.about" = "About PixDeck";
-"menu.hide" = "Hide PixDeck";
+"menu.about" = "About Flipic";
+"menu.hide" = "Hide Flipic";
 "menu.hideOthers" = "Hide Others";
 "menu.showAll" = "Show All";
-"menu.quit" = "Quit PixDeck";
+"menu.quit" = "Quit Flipic";
 
 "menu.file" = "File";
 "menu.open" = "Open…";
@@ -115,7 +115,7 @@
 A native macOS image viewer: instant opening, buttery folder navigation, gesture zoom and EXIF at a glance. Fully on-device — no network requests, no data collection, no accounts.
 
 ■ HOW TO USE
-Drop a folder or image into the window to browse; or right-click an image in Finder and open it with PixDeck.
+Drop a folder or image into the window to browse; or right-click an image in Finder and open it with Flipic.
 ← → to flip; scroll / pinch / ↑↓ to zoom; drag to pan; double-click toggles fit ⇄ 100%; Esc resets.
 R / L rotate the view; ⌘⌥S writes the rotation back to the file losslessly; Return renames; ⌘⌫ moves to Trash.
 ⌘S exports a compressed copy (location / format / quality); the Tools menu adds batch convert and batch rename.
@@ -126,15 +126,16 @@ The interface and every message follow your system language automatically (14 su
 "sc.body" = "← / →  Previous / Next (wraps around)
 ↑ / ↓  Zoom in / out (hold to repeat)
 R / L  Rotate 90° CW / CCW
-S  Slideshow (3s per photo, S to stop)
+S  Slideshow (set the interval in View › Slideshow Interval; S to stop)
 Space  Preview fitted to the image (press again to exit)
 Double-click  Fit ⇄ 100%
 Esc  Back to fit (exits full screen first)
-1 / 0  Actual size / Fit to window
+0  Zoom to 100% at the pointer; press again to fit    1  Actual size
 Pinch / scroll  Zoom at cursor, drag or ⌘+scroll to pan
 View › Scroll Wheel  switch to paging through photos
 I  Photo info    T  Thumbnail strip    F  Full screen
 ⌘⇧C  Batch convert    ⌘⇧B  Batch rename    ⌘⇧D  Set wallpaper
+⌘E  Edit in your photo editor (opens the RAW if one has the same name)
 ⌘⇧K  Cleanup Mode Beta: duplicates, closed eyes, blur
 ⌘S  Quick export    ⌘⇧E  Export as…
 Return  Rename current image
@@ -201,3 +202,22 @@ Drop a folder or image to open";
 "wheel.navigate" = "Previous / Next Photo";
 "wheel.navigate.on" = "Scroll wheel: switch photos (⌘+scroll to zoom)";
 "wheel.zoom.on" = "Scroll wheel: zoom (⌘+scroll to pan)";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "Edit in Photo Editor…";
+"menu.editIn" = "Edit in %@";
+"menu.openWith" = "Open With";
+"menu.openWithOther" = "Other…";
+"menu.setEditor" = "Set Photo Editor…";
+"panel.chooseEditor" = "Choose a Photo Editor";
+"panel.choose" = "Choose";
+"msg.editorSet" = "Photo editor: %@ · ⌘E opens the current photo";
+"msg.openedIn" = "Opened %2$@ in %1$@";
+"msg.openFailed" = "Couldn't open in %1$@: %2$@";
+"menu.slideInterval" = "Slideshow Interval";
+"slide.seconds" = "%d s";
+"msg.slideshowOnN" = "Slideshow · %d s per photo · S or exit full screen to stop";
+"msg.slideInterval" = "Slideshow interval: %d s per photo";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "Fade Between Photos";

@@ -3,5 +3,5 @@ build/
 icon.iconset/
 .DS_Store
 scripts/devid.env
-PixDeck.xcodeproj/
+Flipic.xcodeproj/
 *.p8

@@ -1,10 +1,10 @@
-/* PixDeck — Français */
+/* Flipic — Français */
 
-"menu.about" = "À propos de PixDeck";
-"menu.hide" = "Masquer PixDeck";
+"menu.about" = "À propos de Flipic";
+"menu.hide" = "Masquer Flipic";
 "menu.hideOthers" = "Masquer les autres";
 "menu.showAll" = "Tout afficher";
-"menu.quit" = "Quitter PixDeck";
+"menu.quit" = "Quitter Flipic";
 "menu.file" = "Fichier";
 "menu.open" = "Ouvrir…";
 "menu.reveal" = "Révéler dans le Finder";
@@ -104,7 +104,7 @@
 Une visionneuse d'images native pour macOS : ouverture instantanée, navigation fluide entre dossiers, zoom gestuel et EXIF en un coup d'œil. Totalement hors ligne — aucune requête réseau, aucune collecte de données, aucun compte.
 
 ■ UTILISATION
-Déposez un dossier ou une image dans la fenêtre pour parcourir ; ou clic droit sur une image dans le Finder → Ouvrir avec PixDeck.
+Déposez un dossier ou une image dans la fenêtre pour parcourir ; ou clic droit sur une image dans le Finder → Ouvrir avec Flipic.
 ← → pour naviguer ; molette / pincement / ↑↓ pour zoomer ; glisser pour déplacer ; double-clic pour ajuster ⇄ 100 % ; Échap pour réinitialiser.
 R / L pivotent la vue ; ⌘⌥S écrit la rotation dans le fichier sans perte ; Retour renomme ; ⌘⌫ met à la corbeille.
 ⌘S exporte une copie compressée (emplacement / format / qualité) ; le menu Outils ajoute conversion et renommage par lot.
@@ -115,15 +115,16 @@ L'interface et tous les messages suivent automatiquement la langue du système (
 "sc.body" = "← / →  Précédente / Suivante (en boucle)
 ↑ / ↓  Agrandir / Réduire (maintenir pour répéter)
 R / L  Pivoter de 90° horaire / antihoraire
-S  Diaporama (3 s par photo, S pour arrêter)
+S  Diaporama (intervalle dans Présentation › Intervalle du diaporama ; S pour arrêter)
 Espace  Aperçu ajusté à l’image (appuyez à nouveau pour quitter)
 Double-clic  Ajuster ⇄ 100 %
 Esc  Revenir à l'ajustement (quitte le plein écran)
-1 / 0  Taille réelle / Ajuster à la fenêtre
+0  Zoom à 100 % sous le pointeur ; appuyer à nouveau pour ajuster    1  Taille réelle
 Pincer / défilement  Zoom au curseur, glisser ou ⌘+défilement pour déplacer
 Présentation › Molette  peut servir à changer de photo
 I  Infos photo    T  Bande de vignettes    F  Plein écran
 ⌘⇧C  Conversion par lot    ⌘⇧B  Renommage par lot    ⌘⇧D  Fond d'écran
+⌘E  Modifier dans l’éditeur photo (ouvre le RAW du même nom s’il existe)
 ⌘⇧K  Mode tri Beta : doublons, yeux fermés, flou
 ⌘S  Export rapide    ⌘⇧E  Exporter sous…
 Retour  Renommer l'image affichée
@@ -189,3 +190,22 @@ Déposez un dossier ou une image pour ouvrir";
 "wheel.navigate" = "Photo précédente / suivante";
 "wheel.navigate.on" = "Molette : changer de photo (⌘+molette pour zoomer)";
 "wheel.zoom.on" = "Molette : zoomer (⌘+molette pour déplacer)";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "Modifier dans l’éditeur photo…";
+"menu.editIn" = "Modifier dans %@";
+"menu.openWith" = "Ouvrir avec";
+"menu.openWithOther" = "Autre…";
+"menu.setEditor" = "Choisir l’éditeur photo…";
+"panel.chooseEditor" = "Choisir un éditeur photo";
+"panel.choose" = "Choisir";
+"msg.editorSet" = "Éditeur photo : %@ · ⌘E ouvre la photo affichée";
+"msg.openedIn" = "%2$@ ouvert dans %1$@";
+"msg.openFailed" = "Impossible d’ouvrir dans %1$@ : %2$@";
+"menu.slideInterval" = "Intervalle du diaporama";
+"slide.seconds" = "%d s";
+"msg.slideshowOnN" = "Diaporama · %d s par photo · S ou quitter le plein écran pour arrêter";
+"msg.slideInterval" = "Intervalle du diaporama : %d s par photo";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "Fondu entre les photos";

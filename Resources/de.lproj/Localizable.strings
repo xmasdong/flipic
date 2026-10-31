@@ -1,10 +1,10 @@
-/* PixDeck — Deutsch */
+/* Flipic — Deutsch */
 
-"menu.about" = "Über PixDeck";
-"menu.hide" = "PixDeck ausblenden";
+"menu.about" = "Über Flipic";
+"menu.hide" = "Flipic ausblenden";
 "menu.hideOthers" = "Andere ausblenden";
 "menu.showAll" = "Alle einblenden";
-"menu.quit" = "PixDeck beenden";
+"menu.quit" = "Flipic beenden";
 "menu.file" = "Ablage";
 "menu.open" = "Öffnen…";
 "menu.reveal" = "Im Finder zeigen";
@@ -104,7 +104,7 @@
 Ein nativer macOS-Bildbetrachter: sofortiges Öffnen, flüssige Ordner-Navigation, Gesten-Zoom und EXIF auf einen Blick. Komplett offline — keine Netzwerkanfragen, keine Datenerfassung, keine Konten.
 
 ■ BENUTZUNG
-Ordner oder Bild in dieses Fenster ziehen zum Ansehen; oder im Finder Rechtsklick → Mit PixDeck öffnen.
+Ordner oder Bild in dieses Fenster ziehen zum Ansehen; oder im Finder Rechtsklick → Mit Flipic öffnen.
 ← → blättern; Scrollen / Pinzen / ↑↓ zoomen; Ziehen verschiebt; Doppelklick wechselt An Fenster ⇄ 100 %; Esc setzt zurück.
 R / L drehen die Ansicht; ⌘⌥S schreibt die Drehung verlustfrei in die Datei zurück; Return benennt um; ⌘⌫ in den Papierkorb.
 ⌘S exportiert eine komprimierte Kopie (Ort / Format / Qualität); im Werkzeuge-Menü gibt es Stapelkonvertierung und -umbenennung.
@@ -115,15 +115,16 @@ Oberfläche und alle Texte folgen automatisch der Systemsprache (14 Sprachen).";
 "sc.body" = "← / →  Zurück / Weiter (Endlosschleife)
 ↑ / ↓  Vergrößern / Verkleinern (halten zum Wiederholen)
 R / L  90° im / gegen den Uhrzeigersinn drehen
-S  Diashow (3 s pro Bild, S zum Stoppen)
+S  Diashow (Intervall unter Darstellung › Diashow-Intervall; S stoppt)
 Leertaste  Vorschau im Bildformat (erneut drücken zum Beenden)
 Doppelklick  An Fenster ⇄ 100 %
 Esc  Zurück zur Anpassung (verlässt den Vollbildmodus)
-1 / 0  Originalgröße / An Fenster anpassen
+0  Am Zeiger auf 100 % zoomen, erneut drücken zum Einpassen    1  Originalgröße
 Pinzen / scrollen  Zoom am Cursor, ziehen oder ⌘+Scrollen zum Verschieben
 Darstellung › Mausrad  kann auch Fotos wechseln
 I  Foto-Info    T  Miniaturleiste    F  Vollbild
 ⌘⇧C  Stapelkonvertierung    ⌘⇧B  Stapelumbenennung    ⌘⇧D  Schreibtischbild
+⌘E  In der Bildbearbeitung bearbeiten (öffnet die gleichnamige RAW-Datei, falls vorhanden)
 ⌘⇧K  Aufräummodus Beta: Duplikate, geschlossene Augen, Unschärfe
 ⌘S  Schnellexport    ⌘⇧E  Exportieren unter…
 Return  Angezeigtes Bild umbenennen
@@ -189,3 +190,22 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "wheel.navigate" = "Vorheriges / nächstes Foto";
 "wheel.navigate.on" = "Mausrad: Fotos wechseln (⌘+Rad zum Zoomen)";
 "wheel.zoom.on" = "Mausrad: Zoomen (⌘+Rad zum Verschieben)";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "In Bildbearbeitung bearbeiten …";
+"menu.editIn" = "In %@ bearbeiten";
+"menu.openWith" = "Öffnen mit";
+"menu.openWithOther" = "Andere …";
+"menu.setEditor" = "Bildbearbeitung festlegen …";
+"panel.chooseEditor" = "Bildbearbeitung auswählen";
+"panel.choose" = "Auswählen";
+"msg.editorSet" = "Bildbearbeitung: %@ · ⌘E öffnet das aktuelle Foto";
+"msg.openedIn" = "%2$@ in %1$@ geöffnet";
+"msg.openFailed" = "Öffnen in %1$@ nicht möglich: %2$@";
+"menu.slideInterval" = "Diashow-Intervall";
+"slide.seconds" = "%d s";
+"msg.slideshowOnN" = "Diashow · %d s pro Foto · S oder Vollbild beenden zum Stoppen";
+"msg.slideInterval" = "Diashow-Intervall: %d s pro Foto";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "Überblenden zwischen Fotos";

@@ -1,10 +1,10 @@
-/* PixDeck — 简体中文 */
+/* Flipic — 简体中文 */
 
-"menu.about" = "关于 PixDeck";
-"menu.hide" = "隐藏 PixDeck";
+"menu.about" = "关于 Flipic";
+"menu.hide" = "隐藏 Flipic";
 "menu.hideOthers" = "隐藏其他";
 "menu.showAll" = "全部显示";
-"menu.quit" = "退出 PixDeck";
+"menu.quit" = "退出 Flipic";
 
 "menu.file" = "文件";
 "menu.open" = "打开…";
@@ -115,7 +115,7 @@
 macOS 原生看图器：秒开大图、顺滑翻页、手势缩放、EXIF 随手看。完全本机运行——无网络请求、无数据收集、无账号。
 
 ■ 使用方式
-把文件夹或图片拖进窗口即可浏览；也可以在 Finder 里右键图片选择用 PixDeck 打开。
+把文件夹或图片拖进窗口即可浏览；也可以在 Finder 里右键图片选择用 Flipic 打开。
 ← → 翻页；滚动 / 捏合 / ↑↓ 缩放；拖拽平移；双击在适应窗口与 100% 间切换；Esc 一键回正。
 R / L 旋转视图；⌘⌥S 把旋转无损写回文件；回车重命名；⌘⌫ 移到废纸篓。
 ⌘S 导出压缩副本（位置 / 格式 / 质量可选）；工具菜单支持批量转换与批量重命名。
@@ -126,15 +126,16 @@ S 幻灯片放映；I 照片信息；T 缩略图栏；F 全屏。控件几秒不
 "sc.body" = "← / →  上一张 / 下一张（循环）
 ↑ / ↓  放大 / 缩小（按住连续）
 R / L  向右 / 向左旋转 90°
-S  幻灯片放映（3 秒/张，S 停止）
+S  幻灯片放映（间隔在 显示 › 幻灯片间隔 设置，S 停止）
 空格  贴合图片比例预览（再按一次退出）
 双击  适应窗口 ⇄ 100%
 Esc  回到适应窗口（全屏时退出全屏）
-1 / 0  实际大小 / 适应窗口
+0  在鼠标位置放大到 100%，再按一次恢复    1  实际大小
 双指捏合 / 滚动  缩放，拖拽或 ⌘+滚动平移
 显示 › 鼠标滚轮  可改为滚轮切换图片
 I  照片信息    T  缩略图栏    F  全屏
 ⌘⇧C  批量转换格式    ⌘⇧B  批量重命名    ⌘⇧D  设为壁纸
+⌘E  在后期软件中编辑（有同名 RAW 时打开 RAW）
 ⌘⇧K  清理模式 Beta：重复、闭眼、模糊
 ⌘S  快速导出压缩副本    ⌘⇧E  导出为…
 回车 
@@ -201,3 +202,22 @@ I  照片信息    T  缩略图栏    F  全屏
 "wheel.navigate" = "切换上一张 / 下一张";
 "wheel.navigate.on" = "滚轮：切换图片（⌘+滚轮缩放）";
 "wheel.zoom.on" = "滚轮：缩放图片（⌘+滚轮平移）";
+
+/* 幻灯片间隔、后期软件 */
+"menu.editChoose" = "在后期软件中编辑…";
+"menu.editIn" = "在%@中编辑";
+"menu.openWith" = "打开方式";
+"menu.openWithOther" = "其他…";
+"menu.setEditor" = "设置后期软件…";
+"panel.chooseEditor" = "选择后期软件";
+"panel.choose" = "选择";
+"msg.editorSet" = "后期软件：%@ · ⌘E 打开当前照片";
+"msg.openedIn" = "已用 %1$@ 打开 %2$@";
+"msg.openFailed" = "无法用 %1$@ 打开：%2$@";
+"menu.slideInterval" = "幻灯片间隔";
+"slide.seconds" = "%d 秒";
+"msg.slideshowOnN" = "幻灯片放映中 · 每张 %d 秒 · S 或退出全屏停止";
+"msg.slideInterval" = "幻灯片间隔：每张 %d 秒";
+
+/* 翻页渐变 */
+"menu.fadeTransition" = "翻页渐变";
