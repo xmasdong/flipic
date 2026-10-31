@@ -529,6 +529,12 @@ final class ZoomableImageView: NSView {
         CGPoint(x: (p.x - origin.x) / scale, y: (p.y - origin.y) / scale)
     }
 
+    /// 打开照片时直接进入贴合预览（和按空格一样，再按空格或 Esc 退出）
+    func enterPeek() {
+        guard !spacePeeking else { return }
+        spacePeeking = onPeekBegin?() ?? false
+    }
+
     /// Esc、进入全屏等需要先退出预览时由上层调用
     func endPeek() {
         if spacePeeking {

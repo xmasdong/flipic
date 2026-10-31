@@ -5,6 +5,74 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var pendingURL: URL?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if let i = CommandLine.arguments.firstIndex(of: "--peekopentest"), i + 1 < CommandLine.arguments.count {
+            // --peekopentest <照片>：按设置打开单张照片，记录是否直接进入贴合预览；再按空格回到普通窗口
+            let file = CommandLine.arguments[i + 1]
+            buildMenu()
+            windowController = ViewerWindowController()
+            windowController.showWindow(nil)
+            let vc = windowController.contentViewController as? ViewerViewController
+            windowController.open(URL(fileURLWithPath: file))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                NSLog("PEEKOPEN setting=%d after open: %@", ViewerViewController.openInPeek ? 1 : 0, vc?.debugPeekState ?? "-")
+                if CommandLine.arguments.contains("--press-next") {
+                    vc?.debugPressNext()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        NSLog("PEEKOPEN after → (next photo): %@", vc?.debugPeekState ?? "-")
+                        vc?.debugPressNext()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            NSLog("PEEKOPEN after → again: %@", vc?.debugPeekState ?? "-")
+                            NSApp.terminate(nil)
+                        }
+                    }
+                    return
+                }
+                if CommandLine.arguments.contains("--press-esc") {
+                    vc?.debugPressEsc()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        NSLog("PEEKOPEN after Esc: windowVisible=%d", self.windowController.window?.isVisible == true ? 1 : 0)
+                        NSApp.terminate(nil)
+                    }
+                    return
+                }
+                vc?.debugPressSpace()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    NSLog("PEEKOPEN after Space: %@", vc?.debugPeekState ?? "-")
+                    NSApp.terminate(nil)
+                }
+            }
+            return
+        }
+        if CommandLine.arguments.contains("--selfupdatetest") || CommandLine.arguments.contains("--selfupdatenow") {
+            // 用 FLIPIC_UPDATE_FEED 指向的版本信息走一遍自动更新。
+            // --selfupdatetest：只到替换完成，打印结果后退出；--selfupdatenow：完整流程，包括显示进度窗口和重新打开
+            let realRun = CommandLine.arguments.contains("--selfupdatenow")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                NSLog("SELFUPDATE running=%@ version=%@ team=%@", Bundle.main.bundleURL.path, UpdateChecker.currentVersion,
+                      Updater.teamID(of: Bundle.main.bundleURL) == nil ? "none" : "present")
+                if !realRun {
+                    Updater.shared.onFinishedForTest = { result in
+                        switch result {
+                        case .success(let app):
+                            let info = NSDictionary(contentsOf: app.appendingPathComponent("Contents/Info.plist"))
+                            let v = info?["CFBundleShortVersionString"] as? String ?? "?"
+                            NSLog("SELFUPDATE result=success installed=%@ version=%@ spctl=%d", app.path, v,
+                                  Updater.run("/usr/sbin/spctl", ["--assess", "--type", "execute", app.path]))
+                        case .failure(let f):
+                            NSLog("SELFUPDATE result=failure %@", "\(f)")
+                        }
+                        NSApp.terminate(nil)
+                    }
+                }
+                UpdateChecker.check { result in
+                    switch result {
+                    case .newer(let r): Updater.shared.install(r)
+                    default: NSLog("SELFUPDATE feed says no newer version"); NSApp.terminate(nil)
+                    }
+                }
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--exifdump") {
             // --exifdump <文件...>：打印照片信息面板会显示的各项（诊断用）
             for path in CommandLine.arguments[(i + 1)...] where !path.hasPrefix("-") && !path.hasPrefix("(") {
@@ -352,10 +420,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             switch result {
             case .newer(let r):
                 alert.messageText = L10n.f("update.available", "Flipic %@ 可以更新了", r.version)
-                alert.informativeText = L10n.f("update.availableInfo", "你现在用的是 %@。下载后把新版拖进「应用程序」替换即可，设置都会保留。", UpdateChecker.currentVersion)
-                alert.addButton(withTitle: L10n.t("update.download", "下载新版"))
+                alert.informativeText = L10n.f("update.availableInfoAuto", "你现在用的是 %@。点「立即更新」会自动下载、校验并替换，完成后重新打开，设置都会保留。", UpdateChecker.currentVersion)
+                alert.addButton(withTitle: L10n.t("update.now", "立即更新"))
                 alert.addButton(withTitle: L10n.t("update.later", "以后再说"))
-                if alert.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(r.download) }
+                if alert.runModal() == .alertFirstButtonReturn { Updater.shared.install(r) }
             case .upToDate(let v):
                 alert.messageText = L10n.f("update.upToDate", "已经是最新版本（%@）", v)
                 alert.runModal()

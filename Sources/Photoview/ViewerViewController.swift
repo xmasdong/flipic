@@ -130,6 +130,10 @@ final class ViewerViewController: NSViewController {
         imageView.onEscape = { [weak self] in
             guard let self, let window = self.view.window else { return }
             if self.imageView.isPeeking {
+                if self.peekFromOpen && Self.escCloses {
+                    window.performClose(nil)   // 当快速查看用：打开就是贴合预览，Esc 直接回访达
+                    return
+                }
                 self.imageView.endPeek()
             } else if !self.exifPanel.isHidden {
                 self.exifPanel.isHidden = true   // 右上角的照片信息面板开着时，Esc 先关它
@@ -301,6 +305,7 @@ final class ViewerViewController: NSViewController {
 
     private func endPeek() {
         guard let window = view.window, let saved = peekSaved else { return }
+        peekFromOpen = false
         peekSaved = nil
         window.setFrame(saved.frame, display: true, animate: true)
         window.minSize = saved.minSize
@@ -547,6 +552,15 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 打开与加载
 
+    /// 从访达打开单张照片时，窗口直接贴合照片比例（同空格预览）；打开文件夹还是普通窗口。默认关，设置里打开
+    static var openInPeek: Bool {
+        get { UserDefaults.standard.bool(forKey: "openInPeek") }
+        set { UserDefaults.standard.set(newValue, forKey: "openInPeek") }
+    }
+    private var peekOnFirstImage = false
+    /// 这次贴合预览是打开照片时自动进的：开着「按 Esc 关闭窗口」时，Esc 直接关窗口
+    private var peekFromOpen = false
+
     func open(url: URL) {
         prefetchedURLs.removeAll()
         decodeQueue.cancelAllOperations()
@@ -556,6 +570,7 @@ final class ViewerViewController: NSViewController {
         var isDir: ObjCBool = false
         FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
         showFirstAfterResort = isDir.boolValue
+        peekOnFirstImage = !isDir.boolValue && Self.openInPeek && !CommandLine.arguments.contains(where: { $0.hasPrefix("--") && !["--peekopentest", "--press-esc", "--press-next"].contains($0) })
         let ok = folder.open(url: url)
         emptyState.isHidden = ok
         updateControlsPresence()
@@ -637,6 +652,14 @@ final class ViewerViewController: NSViewController {
         imageView.set(image: image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew)
         if isNew { BenchProbe.adopted() } else { BenchProbe.fullWidth = image.width }
         if isNew, peekSaved != nil { wrapWindowToImage() }
+        if isNew, peekOnFirstImage {
+            peekOnFirstImage = false
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.peekSaved == nil else { return }
+                self.imageView.enterPeek()
+                self.peekFromOpen = self.peekSaved != nil
+            }
+        }
         updateHUD()
     }
 
@@ -1593,10 +1616,11 @@ final class ViewerViewController: NSViewController {
         banner.translatesAutoresizingMaskIntoConstraints = false
         let text = NSTextField(labelWithString: L10n.f("update.available", "Flipic %@ 可以更新了", release.version))
         text.font = .systemFont(ofSize: 12.5, weight: .medium)
-        let download = NSButton(title: L10n.t("update.download", "下载新版"), target: self, action: #selector(updateBannerDownload(_:)))
+        let download = NSButton(title: L10n.t("update.now", "立即更新"), target: self, action: #selector(updateBannerDownload(_:)))
         download.bezelStyle = .rounded
         download.controlSize = .small
         download.identifier = NSUserInterfaceItemIdentifier(release.download.absoluteString)
+        pendingRelease = release
         let close = NSButton(image: NSImage(systemSymbolName: "xmark", accessibilityDescription: L10n.t("update.skip", "不再提醒这个版本"))!,
                              target: self, action: #selector(updateBannerSkip(_:)))
         close.isBordered = false
@@ -1620,8 +1644,10 @@ final class ViewerViewController: NSViewController {
         updateBanner = banner
     }
 
+    private var pendingRelease: UpdateChecker.Release?
+
     @objc private func updateBannerDownload(_ sender: NSButton) {
-        if let s = sender.identifier?.rawValue, let url = URL(string: s) { NSWorkspace.shared.open(url) }
+        if let r = pendingRelease { Updater.shared.install(r) }
         updateBanner?.removeFromSuperview()
         updateBanner = nil
     }
@@ -2712,6 +2738,32 @@ final class ViewerViewController: NSViewController {
             if let saved { UserDefaults.standard.set(saved, forKey: "thumbSize") } else { UserDefaults.standard.removeObject(forKey: "thumbSize") }
             NSApp.terminate(nil)
         }
+    }
+
+    /// 测试用：当前是否在贴合预览、窗口比例、是不是打开时自动进的
+    var debugPeekState: String {
+        let f = view.window?.frame ?? .zero
+        let px = imageView.pixelSize
+        return String(format: "peeking=%d fromOpen=%d windowRatio=%.3f imageRatio=%.3f filmstripHidden=%d",
+                      peekSaved != nil ? 1 : 0, peekFromOpen ? 1 : 0, f.width / max(f.height, 1), px.width / max(px.height, 1), filmstrip.isHidden ? 1 : 0)
+    }
+
+    func debugPressEsc() {
+        guard let w = view.window, let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: w.windowNumber,
+                                                             context: nil, characters: "\u{1B}", charactersIgnoringModifiers: "\u{1B}", isARepeat: false, keyCode: 53) else { return }
+        imageView.keyDown(with: e)
+    }
+
+    func debugPressNext() {
+        guard let w = view.window, let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: w.windowNumber,
+                                                             context: nil, characters: "\u{F703}", charactersIgnoringModifiers: "\u{F703}", isARepeat: false, keyCode: 124) else { return }
+        imageView.keyDown(with: e)
+    }
+
+    func debugPressSpace() {
+        guard let w = view.window, let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: w.windowNumber,
+                                                             context: nil, characters: " ", charactersIgnoringModifiers: " ", isARepeat: false, keyCode: 49) else { return }
+        imageView.keyDown(with: e)
     }
 
     /// --esctest <文件夹>：Esc 关闭开着时，放大先回适应窗口，再按关窗口；关着时不关窗口

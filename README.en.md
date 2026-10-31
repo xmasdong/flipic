@@ -45,7 +45,7 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 **Viewing**
 
 - Page through every image in the folder with ← →, sorted by name, date taken, date modified, date created or file size. Your sort order is remembered.
-- Press Space for a Quick Look style preview: the window wraps itself to the photo's aspect ratio. Press Space again to go back.
+- Press Space for a Quick Look style preview: the window wraps itself to the photo's aspect ratio. Press Space again to go back. Turn on wrapping when opening a photo in Settings and photos opened from Finder start this way, with every photo you page to wrapped as well.
 - Rest the pointer on any detail and press 0 to zoom to 100% right there; press 0 again to go back. Pinch to zoom on the trackpad; double-click also toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.
 - Photos switch instantly when you page; if you like a crossfade, turn on Fade Between Photos in Settings.
 - The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, change it in Settings; ⌘ + scroll then zooms. If you reversed your wheel with a tool like Mos, you can reverse the zoom direction too, and paging can be reversed so a downward swipe goes back, like on a phone.
@@ -112,7 +112,7 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and
 
 ## Privacy
 
-Flipic makes no network connections by default, has no account and collects no data. It only reads the images you open. Only when you choose Check for Updates… or turn on automatic update checks in Settings does it fetch a version file (version.json) from the website, sending no data. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. Only when you rate a photo does Flipic write the rating into its metadata or a same-name .xmp file. All the code is in this repository, so you can check for yourself.
+Flipic makes no network connections by default, has no account and collects no data. It only reads the images you open. Only when you choose Check for Updates… or turn on automatic update checks in Settings does it fetch a version file (version.json) from the website, sending no data; only Update Now downloads the new version from GitHub Releases, checks its signature and Apple notarization, and replaces the app. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. Only when you rate a photo does Flipic write the rating into its metadata or a same-name .xmp file. All the code is in this repository, so you can check for yourself.
 
 ## Building from source
 
@@ -148,6 +148,7 @@ Sources/Photoview/
   HotKey.swift                 Global shortcut to show / hide Flipic
   Rating.swift                 Star ratings (XMP)
   UpdateChecker.swift          Update check (off by default; fetches version.json from the website)
+  Updater.swift                Update Now: download, verify signature and notarization, replace and relaunch
 Resources/                     Info.plist, icon, strings for 14 languages
 docs/                          Website (GitHub Pages)
 scripts/                       Release packaging and test image generators
