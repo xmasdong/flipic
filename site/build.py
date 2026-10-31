@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """生成 flipic.app 官网：中文在根目录，英文在 /en/。
-用法：python3 site/build.py   产出到 site/public，再 wrangler pages deploy site/public --project-name flipic
+用法：python3 site/build.py   产出到 site/public，再在 site/ 下 wrangler deploy（Worker 静态资源 + flipic.app 自定义域名）
 截图、图标、安装包从 docs/ 复制（docs/ 继续给 GitHub Pages 上的旧地址用）。"""
 import html, json, re, shutil
 from pathlib import Path
