@@ -39,6 +39,18 @@ img { display: block; max-width: 100%; height: auto; }
 .top nav { display: flex; gap: clamp(.9rem, 2.6vw, 1.9rem); font-size: .9375rem; color: var(--ink-2); }
 .top nav a { text-decoration: none; }
 .top nav a:hover { color: var(--ink); }
+.top nav { align-items: center; }
+
+/* 右上角的 GitHub 按钮：样子照着 GitHub 官方的 Star 按钮，静态生成，不加载外部脚本 */
+.gh {
+  display: inline-flex; align-items: stretch; font-size: .8125rem; font-weight: 600; line-height: 1;
+  border: 1px solid oklch(100% 0 0 / .18); border-radius: 7px; overflow: hidden; color: var(--ink);
+}
+.gh-main { display: inline-flex; align-items: center; gap: .4rem; padding: .42rem .62rem; background: oklch(100% 0 0 / .06); }
+.gh svg { width: 15px; height: 15px; }
+.gh-count { display: inline-flex; align-items: center; padding: .42rem .6rem; border-left: 1px solid oklch(100% 0 0 / .18); font-variant-numeric: tabular-nums; }
+.gh:hover .gh-main { background: oklch(100% 0 0 / .12); }
+.top nav a.gh { text-decoration: none; color: var(--ink); }
 
 /* 首屏 */
 .hero { padding-block: clamp(2.5rem, 8vw, 6rem) clamp(2rem, 5vw, 3.5rem); }
@@ -175,7 +187,8 @@ footer nav { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; margin-bottom: 1
 }
 @media (prefers-reduced-motion: reduce) { .frame img { transition: none; } }
 @media (max-width: 760px) {
-  .top nav a:not(.lang) { display: none; }
+  .top nav a:not(.lang):not(.gh) { display: none; }
+  .gh-text { display: none; }
   .feature, .feature.flip, .cols { grid-template-columns: 1fr; }
   .feature.flip .copytext { order: 0; }
   .more ul { grid-template-columns: 1fr; }

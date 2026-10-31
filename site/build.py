@@ -15,6 +15,25 @@ VERSION = json.loads((DOCS / "version.json").read_text())["version"]
 SIZE = "1.8 MB"
 GITHUB = "https://github.com/xmasdong/macphoto"
 
+
+def github_stars():
+    """生成时读一次星标数写进页面，不在浏览器里加载 GitHub 的脚本；读不到就只显示按钮"""
+    import subprocess
+    try:
+        out = subprocess.run(["gh", "api", "repos/xmasdong/macphoto", "--jq", ".stargazers_count"],
+                             capture_output=True, text=True, timeout=20)
+        return int(out.stdout.strip())
+    except Exception:
+        return None
+
+
+STARS = github_stars()
+GITHUB_ICON = ('<svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 '
+               '5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 '
+               '1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 '
+               '0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 '
+               '3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>')
+
 # 中英页面一一对应，用来写 hreflang 和语言切换
 PAIRS = {
     "/": "/en/",
@@ -113,9 +132,17 @@ def header(lang, path):
     <a href="{home}#guides">{t['guides']}</a>
     <a href="{home}#faq">{t['faq']}</a>
     <a class="lang" href="{other}" hreflang="{'en' if lang == 'zh' else 'zh-CN'}">{t['other']}</a>
+    {gh_button(lang)}
   </nav>
 </header>
 """
+
+
+def gh_button(lang):
+    label = "在 GitHub 上给 Flipic 点星" if lang == "zh" else "Star Flipic on GitHub"
+    count = f'<span class="gh-count">{STARS}</span>' if STARS is not None else ""
+    return (f'<a class="gh" href="{GITHUB}" aria-label="{label}" rel="noopener">'
+            f'<span class="gh-main">{GITHUB_ICON}<span class="gh-text">Star</span></span>{count}</a>')
 
 
 def download_block(lang, big=True):
