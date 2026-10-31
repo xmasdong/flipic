@@ -95,11 +95,20 @@ final class ZoomableImageView: NSView {
         }
         baseImage = newSrc
         image = displayed
-        // 换图默认直接切换；只有在「显示 › 翻页渐变」打开时才保留图层自带的淡入淡出
+        // 换图默认直接切换；打开「翻页渐变」或幻灯片放映时淡入淡出
+        let fade: TimeInterval? = isNew ? (pendingFadeDuration ?? (Self.fadeTransition ? 0.25 : nil)) : nil
+        if isNew { pendingFadeDuration = nil }
+        endFade()
+        let oldContents = imageLayer.contents
+        let oldFrame = imageLayer.frame
         CATransaction.begin()
-        CATransaction.setDisableActions(!(Self.fadeTransition && isNew))
+        CATransaction.setDisableActions(true)
         imageLayer.contents = ImageLoader.surface(for: displayed) ?? displayed
+        setEDR(imageLayer, ImageLoader.isHDR(displayed))
         CATransaction.commit()
+        if let fade, let oldContents, !imageLayer.isHidden {
+            crossfade(from: oldContents, frame: oldFrame, duration: fade)
+        }
         imageLayer.isHidden = (displayed == nil)
         // 换了新图一律适应窗口并居中；只有预览换原图（isNew = false）时保持当前缩放
         if resetToFit || isNew || mode == .fit || displayed == nil {
@@ -107,6 +116,65 @@ final class ZoomableImageView: NSView {
         } else {
             apply()
         }
+    }
+
+    // MARK: - 渐变
+
+    /// 旧图单独放一层，按它原来的位置和尺寸淡出，新图按自己的比例淡入。
+    /// 不能在同一个图层上换内容做渐变：竖图换横图时旧图会被塞进变宽的框里，人脸被横向拉宽
+    private var fadeGhost: CALayer?
+
+    private func crossfade(from oldContents: Any, frame: CGRect, duration: TimeInterval) {
+        guard let host = imageLayer.superlayer else { return }
+        let ghost = CALayer()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        ghost.frame = frame
+        ghost.contents = oldContents
+        ghost.contentsScale = imageLayer.contentsScale
+        ghost.magnificationFilter = imageLayer.magnificationFilter
+        ghost.minificationFilter = imageLayer.minificationFilter
+        if #available(macOS 14, *) { ghost.wantsExtendedDynamicRangeContent = imageLayer.wantsExtendedDynamicRangeContent }
+        ghost.opacity = 0
+        host.insertSublayer(ghost, above: imageLayer)
+        CATransaction.commit()
+        fadeGhost = ghost
+
+        let timing = CAMediaTimingFunction(name: .easeInEaseOut)
+        let out = CABasicAnimation(keyPath: "opacity")
+        out.fromValue = 1
+        out.toValue = 0
+        out.duration = duration
+        out.timingFunction = timing
+        ghost.add(out, forKey: "fade")
+        let inn = CABasicAnimation(keyPath: "opacity")
+        inn.fromValue = 0
+        inn.toValue = 1
+        inn.duration = duration
+        inn.timingFunction = timing
+        imageLayer.add(inn, forKey: "fade")
+        DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self, weak ghost] in
+            guard let ghost, self?.fadeGhost === ghost else { return }
+            self?.endFade()
+        }
+    }
+
+    /// HDR 照片要让图层申请高光余量，屏幕才会把亮部推到普通白以上
+    private func setEDR(_ layer: CALayer, _ on: Bool) {
+        if #available(macOS 14, *) { layer.wantsExtendedDynamicRangeContent = on }
+    }
+
+    var debugImage: CGImage? { image }
+    var debugEDR: Bool {
+        if #available(macOS 14, *) { return imageLayer.wantsExtendedDynamicRangeContent }
+        return false
+    }
+
+    /// 渐变途中又换图（比如幻灯片放映时手动翻页）：直接收掉，不接着淡
+    private func endFade() {
+        imageLayer.removeAnimation(forKey: "fade")
+        fadeGhost?.removeFromSuperlayer()
+        fadeGhost = nil
     }
 
     /// 播放动图：ImageIO 在主队列按每帧时长驱动回调，我们只把帧放到当前图层上
@@ -207,6 +275,15 @@ final class ZoomableImageView: NSView {
         get { UserDefaults.standard.bool(forKey: "fadeTransition") }
         set { UserDefaults.standard.set(newValue, forKey: "fadeTransition") }
     }
+
+    /// 下一次换图用的渐变时长（幻灯片自己设，和手动翻页的渐变开关分开）；用一次就清掉
+    var pendingFadeDuration: TimeInterval?
+    var debugFadeDuration: CFTimeInterval { imageLayer.animation(forKey: "fade")?.duration ?? 0 }
+    /// 渐变时旧图那一层的尺寸（测试用：应保持旧图自己的比例）
+    var debugGhostFrame: CGRect? { fadeGhost?.frame }
+    var debugImageFrame: CGRect { imageLayer.frame }
+    var debugGhostPresentation: Float { fadeGhost?.presentation()?.opacity ?? -1 }
+    var debugImagePresentationOpacity: Float { imageLayer.presentation()?.opacity ?? imageLayer.opacity }
 
     /// 适应窗口 ⇄ 100%，以 point 为中心放大；小图本来就不到窗口大小时放大到 200%
     func toggleFitActual(at point: CGPoint?) {
@@ -415,7 +492,7 @@ final class ZoomableImageView: NSView {
     var isPeeking: Bool { spacePeeking }
     var isFit: Bool { mode == .fit }
     var debugHasImage: Bool { image != nil }
-    var debugContentsAnimating: Bool { imageLayer.animation(forKey: "contents") != nil }
+    var debugContentsAnimating: Bool { imageLayer.animation(forKey: "fade") != nil }
     func debugToggle(at p: CGPoint) { toggleFitActual(at: p) }
     func debugImagePoint(_ p: CGPoint) -> CGPoint {
         CGPoint(x: (p.x - origin.x) / scale, y: (p.y - origin.y) / scale)

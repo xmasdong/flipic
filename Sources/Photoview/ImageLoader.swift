@@ -1,3 +1,4 @@
+import AppKit
 import CoreGraphics
 import IOSurface
 import Foundation
@@ -58,16 +59,17 @@ final class ImageLoader {
 
     /// ImageIO 降采样解码：maxPixel 是需要的最大边长像素
     /// allowEmbedded：允许直接用文件内嵌的 EXIF 缩略图（胶片条用，免去整图解码）
-    static func renderThumbnail(url: URL, maxPixel: CGFloat, allowEmbedded: Bool = false) -> CGImage? {
+    static func renderThumbnail(url: URL, maxPixel: CGFloat, allowEmbedded: Bool = false, hdr: Bool = false) -> CGImage? {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else {
             return nil
         }
-        let options: [CFString: Any] = [
+        var options: [CFString: Any] = [
             allowEmbedded ? kCGImageSourceCreateThumbnailFromImageIfAbsent : kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceThumbnailMaxPixelSize: maxPixel,
             kCGImageSourceShouldCacheImmediately: true,
         ]
+        if hdr { addHDRRequest(&options) }
         return CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary)
     }
 
@@ -106,7 +108,7 @@ final class ImageLoader {
     /// 适配窗口用的快速预览图
     func preview(for url: URL, maxPixel: CGFloat) -> CGImage? {
         if let hit = cachedPreview(for: url, maxPixel: maxPixel) { return hit }
-        guard let decoded = Self.renderThumbnail(url: url, maxPixel: maxPixel) else { return nil }
+        guard let decoded = Self.renderThumbnail(url: url, maxPixel: maxPixel, hdr: Self.hdrActive) else { return nil }
         let img = Self.displayReady(decoded)
         previewCache.setObject(CGBox(image: img, px: CGFloat(max(img.width, img.height))),
                                forKey: url as NSURL, cost: pixelBytes(img))
@@ -114,7 +116,7 @@ final class ImageLoader {
     }
 
     /// 全分辨率解码（带 EXIF 方向校正），不写缓存；maxPixel 给出时最长边不超过它
-    static func decodedFull(url: URL, maxPixel: CGFloat? = nil) -> CGImage? {
+    static func decodedFull(url: URL, maxPixel: CGFloat? = nil, hdr: Bool = false) -> CGImage? {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else {
             return nil
         }
@@ -122,12 +124,13 @@ final class ImageLoader {
         var maxSide = max(props?["PixelWidth"] as? Int ?? 0, props?["PixelHeight"] as? Int ?? 0)
         if let maxPixel { maxSide = min(maxSide, Int(maxPixel)) }
         if maxSide > 0 {
-            let options: [CFString: Any] = [
+            var options: [CFString: Any] = [
                 kCGImageSourceCreateThumbnailFromImageAlways: true,
                 kCGImageSourceCreateThumbnailWithTransform: true,
                 kCGImageSourceThumbnailMaxPixelSize: maxSide,
                 kCGImageSourceShouldCacheImmediately: true,
             ]
+            if hdr { addHDRRequest(&options) }
             return CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary)
         }
         return CGImageSourceCreateImageAtIndex(src, 0, nil)
@@ -136,11 +139,41 @@ final class ImageLoader {
     /// 全分辨率图（带 EXIF 方向校正），供放大查看；只在预览分辨率不够时才解码
     func fullImage(for url: URL) -> CGImage? {
         if let hit = fullCache.object(forKey: url as NSURL) { return hit.image }
-        guard let decoded = Self.decodedFull(url: url, maxPixel: Self.displayMaxPixel) else { return nil }
+        guard let decoded = Self.decodedFull(url: url, maxPixel: Self.displayMaxPixel, hdr: Self.hdrActive) else { return nil }
         let image = Self.displayReady(decoded)
         fullCache.setObject(CGBox(image: image, px: CGFloat(max(image.width, image.height))),
                             forKey: url as NSURL, cost: pixelBytes(image))
         return image
+    }
+
+    // MARK: - HDR
+
+    /// 设置里的 HDR 开关，默认关：HDR 照片按 16 位浮点解码，内存是普通照片的两倍
+    static var hdrEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "hdrEnabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "hdrEnabled") }
+    }
+
+    /// 系统和屏幕都支持时开关才生效：macOS 14 起 ImageIO 才能按 HDR 解码，屏幕要能把高光提到普通白以上
+    static var hdrSupported: Bool {
+        guard #available(macOS 14, *) else { return false }
+        return NSScreen.screens.contains { $0.maximumPotentialExtendedDynamicRangeColorComponentValue > 1 }
+    }
+
+    static var hdrActive: Bool { hdrEnabled && hdrSupported }
+
+    private static func addHDRRequest(_ options: inout [CFString: Any]) {
+        if #available(macOS 14, *) {
+            options[kCGImageSourceDecodeRequest] = kCGImageSourceDecodeToHDR
+        }
+    }
+
+    /// 解出来的是带高光余量的 HDR 图（16 位以上、扩展范围或 PQ / HLG 色彩空间）
+    static func isHDR(_ image: CGImage?) -> Bool {
+        guard let image, image.bitsPerComponent > 8, let cs = image.colorSpace else { return false }
+        if CGColorSpaceUsesExtendedRange(cs) { return true }
+        if #available(macOS 11, *), CGColorSpaceUsesITUR_2100TF(cs) { return true }
+        return false
     }
 
     // MARK: - 上屏前准备
@@ -153,6 +186,9 @@ final class ImageLoader {
     private static let displaySpace = CGColorSpace(name: CGColorSpace.displayP3)!
 
     static func displayReady(_ src: CGImage) -> CGImage {
+        // HDR 开着时 HDR 图原样交给图层，画进 8 位 surface 会把高光截掉；
+        // 开关关着时（PQ 这类文件本身就是 HDR 编码）画进 8 位，按普通照片显示
+        if isHDR(src) && hdrActive { return src }
         let w = src.width, h = src.height
         guard w > 0, h > 0,
               let surface = IOSurface(properties: [

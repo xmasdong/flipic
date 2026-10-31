@@ -21,6 +21,71 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in self?.windowController?.runXhsShots(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--hdrtest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runHDRTest() }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--slidestriptest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runSlideStripTest(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--updatetest"), i + 2 < CommandLine.arguments.count {
+            // --updatetest <截图路径> <文件夹>：自动检查关着时不联网；版本比较；有新版时顶部提示；点 × 后这个版本不再提醒
+            let shot = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            let d = UserDefaults.standard
+            let saved = (d.object(forKey: "autoCheckUpdates"), d.object(forKey: "skippedUpdateVersion"), d.object(forKey: "lastUpdateCheck"))
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                let vc = self?.windowController?.contentViewController as? ViewerViewController
+                NSLog("UPD compare 0.6.10>0.6.9=%d 0.6.2>0.6.2=%d 1.0>0.9.9=%d", UpdateChecker.isNewer("0.6.10", than: "0.6.9") ? 1 : 0,
+                      UpdateChecker.isNewer("0.6.2", than: "0.6.2") ? 1 : 0, UpdateChecker.isNewer("1.0", than: "0.9.9") ? 1 : 0)
+                UpdateChecker.autoCheck = false
+                d.removeObject(forKey: "lastUpdateCheck")
+                var calledWhileOff = false
+                UpdateChecker.checkIfDue { _ in calledWhileOff = true }
+                UpdateChecker.check { result in
+                    var tag = "failed"
+                    if case .newer(let r) = result { tag = "newer " + r.version; vc?.showUpdateBanner(r) }
+                    if case .upToDate(let v) = result { tag = "upToDate " + v }
+                    NSLog("UPD check current=%@ result=%@ lastCheckSet=%d", UpdateChecker.currentVersion, tag, d.object(forKey: "lastUpdateCheck") != nil ? 1 : 0)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        NSLog("UPD banner visible=%d autoOffCalled=%d", vc?.debugUpdateBannerVisible == true ? 1 : 0, calledWhileOff ? 1 : 0)
+                        vc?.debugCapture(to: shot)
+                        vc?.debugSkipUpdate()
+                        UpdateChecker.autoCheck = true
+                        d.removeObject(forKey: "lastUpdateCheck")
+                        var calledAfterSkip = false
+                        UpdateChecker.checkIfDue { _ in calledAfterSkip = true }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            NSLog("UPD after skip skipped=%@ bannerVisible=%d promptedAgain=%d", UpdateChecker.skippedVersion ?? "-",
+                                  vc?.debugUpdateBannerVisible == true ? 1 : 0, calledAfterSkip ? 1 : 0)
+                            for (k, v) in [("autoCheckUpdates", saved.0), ("skippedUpdateVersion", saved.1), ("lastUpdateCheck", saved.2)] {
+                                if let v { d.set(v, forKey: k) } else { d.removeObject(forKey: k) }
+                            }
+                            NSApp.terminate(nil)
+                        }
+                    }
+                }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--fadeseq"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runFadeSequence(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--slidefadetest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runSlideFadeTest() }
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--ratingshot"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
             let folder = CommandLine.arguments[i + 2]
@@ -153,9 +218,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else if CommandLine.arguments.contains("--shot") {
             // shot 模式的文件夹加载在下方单独编排，不走红路径
         } else if let pending = pendingURL {
+            scheduleAutoUpdateCheck()
             windowController.open(pending)
             pendingURL = nil
         } else {
+            scheduleAutoUpdateCheck()
             let paths = CommandLine.arguments.dropFirst()
                 .filter { !$0.hasPrefix("-") }
             if let first = paths.first, FileManager.default.fileExists(atPath: first) {
@@ -227,6 +294,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.setWallpaper(_:)): .wallpaper,
     ]
 
+    // MARK: - 检查更新
+
+    /// 打开了自动检查才会联网；启动几秒后再查，不和打开图片抢时间
+    private func scheduleAutoUpdateCheck() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            UpdateChecker.checkIfDue { release in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.showUpdateBanner(release)
+            }
+        }
+    }
+
+    @objc func checkForUpdates(_ sender: Any?) {
+        UpdateChecker.check { result in
+            let alert = NSAlert()
+            switch result {
+            case .newer(let r):
+                alert.messageText = L10n.f("update.available", "Flipic %@ 可以更新了", r.version)
+                alert.informativeText = L10n.f("update.availableInfo", "你现在用的是 %@。下载后把新版拖进「应用程序」替换即可，设置都会保留。", UpdateChecker.currentVersion)
+                alert.addButton(withTitle: L10n.t("update.download", "下载新版"))
+                alert.addButton(withTitle: L10n.t("update.later", "以后再说"))
+                if alert.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(r.download) }
+            case .upToDate(let v):
+                alert.messageText = L10n.f("update.upToDate", "已经是最新版本（%@）", v)
+                alert.runModal()
+            case .failed(let why):
+                alert.messageText = L10n.t("update.failed", "暂时连不上官网，稍后再试")
+                alert.informativeText = why
+                alert.runModal()
+            }
+        }
+    }
+
     /// 全局快捷键：Flipic 在最前面就收起来（回到刚才的软件），否则叫到最前面
     func toggleAppVisibility() {
         if NSApp.isActive && !NSApp.isHidden, windowController?.window?.isVisible == true {
@@ -278,6 +377,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         addMenu(L10n.t("menu.about", "关于 Flipic")) { m in
             item(m, L10n.t("menu.about", "关于 Flipic"), #selector(ViewerViewController.showAbout(_:)))
+            item(m, L10n.t("menu.checkUpdates", "检查更新…"), #selector(AppDelegate.checkForUpdates(_:))).target = self
             m.addItem(.separator())
             item(m, L10n.t("menu.settings", "设置…"), #selector(ViewerViewController.showSettings(_:)), ",")
             m.addItem(.separator())

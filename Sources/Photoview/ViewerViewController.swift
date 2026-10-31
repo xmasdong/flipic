@@ -28,6 +28,9 @@ final class ViewerViewController: NSViewController {
     private var controlsHideTimer: Timer?
     private var controlsVisible = true
     private var filmstripHeight: NSLayoutConstraint!
+    /// 平时图片停在缩略图栏上方；幻灯片放映时图片铺到底，缩略图栏浮在上面，跟着控件一起自动隐藏
+    private var imageAboveFilmstrip: NSLayoutConstraint!
+    private var imageToBottom: NSLayoutConstraint!
     private var generation = 0
     private var slideshowTimer: Timer?
     private var isProcessing = false
@@ -166,6 +169,8 @@ final class ViewerViewController: NSViewController {
         refreshShortcutTips()
 
         filmstripHeight = filmstrip.heightAnchor.constraint(equalToConstant: 76)
+        imageAboveFilmstrip = imageView.bottomAnchor.constraint(equalTo: filmstrip.topAnchor)
+        imageToBottom = imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
 
         NSLayoutConstraint.activate([
             filmstrip.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -176,7 +181,7 @@ final class ViewerViewController: NSViewController {
             imageView.topAnchor.constraint(equalTo: view.topAnchor),
             imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            imageView.bottomAnchor.constraint(equalTo: filmstrip.topAnchor),
+            imageAboveFilmstrip,
 
             hudView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             hudView.topAnchor.constraint(equalTo: view.topAnchor, constant: 44),
@@ -248,7 +253,8 @@ final class ViewerViewController: NSViewController {
     private func setControlsVisible(_ visible: Bool) {
         guard visible != controlsVisible else { return }
         controlsVisible = visible
-        let targets = [toolbarView, prevArrowContainer!, nextArrowContainer!]
+        var targets: [NSView] = [toolbarView, prevArrowContainer!, nextArrowContainer!]
+        if filmstripFloating && filmstripHeight.constant > 0 { targets.append(filmstrip) }
         if visible {
             for t in targets where folder.current != nil { t.isHidden = false }
         }
@@ -673,6 +679,9 @@ final class ViewerViewController: NSViewController {
     var debugZoomState: String { imageView.fitDiagnostics }
 
     private func navigate(_ delta: Int) {
+        // 手动翻页不带幻灯片的渐变
+        if !advancingSlideshow { imageView.pendingFadeDuration = nil }
+        if BenchProbe.traceNav { NSLog("TRACE navigate delta=%d slideshow=%d from=%d", delta, advancingSlideshow ? 1 : 0, folder.index) }
         if CommandLine.arguments.contains("--selftest") {
             NSLog("SELFTEST navigate delta=\(delta) index \(folder.index) ->")
         }
@@ -1016,6 +1025,10 @@ final class ViewerViewController: NSViewController {
             if slideshowTimer != nil { scheduleSlideshowTimer() }
         case "rating":
             updateRatingLabel()
+        case "hdr":
+            // 解码方式变了，缓存里的图作废，当前这张重新解码
+            loader.purge()
+            showImage(resetToFit: false)
         default: break
         }
     }
@@ -1148,10 +1161,28 @@ final class ViewerViewController: NSViewController {
         }
         scheduleSlideshowTimer()
         updateSlideshowButton()
+        setFilmstripFloating(true)
         flash(L10n.f("msg.slideshowOnN", "幻灯片放映中 · 每张 %d 秒 · S 或退出全屏停止", slideshowInterval), seconds: 3)
     }
 
     static let slideshowIntervals = [1, 2, 3, 5, 10]
+    static let slideshowFadeDurations: [Double] = [0.5, 1, 1.5, 2, 3]
+
+    /// 幻灯片切换时渐变：和手动翻页的「翻页渐变」分开，默认开，默认 1 秒
+    static var slideshowFade: Bool {
+        get { !UserDefaults.standard.bool(forKey: "slideshowFadeOff") }
+        set { UserDefaults.standard.set(!newValue, forKey: "slideshowFadeOff") }
+    }
+
+    static var slideshowFadeDuration: Double {
+        get {
+            let v = UserDefaults.standard.double(forKey: "slideshowFadeDuration")
+            return slideshowFadeDurations.contains(v) ? v : 1
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "slideshowFadeDuration") }
+    }
+
+    private var advancingSlideshow = false
 
     /// 每张停留秒数，跨启动记住，默认 3 秒
     private var slideshowInterval: Int {
@@ -1165,7 +1196,15 @@ final class ViewerViewController: NSViewController {
     private func scheduleSlideshowTimer() {
         slideshowTimer?.invalidate()
         let timer = Timer(timeInterval: TimeInterval(slideshowInterval), repeats: true) { [weak self] _ in
-            self?.navigate(1)
+            guard let self else { return }
+            // 渐变不超过间隔的 80%，免得上一张还没淡完下一张就来了
+            if Self.slideshowFade {
+                self.imageView.pendingFadeDuration = min(Self.slideshowFadeDuration, Double(self.slideshowInterval) * 0.8)
+            }
+            if BenchProbe.traceNav { NSLog("TRACE slideshow tick interval=%d", self.slideshowInterval) }
+            self.advancingSlideshow = true
+            self.navigate(1)
+            self.advancingSlideshow = false
         }
         RunLoop.main.add(timer, forMode: .common)
         slideshowTimer = timer
@@ -1178,11 +1217,33 @@ final class ViewerViewController: NSViewController {
         flash(L10n.f("msg.slideInterval", "幻灯片间隔：每张 %d 秒", sender.tag))
     }
 
+    private var filmstripFloating = false
+
+    /// 放映时缩略图栏改成浮在图片上、随控件自动隐藏；停止放映后回到原位
+    private func setFilmstripFloating(_ floating: Bool) {
+        guard floating != filmstripFloating else { return }
+        filmstripFloating = floating
+        if floating {
+            imageAboveFilmstrip.isActive = false
+            imageToBottom.isActive = true
+        } else {
+            imageToBottom.isActive = false
+            imageAboveFilmstrip.isActive = true
+            filmstrip.alphaValue = 1
+            filmstrip.isHidden = filmstripHeight.constant == 0
+        }
+        ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible)
+        view.layoutSubtreeIfNeeded()
+        imageView.fit()
+        pokeControls()
+    }
+
     private func stopSlideshow() {
         guard slideshowTimer != nil else { return }
         slideshowTimer?.invalidate()
         slideshowTimer = nil
         updateSlideshowButton()
+        setFilmstripFloating(false)
         flash(L10n.t("msg.slideshowOff", "已停止幻灯片放映"))
     }
 
@@ -1411,7 +1472,9 @@ final class ViewerViewController: NSViewController {
     private var ratingBadgeBottom: NSLayoutConstraint!
 
     private func ratingBadgeOffset(controls: Bool) -> CGFloat {
-        controls ? -(8 + max(toolbarView.fittingSize.height, 44) + 8) : -14
+        if controls { return -(8 + max(toolbarView.fittingSize.height, 44) + 8) }
+        // 放映时缩略图栏隐藏了，星级落到屏幕底部
+        return filmstripFloating ? filmstripHeight.constant - 14 : -14
     }
     private let ratingBadgeLabel = NSTextField(labelWithString: "")
 
@@ -1466,6 +1529,74 @@ final class ViewerViewController: NSViewController {
         none.tag = 0
         menu.addItem(none)
         return menu
+    }
+
+    // MARK: - 新版本提示
+
+    /// 顶部居中的一条小提示，不挡操作：点「下载」打开下载地址，点 × 本版本不再提醒
+    private var updateBanner: NSView?
+
+    func showUpdateBanner(_ release: UpdateChecker.Release) {
+        guard updateBanner == nil else { return }
+        let banner = NSVisualEffectView()
+        banner.material = .hudWindow
+        banner.blendingMode = .withinWindow
+        banner.state = .active
+        banner.wantsLayer = true
+        banner.layer?.cornerRadius = 10
+        banner.layer?.masksToBounds = true
+        banner.translatesAutoresizingMaskIntoConstraints = false
+        let text = NSTextField(labelWithString: L10n.f("update.available", "Flipic %@ 可以更新了", release.version))
+        text.font = .systemFont(ofSize: 12.5, weight: .medium)
+        let download = NSButton(title: L10n.t("update.download", "下载新版"), target: self, action: #selector(updateBannerDownload(_:)))
+        download.bezelStyle = .rounded
+        download.controlSize = .small
+        download.identifier = NSUserInterfaceItemIdentifier(release.download.absoluteString)
+        let close = NSButton(image: NSImage(systemSymbolName: "xmark", accessibilityDescription: L10n.t("update.skip", "不再提醒这个版本"))!,
+                             target: self, action: #selector(updateBannerSkip(_:)))
+        close.isBordered = false
+        close.contentTintColor = .secondaryLabelColor
+        close.toolTip = L10n.t("update.skip", "不再提醒这个版本")
+        close.identifier = NSUserInterfaceItemIdentifier(release.version)
+        let stack = NSStackView(views: [text, download, close])
+        stack.spacing = 10
+        stack.edgeInsets = NSEdgeInsets(top: 6, left: 14, bottom: 6, right: 10)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        banner.addSubview(stack)
+        view.addSubview(banner)
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: banner.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: banner.bottomAnchor),
+            stack.leadingAnchor.constraint(equalTo: banner.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: banner.trailingAnchor),
+            banner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            banner.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
+        ])
+        updateBanner = banner
+    }
+
+    @objc private func updateBannerDownload(_ sender: NSButton) {
+        if let s = sender.identifier?.rawValue, let url = URL(string: s) { NSWorkspace.shared.open(url) }
+        updateBanner?.removeFromSuperview()
+        updateBanner = nil
+    }
+
+    @objc private func updateBannerSkip(_ sender: NSButton) {
+        UpdateChecker.skippedVersion = sender.identifier?.rawValue
+        updateBanner?.removeFromSuperview()
+        updateBanner = nil
+    }
+
+    var debugUpdateBannerVisible: Bool { updateBanner?.superview != nil }
+    func debugCapture(to path: String) { captureWindow(to: path, raw: true) }
+    func debugSkipUpdate() {
+        guard let banner = updateBanner else { return }
+        func find(_ v: NSView) -> NSButton? {
+            if let b = v as? NSButton, b.action == #selector(updateBannerSkip(_:)) { return b }
+            for s in v.subviews { if let b = find(s) { return b } }
+            return nil
+        }
+        if let b = find(banner) { updateBannerSkip(b) }
     }
 
     // MARK: - 设为桌面壁纸
@@ -2277,6 +2408,145 @@ final class ViewerViewController: NSViewController {
             self.setRating(0)
         }
         at(1.0) { NSApp.terminate(nil) }
+    }
+
+    /// --slidefadetest <文件夹>：翻页渐变关、幻灯片渐变开 1.5 秒：放映切换有渐变且时长对，手动翻页没有；
+    /// 幻灯片渐变关掉后放映也没有；间隔 1 秒时渐变压到 0.8 秒
+    func runSlideFadeTest() {
+        let d = UserDefaults.standard
+        let saved = (d.object(forKey: "fadeTransition"), d.object(forKey: "slideshowFadeOff"), d.object(forKey: "slideshowFadeDuration"), d.object(forKey: "slideshowInterval"))
+        ZoomableImageView.fadeTransition = false
+        Self.slideshowFade = true
+        Self.slideshowFadeDuration = 1.5
+        slideshowInterval = 2
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        func state(_ tag: String) { NSLog("SFADE %@ animating=%d duration=%.2f", tag, imageView.debugContentsAnimating ? 1 : 0, imageView.debugFadeDuration) }
+        at(0.5) { self.scheduleSlideshowTimer() }
+        at(2.25) { state("1-slideshow advance (expect 1, 1.50)") }
+        at(0.2) { self.stopSlideshow(); self.navigate(1) }
+        at(0.1) { state("2-manual next, paging fade off (expect 0)") }
+        at(0.5) { Self.slideshowFade = false; self.scheduleSlideshowTimer() }
+        at(2.25) { state("3-slideshow fade off (expect 0)") }
+        at(0.2) { self.stopSlideshow(); Self.slideshowFade = true; self.slideshowInterval = 1; self.scheduleSlideshowTimer() }
+        at(1.2) { state("4-interval 1s (expect 1, 0.80)") }
+        // 竖图 → 横图：渐变时旧图那层保持竖图比例，新图是横图比例，都不拉伸
+        at(0.3) {
+            self.stopSlideshow()
+            self.slideshowInterval = 2
+            Self.slideshowFadeDuration = 3
+            if let i = self.folder.items.firstIndex(where: { (self.loader.info(for: $0.url)?.pixelSize).map { $0.height > $0.width } ?? false }) {
+                self.goTo(i)
+            }
+        }
+        at(1.0) { self.scheduleSlideshowTimer() }
+        at(2.6) {
+            func ratio(_ r: CGRect?) -> Double { guard let r, r.height > 0 else { return 0 }; return Double(r.width / r.height) }
+            let px = self.imageView.pixelSize
+            NSLog("SFADE 5-portrait->landscape ghostRatio=%.3f newRatio=%.3f newImageRatio=%.3f", ratio(self.imageView.debugGhostFrame),
+                  ratio(self.imageView.debugImageFrame), Double(px.width / max(px.height, 1)))
+            if let out = ProcessInfo.processInfo.environment["SFADE_SHOT"] { self.captureWindow(to: out, raw: true) }
+        }
+        at(0.3) {
+            self.stopSlideshow()
+            for (k, v) in [("fadeTransition", saved.0), ("slideshowFadeOff", saved.1), ("slideshowFadeDuration", saved.2), ("slideshowInterval", saved.3)] {
+                if let v { d.set(v, forKey: k) } else { d.removeObject(forKey: k) }
+            }
+            NSApp.terminate(nil)
+        }
+    }
+
+    /// --fadeseq <输出目录> <文件夹>：真正的放映（进全屏），竖图换横图的渐变过程中连拍几帧，记录两层的比例
+    func runFadeSequence(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        let d = UserDefaults.standard
+        let saved = (d.object(forKey: "slideshowFadeDuration"), d.object(forKey: "slideshowInterval"), d.object(forKey: "slideshowFadeOff"))
+        Self.slideshowFade = true
+        Self.slideshowFadeDuration = 2
+        slideshowInterval = 3
+        if let i = folder.items.firstIndex(where: { (loader.info(for: $0.url)?.pixelSize).map { $0.height > $0.width } ?? false }) { goTo(i) }
+        func ratio(_ r: CGRect?) -> Double { guard let r, r.height > 0 else { return 0 }; return Double(r.width / r.height) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { self.toggleSlideshow(nil) }
+        // 进全屏约 1 秒，第一次切换在开始后 3 秒
+        for (n, dt) in [3.9, 4.25, 4.6, 4.95, 5.3].enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0 + dt) {
+                let pg = self.imageView.debugGhostPresentation
+                NSLog("FSEQ %d ghostRatio=%.3f ghostOpacity=%.2f newRatio=%.3f newOpacity=%.2f fullscreen=%d", n, ratio(self.imageView.debugGhostFrame), pg,
+                      ratio(self.imageView.debugImageFrame), self.imageView.debugImagePresentationOpacity,
+                      self.view.window?.styleMask.contains(.fullScreen) == true ? 1 : 0)
+                self.captureWindow(to: "\(outDir)/f\(n).png", raw: true)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 7.0) {
+            self.toggleSlideshow(nil)
+            for (k, v) in [("slideshowFadeDuration", saved.0), ("slideshowInterval", saved.1), ("slideshowFadeOff", saved.2)] {
+                if let v { d.set(v, forKey: k) } else { d.removeObject(forKey: k) }
+            }
+            if let w = self.view.window, w.styleMask.contains(.fullScreen) { w.toggleFullScreen(nil) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { NSApp.terminate(nil) }
+        }
+    }
+
+    /// --slidestriptest <输出目录> <文件夹>：放映时没动鼠标，缩略图栏跟控件一起隐藏、图片铺到底；动一下出现；停止后回原位
+    func runSlideStripTest(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        func state(_ tag: String) {
+            NSLog("STRIP %@ stripVisible=%d alpha=%.2f imageBottom=%.0f stripTop=%.0f toolbarVisible=%d", tag,
+                  filmstrip.isHidden ? 0 : 1, filmstrip.alphaValue, imageView.frame.minY, filmstrip.frame.maxY,
+                  (toolbarView.isHidden || toolbarView.alphaValue < 0.5) ? 0 : 1)
+        }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.3) { state("0-before") }
+        at(0.2) { self.toggleSlideshow(nil) }
+        at(5.0) { state("1-slideshow idle (expect strip hidden, image to bottom)"); self.captureWindow(to: "\(outDir)/idle.png", raw: true) }
+        at(0.2) { self.pokeControls() }
+        at(0.5) { state("2-mouse moved (expect strip visible)"); self.captureWindow(to: "\(outDir)/moved.png", raw: true) }
+        at(0.2) { self.toggleSlideshow(nil) }
+        at(0.8) { state("3-stopped (expect strip visible, image above strip)") }
+        at(0.3) {
+            if let w = self.view.window, w.styleMask.contains(.fullScreen) { w.toggleFullScreen(nil) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { NSApp.terminate(nil) }
+        }
+    }
+
+    /// --hdrtest <文件夹>：每张图在 HDR 开 / 关两种情况下的解码结果；开着时显示 HDR 图，图层申请高光余量，屏幕当前余量应大于 1
+    func runHDRTest() {
+        let saved = UserDefaults.standard.object(forKey: "hdrEnabled")
+        func desc(_ img: CGImage?) -> String {
+            guard let img else { return "nil" }
+            return "\(img.bitsPerComponent)bit \((img.colorSpace?.name as String?) ?? "-") hdr=\(ImageLoader.isHDR(img) ? 1 : 0)"
+        }
+        NSLog("HDR supported=%d screenPotential=%.1f", ImageLoader.hdrSupported ? 1 : 0, NSScreen.main?.maximumPotentialExtendedDynamicRangeColorComponentValue ?? 0)
+        for item in folder.items {
+            let off = ImageLoader.renderThumbnail(url: item.url, maxPixel: 1600)
+            let on = ImageLoader.renderThumbnail(url: item.url, maxPixel: 1600, hdr: true)
+            NSLog("HDR decode %@ off=[%@] on=[%@]", item.url.lastPathComponent, desc(off), desc(on))
+        }
+        let names = folder.items.map(\.url.lastPathComponent)
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        func show(_ name: String, _ tag: String) {
+            at(0.2) { if let i = names.firstIndex(of: name) { self.goTo(i) } }
+            at(1.5) {
+                NSLog("HDR show %@ %@ layerEDR=%d shown=[%@] screenHeadroomNow=%.2f windowVisible=%d front=%@", tag, name, self.imageView.debugEDR ? 1 : 0,
+                      desc(self.imageView.debugImage), self.view.window?.screen?.maximumExtendedDynamicRangeColorComponentValue ?? 0,
+                      self.view.window?.occlusionState.contains(.visible) == true ? 1 : 0,
+                      NSWorkspace.shared.frontmostApplication?.localizedName ?? "-")
+            }
+        }
+        at(0.1) { NSApp.activate(ignoringOtherApps: true); self.view.window?.orderFrontRegardless(); ImageLoader.hdrEnabled = true; SettingsWindowController.notify("hdr") }
+        show("sdr.jpg", "on-baseline")
+        at(5.0) { NSLog("HDR baseline after 5s screenHeadroomNow=%.2f", self.view.window?.screen?.maximumExtendedDynamicRangeColorComponentValue ?? 0) }
+        let hdrNames = names.filter { $0 != "sdr.jpg" }
+        for n in hdrNames { show(n, "on") }
+        at(0.1) { ImageLoader.hdrEnabled = false; SettingsWindowController.notify("hdr") }
+        if let first = hdrNames.first { show(first, "off") }
+        at(15.0) { NSLog("HDR off after 20s screenHeadroomNow=%.2f", self.view.window?.screen?.maximumExtendedDynamicRangeColorComponentValue ?? 0) }
+        at(0.3) {
+            if let saved { UserDefaults.standard.set(saved, forKey: "hdrEnabled") } else { UserDefaults.standard.removeObject(forKey: "hdrEnabled") }
+            NSApp.terminate(nil)
+        }
     }
 
     /// --esctest <文件夹>：Esc 关闭开着时，放大先回适应窗口，再按关窗口；关着时不关窗口

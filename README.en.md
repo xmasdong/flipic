@@ -26,7 +26,7 @@
 
 ![Flipic browsing a folder](docs/screenshot-browse.jpg)
 
-Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 1.8 MB, the app makes no network connections, and there is no account to create.
+Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 1.8 MB, the app makes no network connections by default, and there is no account to create.
 
 ## Install
 
@@ -49,6 +49,7 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 - Rest the pointer on any detail and press 0 to zoom to 100% right there; press 0 again to go back. Pinch to zoom on the trackpad; double-click also toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.
 - Photos switch instantly when you page; if you like a crossfade, turn on Fade Between Photos in Settings.
 - The scroll wheel zooms around the pointer by default. If you would rather flip photos with it, change it in Settings; ⌘ + scroll then zooms. If you reversed your wheel with a tool like Mos, you can reverse the zoom direction too.
+- HDR photos (iPhone HEIC, JPEGs with a gain map and more) can be shown in HDR, with highlights brighter than regular white, as in Preview. Turn it on in Settings; it is off by default and needs macOS 14 and an HDR-capable display.
 - Nothing but the photo by default. Press I for camera, lens, shutter speed, aperture, ISO, date taken, size and color profile; Esc closes it.
 
 **Star ratings**
@@ -68,7 +69,7 @@ Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. 
 - Convert a whole folder to JPEG, PNG or HEIC; converted files go into a subfolder and the originals stay untouched
 - Batch rename
 - Rotate and save back to the file; for JPEG and HEIC only the orientation tag changes, so there is no quality loss
-- Slideshow with 1, 2, 3, 5 or 10 seconds per photo (set in Settings)
+- Slideshow with 1, 2, 3, 5 or 10 seconds per photo and a 0.5 to 3 second crossfade, set separately from paging; the thumbnail strip and toolbar hide while you leave the mouse alone
 - Export compressed copies, set as desktop picture, move to Trash
 
 **Hand off to your editor**
@@ -110,7 +111,7 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and
 
 ## Privacy
 
-Flipic makes no network connections, has no account and collects no data. It only reads the images you open. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. Only when you rate a photo does Flipic write the rating into its metadata or a same-name .xmp file. All the code is in this repository, so you can check for yourself.
+Flipic makes no network connections by default, has no account and collects no data. It only reads the images you open. Only when you choose Check for Updates… or turn on automatic update checks in Settings does it fetch a version file (version.json) from the website, sending no data. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. Only when you rate a photo does Flipic write the rating into its metadata or a same-name .xmp file. All the code is in this repository, so you can check for yourself.
 
 ## Building from source
 
@@ -145,6 +146,7 @@ Sources/Photoview/
   Shortcuts.swift              Customizable shortcuts
   HotKey.swift                 Global shortcut to show / hide Flipic
   Rating.swift                 Star ratings (XMP)
+  UpdateChecker.swift          Update check (off by default; fetches version.json from the website)
 Resources/                     Info.plist, icon, strings for 14 languages
 docs/                          Website (GitHub Pages)
 scripts/                       Release packaging and test image generators

@@ -332,8 +332,13 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let descending = NSButton(checkboxWithTitle: L10n.t("sort.descending", "倒序"), target: nil, action: nil)
     private let fade = NSButton(checkboxWithTitle: L10n.t("menu.fadeTransition", "翻页渐变"), target: nil, action: nil)
     private let intervalPopup = NSPopUpButton()
+    private let slideFade = NSButton(checkboxWithTitle: L10n.t("set.slideFade", "切换时渐变"), target: nil, action: nil)
+    private let fadePopup = NSPopUpButton()
     private let escCloses = NSButton(checkboxWithTitle: L10n.t("menu.escCloses", "按 Esc 关闭窗口"), target: nil, action: nil)
-    private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片左下角显示星级"), target: nil, action: nil)
+    private let hdr = NSButton(checkboxWithTitle: L10n.t("set.hdrCheck", "显示 HDR 照片的高光"), target: nil, action: nil)
+    private let hdrNote = note("")
+    private let autoUpdate = NSButton(checkboxWithTitle: L10n.t("set.autoUpdate", "自动检查更新（每天一次）"), target: nil, action: nil)
+    private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
     private let editorName = NSTextField(labelWithString: "")
     private let editorIcon = NSImageView()
     private lazy var clearEditor = pillButton(L10n.t("set.clear", "清除"), self, #selector(clearEditorApp))
@@ -346,13 +351,24 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             intervalPopup.addItem(withTitle: L10n.f("slide.seconds", "%d 秒", sec))
             intervalPopup.lastItem?.tag = sec
         }
-        for c in [sortPopup, intervalPopup] as [NSControl] { c.target = self }
+        for d in ViewerViewController.slideshowFadeDurations {
+            fadePopup.addItem(withTitle: L10n.f("slide.fadeSeconds", "%@ 秒", Self.secondsText(d)))
+            fadePopup.lastItem?.representedObject = d
+        }
+        for c in [sortPopup, intervalPopup, fadePopup] as [NSControl] { c.target = self }
+        fadePopup.action = #selector(slideFadeChanged)
+        slideFade.target = self; slideFade.action = #selector(slideFadeChanged)
         sortPopup.action = #selector(sortChanged)
         descending.target = self; descending.action = #selector(sortChanged)
         intervalPopup.action = #selector(intervalChanged)
         fade.target = self; fade.action = #selector(fadeChanged)
         escCloses.target = self; escCloses.action = #selector(escChanged)
         ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
+        autoUpdate.target = self; autoUpdate.action = #selector(autoUpdateChanged)
+        hdr.target = self; hdr.action = #selector(hdrChanged)
+        let checkNow = pillButton(L10n.t("set.checkNow", "现在检查"), self, #selector(checkNow))
+        let updateRow = NSStackView(views: [autoUpdate, checkNow])
+        updateRow.spacing = 12
         let choose = pillButton(L10n.t("set.choose", "选择…"), self, #selector(chooseEditorApp))
 
         editorIcon.translatesAutoresizingMaskIntoConstraints = false
@@ -364,6 +380,8 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         let sortRow = NSStackView(views: [sortPopup, descending])
         sortRow.spacing = 12
 
+        let slideFadeRow = NSStackView(views: [slideFade, fadePopup])
+        slideFadeRow.spacing = 12
         let defaultRow = NSStackView(views: [defaultStatus, makeDefault])
         defaultRow.spacing = 12
         let g = grid([
@@ -373,14 +391,21 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.paging", "翻页：")), fade],
             [label(L10n.t("set.rating", "评分：")), ratingBadge],
             [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
+            [label(L10n.t("set.slideFadeLabel", "幻灯片渐变：")), slideFadeRow],
             [label(L10n.t("set.esc", "Esc 键：")), escCloses],
             spacerRow(note(L10n.t("set.escNote", "适应窗口时按 Esc 直接关闭，放大时先恢复。配合访达的 ⌘↓ 打开，可以当快速查看用。"))),
+            [label(L10n.t("set.hdr", "HDR：")), hdr],
+            spacerRow(hdrNote),
             [label(L10n.t("set.editor", "后期软件：")), editorRow],
             spacerRow(note(L10n.t("set.editorNote", "「在后期软件中编辑」用它打开当前照片，同名 RAW 也在时打开 RAW。"))),
+            [label(L10n.t("set.update", "更新：")), updateRow],
+            spacerRow(note(L10n.t("set.updateNote", "Flipic 默认不联网。打开后每天最多查一次，只向官网请求最新版本号，不发送任何数据。"))),
         ])
         g.row(at: 1).topPadding = -4
-        g.row(at: 7).topPadding = -4
-        g.row(at: 9).topPadding = -4
+        g.row(at: 8).topPadding = -4
+        g.row(at: 10).topPadding = -4
+        g.row(at: 12).topPadding = -4
+        g.row(at: 14).topPadding = -4
         view = host(g)
         reload()
     }
@@ -393,6 +418,17 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         intervalPopup.selectItem(withTag: ViewerViewController.slideshowIntervals.contains(sec) ? sec : 3)
         escCloses.state = ViewerViewController.escCloses ? .on : .off
         ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
+        slideFade.state = ViewerViewController.slideshowFade ? .on : .off
+        autoUpdate.state = UpdateChecker.autoCheck ? .on : .off
+        let hdrOK = ImageLoader.hdrSupported
+        hdr.state = ImageLoader.hdrEnabled && hdrOK ? .on : .off
+        hdr.isEnabled = hdrOK
+        hdrNote.stringValue = hdrOK
+            ? L10n.t("set.hdrNote", "iPhone 等拍的 HDR 照片，亮部会比普通白更亮，和系统「预览」看到的一样。HDR 照片占用的内存是普通照片的两倍。")
+            : L10n.t("set.hdrUnsupported", "需要 macOS 14 或更新版本，以及支持 HDR 的屏幕（如 MacBook Pro 的 XDR 屏）。")
+        let fd = ViewerViewController.slideshowFadeDuration
+        if let item = fadePopup.itemArray.first(where: { ($0.representedObject as? Double) == fd }) { fadePopup.select(item) }
+        fadePopup.isEnabled = slideFade.state == .on
         let isDefault = DefaultViewer.isDefault
         defaultStatus.stringValue = isDefault ? L10n.t("set.isDefault", "Flipic 已是默认看图软件")
             : L10n.f("set.currentDefault", "现在双击照片用「%@」打开", DefaultViewer.currentName)
@@ -428,6 +464,31 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     }
 
     @objc private func fadeChanged() { ZoomableImageView.fadeTransition = fade.state == .on }
+    @objc private func hdrChanged() {
+        ImageLoader.hdrEnabled = hdr.state == .on
+        SettingsWindowController.notify("hdr")
+    }
+
+    @objc private func autoUpdateChanged() { UpdateChecker.autoCheck = autoUpdate.state == .on }
+
+    @objc private func checkNow() {
+        (NSApp.delegate as? AppDelegate)?.checkForUpdates(nil)
+    }
+
+    @objc private func slideFadeChanged() {
+        ViewerViewController.slideshowFade = slideFade.state == .on
+        if let d = fadePopup.selectedItem?.representedObject as? Double { ViewerViewController.slideshowFadeDuration = d }
+        fadePopup.isEnabled = slideFade.state == .on
+    }
+
+    /// 0.5、1、1.5 这样按系统语言写小数
+    static func secondsText(_ v: Double) -> String {
+        let f = NumberFormatter()
+        f.minimumFractionDigits = 0
+        f.maximumFractionDigits = 1
+        return f.string(from: NSNumber(value: v)) ?? "\(v)"
+    }
+
     @objc private func ratingBadgeChanged() {
         ViewerViewController.showRatingBadge = ratingBadge.state == .on
         SettingsWindowController.notify("rating")

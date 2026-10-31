@@ -4,6 +4,7 @@ import Darwin
 /// --bench <文件夹>：自动翻页跑分，输出内存峰值、翻页出图延迟、主线程最长卡顿（仅诊断用）
 enum BenchProbe {
     static var enabled = false
+    static let traceNav = CommandLine.arguments.contains("--fadeseq")
     private static var navAt: CFAbsoluteTime?
     private static var latencies: [Double] = []
     static var fullWidth = 0
