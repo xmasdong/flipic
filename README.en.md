@@ -11,15 +11,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/xmasdong/macphoto/releases/latest/download/Flipic.dmg"><b>Download Flipic.dmg</b></a>
+  <a href="https://github.com/xmasdong/flipic/releases/latest/download/Flipic.dmg"><b>Download Flipic.dmg</b></a>
   ·
-  <a href="https://xmasdong.github.io/macphoto/en/">Website</a>
+  <a href="https://flipic.app/en/">Website</a>
   ·
-  <a href="https://github.com/xmasdong/macphoto/releases">All releases</a>
+  <a href="https://github.com/xmasdong/flipic/releases">All releases</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/xmasdong/macphoto/releases/latest"><img src="https://img.shields.io/github/v/release/xmasdong/macphoto?label=release&color=444" alt="Latest release"></a>
+  <a href="https://github.com/xmasdong/flipic/releases/latest"><img src="https://img.shields.io/github/v/release/xmasdong/flipic?label=release&color=444" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/macOS-13%2B-444" alt="macOS 13 or later">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-444" alt="MIT"></a>
 </p>
@@ -30,11 +30,11 @@ Open a single image in Preview and that is all you get: to see the next one, you
 
 ## Install
 
-1. Download [Flipic.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/Flipic.dmg)
+1. Download [Flipic.dmg](https://github.com/xmasdong/flipic/releases/latest/download/Flipic.dmg)
 2. Open the disk image and drag Flipic into Applications
 3. The first time you launch it, macOS reminds you the app came from the internet; click Open
 
-Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Older versions are on the [Releases](https://github.com/xmasdong/macphoto/releases) page.
+Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Older versions are on the [Releases](https://github.com/xmasdong/flipic/releases) page.
 
 To make Flipic your default viewer, open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go. You can also Control-click an image in Finder, hold ⌥ and choose Always Open With › Flipic.
 
@@ -118,8 +118,8 @@ Flipic makes no network connections by default, has no account and collects no d
 Flipic is written in Swift and AppKit with no third-party dependencies. You need macOS 13 or later and Xcode 15 or the Swift 5.9 command line tools.
 
 ```bash
-git clone https://github.com/xmasdong/macphoto.git
-cd macphoto
+git clone https://github.com/xmasdong/flipic.git
+cd flipic
 ./build.sh                 # builds build/Flipic.app with an ad-hoc signature
 open build/Flipic.app
 ```
@@ -163,7 +163,7 @@ $Flipic --cleanup-report <folder>   # per-photo Cleanup Mode metrics and groups
 
 ## Contributing
 
-Found a bug, something that feels off, or a feature you want? Open an [issue](https://github.com/xmasdong/macphoto/issues). Pull requests are welcome, translations especially: every language other than Simplified Chinese can be improved by a native speaker.
+Found a bug, something that feels off, or a feature you want? Open an [issue](https://github.com/xmasdong/flipic/issues). Pull requests are welcome, translations especially: every language other than Simplified Chinese can be improved by a native speaker.
 
 ## License
 

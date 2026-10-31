@@ -13,14 +13,14 @@ BASE = "https://flipic.app"
 UPDATED = "2026-10-31"
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
 SIZE = "1.8 MB"
-GITHUB = "https://github.com/xmasdong/macphoto"
+GITHUB = "https://github.com/xmasdong/flipic"
 
 
 def github_stars():
     """生成时读一次星标数写进页面，不在浏览器里加载 GitHub 的脚本；读不到就只显示按钮"""
     import subprocess
     try:
-        out = subprocess.run(["gh", "api", "repos/xmasdong/macphoto", "--jq", ".stargazers_count"],
+        out = subprocess.run(["gh", "api", "repos/xmasdong/flipic", "--jq", ".stargazers_count"],
                              capture_output=True, text=True, timeout=20)
         return int(out.stdout.strip())
     except Exception:

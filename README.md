@@ -11,15 +11,15 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/xmasdong/macphoto/releases/latest/download/Flipic.dmg"><b>下载 Flipic.dmg</b></a>
+  <a href="https://github.com/xmasdong/flipic/releases/latest/download/Flipic.dmg"><b>下载 Flipic.dmg</b></a>
   ·
-  <a href="https://xmasdong.github.io/macphoto/">官网</a>
+  <a href="https://flipic.app/">官网</a>
   ·
-  <a href="https://github.com/xmasdong/macphoto/releases">历史版本</a>
+  <a href="https://github.com/xmasdong/flipic/releases">历史版本</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/xmasdong/macphoto/releases/latest"><img src="https://img.shields.io/github/v/release/xmasdong/macphoto?label=%E7%89%88%E6%9C%AC&color=444" alt="最新版本"></a>
+  <a href="https://github.com/xmasdong/flipic/releases/latest"><img src="https://img.shields.io/github/v/release/xmasdong/flipic?label=%E7%89%88%E6%9C%AC&color=444" alt="最新版本"></a>
   <img src="https://img.shields.io/badge/macOS-13%2B-444" alt="macOS 13 或更新">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-444" alt="MIT"></a>
 </p>
@@ -30,11 +30,11 @@
 
 ## 下载安装
 
-1. 下载 [Flipic.dmg](https://github.com/xmasdong/macphoto/releases/latest/download/Flipic.dmg)，国内下载慢可以从[官网](https://xmasdong.github.io/macphoto/)下
+1. 下载 [Flipic.dmg](https://github.com/xmasdong/flipic/releases/latest/download/Flipic.dmg)，国内下载慢可以从[官网](https://flipic.app/)下
 2. 打开 dmg，把 Flipic 拖进「应用程序」
 3. 第一次打开时系统会提示这是从互联网下载的 App，点「打开」
 
-需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片都能用。安装包用 Developer ID 签名并通过了 Apple 公证。历史版本在 [Releases](https://github.com/xmasdong/macphoto/releases)。
+需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片都能用。安装包用 Developer ID 签名并通过了 Apple 公证。历史版本在 [Releases](https://github.com/xmasdong/flipic/releases)。
 
 想设成默认看图软件：打开设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 会一次设好。也可以在访达里右键一张图，按住 ⌥ 键，选「始终以此方式打开」› Flipic。
 
@@ -118,8 +118,8 @@ Flipic 默认不联网，没有账号，不收集任何数据，只读取你打�
 用 Swift 和 AppKit 写成，没有第三方依赖。需要 macOS 13 或更新版本，以及 Xcode 15 或 Swift 5.9 命令行工具。
 
 ```bash
-git clone https://github.com/xmasdong/macphoto.git
-cd macphoto
+git clone https://github.com/xmasdong/flipic.git
+cd flipic
 ./build.sh                 # 产出 build/Flipic.app，本机临时签名
 open build/Flipic.app
 ```
@@ -163,7 +163,7 @@ $Flipic --cleanup-report <文件夹>   # 清理模式逐张指标与分类结果
 
 ## 参与
 
-用着不顺手、发现 bug，或者想要什么功能，都可以开 [Issue](https://github.com/xmasdong/macphoto/issues)。PR 也欢迎，尤其是翻译：除了简体中文，其他语言的文案都有改进空间。
+用着不顺手、发现 bug，或者想要什么功能，都可以开 [Issue](https://github.com/xmasdong/flipic/issues)。PR 也欢迎，尤其是翻译：除了简体中文，其他语言的文案都有改进空间。
 
 ## 协议
 
