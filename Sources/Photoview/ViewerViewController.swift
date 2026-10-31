@@ -129,6 +129,8 @@ final class ViewerViewController: NSViewController {
             guard let self, let window = self.view.window else { return }
             if self.imageView.isPeeking {
                 self.imageView.endPeek()
+            } else if !self.exifPanel.isHidden {
+                self.exifPanel.isHidden = true   // 右上角的照片信息面板开着时，Esc 先关它
             } else if window.styleMask.contains(.fullScreen) {
                 window.toggleFullScreen(window)
             } else {
@@ -676,6 +678,17 @@ final class ViewerViewController: NSViewController {
         loadCaptureDatesIfNeeded()
     }
 
+    /// 左上角的照片信息浮层（文件名、尺寸、拍摄参数），可在显示菜单里关掉，跨启动记住；临时提示不受影响
+    static var hudEnabled: Bool {
+        get { !UserDefaults.standard.bool(forKey: "hudHidden") }
+        set { UserDefaults.standard.set(!newValue, forKey: "hudHidden") }
+    }
+
+    @objc func toggleHUD(_ sender: Any?) {
+        Self.hudEnabled.toggle()
+        updateHUD()
+    }
+
     @objc func toggleFadeTransition(_ sender: Any?) {
         ZoomableImageView.fadeTransition.toggle()
     }
@@ -805,7 +818,7 @@ final class ViewerViewController: NSViewController {
 
     private func updateHUD() {
         guard !isFlashing else { return }
-        guard peekSaved == nil else {
+        guard peekSaved == nil, Self.hudEnabled else {
             hudView.isHidden = true
             return
         }
@@ -1895,6 +1908,36 @@ final class ViewerViewController: NSViewController {
         }
     }
 
+    /// --hudtest <输出目录> <文件夹>：关掉信息浮层后翻页仍不出现、临时提示照常；Esc 先关右上角照片信息
+    func runHUDTest(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        let saved = Self.hudEnabled
+        func esc() {
+            guard let w = view.window, let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
+                windowNumber: w.windowNumber, context: nil, characters: "\u{1B}", charactersIgnoringModifiers: "\u{1B}",
+                isARepeat: false, keyCode: 53) else { return }
+            imageView.keyDown(with: e)
+        }
+        NSLog("HUD start enabled=%d hidden=%d", Self.hudEnabled ? 1 : 0, hudView.isHidden ? 1 : 0)
+        toggleHUD(nil)
+        navigate(1)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [self] in
+            NSLog("HUD off after nav hidden=%d", hudView.isHidden ? 1 : 0)
+            captureWindow(to: "\(outDir)/hud-off.png", raw: true)
+            flash("test flash")
+            NSLog("HUD flash shows=%d", hudView.isHidden ? 0 : 1)
+            toggleInfoPanel(nil)
+            NSLog("INFO open=%d", exifPanel.isHidden ? 0 : 1)
+            esc()
+            NSLog("INFO after esc open=%d fit=%@", exifPanel.isHidden ? 0 : 1, imageView.fitDiagnostics)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [self] in
+                NSLog("HUD after flash hidden=%d", hudView.isHidden ? 1 : 0)
+                Self.hudEnabled = saved
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
     func runBrowseShots(outDir: String) {
         guard let window = view.window else { return }
         window.setFrame(CGRect(x: 0, y: 0, width: 1440, height: 900), display: true)
@@ -2237,6 +2280,8 @@ extension ViewerViewController: NSMenuItemValidation {
         }
         if menuItem.action == #selector(setSortKey(_:)) {
             menuItem.state = menuItem.tag == folder.sortKey.rawValue ? .on : .off
+        } else if menuItem.action == #selector(toggleHUD(_:)) {
+            menuItem.state = Self.hudEnabled ? .on : .off
         } else if menuItem.action == #selector(toggleFadeTransition(_:)) {
             menuItem.state = ZoomableImageView.fadeTransition ? .on : .off
         } else if menuItem.action == #selector(setSlideshowInterval(_:)) {

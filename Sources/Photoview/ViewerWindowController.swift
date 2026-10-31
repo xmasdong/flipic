@@ -28,6 +28,7 @@ final class ViewerWindowController: NSWindowController {
     func runCleanupTest(outDir: String) { viewerVC?.runCleanupTest(outDir: outDir) }
     func runWheelTest() { viewerVC?.runWheelTest() }
     func runZoomFadeTest() { viewerVC?.runZoomFadeTest() }
+    func runHUDTest(outDir: String) { viewerVC?.runHUDTest(outDir: outDir) }
     func runSlideAndEditorTest(appPath: String) { viewerVC?.runSlideAndEditorTest(appPath: appPath) }
 
     func runBench(folder: String) {

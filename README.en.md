@@ -82,7 +82,8 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and
 | Space | Preview fitted to the photo; press again to exit |
 | 0 | Zoom to 100% at the pointer; press again to fit |
 | Double-click | Fit to window / 100% |
-| I | Photo info |
+| I | Photo info panel (Esc also closes it) |
+| ⌘⇧H | Show / hide the info overlay |
 | T | Thumbnail strip |
 | R / L | Rotate right / left |
 | S | Slideshow |

@@ -123,6 +123,7 @@ Esc  Zurück zur Anpassung (verlässt den Vollbildmodus)
 Pinzen / scrollen  Zoom am Cursor, ziehen oder ⌘+Scrollen zum Verschieben
 Darstellung › Mausrad  kann auch Fotos wechseln
 I  Foto-Info    T  Miniaturleiste    F  Vollbild
+⌘⇧H  Info-Einblendung ein / aus    Esc  Schließt zuerst das Foto-Info-Fenster
 ⌘⇧C  Stapelkonvertierung    ⌘⇧B  Stapelumbenennung    ⌘⇧D  Schreibtischbild
 ⌘E  In der Bildbearbeitung bearbeiten (öffnet die gleichnamige RAW-Datei, falls vorhanden)
 ⌘⇧K  Aufräummodus Beta: Duplikate, geschlossene Augen, Unschärfe
@@ -209,3 +210,6 @@ Ordner oder Bild hineinziehen zum Öffnen";
 
 /* 翻页渐变 */
 "menu.fadeTransition" = "Überblenden zwischen Fotos";
+
+/* 信息浮层 */
+"menu.hud" = "Info-Einblendung";

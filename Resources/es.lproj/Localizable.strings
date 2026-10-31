@@ -123,6 +123,7 @@ Esc  Volver a ajustar (sale de pantalla completa)
 Pellizcar / desplazar  Zoom en el cursor, arrastrar o ⌘+desplazar para mover
 Visualización › Rueda del ratón  puede cambiar de foto
 I  Información    T  Tira de miniaturas    F  Pantalla completa
+⌘⇧H  Mostrar / ocultar la información superpuesta    Esc  Cierra primero el panel de información
 ⌘⇧C  Conversión por lotes    ⌘⇧B  Renombrar por lotes    ⌘⇧D  Fondo de escritorio
 ⌘E  Editar en el editor de fotos (abre el RAW del mismo nombre si existe)
 ⌘⇧K  Modo limpieza Beta: duplicados, ojos cerrados, desenfoque
@@ -209,3 +210,6 @@ Arrastra una carpeta o imagen para abrir";
 
 /* 翻页渐变 */
 "menu.fadeTransition" = "Fundido entre fotos";
+
+/* 信息浮层 */
+"menu.hud" = "Información superpuesta";

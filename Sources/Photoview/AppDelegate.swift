@@ -14,7 +14,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         windowController.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
 
-        if let i = CommandLine.arguments.firstIndex(of: "--zoomtest"), i + 1 < CommandLine.arguments.count {
+        if let i = CommandLine.arguments.firstIndex(of: "--hudtest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runHUDTest(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--zoomtest"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
@@ -182,6 +189,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.rotateCW", "向右旋转 90°"), #selector(ViewerViewController.rotateCW(_:)))
             item(m, L10n.t("menu.rotateCCW", "向左旋转 90°"), #selector(ViewerViewController.rotateCCW(_:)))
             m.addItem(.separator())
+            item(m, L10n.t("menu.hud", "左上角信息浮层"), #selector(ViewerViewController.toggleHUD(_:)), "h", [.command, .shift])
             item(m, L10n.t("menu.info", "照片信息"), #selector(ViewerViewController.toggleInfoPanel(_:)))
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
             item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))

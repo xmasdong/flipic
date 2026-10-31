@@ -134,6 +134,7 @@ Esc  Back to fit (exits full screen first)
 Pinch / scroll  Zoom at cursor, drag or ⌘+scroll to pan
 View › Scroll Wheel  switch to paging through photos
 I  Photo info    T  Thumbnail strip    F  Full screen
+⌘⇧H  Show / hide the info overlay    Esc  Closes the photo info panel first
 ⌘⇧C  Batch convert    ⌘⇧B  Batch rename    ⌘⇧D  Set wallpaper
 ⌘E  Edit in your photo editor (opens the RAW if one has the same name)
 ⌘⇧K  Cleanup Mode Beta: duplicates, closed eyes, blur
@@ -221,3 +222,6 @@ Drop a folder or image to open";
 
 /* 翻页渐变 */
 "menu.fadeTransition" = "Fade Between Photos";
+
+/* 信息浮层 */
+"menu.hud" = "Info Overlay";

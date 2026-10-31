@@ -123,6 +123,7 @@ Esc  Revenir à l'ajustement (quitte le plein écran)
 Pincer / défilement  Zoom au curseur, glisser ou ⌘+défilement pour déplacer
 Présentation › Molette  peut servir à changer de photo
 I  Infos photo    T  Bande de vignettes    F  Plein écran
+⌘⇧H  Afficher / masquer les infos en surimpression    Échap  Ferme d’abord le panneau d’infos
 ⌘⇧C  Conversion par lot    ⌘⇧B  Renommage par lot    ⌘⇧D  Fond d'écran
 ⌘E  Modifier dans l’éditeur photo (ouvre le RAW du même nom s’il existe)
 ⌘⇧K  Mode tri Beta : doublons, yeux fermés, flou
@@ -209,3 +210,6 @@ Déposez un dossier ou une image pour ouvrir";
 
 /* 翻页渐变 */
 "menu.fadeTransition" = "Fondu entre les photos";
+
+/* 信息浮层 */
+"menu.hud" = "Infos en surimpression";

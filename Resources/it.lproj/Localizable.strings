@@ -123,6 +123,7 @@ Esc  Torna ad adatta (esce da schermo intero)
 Pizzica / scorri  Zoom sul cursore, trascina o ⌘+scorri per spostare
 Vista › Rotella  può servire a cambiare foto
 I  Info foto    T  Striscia miniature    F  Schermo intero
+⌘⇧H  Mostra / nascondi le info in sovrimpressione    Esc  Chiude prima il pannello info
 ⌘⇧C  Conversione in blocco    ⌘⇧B  Rinomina in blocco    ⌘⇧D  Immagine scrivania
 ⌘E  Modifica nell’editor foto (apre il RAW con lo stesso nome se c’è)
 ⌘⇧K  Modalità pulizia Beta: duplicati, occhi chiusi, sfocature
@@ -209,3 +210,6 @@ Trascina una cartella o un'immagine per aprire";
 
 /* 翻页渐变 */
 "menu.fadeTransition" = "Dissolvenza tra le foto";
+
+/* 信息浮层 */
+"menu.hud" = "Info in sovrimpressione";
