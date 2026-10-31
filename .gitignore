@@ -5,3 +5,4 @@ icon.iconset/
 scripts/devid.env
 Flipic.xcodeproj/
 *.p8
+site/public/
