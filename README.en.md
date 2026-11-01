@@ -26,7 +26,7 @@
 
 ![Flipic browsing a folder](docs/screenshot-browse.jpg)
 
-Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 2.3 MB, the app makes no network connections by default, and there is no account to create.
+Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 2.4 MB, the app makes no network connections by default, and there is no account to create.
 
 ## Install
 
@@ -119,7 +119,7 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 
 Viewing, rating, marking, filtering, exporting, side-by-side comparison and Cleanup Mode stay free, and all of that code is in this repository (MIT).
 
-Flipic Pro adds batch tools for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 14-day trial: before/after comparison (hold `\` to switch, split line, opacity), sort into subfolders by rating, and favorite folders on ⌥1–⌥9. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
+Flipic Pro adds batch tools for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 14-day trial: before/after comparison (hold `\` to switch, split line, opacity), merged JPG + RAW, sort into subfolders by rating, favorite folders on ⌥1–⌥9, delete what you didn’t pick, send a batch to your editor, and custom linked files. The free version is enough for most people; Pro just saves time for those who cull and edit a lot. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
 
 ## Privacy
 

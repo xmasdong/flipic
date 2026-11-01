@@ -49,9 +49,11 @@ enum SortKey: Int, CaseIterable {
 final class FolderModel {
     private(set) var items: [ImageItem] = []
     private(set) var index: Int = 0
-    /// 筛选时存着完整列表，items 只是其中符合条件的；nil 表示显示全部
+    /// 筛选或有藏起来的文件时存着完整列表，items 只是其中显示的；nil 表示显示全部
     private var unfiltered: [ImageItem]?
     private(set) var filter: PhotoFilter?
+    /// 不单独显示的文件（JPG 和 RAW 合并显示时藏起来的那一张），仍在整个文件夹的列表里
+    private(set) var hidden: Set<URL> = []
 
     /// 排序方式与方向，跨启动记住；sortReversed 是在该方式自然方向上反过来
     var sortKey: SortKey {
@@ -69,11 +71,11 @@ final class FolderModel {
     var markedOnly: Bool { filter == .marked }
     /// 整个文件夹的列表，不受筛选影响
     var allItems: [ImageItem] { unfiltered ?? items }
-    /// 整个文件夹的张数，不受筛选影响
-    var totalCount: Int { unfiltered?.count ?? items.count }
-    var markedCount: Int { (unfiltered ?? items).filter(\.marked).count }
+    /// 整个文件夹的张数，不受筛选影响；合并显示的一对算一张
+    var totalCount: Int { (unfiltered?.count ?? items.count) - hidden.count }
+    var markedCount: Int { (unfiltered ?? items).filter { $0.marked && !hidden.contains($0.url) }.count }
     /// 整个文件夹里符合当前筛选条件的张数
-    var matchingCount: Int { filter.map { f in allItems.filter { f.matches($0) }.count } ?? items.count }
+    var matchingCount: Int { filter.map { f in allItems.filter { !hidden.contains($0.url) && f.matches($0) }.count } ?? items.count }
     /// 还没读过星级的文件
     var urlsMissingRating: [URL] { allItems.filter { $0.rating == nil }.map(\.url) }
 
@@ -95,6 +97,7 @@ final class FolderModel {
         let oldIndex = index
         items.removeAll { urls.contains($0.url) }
         unfiltered?.removeAll { urls.contains($0.url) }
+        hidden.subtract(urls)
         if let cur, !urls.contains(cur) {
             index = items.firstIndex { $0.url == cur } ?? 0
         } else {
@@ -109,24 +112,57 @@ final class FolderModel {
     /// 筛选中取消标记或改了星级的照片先留在列表里，下次切换时才拿掉，免得看着看着画面突然换了
     @discardableResult
     func setFilter(_ f: PhotoFilter?) -> Bool {
-        let all = unfiltered ?? items
+        let all = allItems
+        if let f, !all.contains(where: { isVisible($0, f) }) { return false }
         let cur = current?.url
-        guard let f else {
+        filter = f
+        rebuild(all, keeping: cur)
+        return true
+    }
+
+    /// 换一组藏起来的文件；keeping 指定的文件要是被藏了，就停在它后面第一张显示的
+    func setHidden(_ h: Set<URL>, keeping: URL? = nil) {
+        let all = allItems
+        let cur = keeping ?? current?.url
+        hidden = h
+        rebuild(all, keeping: cur)
+    }
+
+    /// 当前显示的 shown 换成藏起来的 other（同一对 JPG / RAW 互换），位置不变
+    func swapVisible(_ shown: URL, for other: URL) {
+        guard hidden.contains(other), let item = allItems.first(where: { $0.url == other }),
+              let i = items.firstIndex(where: { $0.url == shown }) else { return }
+        hidden.remove(other)
+        hidden.insert(shown)
+        items[i] = item
+    }
+
+    /// 列表里这些文件，加上它们藏起来的同名搭档（导出、移动时一起带走）
+    func withHiddenPartners(_ urls: [URL]) -> [URL] {
+        guard !hidden.isEmpty else { return urls }
+        let keys = Set(urls.map { $0.deletingPathExtension().path })
+        return urls + hidden.filter { keys.contains($0.deletingPathExtension().path) }.sorted { $0.path < $1.path }
+    }
+
+    private func isVisible(_ item: ImageItem, _ f: PhotoFilter?) -> Bool {
+        !hidden.contains(item.url) && (f?.matches(item) ?? true)
+    }
+
+    private func rebuild(_ all: [ImageItem], keeping cur: URL?) {
+        if filter == nil && hidden.isEmpty {
             items = all
             unfiltered = nil
-            filter = nil
-            index = cur.flatMap { u in items.firstIndex { $0.url == u } } ?? 0
-            return true
+        } else {
+            unfiltered = all
+            items = all.filter { isVisible($0, filter) }
         }
-        guard all.contains(where: f.matches) else { return false }
-        let start = cur.flatMap { u in all.firstIndex { $0.url == u } } ?? 0
+        guard let cur, let start = all.firstIndex(where: { $0.url == cur }) else {
+            index = 0
+            return
+        }
         let order = Array(all[start...]) + Array(all[..<start])
-        let target = order.first(where: f.matches)?.url
-        unfiltered = all
-        filter = f
-        items = all.filter(f.matches)
+        let target = order.first { isVisible($0, filter) }?.url
         index = target.flatMap { u in items.firstIndex { $0.url == u } } ?? 0
-        return true
     }
 
     /// 按拍摄时间排序但还有文件没读 EXIF
@@ -161,6 +197,7 @@ final class FolderModel {
         }
         unfiltered = nil
         filter = nil
+        hidden = []
         index = 0
         resort(keeping: target)
         return !items.isEmpty

@@ -81,10 +81,10 @@ enum ShortcutAction: String, CaseIterable {
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
     case mark, markedOnly, compare, compare4, comparePane, compareSync
-    case beforeAfter, splitByRating
+    case beforeAfter, splitByRating, switchPair
 
     /// Pro 功能；开源版里没有，不在快捷键设置里列出
-    var isPro: Bool { self == .beforeAfter || self == .splitByRating }
+    var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair].contains(self) }
 
     var isAvailable: Bool {
         #if FLIPIC_PRO
@@ -131,7 +131,7 @@ enum ShortcutAction: String, CaseIterable {
         case .rename, .trash, .edit, .reveal, .exportAs, .exportFolder, .saveRotation: return .file
         case .cleanup, .batchConvert, .batchRename, .wallpaper: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
-        case .mark, .markedOnly, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating: return .pick
+        case .mark, .markedOnly, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating, .switchPair: return .pick
         }
     }
 
@@ -177,6 +177,7 @@ enum ShortcutAction: String, CaseIterable {
         case .compareSync: return L10n.t("menu.compareSync", "对比时同步缩放和位置")
         case .beforeAfter: return L10n.t("menu.beforeAfter", "修图前后对比") + " (Pro)"
         case .splitByRating: return plain(L10n.t("menu.splitByRating", "按星级分到子文件夹…")) + " (Pro)"
+        case .switchPair: return L10n.t("menu.switchPair", "切换看 JPG / RAW") + " (Pro)"
         }
     }
 
@@ -224,6 +225,7 @@ enum ShortcutAction: String, CaseIterable {
         case .compareSync: return KeyCombo(keyCode: 37, mods: .shift, chars: "l")
         case .beforeAfter: return KeyCombo(keyCode: 11, chars: "b")
         case .splitByRating: return nil
+        case .switchPair: return KeyCombo(keyCode: 9, chars: "v")
         }
     }
 }

@@ -202,10 +202,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         buildMenu()
+        #if FLIPIC_PRO
+        Pairs.install()
+        NotificationCenter.default.addObserver(forName: License.didChange, object: nil, queue: .main) { _ in Pairs.install() }
+        #endif
         newViewerWindow()
         NSApp.activate(ignoringOtherApps: true)
 
         #if FLIPIC_PRO
+        if let i = CommandLine.arguments.firstIndex(of: "--protest2"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runProTest2()
+                }
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--protest"), i + 3 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
             let folder = CommandLine.arguments[i + 2]
@@ -574,6 +588,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private static let proMenuActions: [Selector: ShortcutAction] = [
         #selector(ViewerViewController.toggleBeforeAfter(_:)): .beforeAfter,
         #selector(ViewerViewController.splitByRating(_:)): .splitByRating,
+        #selector(ViewerViewController.switchPairMember(_:)): .switchPair,
     ]
     #endif
 
@@ -728,6 +743,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             sendItem.submenu = sendMenu
             m.addItem(sendItem)
             item(m, L10n.t("menu.splitByRating", "按星级分到子文件夹…"), #selector(ViewerViewController.splitByRating(_:)))
+            item(m, L10n.t("menu.openAllInEditor", "全部在后期软件中打开…"), #selector(ViewerViewController.openAllInEditor(_:)))
+            item(m, L10n.t("menu.trashUnmarked", "没标记的移到废纸篓…"), #selector(ViewerViewController.trashUnpicked(_:))).tag = 0
+            item(m, L10n.t("menu.trashUnrated", "没评星的移到废纸篓…"), #selector(ViewerViewController.trashUnpicked(_:))).tag = 1
+            item(m, L10n.t("menu.restoreTrash", "放回刚才删掉的照片"), #selector(ViewerViewController.restoreLastTrash(_:)))
             #endif
             m.addItem(.separator())
             item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
@@ -753,6 +772,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.compareSync", "对比时同步缩放和位置"), #selector(ViewerViewController.toggleCompareSync(_:)))
             #if FLIPIC_PRO
             item(m, L10n.t("menu.beforeAfter", "修图前后对比"), #selector(ViewerViewController.toggleBeforeAfter(_:)))
+            item(m, L10n.t("menu.mergePairs", "合并显示 JPG 和 RAW"), #selector(ViewerViewController.toggleMergePairs(_:)))
+            item(m, L10n.t("menu.switchPair", "切换看 JPG / RAW"), #selector(ViewerViewController.switchPairMember(_:)))
             #endif
             item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
             m.addItem(.separator())

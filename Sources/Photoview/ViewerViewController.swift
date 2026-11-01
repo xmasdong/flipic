@@ -580,6 +580,9 @@ final class ViewerViewController: NSViewController {
         showFirstAfterResort = isDir.boolValue
         peekOnFirstImage = !isDir.boolValue && Self.openInPeek && !CommandLine.arguments.contains(where: { $0.hasPrefix("--") && !["--peekopentest", "--press-esc", "--press-next"].contains($0) })
         let ok = folder.open(url: url)
+        #if FLIPIC_PRO
+        if ok { applyMergePairs(keep: isDir.boolValue ? nil : url.standardizedFileURL) }
+        #endif
         emptyState.isHidden = ok
         updateControlsPresence()
         if !ok {
@@ -1012,11 +1015,17 @@ final class ViewerViewController: NSViewController {
         exitCompare()
         guard let item = folder.current else { return }
         let gen = generation
-        NSWorkspace.shared.recycle([item.url]) { [weak self] _, _ in
+        // 合并显示的那一对、设好的附属文件一起删
+        var urls = folder.withHiddenPartners([item.url])
+        for u in urls { for f in Self.linkedFiles?(u) ?? [] where !urls.contains(f) { urls.append(f) } }
+        NSWorkspace.shared.recycle(urls) { [weak self] _, _ in
             DispatchQueue.main.async {
                 guard let self, self.generation == gen else { return }
-                self.loader.evict(url: item.url)
-                if self.folder.removeCurrent() {
+                for u in urls { self.loader.evict(url: u) }
+                let others = Set(urls.dropFirst())
+                let remaining = self.folder.removeCurrent()
+                if !others.isEmpty { self.folder.remove(urls: others) }
+                if remaining {
                     self.filmstrip.collectionView.reloadData()
                     self.showImage(resetToFit: false)
                 } else {
@@ -1088,6 +1097,7 @@ final class ViewerViewController: NSViewController {
         #if FLIPIC_PRO
         case .beforeAfter: toggleBeforeAfter(nil)
         case .splitByRating: splitByRating(nil)
+        case .switchPair: switchPairMember(nil)
         #endif
         default: break
         }
@@ -1443,7 +1453,7 @@ final class ViewerViewController: NSViewController {
         }
     }
 
-    private func pickApplication(_ done: @escaping (URL) -> Void) {
+    func pickApplication(_ done: @escaping (URL) -> Void) {
         let panel = NSOpenPanel()
         panel.title = L10n.t("panel.chooseEditor", "选择后期软件")
         panel.prompt = L10n.t("panel.choose", "选择")
@@ -1885,7 +1895,7 @@ final class ViewerViewController: NSViewController {
     @objc func exportToFolder(_ sender: Any?) {
         guard folder.count > 0, !isProcessing, let source = folder.current?.url.deletingLastPathComponent() else { return }
         exitCompare()
-        let urls = folder.items.map(\.url)
+        let urls = folder.withHiddenPartners(folder.items.map(\.url))
         if let target = debugExportTarget {
             runFolderExport(urls, to: target, from: source, move: Self.exportFolderMoves)
             return
@@ -1896,7 +1906,7 @@ final class ViewerViewController: NSViewController {
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
         panel.prompt = L10n.t("exp.f.prompt", "导出到这里")
-        panel.message = exportSummary(count: urls.count)
+        panel.message = exportSummary(count: folder.items.count)
         let copy = NSButton(radioButtonWithTitle: L10n.t("exp.f.copy", "复制（原文件留在这里）"), target: nil, action: nil)
         let move = NSButton(radioButtonWithTitle: L10n.t("exp.f.move", "移动（从这里移走）"), target: nil, action: nil)
         copy.state = Self.exportFolderMoves ? .off : .on
@@ -1929,6 +1939,9 @@ final class ViewerViewController: NSViewController {
 
     /// 同名的一组文件（比如 RAW 的星级旁车 .xmp）一起走，用同一个新名字；目标里已有同名文件时加编号，不覆盖。
     /// 在后台线程跑；progress 收到已处理的张数
+    /// 跟着照片一起复制、移动、删除的附属文件（Pro 里可以设扩展名）；nil 时只带星级用的 .xmp
+    static var linkedFiles: ((URL) -> [URL])?
+
     static func transfer(_ urls: [URL], to target: URL, move: Bool,
                          progress: ((Int) -> Void)? = nil) -> (done: Set<URL>, failed: Int) {
         let fm = FileManager.default
@@ -1939,6 +1952,7 @@ final class ViewerViewController: NSViewController {
             var files = [u]
             let side = Rating.sidecarURL(for: u)
             if fm.fileExists(atPath: side.path) { files.append(side) }
+            for f in linkedFiles?(u) ?? [] where !files.contains(f) { files.append(f) }
             if let gi = groupIndex[base] {
                 for f in files where !groups[gi].files.contains(f) { groups[gi].files.append(f) }
             } else {
@@ -4114,6 +4128,16 @@ extension ViewerViewController: NSMenuItemValidation {
             menuItem.state = SendTo.moves ? .on : .off
         } else if menuItem.action == #selector(splitByRating(_:)) {
             return folder.totalCount > 0 && !isProcessing
+        } else if menuItem.action == #selector(toggleMergePairs(_:)) {
+            menuItem.state = Pairs.merge ? .on : .off
+        } else if menuItem.action == #selector(switchPairMember(_:)) {
+            return Pairs.merge && folder.current != nil
+        } else if menuItem.action == #selector(trashUnpicked(_:)) {
+            return folder.totalCount > 0 && !isProcessing
+        } else if menuItem.action == #selector(restoreLastTrash(_:)) {
+            return Self.canRestoreTrash
+        } else if menuItem.action == #selector(openAllInEditor(_:)) {
+            return folder.count > 0
         }
         #endif
         return true
