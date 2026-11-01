@@ -20,6 +20,8 @@ SHOTS_V = hashlib.sha1(b"".join(f.read_bytes() for f in sorted((REPO / "docs/sho
 SHOTS = f"/shots/{SHOTS_V}/"
 ASSET_V = hashlib.sha1((ROOT / "src/site.css").read_bytes() + (ROOT / "src/site.js").read_bytes()).hexdigest()[:10]
 GITHUB = "https://github.com/xmasdong/flipic"
+# IndexNow：发布后把网址推给 Bing / Yandex 等，密钥本来就是公开放在网站上的
+INDEXNOW_KEY = "b3c572183d825917ef4d3b1eae8c1035"
 
 
 def github_stars():
@@ -186,6 +188,9 @@ def footer(lang):
 def app_schema(lang, desc):
     return {
         "@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Flipic",
+        # 「Flipic」这个词常被当成拼错的 flip icon / flipaclip，写全称帮搜索引擎认出是哪个软件
+        "alternateName": ["Flipic for Mac", "Flipic Image Viewer", "Flipic 看图"],
+        "sameAs": [GITHUB, f"{GITHUB}/releases"],
         "operatingSystem": "macOS 13+", "applicationCategory": "MultimediaApplication",
         "softwareVersion": VERSION, "fileSize": SIZE.replace(" ", ""),
         "downloadUrl": f"{BASE}/download/Flipic.dmg", "installUrl": f"{BASE}/download/Flipic.dmg",
@@ -740,6 +745,7 @@ def main():
         items.append(f"<url><loc>{BASE}{u}</loc><lastmod>{UPDATED}</lastmod><priority>{pri}</priority>{alts}</url>")
     (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
                                      'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' + "\n".join(items) + "\n</urlset>\n")
+    (OUT / f"{INDEXNOW_KEY}.txt").write_text(INDEXNOW_KEY)
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {BASE}/sitemap.xml\n")
 
     guide_lines = "\n".join(f"- [{g['title']}]({BASE}{g['path']}): {g['desc']}" for lang in ("en", "zh") for g in GUIDES[lang])
