@@ -482,3 +482,4 @@ Return  重新命名目前圖片
 "set.bg.black" = "純黑";
 "set.background" = "背景執行：";
 "set.keepRunning" = "關掉視窗後留在背景，再打開圖片更快";
+"menu.closePhotos" = "關閉照片";

@@ -55,7 +55,7 @@ final class ViewerViewController: NSViewController {
     private var nextArrowButton: ToolbarButton!
     var controlsHideTimer: Timer?
     private var controlsVisible = true
-    private var filmstripHeight: NSLayoutConstraint!
+    var filmstripHeight: NSLayoutConstraint!
     /// 平时图片停在缩略图栏上方；幻灯片放映时图片铺到底，缩略图栏浮在上面，跟着控件一起自动隐藏
     private var imageAboveFilmstrip: NSLayoutConstraint!
     private var imageToBottom: NSLayoutConstraint!
@@ -2522,6 +2522,46 @@ final class ViewerViewController: NSViewController {
         return out.makeImage()
     }
 
+    // MARK: - ⌘W：先回开始页，再关窗口
+
+    /// 看着照片时按 ⌘W 回到开始页，换个文件夹不用关窗口；已经在开始页时才关窗口
+    @objc func closePhotosOrWindow(_ sender: Any?) {
+        guard let w = view.window else { return }
+        if let cleanup {
+            cleanup.finish(nil)
+            return
+        }
+        guard folder.totalCount > 0 else {
+            w.performClose(nil)
+            return
+        }
+        showStartPage()
+    }
+
+    func showStartPage() {
+        exitCompare()
+        if slideshowActive { stopSlideshow() }
+        imageView.endPeek()
+        folderGeneration += 1
+        generation += 1
+        decodeQueue.cancelAllOperations()
+        prefetchQueue.cancelAllOperations()
+        thumbQueue.cancelAllOperations()
+        folder.clear()
+        prefetchedURLs.removeAll()
+        imageView.set(image: nil, resetToFit: true, isNew: true)
+        exifPanel.isHidden = true
+        emptyHint.stringValue = L10n.t("ui.emptyHint", "把文件夹或图片拖进这个窗口，或点击「打开…」")
+        emptyState.isHidden = false
+        filmstrip.collectionView.reloadData()
+        updateControlsPresence()
+        updateHUD()
+        updateRatingLabel()
+        refreshMarks()
+        updateMarkedOnlyPill()
+        view.window?.title = "Flipic"
+    }
+
     // MARK: - 窗口置顶、分享
 
     /// 置顶：窗口浮在其他软件上面，切到别的桌面或别的软件全屏时也跟着；每个窗口单独设，关掉窗口就没了
@@ -4280,6 +4320,7 @@ extension ViewerViewController: NSMenuItemValidation {
         if cleanup != nil {
             // 清理模式里只留退出清理和打开别的文件夹，其余看图操作都停用
             return menuItem.action == #selector(toggleCleanup(_:)) || menuItem.action == #selector(showSettings(_:))
+                || menuItem.action == #selector(closePhotosOrWindow(_:))
                 || menuItem.action == #selector(showAbout(_:)) || menuItem.action == #selector(showShortcuts(_:))
         }
         if menuItem.action == #selector(toggleCleanup(_:)) {
@@ -4322,6 +4363,8 @@ extension ViewerViewController: NSMenuItemValidation {
         } else if menuItem.action == #selector(toggleCompareSync(_:)) {
             menuItem.state = compareSynced ? .on : .off
             return compareView != nil
+        } else if menuItem.action == #selector(closePhotosOrWindow(_:)) {
+            menuItem.title = folder.totalCount > 0 ? L10n.t("menu.closePhotos", "关闭照片") : L10n.t("menu.close", "关闭窗口")
         } else if menuItem.action == #selector(togglePinned(_:)) {
             menuItem.state = isPinned ? .on : .off
         } else if menuItem.action == #selector(shareCurrent(_:)) {

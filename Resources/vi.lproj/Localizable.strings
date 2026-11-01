@@ -482,3 +482,4 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.bg.black" = "Đen";
 "set.background" = "Chạy nền:";
 "set.keepRunning" = "Vẫn chạy sau khi đóng cửa sổ cuối để mở ảnh nhanh hơn";
+"menu.closePhotos" = "Đóng ảnh";

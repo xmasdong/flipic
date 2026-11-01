@@ -203,6 +203,15 @@ final class FolderModel {
         return !items.isEmpty
     }
 
+    /// 回到开始页：清空列表
+    func clear() {
+        items = []
+        unfiltered = nil
+        filter = nil
+        hidden = []
+        index = 0
+    }
+
     /// 按当前排序方式重排，keeping 指定的文件保持为当前项
     func resort(keeping url: URL?) {
         let key = sortKey

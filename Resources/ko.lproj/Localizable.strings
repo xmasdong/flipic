@@ -482,3 +482,4 @@ Return  현재 이미지 이름 변경
 "set.bg.black" = "검정";
 "set.background" = "백그라운드:";
 "set.keepRunning" = "창을 닫아도 계속 실행해 다음에 사진을 더 빨리 열기";
+"menu.closePhotos" = "사진 닫기";

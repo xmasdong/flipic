@@ -219,6 +219,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.activate(ignoringOtherApps: true)
 
         #if FLIPIC_PRO
+        if let i = CommandLine.arguments.firstIndex(of: "--film-shots"), i + 3 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2], wide = CommandLine.arguments[i + 3]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runFilmShots(outDir: outDir, wideFolder: wide)
+                }
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--revoketest"), i + 1 < CommandLine.arguments.count {
             RevokeTest.run(keyFile: CommandLine.arguments[i + 1])
             return
@@ -358,6 +368,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runRatingShot(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--cmdwtest"), i + 1 < CommandLine.arguments.count {
+            // --cmdwtest <文件夹>：⌘W 先回开始页，再按才关窗口
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                guard let self, let wc = self.windowController, let w = wc.window,
+                      let vc = wc.contentViewController as? ViewerViewController else { return }
+                wc.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    let item = NSMenuItem(title: "", action: #selector(ViewerViewController.closePhotosOrWindow(_:)), keyEquivalent: "")
+                    _ = vc.validateMenuItem(item)
+                    NSLog("CMDW before: empty=%d visible=%d menu=%@", vc.isEmpty ? 1 : 0, w.isVisible ? 1 : 0, item.title)
+                    vc.closePhotosOrWindow(nil)
+                    _ = vc.validateMenuItem(item)
+                    NSLog("CMDW after 1st: empty=%d visible=%d title=%@ menu=%@", vc.isEmpty ? 1 : 0, w.isVisible ? 1 : 0, w.title, item.title)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    vc.debugCapture(to: NSTemporaryDirectory() + "cmdw.png")
+                    vc.closePhotosOrWindow(nil)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                        NSLog("CMDW after 2nd: visible=%d", w.isVisible ? 1 : 0)
+                        NSApp.terminate(nil)
+                    }
+                }
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--fstest"), i + 2 < CommandLine.arguments.count {
             // --fstest <输出文件夹> <照片>：全屏时磨砂玻璃换成窗口内的中性深灰
@@ -633,6 +667,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { !Self.keepRunning }
 
+    /// ⌘W 落到这里说明前面不是看图窗口（设置、关于等），直接关掉那个窗口；看图窗口由 ViewerViewController 先接
+    @objc func closePhotosOrWindow(_ sender: Any?) {
+        NSApp.keyWindow?.performClose(nil)
+    }
+
     /// 留在后台时点 Dock 图标：没有窗口就开一个
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !flag { newViewerWindow().openFolderPanel() }
@@ -834,7 +873,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.close", "关闭窗口"), #selector(NSWindow.performClose(_:)), "w")
+            item(m, L10n.t("menu.close", "关闭窗口"), #selector(AppDelegate.closePhotosOrWindow(_:)), "w")
         }
         addMenu(L10n.t("menu.view", "显示")) { m in
             item(m, L10n.t("menu.zoomIn", "放大"), #selector(ViewerViewController.zoomIn(_:)), "=")
@@ -910,5 +949,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         HotKey.onPress = { [weak self] in self?.toggleAppVisibility() }
         NSApp.windowsMenu = main.item(at: 5)?.submenu
         NSApp.helpMenu = helpMenu
+    }
+}
+
+extension AppDelegate: NSMenuItemValidation {
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(closePhotosOrWindow(_:)) {
+            menuItem.title = L10n.t("menu.close", "关闭窗口")
+            return NSApp.keyWindow != nil
+        }
+        return true
     }
 }

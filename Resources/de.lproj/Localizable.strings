@@ -482,3 +482,4 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.bg.black" = "Schwarz";
 "set.background" = "Hintergrund:";
 "set.keepRunning" = "Nach dem Schließen des letzten Fensters weiterlaufen, damit Fotos schneller öffnen";
+"menu.closePhotos" = "Fotos schließen";

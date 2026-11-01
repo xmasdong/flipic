@@ -482,3 +482,4 @@ Arrastra una carpeta o imagen para abrir";
 "set.bg.black" = "Negro";
 "set.background" = "Segundo plano:";
 "set.keepRunning" = "Seguir abierto al cerrar la última ventana para abrir fotos más rápido";
+"menu.closePhotos" = "Cerrar fotos";

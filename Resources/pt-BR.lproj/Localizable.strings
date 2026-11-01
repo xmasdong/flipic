@@ -482,3 +482,4 @@ Arraste uma pasta ou imagem para abrir";
 "set.bg.black" = "Preto";
 "set.background" = "Segundo plano:";
 "set.keepRunning" = "Continuar aberto ao fechar a última janela, para abrir fotos mais rápido";
+"menu.closePhotos" = "Fechar fotos";

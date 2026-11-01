@@ -482,3 +482,4 @@ Déposez un dossier ou une image pour ouvrir";
 "set.bg.black" = "Noir";
 "set.background" = "Arrière-plan :";
 "set.keepRunning" = "Rester ouvert après la fermeture de la dernière fenêtre pour rouvrir plus vite";
+"menu.closePhotos" = "Fermer les photos";

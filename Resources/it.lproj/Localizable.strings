@@ -482,3 +482,4 @@ Trascina una cartella o un'immagine per aprire";
 "set.bg.black" = "Nero";
 "set.background" = "In background:";
 "set.keepRunning" = "Resta aperto dopo aver chiuso l’ultima finestra, per aprire le foto più in fretta";
+"menu.closePhotos" = "Chiudi foto";

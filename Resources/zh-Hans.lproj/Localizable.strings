@@ -494,3 +494,4 @@ Esc  先关掉右上角的照片信息
 "set.bg.black" = "纯黑";
 "set.background" = "后台：";
 "set.keepRunning" = "关掉窗口后留在后台，再打开图片更快";
+"menu.closePhotos" = "关闭照片";

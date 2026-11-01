@@ -482,3 +482,4 @@ Return  表示中の画像を名称変更
 "set.bg.black" = "黒";
 "set.background" = "バックグラウンド：";
 "set.keepRunning" = "ウインドウを閉じても終了せず、次に写真を速く開く";
+"menu.closePhotos" = "写真を閉じる";

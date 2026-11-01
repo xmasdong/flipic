@@ -494,3 +494,4 @@ Drop a folder or image to open";
 "set.bg.black" = "Black";
 "set.background" = "Background:";
 "set.keepRunning" = "Keep running after the last window closes, so photos open faster";
+"menu.closePhotos" = "Close Photos";
