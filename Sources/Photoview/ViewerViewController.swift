@@ -2861,6 +2861,13 @@ final class ViewerViewController: NSViewController {
         }
         at(0.3) { wheel(-1, cmd: true); wheel(-1, cmd: true); state("7-cmd+wheel (expect zoomed, same index)") }
         at(0.3) { wheel(-1); state("8-wheel while zoomed (expect pan, same index)") }
+        at(0.3) {
+            // 放大后双指往上推（自然滚动下 deltaY 为负）：照片跟着往上走，centerOffset.y 变小；往右推 deltaX 为正，照片往右
+            NSLog("WHEEL 8a-before %@", self.imageView.fitDiagnostics)
+            wheel(-30, dx: 30, precise: true, phase: 1)
+            wheel(0, precise: true, phase: 4)
+            state("8b-trackpad up+right while zoomed (expect y smaller by 30, x larger by 30)")
+        }
         at(0.3) { self.imageView.fit(); wheel(-1); state("9-fit again, wheel down (expect +1)") }
         let savedInv = ZoomableImageView.wheelZoomInverted
         at(0.3) { ZoomableImageView.wheelNavigates = false; ZoomableImageView.wheelZoomInverted = false; self.imageView.fit(); wheel(1); wheel(1); state("10-normal wheel up x2") }

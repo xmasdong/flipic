@@ -497,10 +497,12 @@ final class ZoomableImageView: NSView {
         }
     }
 
+    /// 和系统滚动视图同向（跟「预览」一样）：开着自然滚动时照片跟着手指走，关掉时反过来；
+    /// scrollingDeltaY 为正是内容往下移，视图是翻转坐标，origin.y 加上它就是往下
     private func panByWheel(_ event: NSEvent) {
         let k: CGFloat = event.hasPreciseScrollingDeltas ? 1 : 10
-        origin.x -= event.scrollingDeltaX * k
-        origin.y -= event.scrollingDeltaY * k
+        origin.x += event.scrollingDeltaX * k
+        origin.y += event.scrollingDeltaY * k
         mode = .free
         apply()
     }
