@@ -119,7 +119,7 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 
 Viewing, rating, marking, filtering, exporting, side-by-side comparison and Cleanup Mode stay free, and all of that code is in this repository (MIT).
 
-Flipic Pro adds batch tools for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 14-day trial: before/after comparison (hold `\` to switch, split line, opacity), merged JPG + RAW, sort into subfolders by rating, favorite folders on ⌥1–⌥9, delete what you didn’t pick, send a batch to your editor, and custom linked files. The free version is enough for most people; Pro just saves time for those who cull and edit a lot. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
+Flipic Pro adds batch tools for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 7-day trial: before/after comparison (hold `\` to switch, split line, opacity), merged JPG + RAW, sort into subfolders by rating, favorite folders on ⌥1–⌥9, delete what you didn’t pick, send a batch to your editor, and custom linked files. The free version is enough for most people; Pro just saves time for those who cull and edit a lot. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
 
 ## Privacy
 
