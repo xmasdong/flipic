@@ -13,6 +13,9 @@ BASE = "https://flipic.app"
 UPDATED = "2026-10-31"
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
 SIZE = "2.4 MB"
+# 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
+import hashlib
+ASSET_V = hashlib.sha1((ROOT / "src/site.css").read_bytes() + (ROOT / "src/site.js").read_bytes()).hexdigest()[:10]
 GITHUB = "https://github.com/xmasdong/flipic"
 
 
@@ -106,7 +109,7 @@ def head(lang, path, title, desc, schema, og_type="website"):
 <link rel="canonical" href="{BASE}{path}">
 {alts}<link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/icon-256.png">
-<meta name="theme-color" content="#151413">
+<meta name="theme-color" content="#f5f2ea">
 <meta property="og:type" content="{og_type}">
 <meta property="og:site_name" content="Flipic">
 <meta property="og:title" content="{esc(title)}">
@@ -117,7 +120,7 @@ def head(lang, path, title, desc, schema, og_type="website"):
 <meta property="og:url" content="{BASE}{path}">
 <meta property="og:locale" content="{'zh_CN' if lang == 'zh' else 'en_US'}">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="/site.css?v={VERSION}">
+<link rel="stylesheet" href="/site.css?v={ASSET_V}">
 {ld}
 </head>
 <body>
@@ -171,7 +174,7 @@ def footer(lang):
   <p>{t['footer_line'].format(v=VERSION)} · <a href="{GITHUB}">{t['src']}</a> · <a href="{GITHUB}/issues">{t['feedback']}</a> · <a href="{GITHUB}/releases">{t['releases']}</a></p>
   <p>{t['footer_credit']}</p>
 </footer>
-<script src="/site.js?v={VERSION}" defer></script>
+<script src="/site.js?v={ASSET_V}" defer></script>
 </body>
 </html>
 """
@@ -239,6 +242,7 @@ HOME = {
         ],
         "more_title": "其他你可能用得上的",
         "more": [
+            ("挑片：标记、筛选、并排对比", "按 P 标记要留的，⇧P 只看已标记，也能只看几星以上；按 C 两张并排比，⇧C 四张一起看。挑完用 ⇧⌘E 一次导出到文件夹。"),
             ("交给后期软件", "按 ⌘E 用 Photoshop、Lightroom 或 Capture One 打开当前照片，同名 RAW 在时打开 RAW。"),
             ("幻灯片放映", "每张 1 到 10 秒，渐变时长可调；单击暂停，再单击继续，暂停时能翻看和打星。"),
             ("HEIC 批量转 JPG", "整个文件夹一次转成 JPEG、PNG 或 HEIC，放进子文件夹，原图不动。"),
@@ -261,7 +265,7 @@ HOME = {
                  ("⇧⌘K", "清理模式"), ("⌘⌫", "移到废纸篓"), ("⌘,", "设置，快捷键都能改")],
         "guides_title": "指南",
         "faq": [
-            ("Flipic 收费吗？", "免费，没有内购、没有广告，也不用注册账号。代码以 MIT 协议开源在 GitHub。"),
+            ("Flipic 收费吗？", "看图、评星、标记、筛选、导出、清理这些都免费，没有广告，也不用注册账号，代码以 MIT 协议开源在 GitHub。另有可选的 <a href=\"/pro/\">Pro</a>，一次买断，只加了批量处理和几个专业功能，大多数人用不上。"),
             ("从网上下载的安全吗？", "安装包用 Developer ID 签名，并通过了 Apple 公证，macOS 安装时会自动校验。Flipic 默认不联网，不收集任何数据。"),
             ("Mac 上怎么看下一张图片？", "用 Flipic 双击任意一张图片，按右方向键就是下一张，左方向键是上一张，同一个文件夹里的图片都能翻到。"),
             ("怎么设为默认看图软件？", "打开 Flipic 的设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 一次设好。"),
@@ -298,6 +302,7 @@ HOME = {
         ],
         "more_title": "Also in the box",
         "more": [
+            ("Culling: marks, filters, side by side", "Press P to mark keepers, ⇧P to show only marked, or show only 4 stars and up. C puts two photos side by side, ⇧C shows four. Then ⇧⌘E exports them to a folder."),
             ("Hand off to your editor", "⌘E opens the photo in Photoshop, Lightroom or Capture One; the RAW if one sits next to it."),
             ("Slideshow", "1 to 10 seconds per photo with an adjustable crossfade; click to pause, click to resume."),
             ("Batch convert HEIC to JPG", "Convert a whole folder to JPEG, PNG or HEIC into a subfolder; originals stay untouched."),
@@ -320,7 +325,7 @@ HOME = {
                  ("⇧⌘K", "Cleanup Mode"), ("⌘⌫", "Move to Trash"), ("⌘,", "Settings; change any shortcut")],
         "guides_title": "Guides",
         "faq": [
-            ("Is Flipic free?", "Yes. No in-app purchases, no ads, no account. The code is MIT licensed on GitHub."),
+            ("Is Flipic free?", "Viewing, ratings, marks, filtering, export and Cleanup Mode are free, with no ads and no account, and the code is MIT licensed on GitHub. There is an optional <a href=\"/en/pro/\">Pro</a> one-time purchase that only adds batch and pro tools; most people won’t need it."),
             ("Is the download safe?", "It is signed with a Developer ID and notarized by Apple; macOS checks it on install. Flipic is offline by default and collects no data."),
             ("How do I see the next image on a Mac?", "Double-click any image in Flipic and press the right arrow key for the next one, the left arrow for the previous one, across the whole folder."),
             ("How do I make it my default viewer?", "Open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go."),
@@ -479,6 +484,12 @@ guide("en", "/en/guides/cull-photos-on-mac/", "How to cull hundreds of event pho
 
 # ---------------------------------------------------------------- 渲染
 
+HOME_PRO = {
+    "zh": ("免费版已经够用", "上面这些全部免费，以后也不会挪进付费版。如果你每次要整理几百上千张照片，可以看看 Pro：修图前后对比、JPG 和 RAW 合并显示、按星级分文件夹这类批量功能，一次买断。不需要的话，不用买。", "/pro/", "Pro 有什么，什么情况不需要"),
+    "en": ("The free version is enough", "Everything above is free and will stay free. If you sort hundreds or thousands of photos at a time, Pro adds batch tools like before/after comparison, merged JPG + RAW and sorting into folders by rating, as a one-time purchase. If you don’t need them, don’t buy it.", "/en/pro/", "What’s in Pro, and when you don’t need it"),
+}
+
+
 def render_home(lang):
     h = HOME[lang]
     t = T[lang]
@@ -525,6 +536,8 @@ def render_home(lang):
   <div><h2>{h['keys_title']}</h2><table><tbody>{keys_rows}</tbody></table></div>
 </div></section>
 """
+    pro = HOME_PRO[lang]
+    out += f'<section class="wrap pro-note"><h2>{pro[0]}</h2><p>{pro[1]}</p><p><a href="{pro[2]}">{pro[3]}</a></p></section>\n'
     items = "".join(f'<li><a href="{g["path"]}"><b>{esc(g["title"])}</b><span>{esc(g["summary"])}</span></a></li>' for g in GUIDES[lang])
     out += f'<section class="wrap guides" id="guides"><h2>{h["guides_title"]}</h2><ol>{items}</ol></section>\n'
     faqs = "".join(f"<details><summary>{esc(q)}</summary><p>{a}</p></details>" for q, a in h["faq"])
