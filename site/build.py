@@ -116,7 +116,7 @@ def head(lang, path, title, desc, schema, og_type="website"):
 <link rel="apple-touch-icon" href="/icon-256.png">
 <meta name="theme-color" content="#f5f2ea">
 <meta property="og:type" content="{og_type}">
-<meta property="og:site_name" content="Flipic">
+<meta property="og:site_name" content="Flipic for Mac">
 <meta property="og:title" content="{esc(title)}">
 <meta property="og:description" content="{esc(desc)}">
 <meta property="og:image" content="{BASE}/og.jpg">
@@ -224,7 +224,7 @@ def shot(name, alt, w=1440, h=900, eager=False):
 
 HOME = {
     "zh": {
-        "title": "Flipic：免费开源的 Mac 看图软件，双击图片用左右键看下一张",
+        "title": "Flipic Mac 看图：免费开源的 Mac 看图软件，双击图片用左右键看下一张",
         "desc": "Flipic 是一个免费开源的 Mac 看图软件。双击一张图片，用左右方向键就能看同一个文件夹里的其他图片，也能放大看细节、给照片打星、把 HEIC 批量转成 JPG。安装包 2.5 MB，已通过 Apple 公证。",
         "eyebrow": "免费开源的 Mac 看图软件",
         "h1": "双击一张图片，<br>用方向键往下翻",
@@ -286,7 +286,7 @@ HOME = {
         "end": "下载 Flipic",
     },
     "en": {
-        "title": "Flipic: free image viewer for Mac with arrow-key browsing",
+        "title": "Flipic for Mac: free, open-source image viewer with arrow-key browsing",
         "desc": "A free, open-source image viewer for Mac. Double-click a photo and use the arrow keys to see the other images in the folder. You can also zoom in on details, rate photos and batch convert HEIC to JPG.",
         "eyebrow": "Free, open-source image viewer for Mac",
         "h1": "Double-click a photo,<br>then use the arrow keys",
@@ -569,7 +569,7 @@ def render_guide(lang, g):
         schema.append({"@context": "https://schema.org", "@type": "HowTo", "name": g["title"], "inLanguage": t["lang"],
                        "tool": [{"@type": "HowToTool", "name": "Flipic"}],
                        "step": [{"@type": "HowToStep", "position": i + 1, "text": s} for i, s in enumerate(g["howto"])]})
-    out = head(lang, g["path"], g["title"] + " | Flipic", g["desc"], schema, og_type="article") + header(lang, g["path"])
+    out = head(lang, g["path"], g["title"] + (" | Flipic Mac 看图" if lang == "zh" else " | Flipic for Mac"), g["desc"], schema, og_type="article") + header(lang, g["path"])
     related = "".join(f'<a href="{o["path"]}">{esc(o["title"])}</a>' for o in GUIDES[lang] if o is not g)
     out += f"""<main id="main" class="narrow article">
 <p class="crumbs"><a href="{t['home']}">{t['crumbs_home']}</a> › <a href="{t['home']}#guides">{t['crumbs_guides']}</a></p>
@@ -588,7 +588,7 @@ def render_guide(lang, g):
 PRO = {
     "zh": {
         "path": "/pro/",
-        "title": "Flipic Pro：给大量挑片、修图的摄影师准备的批量功能",
+        "title": "Flipic Mac 看图 Pro：给大量挑片、修图的摄影师准备的批量功能",
         "desc": "Flipic 免费版已经够大多数人用。Pro 只加了批量处理和几个专业功能，一次买断，下载就有 7 天试用。",
         "h1": "Flipic Pro",
         "lede": "先说一句：大多数人用免费版就够了。",
@@ -629,7 +629,7 @@ PRO = {
     },
     "en": {
         "path": "/en/pro/",
-        "title": "Flipic Pro: batch tools for photographers who cull and edit a lot",
+        "title": "Flipic for Mac Pro: batch tools for photographers who cull and edit a lot",
         "desc": "The free Flipic is enough for most people. Pro adds batch and pro tools only. One-time purchase, 7-day trial in every download.",
         "h1": "Flipic Pro",
         "lede": "First, most people will be fine with the free version.",
