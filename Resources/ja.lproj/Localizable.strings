@@ -346,3 +346,12 @@ Return  表示中の画像を名称変更
 "set.toolbarCheck" = "マウスを動かすと下部にツールバーを表示";
 "menu.toolbar" = "ツールバー";
 "ui.marked" = "マーク済み";
+"menu.compare2" = "2 枚を並べて比較";
+"menu.compare4" = "4 枚を並べて比較";
+"sc.a.comparePane" = "比較中にアクティブな枠を切り替え";
+"msg.compareNeedsTwo" = "比較するには写真が 2 枚以上必要です";
+"menu.compareSync" = "比較中にズームと位置を同期";
+"msg.compareSyncOn" = "すべての枠を一緒にズーム・移動（⌥ を押すと 1 枠だけ）";
+"msg.compareSyncOff" = "枠ごとにズーム・移動";
+"ui.compareUnsynced" = "同期なし";
+"ui.compareAdjusted" = "個別に調整済み";

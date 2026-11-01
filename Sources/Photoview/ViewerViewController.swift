@@ -236,7 +236,7 @@ final class ViewerViewController: NSViewController {
     // MARK: - 控件自动隐藏
 
     private func pokeControls() {
-        guard peekSaved == nil else { return }
+        guard peekSaved == nil, compareView == nil else { return }
         setControlsVisible(true)
         controlsHideTimer?.invalidate()
         let timer = Timer(timeInterval: 3.0, repeats: false) { [weak self] _ in
@@ -568,6 +568,7 @@ final class ViewerViewController: NSViewController {
     var debugFilmstripHeight: CGFloat { filmstrip.frame.height }
 
     func open(url: URL) {
+        exitCompare()
         prefetchedURLs.removeAll()
         decodeQueue.cancelAllOperations()
         prefetchQueue.cancelAllOperations()
@@ -776,6 +777,7 @@ final class ViewerViewController: NSViewController {
     /// 重排后当前看的图不变，只更新序号、胶片条与预取窗口
     private func applySort() {
         guard folder.count > 0 else { return }
+        exitCompare()
         if showFirstAfterResort {
             folder.resort(keeping: nil)
             filmstrip.collectionView.reloadData()
@@ -1000,6 +1002,7 @@ final class ViewerViewController: NSViewController {
     }
 
     @objc func trashCurrent(_ sender: Any?) {
+        exitCompare()
         guard let item = folder.current else { return }
         let gen = generation
         NSWorkspace.shared.recycle([item.url]) { [weak self] _, _ in
@@ -1070,6 +1073,10 @@ final class ViewerViewController: NSViewController {
         case .rate0, .rate1, .rate2, .rate3, .rate4, .rate5: setRating(action.stars ?? 0)
         case .mark: toggleMark(nil)
         case .markedOnly: toggleMarkedOnly(nil)
+        case .compare: toggleCompare(nil)
+        case .compare4: toggleCompare4(nil)
+        case .comparePane: compareCyclePane()
+        case .compareSync: toggleCompareSync(nil)
         default: break
         }
     }
@@ -1132,6 +1139,7 @@ final class ViewerViewController: NSViewController {
     // MARK: - 清理模式
 
     @objc func toggleCleanup(_ sender: Any?) {
+        exitCompare()
         if let cleanup {
             cleanup.finish(nil)
             return
@@ -1233,6 +1241,7 @@ final class ViewerViewController: NSViewController {
     }
 
     @objc func toggleSlideshow(_ sender: Any?) {
+        exitCompare()
         if slideshowActive {
             stopSlideshow()
         } else {
@@ -1611,11 +1620,12 @@ final class ViewerViewController: NSViewController {
         let r = currentRating
         let badge = Self.showRatingBadge
         ratingBadgeLabel.stringValue = String(repeating: "★", count: r)
-        ratingBadge.isHidden = r == 0 || !badge || peekSaved != nil || cleanup != nil
+        ratingBadge.isHidden = r == 0 || !badge || peekSaved != nil || cleanup != nil || compareView != nil
         // 刚出现时按当前工具条状态放，免得工具条正显示着却落在它下面
         if !ratingBadge.isHidden { ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible) }
         // 标记固定在左下角，不随工具条移动，也不受「底部显示星级」开关影响
-        markBadge.isHidden = !(folder.current?.marked ?? false) || peekSaved != nil || cleanup != nil
+        markBadge.isHidden = !(folder.current?.marked ?? false) || peekSaved != nil || cleanup != nil || compareView != nil
+        if compareView != nil { refreshCompareInfo() }
         markBadgeBottom.constant = ratingBadgeOffset(controls: false)
         ratingLabel.stringValue = Rating.stars(r)
         ratingLabel.isHidden = r == 0 || badge
@@ -1703,6 +1713,7 @@ final class ViewerViewController: NSViewController {
     /// 只看已标记 / 显示全部
     @objc func toggleMarkedOnly(_ sender: Any?) {
         guard cleanup == nil, folder.totalCount > 0 else { return }
+        exitCompare()
         let on = !folder.markedOnly
         guard folder.setMarkedOnly(on) else {
             let key = Shortcuts.combo(for: .mark)?.display
@@ -1771,6 +1782,268 @@ final class ViewerViewController: NSViewController {
         markedOnlyPill.isHidden = !folder.markedOnly || cleanup != nil
         markedOnlyLabel.stringValue = L10n.f("ui.markedOnlyPill", "只看已标记 · %1$d / %2$d",
                                              folder.markedCount, folder.totalCount)
+    }
+
+    // MARK: - 并排对比
+
+    /// 非 nil 时在并排对比：2 格或 4 格，各格缩放和位置同步，当前格的照片就是 folder.current
+    private var compareView: CompareView?
+    private var compareActive = 0
+    /// 最后一次缩放 / 拖动后的状态；换图的格子照着它摆，nil 表示适应窗口
+    private var compareState: ZoomableImageView.ViewState?
+    private var compareRatingPending = Set<URL>()
+    /// 换图时格子会先回到适应窗口，这个过程不同步给别的格
+    private var compareLoading = false
+    /// 关掉后各格单独缩放和拖动（⇧L 切换）
+    private var compareSynced = true
+    /// 测试用：当作按住了 ⌥
+    private var debugOptionHeld = false
+
+    @objc func toggleCompare(_ sender: Any?) {
+        if let cv = compareView, cv.panes.count == 2 { exitCompare() } else { enterCompare(2) }
+    }
+
+    @objc func toggleCompare4(_ sender: Any?) {
+        if let cv = compareView, cv.panes.count >= 3 { exitCompare() } else { enterCompare(4) }
+    }
+
+    private func enterCompare(_ want: Int) {
+        guard cleanup == nil, folder.count >= 2 else {
+            flash(L10n.t("msg.compareNeedsTwo", "至少要两张照片才能并排对比"))
+            return
+        }
+        if slideshowActive { stopSlideshow() }
+        imageView.endPeek()
+        let n = min(want, folder.count)
+        let cv: CompareView
+        if let existing = compareView {
+            cv = existing
+        } else {
+            cv = CompareView()
+            cv.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(cv, positioned: .above, relativeTo: imageView)
+            NSLayoutConstraint.activate([
+                cv.leadingAnchor.constraint(equalTo: imageView.leadingAnchor),
+                cv.trailingAnchor.constraint(equalTo: imageView.trailingAnchor),
+                cv.topAnchor.constraint(equalTo: imageView.topAnchor),
+                cv.bottomAnchor.constraint(equalTo: imageView.bottomAnchor),
+            ])
+            compareView = cv
+            compareState = nil
+            imageView.isHidden = true
+            controlsHideTimer?.invalidate()
+            setControlsVisible(false)
+        }
+        // 已有的格子保持原样，新加的格子接着往后放还没出现过的照片
+        var used = cv.panes.map(\.photoIndex)
+        let startCount = cv.panes.count
+        cv.setPaneCount(n)
+        cv.layoutSubtreeIfNeeded()
+        var next = startCount == 0 ? folder.index : (used.max() ?? folder.index) + 1
+        for i in startCount..<n {
+            while used.contains(next % folder.count) { next += 1 }
+            let idx = next % folder.count
+            used.append(idx)
+            configurePane(cv.panes[i], at: i)
+            loadPane(cv.panes[i], index: idx)
+            next += 1
+        }
+        // 两格时右边是「候选」，← → 换它，左边留着做参照
+        compareActivate(startCount == 0 ? (n == 2 ? 1 : 0) : min(compareActive, n - 1))
+        updateRatingLabel()
+    }
+
+    func exitCompare() {
+        guard let cv = compareView else { return }
+        cv.removeFromSuperview()
+        compareView = nil
+        compareState = nil
+        compareSynced = true
+        imageView.isHidden = false
+        showImage(resetToFit: true)
+        view.window?.makeFirstResponder(imageView)
+        updateRatingLabel()
+        pokeControls()
+    }
+
+    private func configurePane(_ pane: ComparePane, at i: Int) {
+        let iv = pane.imageView
+        iv.onMouseDown = { [weak self] in self?.compareActivate(i) }
+        iv.onNavigate = { [weak self] d in
+            self?.compareActivate(i)
+            self?.compareNavigate(d)
+        }
+        iv.onEscape = { [weak self] in self?.exitCompare() }
+        iv.onCommand = { [weak self] action in self?.perform(action) }
+        iv.onToggleFilmstrip = { [weak self] in self?.toggleFilmstrip(nil) }
+        iv.onToggleInfo = { [weak self] in self?.toggleInfoPanel(nil) }
+        iv.onToggleFullscreen = { [weak self] in
+            guard let window = self?.view.window else { return }
+            window.toggleFullScreen(window)
+        }
+        iv.onViewChange = { [weak self, weak pane] state, animated in
+            guard let self, let pane, let cv = self.compareView, !self.compareLoading, self.compareSynced else { return }
+            if NSEvent.modifierFlags.contains(.option) || self.debugOptionHeld {
+                // 按住 ⌥：只动这一格，记下它和大家的差；都还在适应窗口时没有可对齐的位置，不记
+                if let base = self.compareState, !state.fit {
+                    pane.zoomRatio = state.zoom / base.zoom
+                    pane.centerDelta = CGPoint(x: state.center.x - base.center.x, y: state.center.y - base.center.y)
+                } else {
+                    pane.resetAdjustment()
+                }
+                self.refreshCompareInfo()
+                return
+            }
+            if state.fit {
+                self.compareState = nil
+                for other in cv.panes where other !== pane { other.imageView.applyViewState(state, animated: animated) }
+                return
+            }
+            // 去掉这一格自己的偏差，得到大家共用的状态，再按各格的偏差摆
+            let shared = ZoomableImageView.ViewState(
+                fit: false, zoom: state.zoom / pane.zoomRatio,
+                center: CGPoint(x: state.center.x - pane.centerDelta.x, y: state.center.y - pane.centerDelta.y))
+            self.compareState = shared
+            for other in cv.panes where other !== pane { other.imageView.applyViewState(other.placed(shared), animated: animated) }
+        }
+        iv.onNeedsDetail = { [weak self, weak pane] in
+            guard let self, let pane, let url = pane.url else { return }
+            let loader = self.loader
+            self.decodeQueue.addOperation {
+                guard let info = loader.info(for: url), let full = loader.fullImage(for: url) else { return }
+                DispatchQueue.main.async {
+                    guard pane.url == url else { return }
+                    pane.imageView.set(image: full, logicalSize: info.pixelSize, resetToFit: false, isNew: false)
+                }
+            }
+        }
+    }
+
+    /// 把第 index 张放进这一格，按其他格当前的缩放和位置摆好
+    private func loadPane(_ pane: ComparePane, index: Int) {
+        guard folder.items.indices.contains(index) else { return }
+        let url = folder.items[index].url
+        pane.photoIndex = index
+        pane.url = url
+        refreshCompareInfo()
+        let px = previewPixelTarget
+        // 换了照片：之前单独调的偏差作废；不同步时新照片沿用这一格原来的缩放和位置
+        pane.resetAdjustment()
+        let previous = pane.imageView.debugHasImage ? pane.imageView.viewState : nil
+        let place: (CGImage, CGSize) -> Void = { [weak self, weak pane] img, size in
+            guard let self, let pane, pane.url == url else { return }
+            pane.imageView.pendingFadeDuration = nil
+            self.compareLoading = true
+            pane.imageView.set(image: img, logicalSize: size, resetToFit: true, isNew: true)
+            if let s = self.compareSynced ? self.compareState : previous { pane.imageView.applyViewState(s) }
+            self.compareLoading = false
+        }
+        if let info = loader.cachedInfo(for: url),
+           let hit = loader.cachedFull(for: url) ?? loader.cachedPreview(for: url, maxPixel: px) {
+            place(hit, info.pixelSize)
+            return
+        }
+        let loader = self.loader
+        decodeQueue.addOperation {
+            guard let info = loader.info(for: url), let pv = loader.preview(for: url, maxPixel: px) else { return }
+            DispatchQueue.main.async { place(pv, info.pixelSize) }
+        }
+    }
+
+    private func compareActivate(_ i: Int) {
+        guard let cv = compareView, cv.panes.indices.contains(i) else { return }
+        compareActive = i
+        for (j, p) in cv.panes.enumerated() { p.isActive = j == i }
+        view.window?.makeFirstResponder(cv.panes[i].imageView)
+        folder.jump(to: cv.panes[i].photoIndex)
+        syncFilmstripSelection()
+        filmstrip.scrollTo(index: folder.index)
+        if let url = folder.current?.url {
+            view.window?.title = url.lastPathComponent
+            loadRating(for: url)
+        }
+        updateExifPanel()
+        refreshCompareInfo()
+    }
+
+    /// 当前格换成前一张 / 后一张，跳过别的格已经在显示的
+    private func compareNavigate(_ delta: Int) {
+        guard let cv = compareView else { return }
+        let pane = cv.panes[compareActive]
+        let n = folder.count
+        let others = Set(cv.panes.enumerated().filter { $0.offset != compareActive }.map(\.element.photoIndex))
+        var i = pane.photoIndex
+        for _ in 0..<n {
+            i = ((i + delta) % n + n) % n
+            if !others.contains(i) { break }
+        }
+        guard i != pane.photoIndex else { return }
+        loadPane(pane, index: i)
+        compareActivate(compareActive)
+    }
+
+    /// 点缩略图：放进当前格
+    private func compareShow(_ index: Int) {
+        guard let cv = compareView else { return }
+        loadPane(cv.panes[compareActive], index: index)
+        compareActivate(compareActive)
+    }
+
+    /// 同步 / 各自独立。重新同步时以当前格为准，其他格保持现在看的位置，记成各自的偏差
+    @objc func toggleCompareSync(_ sender: Any?) {
+        guard let cv = compareView else { return }
+        compareSynced.toggle()
+        if compareSynced {
+            let ref = cv.panes[compareActive].imageView.viewState
+            for p in cv.panes { p.resetAdjustment() }
+            if ref.fit {
+                compareState = nil
+                for p in cv.panes { p.imageView.applyViewState(ref) }
+            } else {
+                compareState = ref
+                for (j, p) in cv.panes.enumerated() where j != compareActive {
+                    let s = p.imageView.viewState
+                    if s.fit {
+                        p.imageView.applyViewState(ref)
+                    } else {
+                        p.zoomRatio = s.zoom / ref.zoom
+                        p.centerDelta = CGPoint(x: s.center.x - ref.center.x, y: s.center.y - ref.center.y)
+                    }
+                }
+            }
+        }
+        flash(compareSynced ? L10n.t("msg.compareSyncOn", "各格一起缩放和拖动（按住 ⌥ 只动一格）")
+                            : L10n.t("msg.compareSyncOff", "各格单独缩放和拖动"), seconds: 2)
+        refreshCompareInfo()
+    }
+
+    private func compareCyclePane() {
+        guard let cv = compareView else { return }
+        compareActivate((compareActive + 1) % cv.panes.count)
+    }
+
+    /// 各格左下角的序号、文件名、星级、标记
+    private func refreshCompareInfo() {
+        guard let cv = compareView else { return }
+        for p in cv.panes where folder.items.indices.contains(p.photoIndex) {
+            let item = folder.items[p.photoIndex]
+            let url = item.url
+            if ratingCache[url] == nil, !compareRatingPending.contains(url) {
+                compareRatingPending.insert(url)
+                ratingQueue.async { [weak self] in
+                    let r = Rating.read(url)
+                    DispatchQueue.main.async {
+                        self?.ratingCache[url] = r
+                        self?.compareRatingPending.remove(url)
+                        self?.refreshCompareInfo()
+                    }
+                }
+            }
+            let status = !compareSynced ? L10n.t("ui.compareUnsynced", "未同步")
+                : p.isAdjusted ? L10n.t("ui.compareAdjusted", "单独调过") : nil
+            p.setInfo(position: p.photoIndex + 1, total: folder.count, name: url.lastPathComponent,
+                      rating: ratingCache[url] ?? 0, marked: item.marked, status: status)
+        }
     }
 
     // MARK: - 新版本提示
@@ -1950,6 +2223,7 @@ final class ViewerViewController: NSViewController {
     // MARK: - 重命名当前图片
 
     @objc func renameCurrent(_ sender: Any?) {
+        exitCompare()
         guard let item = folder.current, !isProcessing else { return }
         let ext = item.url.pathExtension
         let base = item.url.deletingPathExtension().lastPathComponent
@@ -2656,6 +2930,56 @@ final class ViewerViewController: NSViewController {
         at(0.6) { NSApp.terminate(nil) }
     }
 
+    /// --comparetest <截图目录> <文件夹>：C 进入两格对比、在当前格放大（另一格同步）、→ 换候选、Tab 换格并按 P、⇧C 四格、Esc 退出
+    func runCompareTest(outDir: String) {
+        func key(_ chars: String, _ code: UInt16, _ mods: NSEvent.ModifierFlags = []) {
+            guard let target = view.window?.firstResponder as? NSView,
+                  let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: mods, timestamp: 0, windowNumber: view.window?.windowNumber ?? 0,
+                                           context: nil, characters: chars, charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) else { return }
+            target.keyDown(with: e)
+        }
+        func fmt(_ s: ZoomableImageView.ViewState) -> String {
+            s.fit ? "fit" : String(format: "x%.2f@(%.3f,%.3f)", s.zoom, s.center.x, s.center.y)
+        }
+        func report(_ tag: String) {
+            let panes = compareView?.panes ?? []
+            NSLog("CMP %@ | panes=%d active=%d current=%@ main=%@ | %@", tag, panes.count, compareActive,
+                  folder.current?.url.lastPathComponent ?? "-", imageView.isHidden ? "hidden" : "shown",
+                  panes.map { "[\($0.photoIndex) \(fmt($0.imageView.viewState)) img=\($0.imageView.debugImage?.width ?? 0)/\(Int($0.imageView.pixelSize.width)) \($0.debugInfo)]" }.joined(separator: " "))
+        }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.0) { self.goTo(0) }
+        at(0.8) { key("c", 8) }
+        at(1.2) { report("1-C two panes"); self.captureWindow(to: "\(outDir)/1-two.png", raw: true) }
+        at(0.2) {
+            guard let p = self.compareView?.panes[self.compareActive] else { return }
+            p.imageView.debugToggle(at: CGPoint(x: p.bounds.width * 0.3, y: p.bounds.height * 0.4))
+        }
+        at(1.2) { report("2-zoomed active pane (other follows)"); self.captureWindow(to: "\(outDir)/2-zoomed.png", raw: true) }
+        at(0.2) { self.debugOptionHeld = true; self.compareView?.panes[0].imageView.debugPan(dx: 60, dy: 0); self.debugOptionHeld = false }
+        at(0.4) { report("2a-option-drag left pane only") }
+        at(0.2) { self.compareView?.panes[1].imageView.debugPan(dx: 0, dy: 40) }
+        at(0.4) { report("2b-drag right pane: both move, left keeps its offset") }
+        at(0.2) { key("L", 37, .shift) }
+        at(0.3) { self.compareView?.panes[1].imageView.debugPan(dx: 0, dy: 40) }
+        at(0.4) { report("2c-sync off: right moves alone") }
+        at(0.2) { key("L", 37, .shift) }
+        at(0.3) { self.compareView?.panes[1].imageView.debugPan(dx: 0, dy: -40) }
+        at(0.4) { report("2d-sync on again: both move, offsets kept") }
+        at(0.2) { key("", 124) }
+        at(1.2) { report("3-right arrow: candidate changes, keeps zoom") }
+        at(0.2) { key("\t", 48) }
+        at(0.4) { key("p", 35) }
+        at(0.6) { report("4-tab to left pane, P marks it") }
+        at(0.2) { key("C", 8, .shift) }
+        at(1.5) { report("5-shift-C four panes"); self.captureWindow(to: "\(outDir)/3-four.png", raw: true) }
+        at(0.2) { key("\u{1B}", 53) }
+        at(1.0) { report("6-Esc exits to single view"); self.captureWindow(to: "\(outDir)/4-exit.png", raw: true) }
+        at(0.3) { if self.folder.current?.marked == true { self.toggleMark(nil) } }
+        at(0.8) { NSApp.terminate(nil) }
+    }
+
     func runRatingTest() {
         func pixelHash(_ url: URL) -> Int {
             guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
@@ -3334,6 +3658,10 @@ extension ViewerViewController: NSCollectionViewDataSource, NSCollectionViewDele
 
     func collectionView(_ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>) {
         guard let ip = indexPaths.first else { return }
+        if compareView != nil {
+            compareShow(ip.item)
+            return
+        }
         folder.jump(to: ip.item)
         showImage(resetToFit: false)
         view.window?.makeFirstResponder(imageView)
@@ -3469,6 +3797,15 @@ extension ViewerViewController: NSMenuItemValidation {
             return folder.current != nil
         } else if menuItem.action == #selector(toggleSortReversed(_:)) {
             menuItem.state = folder.sortReversed ? .on : .off
+        } else if menuItem.action == #selector(toggleCompare(_:)) {
+            menuItem.state = (compareView?.panes.count ?? 0) == 2 ? .on : .off
+            return folder.count >= 2
+        } else if menuItem.action == #selector(toggleCompare4(_:)) {
+            menuItem.state = (compareView?.panes.count ?? 0) >= 3 ? .on : .off
+            return folder.count >= 2
+        } else if menuItem.action == #selector(toggleCompareSync(_:)) {
+            menuItem.state = compareSynced ? .on : .off
+            return compareView != nil
         } else if menuItem.action == #selector(toggleToolbar(_:)) {
             menuItem.state = Self.showToolbar ? .on : .off
         } else if menuItem.action == #selector(toggleMark(_:)) {

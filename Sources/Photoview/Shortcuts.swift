@@ -80,7 +80,7 @@ enum ShortcutAction: String, CaseIterable {
     case rename, trash, edit, reveal, exportAs, saveRotation
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
-    case mark, markedOnly
+    case mark, markedOnly, compare, compare4, comparePane, compareSync
 
     /// 评分快捷键对应的星数
     var stars: Int? {
@@ -119,7 +119,7 @@ enum ShortcutAction: String, CaseIterable {
         case .rename, .trash, .edit, .reveal, .exportAs, .saveRotation: return .file
         case .cleanup, .batchConvert, .batchRename, .wallpaper: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
-        case .mark, .markedOnly: return .pick
+        case .mark, .markedOnly, .compare, .compare4, .comparePane, .compareSync: return .pick
         }
     }
 
@@ -158,6 +158,10 @@ enum ShortcutAction: String, CaseIterable {
         case .rate1, .rate2, .rate3, .rate4, .rate5: return Rating.stars(stars ?? 0)
         case .mark: return L10n.t("sc.a.mark", "标记 / 取消标记")
         case .markedOnly: return L10n.t("menu.markedOnly", "只看已标记")
+        case .compare: return L10n.t("menu.compare2", "并排对比 2 张")
+        case .compare4: return L10n.t("menu.compare4", "并排对比 4 张")
+        case .comparePane: return L10n.t("sc.a.comparePane", "对比时切换当前格")
+        case .compareSync: return L10n.t("menu.compareSync", "对比时同步缩放和位置")
         }
     }
 
@@ -198,6 +202,10 @@ enum ShortcutAction: String, CaseIterable {
         case .rate0: return nil
         case .mark: return KeyCombo(keyCode: 35, chars: "p")
         case .markedOnly: return KeyCombo(keyCode: 35, mods: .shift, chars: "p")
+        case .compare: return KeyCombo(keyCode: 8, chars: "c")
+        case .compare4: return KeyCombo(keyCode: 8, mods: .shift, chars: "c")
+        case .comparePane: return KeyCombo(keyCode: 48, chars: "\t")
+        case .compareSync: return KeyCombo(keyCode: 37, mods: .shift, chars: "l")
         }
     }
 }

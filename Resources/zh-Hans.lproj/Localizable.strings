@@ -358,3 +358,12 @@ Esc  先关掉右上角的照片信息
 "set.toolbarCheck" = "移动鼠标时显示底部工具条";
 "menu.toolbar" = "工具条";
 "ui.marked" = "已标记";
+"menu.compare2" = "并排对比 2 张";
+"menu.compare4" = "并排对比 4 张";
+"sc.a.comparePane" = "对比时切换当前格";
+"msg.compareNeedsTwo" = "至少要两张照片才能并排对比";
+"menu.compareSync" = "对比时同步缩放和位置";
+"msg.compareSyncOn" = "各格一起缩放和拖动（按住 ⌥ 只动一格）";
+"msg.compareSyncOff" = "各格单独缩放和拖动";
+"ui.compareUnsynced" = "未同步";
+"ui.compareAdjusted" = "单独调过";

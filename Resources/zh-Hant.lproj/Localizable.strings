@@ -346,3 +346,12 @@ Return  重新命名目前圖片
 "set.toolbarCheck" = "移動滑鼠時顯示底部工具列";
 "menu.toolbar" = "工具列";
 "ui.marked" = "已標記";
+"menu.compare2" = "並排對比 2 張";
+"menu.compare4" = "並排對比 4 張";
+"sc.a.comparePane" = "對比時切換目前格";
+"msg.compareNeedsTwo" = "至少要兩張照片才能並排對比";
+"menu.compareSync" = "對比時同步縮放和位置";
+"msg.compareSyncOn" = "各格一起縮放和拖動（按住 ⌥ 只動一格）";
+"msg.compareSyncOff" = "各格單獨縮放和拖動";
+"ui.compareUnsynced" = "未同步";
+"ui.compareAdjusted" = "單獨調過";

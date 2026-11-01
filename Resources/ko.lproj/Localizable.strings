@@ -346,3 +346,12 @@ Return  현재 이미지 이름 변경
 "set.toolbarCheck" = "마우스를 움직이면 아래쪽 도구 막대 표시";
 "menu.toolbar" = "도구 막대";
 "ui.marked" = "표시함";
+"menu.compare2" = "2장 나란히 비교";
+"menu.compare4" = "4장 나란히 비교";
+"sc.a.comparePane" = "비교 중 현재 칸 전환";
+"msg.compareNeedsTwo" = "비교하려면 사진이 2장 이상 필요합니다";
+"menu.compareSync" = "비교 중 확대·위치 동기화";
+"msg.compareSyncOn" = "모든 칸이 함께 확대·이동 (⌥를 누르면 한 칸만)";
+"msg.compareSyncOff" = "칸마다 따로 확대·이동";
+"ui.compareUnsynced" = "동기화 안 함";
+"ui.compareAdjusted" = "따로 조정됨";

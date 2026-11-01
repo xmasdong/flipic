@@ -26,6 +26,9 @@ final class ZoomableImageView: NSView {
     /// 空格开 / 关「窗口贴合图片」预览（同访达空格预览）；onPeekBegin 返回 false 表示当前不能进入（如全屏）
     var onPeekBegin: (() -> Bool)?
     var onPeekEnd: (() -> Void)?
+    /// 并排对比：鼠标按下（用来切换当前格）、缩放或位置变了（同步给其他格）
+    var onMouseDown: (() -> Void)?
+    var onViewChange: ((ViewState, Bool) -> Void)?
 
     private enum Mode { case fit, free }
 
@@ -343,6 +346,7 @@ final class ZoomableImageView: NSView {
         imageLayer.frame = CGRect(origin: origin, size: CGSize(width: w, height: h))
         CATransaction.commit()
         onZoomChange?(scale)
+        if !applyingViewState { onViewChange?(viewState, animated) }
 
         // 图层图片的像素少于屏幕实际要显示的像素、且原图还有更多细节时，请求全分辨率
         if !detailRequested, !animationActive, CGFloat(image.width) < c.width - 1 {
@@ -354,12 +358,19 @@ final class ZoomableImageView: NSView {
         }
     }
 
+    /// 上次布局时的尺寸：放大状态下窗口或格子变大变小，保持画面中心看的还是同一处
+    private var lastLayoutSize: CGSize = .zero
+
     override func layout() {
         super.layout()
         if mode == .fit {
             scale = min(fitScale, 4)
             centerOrigin()
+        } else if lastLayoutSize.width > 0 {
+            origin.x += (bounds.width - lastLayoutSize.width) / 2
+            origin.y += (bounds.height - lastLayoutSize.height) / 2
         }
+        lastLayoutSize = bounds.size
         apply()
     }
 
@@ -530,6 +541,7 @@ final class ZoomableImageView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
+        onMouseDown?()
         mouseMovedSinceDown = false
         if event.clickCount >= 2 { pendingSingleClick?.cancel(); pendingSingleClick = nil }
         dragStartOrigin = origin
@@ -563,6 +575,50 @@ final class ZoomableImageView: NSView {
 
     @objc private func doubleClicked(_ recognizer: NSClickGestureRecognizer) {
         toggleFitActual(at: recognizer.location(in: self))
+    }
+
+    // MARK: - 并排对比同步
+
+    /// 缩放用「相对适应窗口的倍数」，位置用照片上归一化的中心点，分辨率不同的连拍也能对到同一处
+    struct ViewState: Equatable {
+        var fit: Bool
+        var zoom: CGFloat
+        var center: CGPoint
+    }
+
+    private var applyingViewState = false
+
+    var viewState: ViewState {
+        let c = contentSize
+        guard image != nil, c.width > 0, scale > 0 else { return ViewState(fit: true, zoom: 1, center: CGPoint(x: 0.5, y: 0.5)) }
+        return ViewState(fit: mode == .fit, zoom: scale / fitScale,
+                         center: CGPoint(x: (bounds.midX - origin.x) / (c.width * scale),
+                                         y: (bounds.midY - origin.y) / (c.height * scale)))
+    }
+
+    /// 测试用：模拟拖动
+    func debugPan(dx: CGFloat, dy: CGFloat) {
+        origin.x += dx
+        origin.y += dy
+        mode = .free
+        apply()
+    }
+
+    /// 照搬别的格子的缩放和位置，不再回传
+    func applyViewState(_ s: ViewState, animated: Bool = false) {
+        guard image != nil, contentSize.width > 0 else { return }
+        applyingViewState = true
+        defer { applyingViewState = false }
+        if s.fit {
+            fit(animate: animated)
+            return
+        }
+        let c = contentSize
+        mode = .free
+        scale = min(max(fitScale * s.zoom, minScale), maxScale)
+        origin = CGPoint(x: bounds.midX - s.center.x * c.width * scale,
+                         y: bounds.midY - s.center.y * c.height * scale)
+        apply(animated: animated)
     }
 
     // MARK: - 键盘

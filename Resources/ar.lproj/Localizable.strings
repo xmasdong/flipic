@@ -346,3 +346,12 @@ Return  إعادة تسمية الصورة الحالية
 "set.toolbarCheck" = "إظهار شريط الأدوات عند تحريك الفأرة";
 "menu.toolbar" = "شريط الأدوات";
 "ui.marked" = "معلّمة";
+"menu.compare2" = "مقارنة صورتين جنبًا إلى جنب";
+"menu.compare4" = "مقارنة 4 صور جنبًا إلى جنب";
+"sc.a.comparePane" = "تبديل الإطار النشط أثناء المقارنة";
+"msg.compareNeedsTwo" = "تحتاج إلى صورتين على الأقل للمقارنة";
+"menu.compareSync" = "مزامنة التكبير والموضع أثناء المقارنة";
+"msg.compareSyncOn" = "تتكبّر الإطارات وتتحرك معًا (اضغط ⌥ لتحريك واحد)";
+"msg.compareSyncOff" = "يتكبّر كل إطار ويتحرك وحده";
+"ui.compareUnsynced" = "غير متزامن";
+"ui.compareAdjusted" = "مضبوط منفردًا";
