@@ -203,6 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         buildMenu()
         #if FLIPIC_PRO
+        License.install()
         Pairs.install()
         NotificationCenter.default.addObserver(forName: License.didChange, object: nil, queue: .main) { _ in Pairs.install() }
         #endif
@@ -210,6 +211,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSApp.activate(ignoringOtherApps: true)
 
         #if FLIPIC_PRO
+        if let i = CommandLine.arguments.firstIndex(of: "--revoketest"), i + 1 < CommandLine.arguments.count {
+            RevokeTest.run(keyFile: CommandLine.arguments[i + 1])
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--protest2"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in

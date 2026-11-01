@@ -1,12 +1,15 @@
 import AppKit
 
-/// 检查新版本：只向官网请求一个 version.json（里面只有版本号和下载地址），不发送任何数据。
+/// 检查新版本：只向官网请求一个 version.json（版本号、下载地址、作废的激活码名单），不发送任何数据。
 /// 默认不联网：只有用户点「检查更新…」或在设置里打开「自动检查更新」时才会请求
 enum UpdateChecker {
     /// 测试时可以用环境变量 FLIPIC_UPDATE_FEED 指向本地文件
     static let feedURL = ProcessInfo.processInfo.environment["FLIPIC_UPDATE_FEED"].flatMap(URL.init(string:))
         ?? URL(string: "https://flipic.app/version.json")!
     static let fallbackDownload = URL(string: "https://github.com/xmasdong/flipic/releases/latest/download/Flipic.dmg")!
+
+    /// 每次读到 version.json 都交一份给这里（Pro 用它读作废的激活码名单）
+    static var onFeed: (([String: Any]) -> Void)?
 
     struct Release {
         let version: String
@@ -53,6 +56,7 @@ enum UpdateChecker {
                       let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let version = json["version"] as? String {
                 lastCheck = Date()
+                DispatchQueue.main.async { onFeed?(json) }
                 let download = (json["download"] as? String).flatMap(URL.init(string:)) ?? fallbackDownload
                 result = isNewer(version, than: currentVersion)
                     ? .newer(Release(version: version, download: download)) : .upToDate(currentVersion)
