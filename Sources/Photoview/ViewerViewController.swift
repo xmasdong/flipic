@@ -381,7 +381,8 @@ final class ViewerViewController: NSViewController {
             [("play.fill", L10n.t("tip.slideshow", "幻灯片放映（S）"), #selector(toggleSlideshow(_:)))],
             [("info.circle", L10n.t("tip.info", "照片信息（I）"), #selector(toggleInfoPanel(_:))),
              ("photo.on.rectangle", L10n.t("tip.strip", "底部缩略图栏开关（T）"), #selector(toggleFilmstrip(_:)))],
-            [("square.and.arrow.down", L10n.t("tip.export", "导出压缩副本（⌘S）"), #selector(exportAs(_:))),
+            [("folder.badge.plus", L10n.t("tip.exportFolder", "把当前显示的照片复制或移动到文件夹（⇧⌘E）"), #selector(exportToFolder(_:))),
+             ("square.and.arrow.down", L10n.t("tip.export", "导出压缩副本（⌘S）"), #selector(exportAs(_:))),
              ("pencil", L10n.t("tip.rename", "重命名（回车）"), #selector(renameCurrent(_:))),
              ("trash", L10n.t("tip.trash", "移到废纸篓（⌘⌫）"), #selector(trashCurrent(_:)))],
         ]
@@ -1077,6 +1078,7 @@ final class ViewerViewController: NSViewController {
         case .compare4: toggleCompare4(nil)
         case .comparePane: compareCyclePane()
         case .compareSync: toggleCompareSync(nil)
+        case .exportFolder: exportToFolder(nil)
         default: break
         }
     }
@@ -1130,6 +1132,7 @@ final class ViewerViewController: NSViewController {
         case #selector(toggleInfoPanel(_:)): return .info
         case #selector(toggleFilmstrip(_:)): return .filmstrip
         case #selector(exportAs(_:)): return .exportAs
+        case #selector(exportToFolder(_:)): return .exportFolder
         case #selector(renameCurrent(_:)): return .rename
         case #selector(trashCurrent(_:)): return .trash
         default: return nil
@@ -1507,6 +1510,7 @@ final class ViewerViewController: NSViewController {
         menu.addItem(rating)
         add(Self.markMenuTitle(folder.current?.marked ?? false), #selector(toggleMark(_:)))
         add(L10n.t("menu.markedOnly", "只看已标记"), #selector(toggleMarkedOnly(_:)))
+        add(L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(exportToFolder(_:)))
         menu.addItem(.separator())
         add(L10n.t("menu.reveal", "在 Finder 中显示"), #selector(revealInFinder(_:)))
         add(L10n.t("menu.trash", "移到废纸篓"), #selector(trashCurrent(_:)))
@@ -1529,6 +1533,7 @@ final class ViewerViewController: NSViewController {
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.ratingCache[url] = r
+                self.folder.setRating(r, url: url)
                 if self.folder.current?.url == url { self.updateRatingLabel() }
             }
         }
@@ -1547,7 +1552,10 @@ final class ViewerViewController: NSViewController {
     func setRating(_ stars: Int) {
         guard cleanup == nil, let url = folder.current?.url else { return }
         let targets = ratingTargets(for: url)
-        for t in targets { ratingCache[t] = stars }
+        for t in targets {
+            ratingCache[t] = stars
+            folder.setRating(stars, url: t)
+        }
         updateRatingLabel()
         flash(stars == 0 ? L10n.t("rating.cleared", "已取消评分") : Rating.stars(stars), seconds: 1.2)
         if !exifPanel.isHidden { updateExifPanel() }
@@ -1555,7 +1563,10 @@ final class ViewerViewController: NSViewController {
             let failed = targets.filter { !Rating.write(stars, to: $0) }
             guard !failed.isEmpty else { return }
             DispatchQueue.main.async {
-                for t in failed { self?.ratingCache[t] = nil }
+                for t in failed {
+                    self?.ratingCache[t] = nil
+                    self?.folder.setRating(nil, url: t)
+                }
                 self?.updateRatingLabel()
                 self?.flash(L10n.f("rating.failed", "评分没能写入：%@", failed.map(\.lastPathComponent).joined(separator: "、")), seconds: 4)
             }
@@ -1721,13 +1732,60 @@ final class ViewerViewController: NSViewController {
                   ?? L10n.t("msg.noMarksMenu", "还没有标记的照片"), seconds: 2.5)
             return
         }
+        filterDidChange()
+    }
+
+    /// 筛选条件变了：重建缩略图栏、显示符合条件的那张，顶部计数跟着变
+    private func filterDidChange() {
         prefetchedURLs.removeAll()
         filmstrip.collectionView.reloadData()
         filmstrip.scrollTo(index: folder.index)
         showImage(resetToFit: true)
         updateMarkedOnlyPill()
         // 进入筛选时顶部的计数已经说明了，退出时才提示一下
-        if !on { flash(L10n.f("msg.markedOnlyOff", "显示全部 %d 张", folder.count), seconds: 1.5) }
+        if folder.filter == nil { flash(L10n.f("msg.markedOnlyOff", "显示全部 %d 张", folder.count), seconds: 1.5) }
+    }
+
+    /// 「只看星级」菜单：tag 是最低星级，0 是全部；再选一次同一档回到全部
+    @objc func setRatingFilter(_ sender: NSMenuItem) { applyRatingFilter(sender.tag) }
+
+    func applyRatingFilter(_ n: Int, done: (() -> Void)? = nil) {
+        guard cleanup == nil, folder.totalCount > 0 else { return }
+        exitCompare()
+        if n == 0 || folder.filter == .minRating(n) {
+            if folder.filter != nil, folder.setFilter(nil) { filterDidChange() }
+            done?()
+            return
+        }
+        let finish = { [weak self] in
+            guard let self else { return }
+            guard self.folder.setFilter(.minRating(n)) else {
+                self.flash(L10n.f("msg.noRatingMatch", "没有%@及以上的照片", Rating.stars(n).replacingOccurrences(of: "☆", with: "")), seconds: 2.5)
+                done?()
+                return
+            }
+            self.filterDidChange()
+            done?()
+        }
+        let missing = folder.urlsMissingRating
+        guard !missing.isEmpty else { finish(); return }
+        // 星级只在翻到某张时才读，筛选前把整个文件夹的都读一遍（只读元数据，很快）
+        if missing.count > 40 { flash(L10n.t("msg.readingRatings", "正在读取评分…"), seconds: 5) }
+        let gen = folderGeneration
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var values = [Int](repeating: 0, count: missing.count)
+            values.withUnsafeMutableBufferPointer { buf in
+                DispatchQueue.concurrentPerform(iterations: missing.count) { i in buf[i] = Rating.read(missing[i]) }
+            }
+            DispatchQueue.main.async {
+                guard let self, self.folderGeneration == gen else { return }
+                for (u, r) in zip(missing, values) {
+                    self.folder.setRating(r, url: u)
+                    self.ratingCache[u] = r
+                }
+                finish()
+            }
+        }
     }
 
     /// 标记变了以后刷新底部徽章、缩略图上的勾和顶部计数，不重建缩略图栏
@@ -1743,6 +1801,7 @@ final class ViewerViewController: NSViewController {
     /// 「只看已标记」时顶部居中的计数，点一下回到显示全部
     private let markedOnlyPill = NSVisualEffectView()
     private let markedOnlyLabel = NSTextField(labelWithString: "")
+    private let markedOnlyPillIcon = NSImageView()
 
     private func buildMarkedOnlyPill() {
         markedOnlyPill.material = .hudWindow
@@ -1753,12 +1812,13 @@ final class ViewerViewController: NSViewController {
         markedOnlyPill.layer?.masksToBounds = true
         markedOnlyPill.translatesAutoresizingMaskIntoConstraints = false
         markedOnlyPill.isHidden = true
-        let icon = NSImageView(image: NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)?
-            .withSymbolConfiguration(.init(pointSize: 12, weight: .semibold)) ?? NSImage())
+        let icon = markedOnlyPillIcon
+        icon.image = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 12, weight: .semibold))
         icon.contentTintColor = Self.markColor
         markedOnlyLabel.font = .systemFont(ofSize: 12, weight: .medium)
         markedOnlyLabel.textColor = .labelColor
-        let close = NSButton(title: L10n.t("ui.showAll", "显示全部"), target: self, action: #selector(toggleMarkedOnly(_:)))
+        let close = NSButton(title: L10n.t("ui.showAll", "显示全部"), target: self, action: #selector(clearFilter(_:)))
         close.isBordered = false
         close.font = .systemFont(ofSize: 12)
         close.contentTintColor = .secondaryLabelColor
@@ -1778,10 +1838,160 @@ final class ViewerViewController: NSViewController {
         ])
     }
 
+    @objc func clearFilter(_ sender: Any?) {
+        if folder.filter != nil, folder.setFilter(nil) { filterDidChange() }
+    }
+
     private func updateMarkedOnlyPill() {
-        markedOnlyPill.isHidden = !folder.markedOnly || cleanup != nil
-        markedOnlyLabel.stringValue = L10n.f("ui.markedOnlyPill", "只看已标记 · %1$d / %2$d",
-                                             folder.markedCount, folder.totalCount)
+        markedOnlyPill.isHidden = folder.filter == nil || cleanup != nil
+        switch folder.filter {
+        case .minRating(let n):
+            markedOnlyPillIcon.isHidden = true
+            markedOnlyLabel.stringValue = L10n.f("ui.ratingPill", "只看%1$@及以上 · %2$d / %3$d",
+                                                 String(repeating: "★", count: n), folder.matchingCount, folder.totalCount)
+        default:
+            markedOnlyPillIcon.isHidden = false
+            markedOnlyLabel.stringValue = L10n.f("ui.markedOnlyPill", "只看已标记 · %1$d / %2$d",
+                                                 folder.markedCount, folder.totalCount)
+        }
+    }
+
+    // MARK: - 导出到文件夹
+
+    /// 复制还是移动，记住上次的选择
+    static var exportFolderMoves: Bool {
+        get { UserDefaults.standard.bool(forKey: "exportFolderMoves") }
+        set { UserDefaults.standard.set(newValue, forKey: "exportFolderMoves") }
+    }
+
+    /// 测试用：跳过选文件夹的面板，直接导出到这里
+    var debugExportTarget: URL?
+
+    /// 把当前显示的照片（筛选中就是筛出来的那些）复制或移动到一个文件夹
+    @objc func exportToFolder(_ sender: Any?) {
+        guard folder.count > 0, !isProcessing, let source = folder.current?.url.deletingLastPathComponent() else { return }
+        exitCompare()
+        let urls = folder.items.map(\.url)
+        if let target = debugExportTarget {
+            runFolderExport(urls, to: target, from: source, move: Self.exportFolderMoves)
+            return
+        }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = L10n.t("exp.f.prompt", "导出到这里")
+        panel.message = exportSummary(count: urls.count)
+        let copy = NSButton(radioButtonWithTitle: L10n.t("exp.f.copy", "复制（原文件留在这里）"), target: nil, action: nil)
+        let move = NSButton(radioButtonWithTitle: L10n.t("exp.f.move", "移动（从这里移走）"), target: nil, action: nil)
+        copy.state = Self.exportFolderMoves ? .off : .on
+        move.state = Self.exportFolderMoves ? .on : .off
+        // 两个单选按钮共用同一个 action 才会互斥
+        copy.action = #selector(exportModeChanged(_:)); copy.target = self
+        move.action = #selector(exportModeChanged(_:)); move.target = self
+        let row = NSStackView(views: [copy, move])
+        row.spacing = 18
+        row.edgeInsets = NSEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
+        panel.accessoryView = row
+        panel.isAccessoryViewDisclosed = true
+        guard let window = view.window else { return }
+        panel.beginSheetModal(for: window) { [weak self] resp in
+            guard let self, resp == .OK, let target = panel.url else { return }
+            Self.exportFolderMoves = move.state == .on
+            self.runFolderExport(urls, to: target, from: source, move: move.state == .on)
+        }
+    }
+
+    @objc private func exportModeChanged(_ sender: NSButton) {}
+
+    private func exportSummary(count: Int) -> String {
+        switch folder.filter {
+        case .marked: return L10n.f("exp.f.summaryMarked", "导出当前显示的 %d 张照片（已标记的）", count)
+        case .minRating(let n): return L10n.f("exp.f.summaryRating", "导出当前显示的 %1$d 张照片（%2$@及以上）", count, String(repeating: "★", count: n))
+        case nil: return L10n.f("exp.f.summaryAll", "导出当前显示的 %d 张照片（整个文件夹）", count)
+        }
+    }
+
+    /// 同名的一组文件（比如 RAW 的星级旁车 .xmp）一起走，用同一个新名字；目标里已有同名文件时加编号，不覆盖
+    private func runFolderExport(_ urls: [URL], to target: URL, from source: URL, move: Bool) {
+        guard target.standardizedFileURL.path != source.standardizedFileURL.path else {
+            flash(L10n.t("msg.exportSameFolder", "目标就是当前文件夹，换一个文件夹"), seconds: 3)
+            return
+        }
+        isProcessing = true
+        let fm = FileManager.default
+        var groups: [(base: String, files: [URL])] = []
+        var groupIndex: [String: Int] = [:]
+        for u in urls {
+            let base = u.deletingPathExtension().lastPathComponent
+            var files = [u]
+            let side = Rating.sidecarURL(for: u)
+            if fm.fileExists(atPath: side.path) { files.append(side) }
+            if let gi = groupIndex[base] {
+                for f in files where !groups[gi].files.contains(f) { groups[gi].files.append(f) }
+            } else {
+                groupIndex[base] = groups.count
+                groups.append((base, files))
+            }
+        }
+        let total = urls.count
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            var done = Set<URL>()
+            var failed = 0
+            var processed = 0
+            for g in groups {
+                // 找一个这组所有扩展名都不冲突的名字：base、base 2、base 3…
+                var name = g.base
+                var n = 1
+                while g.files.contains(where: { fm.fileExists(atPath: target.appendingPathComponent(name).appendingPathExtension($0.pathExtension).path) }) {
+                    n += 1
+                    name = "\(g.base) \(n)"
+                }
+                for f in g.files {
+                    let dest = target.appendingPathComponent(name).appendingPathExtension(f.pathExtension)
+                    do {
+                        if move { try fm.moveItem(at: f, to: dest) } else { try fm.copyItem(at: f, to: dest) }
+                        if urls.contains(f) { done.insert(f) }
+                    } catch {
+                        if urls.contains(f) { failed += 1 }
+                    }
+                }
+                processed += g.files.filter { urls.contains($0) }.count
+                if total > 30, processed % 20 == 0 {
+                    let p = processed
+                    DispatchQueue.main.async { self?.flash(L10n.f("msg.exporting", "正在处理 %1$d / %2$d", p, total), seconds: 5) }
+                }
+            }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isProcessing = false
+                let folderName = target.lastPathComponent
+                var msg = move ? L10n.f("msg.exportedMove", "已移动 %1$d 张到「%2$@」", done.count, folderName)
+                               : L10n.f("msg.exportedCopy", "已复制 %1$d 张到「%2$@」", done.count, folderName)
+                if failed > 0 { msg += " · " + L10n.f("msg.exportFailed", "%d 个文件没能处理", failed) }
+                if move, !done.isEmpty {
+                    for u in done { self.loader.evict(url: u) }
+                    self.folder.remove(urls: done)
+                    self.prefetchedURLs.removeAll()
+                    self.filmstrip.collectionView.reloadData()
+                    if self.folder.count > 0 {
+                        self.showImage(resetToFit: true)
+                    } else if self.folder.filter != nil, self.folder.setFilter(nil), self.folder.count > 0 {
+                        // 筛出来的都移走了，回到剩下的全部照片
+                        self.filmstrip.collectionView.reloadData()
+                        self.showImage(resetToFit: true)
+                    } else {
+                        self.imageView.set(image: nil, resetToFit: true, isNew: true)
+                        self.emptyState.isHidden = false
+                        self.updateControlsPresence()
+                        self.emptyHint.stringValue = L10n.t("ui.noMore", "文件夹里没有更多图片了")
+                    }
+                    self.updateMarkedOnlyPill()
+                }
+                self.flash(msg, seconds: 3.5)
+            }
+        }
     }
 
     // MARK: - 并排对比
@@ -2980,6 +3190,35 @@ final class ViewerViewController: NSViewController {
         at(0.8) { NSApp.terminate(nil) }
     }
 
+    /// --exporttest <输出目录> <文件夹>：只看 4 星以上 → 复制到 copy/（里面先放一个同名文件）→ 移动到 move/ → 回到剩下的全部照片。
+    /// 星级要事先写好：a.jpg 5 星、pair 4 星（RAW 用旁车 .xmp）、c.jpg 2 星
+    func runExportTest(outDir: String) {
+        let out = URL(fileURLWithPath: outDir)
+        let copyDir = out.appendingPathComponent("copy"), moveDir = out.appendingPathComponent("move")
+        func list(_ d: URL) -> String {
+            ((try? FileManager.default.contentsOfDirectory(atPath: d.path)) ?? []).filter { !$0.hasPrefix(".") }.sorted().joined(separator: ",")
+        }
+        func report(_ tag: String) {
+            NSLog("EXP %@ | shown=%d/%d filter=%@ items=[%@] | src=[%@] copy=[%@] move=[%@]", tag, folder.count, folder.totalCount,
+                  String(describing: folder.filter), folder.items.map(\.url.lastPathComponent).joined(separator: ","),
+                  list(folder.allItems.first?.url.deletingLastPathComponent() ?? out.appendingPathComponent("src")), list(copyDir), list(moveDir))
+        }
+        let src = folder.current?.url.deletingLastPathComponent()
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.0) { self.applyRatingFilter(4) { report("1-only 4 stars and up") } }
+        at(1.0) { self.pokeControls() }
+        at(0.6) { self.captureWindow(to: "\(outDir)/filter.png", raw: true) }
+        at(1.0) { self.debugExportTarget = copyDir; Self.exportFolderMoves = false; self.exportToFolder(nil) }
+        at(1.5) { report("2-copied (a.jpg existed -> a 2.jpg, pair.xmp follows)") }
+        at(0.2) { self.debugExportTarget = moveDir; Self.exportFolderMoves = true; self.exportToFolder(nil) }
+        at(1.5) {
+            NSLog("EXP srcdir=[%@]", list(src ?? out))
+            report("3-moved: source loses them, back to remaining photos")
+        }
+        at(0.3) { Self.exportFolderMoves = false; NSApp.terminate(nil) }
+    }
+
     func runRatingTest() {
         func pixelHash(_ url: URL) -> Int {
             guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
@@ -3803,6 +4042,12 @@ extension ViewerViewController: NSMenuItemValidation {
         } else if menuItem.action == #selector(toggleCompare4(_:)) {
             menuItem.state = (compareView?.panes.count ?? 0) >= 3 ? .on : .off
             return folder.count >= 2
+        } else if menuItem.action == #selector(setRatingFilter(_:)) {
+            let current: Int = { if case .minRating(let n) = folder.filter { return n }; return folder.filter == nil ? 0 : -1 }()
+            menuItem.state = menuItem.tag == current ? .on : .off
+            return folder.totalCount > 0
+        } else if menuItem.action == #selector(exportToFolder(_:)) {
+            return folder.count > 0 && !isProcessing
         } else if menuItem.action == #selector(toggleCompareSync(_:)) {
             menuItem.state = compareSynced ? .on : .off
             return compareView != nil

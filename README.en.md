@@ -45,6 +45,7 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 **Viewing**
 
 - Culling: press P to mark the photos you want (a same-name RAW is marked too) and ⇧P to show only marked ones. Marks are a Finder tag named Flipic, so the photo files are not changed and the tag in the Finder sidebar lists them all, ready to select and drag.
+- Filter by rating: View › Show by Rating shows N stars and up, and File › Export to Folder… (⇧⌘E) copies or moves the photos shown in one go, numbering name clashes and taking RAW rating sidecars along.
 - Side-by-side compare: C for two photos, Shift-C for four, with zoom and position synced so you can check focus and expressions across a burst. Hold ⌥ to nudge one pane on its own, and Shift-L turns syncing off.
 - The bottom toolbar can be turned off in Settings if you prefer shortcuts and menus.
 - Open several windows at once: opening another photo from Finder while one is showing starts a new window (Settings can switch back to replacing it), and File › New Window is ⌘N.

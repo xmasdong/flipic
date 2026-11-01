@@ -77,7 +77,7 @@ enum ShortcutAction: String, CaseIterable {
     case prev, next, first, last
     case zoomIn, zoomOut, zoomAtPointer, actualSize, peek, fullscreen
     case info, filmstrip, slideshow, rotateCW, rotateCCW
-    case rename, trash, edit, reveal, exportAs, saveRotation
+    case rename, trash, edit, reveal, exportAs, exportFolder, saveRotation
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
     case mark, markedOnly, compare, compare4, comparePane, compareSync
@@ -116,7 +116,7 @@ enum ShortcutAction: String, CaseIterable {
         case .toggleApp: return .global
         case .prev, .next, .first, .last, .zoomIn, .zoomOut, .zoomAtPointer, .actualSize, .peek: return .browse
         case .fullscreen, .info, .filmstrip, .slideshow, .rotateCW, .rotateCCW: return .view
-        case .rename, .trash, .edit, .reveal, .exportAs, .saveRotation: return .file
+        case .rename, .trash, .edit, .reveal, .exportAs, .exportFolder, .saveRotation: return .file
         case .cleanup, .batchConvert, .batchRename, .wallpaper: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
         case .mark, .markedOnly, .compare, .compare4, .comparePane, .compareSync: return .pick
@@ -149,6 +149,7 @@ enum ShortcutAction: String, CaseIterable {
         case .edit: return plain(L10n.t("menu.editChoose", "在后期软件中编辑…"))
         case .reveal: return L10n.t("menu.reveal", "在 Finder 中显示")
         case .exportAs: return plain(L10n.t("menu.exportAs", "导出为…"))
+        case .exportFolder: return plain(L10n.t("menu.exportFolder", "导出到文件夹…"))
         case .saveRotation: return L10n.t("menu.saveRotation", "保存旋转")
         case .cleanup: return L10n.t("menu.cleanup", "清理模式 Beta")
         case .batchConvert: return plain(L10n.t("menu.batchConvert", "批量转换格式…"))
@@ -189,6 +190,7 @@ enum ShortcutAction: String, CaseIterable {
         case .edit: return KeyCombo(keyCode: 14, mods: .command, chars: "e")
         case .reveal: return KeyCombo(keyCode: 15, mods: .command, chars: "r")
         case .exportAs: return KeyCombo(keyCode: 1, mods: .command, chars: "s")
+        case .exportFolder: return KeyCombo(keyCode: 14, mods: [.command, .shift], chars: "e")
         case .saveRotation: return KeyCombo(keyCode: 1, mods: [.command, .option], chars: "s")
         case .cleanup: return KeyCombo(keyCode: 40, mods: [.command, .shift], chars: "k")
         case .batchConvert: return KeyCombo(keyCode: 8, mods: [.command, .shift], chars: "c")

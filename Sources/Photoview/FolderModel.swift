@@ -11,6 +11,21 @@ struct ImageItem {
     var captureDate: Date?
     /// 挑片标记（访达标签「Flipic」）
     var marked = false
+    /// 星级；nil 表示还没读过
+    var rating: Int?
+}
+
+/// 「只看」筛选：已标记，或某个星级以上
+enum PhotoFilter: Equatable {
+    case marked
+    case minRating(Int)
+
+    func matches(_ item: ImageItem) -> Bool {
+        switch self {
+        case .marked: return item.marked
+        case .minRating(let n): return (item.rating ?? 0) >= n
+        }
+    }
 }
 
 enum SortKey: Int, CaseIterable {
@@ -34,8 +49,9 @@ enum SortKey: Int, CaseIterable {
 final class FolderModel {
     private(set) var items: [ImageItem] = []
     private(set) var index: Int = 0
-    /// 「只看已标记」时存着完整列表，items 只是其中标记过的；nil 表示显示全部
+    /// 筛选时存着完整列表，items 只是其中符合条件的；nil 表示显示全部
     private var unfiltered: [ImageItem]?
+    private(set) var filter: PhotoFilter?
 
     /// 排序方式与方向，跨启动记住；sortReversed 是在该方式自然方向上反过来
     var sortKey: SortKey {
@@ -50,12 +66,16 @@ final class FolderModel {
     var count: Int { items.count }
     var current: ImageItem? { items.isEmpty ? nil : items[index] }
 
-    var markedOnly: Bool { unfiltered != nil }
-    /// 整个文件夹的列表，不受「只看已标记」影响
+    var markedOnly: Bool { filter == .marked }
+    /// 整个文件夹的列表，不受筛选影响
     var allItems: [ImageItem] { unfiltered ?? items }
-    /// 整个文件夹的张数，不受「只看已标记」影响
+    /// 整个文件夹的张数，不受筛选影响
     var totalCount: Int { unfiltered?.count ?? items.count }
     var markedCount: Int { (unfiltered ?? items).filter(\.marked).count }
+    /// 整个文件夹里符合当前筛选条件的张数
+    var matchingCount: Int { filter.map { f in allItems.filter { f.matches($0) }.count } ?? items.count }
+    /// 还没读过星级的文件
+    var urlsMissingRating: [URL] { allItems.filter { $0.rating == nil }.map(\.url) }
 
     /// 改列表里某个文件的信息，两份列表一起改
     private func update(_ url: URL, _ change: (inout ImageItem) -> Void) {
@@ -67,27 +87,45 @@ final class FolderModel {
     }
 
     func setMarked(_ on: Bool, url: URL) { update(url) { $0.marked = on } }
+    func setRating(_ rating: Int?, url: URL) { update(url) { $0.rating = rating } }
 
-    /// 切换「只看已标记」。打开时当前这张没标记就跳到它后面第一张标记过的；一张都没标记返回 false。
-    /// 筛选中取消标记的照片先留在列表里，下次切换时才拿掉，免得看着看着画面突然换了
-    @discardableResult
-    func setMarkedOnly(_ on: Bool) -> Bool {
+    /// 移动走的文件从列表里拿掉；当前这张被拿掉时停在原位置的下一张
+    func remove(urls: Set<URL>) {
         let cur = current?.url
-        if on {
-            guard unfiltered == nil else { return true }
-            guard items.contains(where: \.marked) else { return false }
-            let start = index
-            let order = Array(items[start...]) + Array(items[..<start])
-            let target = order.first(where: \.marked)?.url
-            unfiltered = items
-            items = items.filter(\.marked)
-            index = target.flatMap { u in items.firstIndex { $0.url == u } } ?? 0
+        let oldIndex = index
+        items.removeAll { urls.contains($0.url) }
+        unfiltered?.removeAll { urls.contains($0.url) }
+        if let cur, !urls.contains(cur) {
+            index = items.firstIndex { $0.url == cur } ?? 0
         } else {
-            guard let all = unfiltered else { return true }
+            index = min(oldIndex, max(items.count - 1, 0))
+        }
+    }
+
+    @discardableResult
+    func setMarkedOnly(_ on: Bool) -> Bool { setFilter(on ? .marked : nil) }
+
+    /// 换筛选条件（nil 显示全部）。当前这张不符合就跳到它后面第一张符合的；一张都不符合返回 false、列表不变。
+    /// 筛选中取消标记或改了星级的照片先留在列表里，下次切换时才拿掉，免得看着看着画面突然换了
+    @discardableResult
+    func setFilter(_ f: PhotoFilter?) -> Bool {
+        let all = unfiltered ?? items
+        let cur = current?.url
+        guard let f else {
             items = all
             unfiltered = nil
+            filter = nil
             index = cur.flatMap { u in items.firstIndex { $0.url == u } } ?? 0
+            return true
         }
+        guard all.contains(where: f.matches) else { return false }
+        let start = cur.flatMap { u in all.firstIndex { $0.url == u } } ?? 0
+        let order = Array(all[start...]) + Array(all[..<start])
+        let target = order.first(where: f.matches)?.url
+        unfiltered = all
+        filter = f
+        items = all.filter(f.matches)
+        index = target.flatMap { u in items.firstIndex { $0.url == u } } ?? 0
         return true
     }
 
@@ -122,6 +160,7 @@ final class FolderModel {
                              marked: Marks.isMarked(tagNames: v?.tagNames))
         }
         unfiltered = nil
+        filter = nil
         index = 0
         resort(keeping: target)
         return !items.isEmpty
@@ -219,7 +258,7 @@ final class FolderModel {
         update(old) { item in
             item = ImageItem(url: item.url.deletingLastPathComponent().appendingPathComponent(newName),
                              pixelSize: item.pixelSize, modified: item.modified, created: item.created,
-                             fileSize: item.fileSize, captureDate: item.captureDate, marked: item.marked)
+                             fileSize: item.fileSize, captureDate: item.captureDate, marked: item.marked, rating: item.rating)
         }
     }
 

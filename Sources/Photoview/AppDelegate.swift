@@ -88,6 +88,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--setrating"), i + 2 < CommandLine.arguments.count, let n = Int(CommandLine.arguments[i + 1]) {
+            // --setrating <星级> <文件...>：测试前准备星级
+            for path in CommandLine.arguments[(i + 2)...] where !path.hasPrefix("-") {
+                NSLog("SETRATING %@ %d ok=%d", (path as NSString).lastPathComponent, n, Rating.write(n, to: URL(fileURLWithPath: path)) ? 1 : 0)
+            }
+            NSApp.terminate(nil)
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--bothtest"), i + 1 < CommandLine.arguments.count {
             // --bothtest <文件...>：同一张照片上标记和评星互不影响（评星改写文件后标签还在）
             for path in CommandLine.arguments[(i + 1)...] where !path.hasPrefix("-") {
@@ -306,6 +314,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runRatingShot(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--exporttest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runExportTest(outDir: outDir) }
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--comparetest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
@@ -526,6 +541,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.renameCurrent(_:)): .rename,
         #selector(ViewerViewController.saveRotation(_:)): .saveRotation,
         #selector(ViewerViewController.exportAs(_:)): .exportAs,
+        #selector(ViewerViewController.exportToFolder(_:)): .exportFolder,
         #selector(ViewerViewController.trashCurrent(_:)): .trash,
         #selector(ViewerViewController.batchConvert(_:)): .batchConvert,
         #selector(ViewerViewController.batchRename(_:)): .batchRename,
@@ -649,11 +665,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(ratingItem)
             item(m, L10n.t("menu.mark", "标记这张"), #selector(ViewerViewController.toggleMark(_:)))
             item(m, L10n.t("menu.markedOnly", "只看已标记"), #selector(ViewerViewController.toggleMarkedOnly(_:)))
+            let filterItem = NSMenuItem(title: L10n.t("menu.ratingFilter", "只看星级"), action: nil, keyEquivalent: "")
+            let filterMenu = NSMenu(title: filterItem.title)
+            item(filterMenu, L10n.t("menu.ratingFilterAll", "全部照片"), #selector(ViewerViewController.setRatingFilter(_:))).tag = 0
+            filterMenu.addItem(.separator())
+            for n in stride(from: 5, through: 1, by: -1) {
+                item(filterMenu, L10n.f("menu.ratingAtLeast", "%@及以上", String(repeating: "★", count: n)),
+                     #selector(ViewerViewController.setRatingFilter(_:))).tag = n
+            }
+            filterItem.submenu = filterMenu
+            m.addItem(filterItem)
             m.addItem(.separator())
             item(m, L10n.t("menu.rename", "重命名…"), #selector(ViewerViewController.renameCurrent(_:)))
             item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.exportAs", "导出为…"), #selector(ViewerViewController.exportAs(_:)))
+            item(m, L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(ViewerViewController.exportToFolder(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
             m.addItem(.separator())
