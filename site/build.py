@@ -50,6 +50,7 @@ PAIRS = {
     "/guides/windows-image-viewer-for-mac/": "/en/guides/irfanview-for-mac/",
     "/guides/cull-event-photos/": "/en/guides/cull-photos-on-mac/",
     "/pro/": "/en/pro/",
+    "/guides/mac-image-viewer-recommend/": "/en/guides/open-source-image-viewers-mac/",
 }
 
 # Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
@@ -492,6 +493,57 @@ guide("en", "/en/guides/cull-photos-on-mac/", "How to cull hundreds of event pho
 <h2>3. Hand the keepers to your editor</h2>
 <p>Choose Lightroom, Photoshop or Capture One in Settings and press <kbd>⌘E</kbd> on a photo to open it there, the RAW if one sits next to the JPEG. Lightroom picks up the star ratings on import, so you can filter by them right away.</p>""",
       howto=["Open the folder in Flipic and press ⇧⌘K for Cleanup Mode", "Review the suggested bursts, closed eyes and blurry shots and move them to the Trash", "Page through the rest and rate with 1–5", "Press ⌘E to open keepers in Lightroom or Photoshop"])
+
+
+guide("zh", "/guides/mac-image-viewer-recommend/", "Mac 看图软件推荐（2026）：预览不够用时可以换哪些",
+      "Mac 看图软件推荐",
+      "Mac 自带的预览翻不了整个文件夹。这里把 2026 年还在更新的 Mac 看图软件按免费开源、免费不开源、付费三类列出来，写清楚各自适合谁。",
+      "免费开源、免费、付费三类，各自适合什么人",
+      f"""<p>Mac 自带的「预览」只在你一起打开的几个文件之间切换，双击打开一张后，同一个文件夹里的其他图片翻不到。下面这些都能解决这个问题，按类型分开写。信息在 2026 年 11 月 1 日从各自官网、GitHub 和 App Store 核对过，价格和版本以官网为准。</p>
+<h2>免费开源</h2>
+<table><thead><tr><th>软件</th><th>协议</th><th>适合</th></tr></thead><tbody>
+<tr><td>Flipic</td><td>MIT</td><td>只用 Mac、想要 Windows 看图软件那种手感：双击后方向键翻整个文件夹，按 0 在鼠标处放大到 100%，打星、标记、挑片</td></tr>
+<tr><td>PicView</td><td>GPL-3.0</td><td>Mac 和 Windows 都用；支持的格式多，相机 RAW 也在列；可以 <code>brew install picview</code></td></tr>
+<tr><td>FlowVision</td><td>GPL-3.0</td><td>喜欢按瀑布流网格浏览整个文件夹，也看视频；Swift 写的原生 Mac 软件</td></tr>
+<tr><td>qView</td><td>GPL-3.0</td><td>只想看图、越简单越好；界面只有图片和标题栏，方向键翻页</td></tr>
+<tr><td>nomacs</td><td>GPL-3.0</td><td>Windows、Linux 上用惯了 nomacs；功能多，RAW 用 LibRaw 解</td></tr>
+<tr><td>Oculante</td><td>MIT</td><td>想要速度和一点简单编辑；Rust 写的，跨平台</td></tr>
+<tr><td>ImageGlass</td><td>GPL-3.0</td><td>Windows 上的老用户；Mac 版刚出 beta，需要 macOS 14 和 Apple 芯片，Pro 功能另外付费</td></tr>
+</tbody></table>
+<p>不太推荐的：Phew 只能打开 FLIF 格式，作者已经说不再维护；Sequential 的维护分支 2024 年 9 月之后没有发新版。</p>
+<h2>免费但不开源</h2>
+<p><strong>XnView MP</strong>：个人和教育用途免费，公司用要买授权。支持 500 多种格式，管理、批量转换、改元数据都很强，界面信息比较多。官网的 Mac 下载目前只看到 Intel（x64）版本。</p>
+<p><strong>Picview</strong>（App Store）：免费，模仿 Windows「照片」的用法，方向键翻页。</p>
+<h2>付费</h2>
+<p><strong>Lyn</strong>：29.99 美元，15 天试用，带 HDR 和 RAW，更新很勤。<strong>FastRawViewer</strong>：23.99 美元可装两台电脑，自己解 RAW 而不是看内嵌的预览图，有直方图和焦点峰值，适合严肃挑 RAW。<strong>ApolloOne</strong>：有免费版，也有付费版，面向摄影师的挑片和关键词整理，部分功能需要较新的 macOS。</p>
+<h2>怎么选</h2>
+<ul><li>只是想双击一张后方向键往下翻：Flipic、qView、PicView 都可以，Flipic 最接近 Windows 看图软件的手感。</li><li>主要挑相机 RAW、要看焦点和直方图：FastRawViewer。</li><li>要一个能管理、能批量处理的「大」软件：XnView MP。</li><li>喜欢网格浏览：FlowVision。</li></ul>
+<p>说明一下：Flipic 是本站的软件。看图、打星、标记、筛选、导出都免费开源；另有一个可选的付费 Pro，只加了批量整理的功能，大多数人用不上。</p>
+<figure>{{shot('filmstrip.webp', 'Flipic 底部缩略图栏与左右翻页')}}<figcaption>Flipic：双击一张，方向键翻完整个文件夹。</figcaption></figure>""")
+
+guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image viewers for Mac (2026): which one to pick",
+      "Open-source image viewers for Mac",
+      "Preview can't page through a folder. These open-source Mac image viewers can, checked against their official sites and GitHub in November 2026, with notes on who each one suits.",
+      "Seven maintained options, what each is good at, and two to skip",
+      f"""<p>Preview only moves between files you opened together, so after you double-click one photo you can't page through the rest of the folder. The viewers below fix that and are all open source. Everything here was checked on 1 November 2026 against each project's site, GitHub releases and licenses; check the project pages for current versions.</p>
+<h2>The short list</h2>
+<table><thead><tr><th>Viewer</th><th>License</th><th>Good for</th></tr></thead><tbody>
+<tr><td>Flipic</td><td>MIT</td><td>Mac-only users who want the Windows-viewer feel: arrow keys through the folder, 0 to zoom to 100% at the pointer, ratings, marks and culling</td></tr>
+<tr><td>PicView</td><td>GPL-3.0</td><td>People on both Mac and Windows; a long format list including camera RAW; <code>brew install picview</code></td></tr>
+<tr><td>FlowVision</td><td>GPL-3.0</td><td>Browsing a folder as a waterfall grid, with video; a native Swift app</td></tr>
+<tr><td>qView</td><td>GPL-3.0</td><td>The most minimal option: just the image and a title bar, arrow keys to page</td></tr>
+<tr><td>nomacs</td><td>GPL-3.0</td><td>People who already use it on Windows or Linux; feature-rich, RAW through LibRaw</td></tr>
+<tr><td>Oculante</td><td>MIT (parts GPL)</td><td>Speed plus light editing; written in Rust</td></tr>
+<tr><td>ImageGlass</td><td>GPL-3.0</td><td>Longtime Windows users; the Mac version just left beta, needs macOS 14 and Apple silicon, and Pro features are paid</td></tr>
+</tbody></table>
+<h2>Two to skip</h2>
+<p>Phew only opens FLIF files and its author says it is no longer maintained. The maintained fork of Sequential hasn't shipped a release since September 2024.</p>
+<h2>If open source isn't a requirement</h2>
+<p>XnView MP is free for private and educational use and handles 500+ formats, with strong batch and metadata tools. FastRawViewer ($23.99 for two computers) renders RAW data itself with histograms and focus peaking, which makes it the specialist for culling RAW files. Lyn ($29.99) is a polished paid browser with HDR and RAW support.</p>
+<h2>How to choose</h2>
+<ul><li>You just want to double-click a photo and arrow through the folder: Flipic, qView or PicView. Flipic is the closest to IrfanView or Honeyview in feel.</li><li>You mostly cull RAW and need focus and histograms: FastRawViewer.</li><li>You want one big tool that also organizes and converts: XnView MP.</li><li>You like grids: FlowVision.</li></ul>
+<p>Disclosure: Flipic is made by the people behind this site. Viewing, ratings, marks, filtering and export are free and MIT-licensed; an optional paid Pro adds batch tools that most people won't need.</p>
+<figure>{{shot('filmstrip.webp', 'Flipic thumbnail strip and arrow-key paging')}}<figcaption>Flipic: double-click a photo, then arrow through the folder.</figcaption></figure>""")
 
 
 # ---------------------------------------------------------------- 渲染
