@@ -9,6 +9,8 @@ struct ImageItem {
     var fileSize: Int = 0
     /// EXIF 拍摄时间；nil 表示尚未读取，读过但没有则回落为修改时间
     var captureDate: Date?
+    /// 挑片标记（访达标签「Flipic」）
+    var marked = false
 }
 
 enum SortKey: Int, CaseIterable {
@@ -32,6 +34,8 @@ enum SortKey: Int, CaseIterable {
 final class FolderModel {
     private(set) var items: [ImageItem] = []
     private(set) var index: Int = 0
+    /// 「只看已标记」时存着完整列表，items 只是其中标记过的；nil 表示显示全部
+    private var unfiltered: [ImageItem]?
 
     /// 排序方式与方向，跨启动记住；sortReversed 是在该方式自然方向上反过来
     var sortKey: SortKey {
@@ -46,12 +50,53 @@ final class FolderModel {
     var count: Int { items.count }
     var current: ImageItem? { items.isEmpty ? nil : items[index] }
 
+    var markedOnly: Bool { unfiltered != nil }
+    /// 整个文件夹的列表，不受「只看已标记」影响
+    var allItems: [ImageItem] { unfiltered ?? items }
+    /// 整个文件夹的张数，不受「只看已标记」影响
+    var totalCount: Int { unfiltered?.count ?? items.count }
+    var markedCount: Int { (unfiltered ?? items).filter(\.marked).count }
+
+    /// 改列表里某个文件的信息，两份列表一起改
+    private func update(_ url: URL, _ change: (inout ImageItem) -> Void) {
+        for i in items.indices where items[i].url == url { change(&items[i]) }
+        if var all = unfiltered {
+            for i in all.indices where all[i].url == url { change(&all[i]) }
+            unfiltered = all
+        }
+    }
+
+    func setMarked(_ on: Bool, url: URL) { update(url) { $0.marked = on } }
+
+    /// 切换「只看已标记」。打开时当前这张没标记就跳到它后面第一张标记过的；一张都没标记返回 false。
+    /// 筛选中取消标记的照片先留在列表里，下次切换时才拿掉，免得看着看着画面突然换了
+    @discardableResult
+    func setMarkedOnly(_ on: Bool) -> Bool {
+        let cur = current?.url
+        if on {
+            guard unfiltered == nil else { return true }
+            guard items.contains(where: \.marked) else { return false }
+            let start = index
+            let order = Array(items[start...]) + Array(items[..<start])
+            let target = order.first(where: \.marked)?.url
+            unfiltered = items
+            items = items.filter(\.marked)
+            index = target.flatMap { u in items.firstIndex { $0.url == u } } ?? 0
+        } else {
+            guard let all = unfiltered else { return true }
+            items = all
+            unfiltered = nil
+            index = cur.flatMap { u in items.firstIndex { $0.url == u } } ?? 0
+        }
+        return true
+    }
+
     /// 按拍摄时间排序但还有文件没读 EXIF
     var needsCaptureDates: Bool {
         sortKey == .captureDate && items.contains { $0.captureDate == nil }
     }
 
-    private static let resourceKeys: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .fileSizeKey]
+    private static let resourceKeys: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .fileSizeKey, .tagNamesKey]
 
     /// 传文件夹则列出其中全部图片；传文件则打开其所在文件夹并定位到该文件
     @discardableResult
@@ -73,8 +118,10 @@ final class FolderModel {
         items = urls.map { u in
             let v = try? u.resourceValues(forKeys: Set(Self.resourceKeys))
             return ImageItem(url: u, pixelSize: nil, modified: v?.contentModificationDate,
-                             created: v?.creationDate, fileSize: v?.fileSize ?? 0)
+                             created: v?.creationDate, fileSize: v?.fileSize ?? 0,
+                             marked: Marks.isMarked(tagNames: v?.tagNames))
         }
+        unfiltered = nil
         index = 0
         resort(keeping: target)
         return !items.isEmpty
@@ -102,17 +149,24 @@ final class FolderModel {
             }
         }
         items.sort { desc ? less($1, $0) : less($0, $1) }
+        unfiltered?.sort { desc ? less($1, $0) : less($0, $1) }
         index = url.flatMap { u in items.firstIndex { $0.url == u } } ?? 0
     }
 
     /// 后台读拍摄时间用：返回尚未读取的文件
     func urlsMissingCaptureDate() -> [URL] {
-        items.filter { $0.captureDate == nil }.map(\.url)
+        (unfiltered ?? items).filter { $0.captureDate == nil }.map(\.url)
     }
 
     func setCaptureDates(_ dates: [URL: Date]) {
         for i in items.indices {
             if let d = dates[items[i].url] { items[i].captureDate = d }
+        }
+        if var all = unfiltered {
+            for i in all.indices {
+                if let d = dates[all[i].url] { all[i].captureDate = d }
+            }
+            unfiltered = all
         }
     }
 
@@ -161,18 +215,21 @@ final class FolderModel {
     /// 当前文件已重命名后更新列表中的路径（不重扫目录）
     func renameCurrent(to newName: String) {
         guard items.indices.contains(index) else { return }
-        var item = items[index]
-        item = ImageItem(url: item.url.deletingLastPathComponent().appendingPathComponent(newName),
-                         pixelSize: item.pixelSize, modified: item.modified, created: item.created,
-                         fileSize: item.fileSize, captureDate: item.captureDate)
-        items[index] = item
+        let old = items[index].url
+        update(old) { item in
+            item = ImageItem(url: item.url.deletingLastPathComponent().appendingPathComponent(newName),
+                             pixelSize: item.pixelSize, modified: item.modified, created: item.created,
+                             fileSize: item.fileSize, captureDate: item.captureDate, marked: item.marked)
+        }
     }
 
     /// 当前项已移入废纸篓后从列表移除，返回是否还有剩余
     @discardableResult
     func removeCurrent() -> Bool {
         guard items.indices.contains(index) else { return false }
+        let url = items[index].url
         items.remove(at: index)
+        unfiltered?.removeAll { $0.url == url }
         index = min(index, max(items.count - 1, 0))
         return !items.isEmpty
     }

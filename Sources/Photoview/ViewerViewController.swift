@@ -258,7 +258,8 @@ final class ViewerViewController: NSViewController {
     private func setControlsVisible(_ visible: Bool) {
         guard visible != controlsVisible else { return }
         controlsVisible = visible
-        var targets: [NSView] = [toolbarView, prevArrowContainer!, nextArrowContainer!]
+        var targets: [NSView] = [prevArrowContainer!, nextArrowContainer!]
+        if Self.showToolbar { targets.append(toolbarView) }
         if filmstripFloating && filmstripHeight.constant > 0 { targets.append(filmstrip) }
         if visible {
             for t in targets where folder.current != nil { t.isHidden = false }
@@ -280,6 +281,7 @@ final class ViewerViewController: NSViewController {
     private func updateControlsPresence() {
         let present = folder.current != nil
         for t in [toolbarView, prevArrowContainer!, nextArrowContainer!] { t.isHidden = !present }
+        if !Self.showToolbar { toolbarView.isHidden = true }
         if present { pokeControls() }
     }
 
@@ -296,6 +298,7 @@ final class ViewerViewController: NSViewController {
         exifPanel.isHidden = true
         filmstrip.isHidden = true
         ratingBadge.isHidden = true
+        markBadge.isHidden = true
         filmstripHeight.constant = 0
         window.minSize = NSSize(width: 160, height: 120)
         imageView.fit()
@@ -613,6 +616,7 @@ final class ViewerViewController: NSViewController {
         decodeQueue.cancelAllOperations()
         updateSmartCache()
         updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)
+        updateMarkedOnlyPill()
 
         let fitPx = previewPixelTarget
         if let info = loader.cachedInfo(for: url),
@@ -1033,6 +1037,12 @@ final class ViewerViewController: NSViewController {
         filmstripHeight.constant = show ? FilmstripView.stripHeight : 0
     }
 
+    @objc func toggleToolbar(_ sender: Any?) {
+        Self.showToolbar.toggle()
+        SettingsWindowController.notify("toolbar")
+        if Self.showToolbar { pokeControls() }
+    }
+
     @objc func navigateForward(_ sender: Any?) { navigate(1) }
     @objc func navigateBackward(_ sender: Any?) { navigate(-1) }
     @objc func goFirst(_ sender: Any?) { goTo(0) }
@@ -1058,6 +1068,8 @@ final class ViewerViewController: NSViewController {
         case .batchRename: batchRename(nil)
         case .wallpaper: setWallpaper(nil)
         case .rate0, .rate1, .rate2, .rate3, .rate4, .rate5: setRating(action.stars ?? 0)
+        case .mark: toggleMark(nil)
+        case .markedOnly: toggleMarkedOnly(nil)
         default: break
         }
     }
@@ -1071,6 +1083,10 @@ final class ViewerViewController: NSViewController {
             if slideshowTimer != nil { scheduleSlideshowTimer() }
         case "rating":
             updateRatingLabel()
+        case "toolbar":
+            toolbarView.isHidden = !Self.showToolbar || folder.current == nil || !controlsVisible
+            toolbarView.alphaValue = toolbarView.isHidden ? 0 : 1
+            ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible)
         case "thumbs":
             // 缩略图大小变了：格子、栏高一起改，按新尺寸重新取缩略图
             filmstrip.applyThumbSize()
@@ -1123,6 +1139,7 @@ final class ViewerViewController: NSViewController {
         guard let current = folder.current else { return }
         stopSlideshow()
         imageView.endPeek()
+        if folder.markedOnly { toggleMarkedOnly(nil) }
         let folderURL = current.url.deletingLastPathComponent()
         let c = CleanupController(folderURL: folderURL, items: folder.items) { [weak self] changed in
             self?.exitCleanup(changed: changed, folderURL: folderURL)
@@ -1479,6 +1496,8 @@ final class ViewerViewController: NSViewController {
         for it in ratingMenu.items { it.target = self }
         rating.submenu = ratingMenu
         menu.addItem(rating)
+        add(Self.markMenuTitle(folder.current?.marked ?? false), #selector(toggleMark(_:)))
+        add(L10n.t("menu.markedOnly", "只看已标记"), #selector(toggleMarkedOnly(_:)))
         menu.addItem(.separator())
         add(L10n.t("menu.reveal", "在 Finder 中显示"), #selector(revealInFinder(_:)))
         add(L10n.t("menu.trash", "移到废纸篓"), #selector(trashCurrent(_:)))
@@ -1510,7 +1529,7 @@ final class ViewerViewController: NSViewController {
     private func ratingTargets(for url: URL) -> [URL] {
         let base = url.deletingPathExtension().lastPathComponent
         let dir = url.deletingLastPathComponent()
-        let siblings = folder.items.map(\.url).filter {
+        let siblings = folder.allItems.map(\.url).filter {
             $0 != url && $0.deletingLastPathComponent() == dir && $0.deletingPathExtension().lastPathComponent == base
         }
         return [url] + siblings
@@ -1545,11 +1564,17 @@ final class ViewerViewController: NSViewController {
     private var ratingBadgeBottom: NSLayoutConstraint!
 
     private func ratingBadgeOffset(controls: Bool) -> CGFloat {
-        if controls { return -(8 + max(toolbarView.fittingSize.height, 44) + 8) }
+        if controls && Self.showToolbar { return -(8 + max(toolbarView.fittingSize.height, 44) + 8) }
         // 放映时缩略图栏隐藏了，星级落到屏幕底部
         return filmstripFloating ? filmstripHeight.constant - 14 : -14
     }
     private let ratingBadgeLabel = NSTextField(labelWithString: "")
+
+    /// 移动鼠标时显示底部工具条；关掉后只用快捷键和菜单，左右翻页箭头照常出现
+    static var showToolbar: Bool {
+        get { !UserDefaults.standard.bool(forKey: "toolbarHidden") }
+        set { UserDefaults.standard.set(!newValue, forKey: "toolbarHidden") }
+    }
 
     static var showRatingBadge: Bool {
         get { !UserDefaults.standard.bool(forKey: "ratingBadgeHidden") }
@@ -1576,6 +1601,8 @@ final class ViewerViewController: NSViewController {
             ratingBadgeLabel.bottomAnchor.constraint(equalTo: ratingBadge.bottomAnchor, constant: -5),
         ])
         view.addSubview(ratingBadge)
+        buildMarkBadge()
+        buildMarkedOnlyPill()
     }
 
     static let starColor = NSColor(calibratedRed: 1.0, green: 0.8, blue: 0.25, alpha: 1)
@@ -1585,6 +1612,11 @@ final class ViewerViewController: NSViewController {
         let badge = Self.showRatingBadge
         ratingBadgeLabel.stringValue = String(repeating: "★", count: r)
         ratingBadge.isHidden = r == 0 || !badge || peekSaved != nil || cleanup != nil
+        // 刚出现时按当前工具条状态放，免得工具条正显示着却落在它下面
+        if !ratingBadge.isHidden { ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible) }
+        // 标记固定在左下角，不随工具条移动，也不受「底部显示星级」开关影响
+        markBadge.isHidden = !(folder.current?.marked ?? false) || peekSaved != nil || cleanup != nil
+        markBadgeBottom.constant = ratingBadgeOffset(controls: false)
         ratingLabel.stringValue = Rating.stars(r)
         ratingLabel.isHidden = r == 0 || badge
     }
@@ -1602,6 +1634,143 @@ final class ViewerViewController: NSViewController {
         none.tag = 0
         menu.addItem(none)
         return menu
+    }
+
+    // MARK: - 挑片标记
+
+    static let markColor = NSColor(calibratedRed: 0.3, green: 0.82, blue: 0.45, alpha: 1)
+    /// 左下角的绿色勾：这张标记过。放在角上不挡照片中间和工具条
+    private let markBadge = NSVisualEffectView()
+    private var markBadgeBottom: NSLayoutConstraint!
+
+    private func buildMarkBadge() {
+        markBadge.material = .hudWindow
+        markBadge.blendingMode = .withinWindow
+        markBadge.state = .active
+        markBadge.wantsLayer = true
+        markBadge.layer?.cornerRadius = 8
+        markBadge.layer?.masksToBounds = true
+        markBadge.translatesAutoresizingMaskIntoConstraints = false
+        markBadge.isHidden = true
+        let icon = NSImageView(image: NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 14, weight: .semibold)) ?? NSImage())
+        icon.contentTintColor = Self.markColor
+        let text = NSTextField(labelWithString: L10n.t("ui.marked", "已标记"))
+        text.font = .systemFont(ofSize: 12, weight: .medium)
+        text.textColor = .labelColor
+        let stack = NSStackView(views: [icon, text])
+        stack.spacing = 5
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        markBadge.addSubview(stack)
+        view.addSubview(markBadge)
+        markBadgeBottom = markBadge.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: -14)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: markBadge.leadingAnchor, constant: 8),
+            stack.trailingAnchor.constraint(equalTo: markBadge.trailingAnchor, constant: -10),
+            stack.topAnchor.constraint(equalTo: markBadge.topAnchor, constant: 5),
+            stack.bottomAnchor.constraint(equalTo: markBadge.bottomAnchor, constant: -5),
+            markBadge.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 14),
+            markBadgeBottom,
+        ])
+    }
+
+    static func markMenuTitle(_ marked: Bool) -> String {
+        marked ? L10n.t("menu.unmark", "取消标记") : L10n.t("menu.mark", "标记这张")
+    }
+
+    /// 标记 / 取消标记当前照片；同名的 RAW 和 JPG 一起标
+    @objc func toggleMark(_ sender: Any?) {
+        guard cleanup == nil, let item = folder.current else { return }
+        let on = !item.marked
+        let targets = ratingTargets(for: item.url)
+        for t in targets { folder.setMarked(on, url: t) }
+        refreshMarks()
+        let count = folder.markedCount
+        flash(on ? L10n.f("msg.marked", "已标记 · 共 %d 张", count) : L10n.f("msg.unmarked", "已取消标记 · 共 %d 张", count),
+              seconds: 1.2)
+        ratingQueue.async { [weak self] in
+            let failed = targets.filter { !Marks.set(on, for: $0) }
+            guard !failed.isEmpty else { return }
+            DispatchQueue.main.async {
+                guard let self else { return }
+                for t in failed { self.folder.setMarked(!on, url: t) }
+                self.refreshMarks()
+                self.flash(L10n.f("msg.markFailed", "标记没能写入：%@", failed.map(\.lastPathComponent).joined(separator: "、")), seconds: 4)
+            }
+        }
+    }
+
+    /// 只看已标记 / 显示全部
+    @objc func toggleMarkedOnly(_ sender: Any?) {
+        guard cleanup == nil, folder.totalCount > 0 else { return }
+        let on = !folder.markedOnly
+        guard folder.setMarkedOnly(on) else {
+            let key = Shortcuts.combo(for: .mark)?.display
+            flash(key.map { L10n.f("msg.noMarks", "还没有标记的照片，看图时按 %@ 标记", $0) }
+                  ?? L10n.t("msg.noMarksMenu", "还没有标记的照片"), seconds: 2.5)
+            return
+        }
+        prefetchedURLs.removeAll()
+        filmstrip.collectionView.reloadData()
+        filmstrip.scrollTo(index: folder.index)
+        showImage(resetToFit: true)
+        updateMarkedOnlyPill()
+        // 进入筛选时顶部的计数已经说明了，退出时才提示一下
+        if !on { flash(L10n.f("msg.markedOnlyOff", "显示全部 %d 张", folder.count), seconds: 1.5) }
+    }
+
+    /// 标记变了以后刷新底部徽章、缩略图上的勾和顶部计数，不重建缩略图栏
+    private func refreshMarks() {
+        updateRatingLabel()
+        for case let cell as FilmstripItem in filmstrip.collectionView.visibleItems()
+        where folder.items.indices.contains(cell.itemIndex) {
+            cell.setMarked(folder.items[cell.itemIndex].marked)
+        }
+        updateMarkedOnlyPill()
+    }
+
+    /// 「只看已标记」时顶部居中的计数，点一下回到显示全部
+    private let markedOnlyPill = NSVisualEffectView()
+    private let markedOnlyLabel = NSTextField(labelWithString: "")
+
+    private func buildMarkedOnlyPill() {
+        markedOnlyPill.material = .hudWindow
+        markedOnlyPill.blendingMode = .withinWindow
+        markedOnlyPill.state = .active
+        markedOnlyPill.wantsLayer = true
+        markedOnlyPill.layer?.cornerRadius = 8
+        markedOnlyPill.layer?.masksToBounds = true
+        markedOnlyPill.translatesAutoresizingMaskIntoConstraints = false
+        markedOnlyPill.isHidden = true
+        let icon = NSImageView(image: NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 12, weight: .semibold)) ?? NSImage())
+        icon.contentTintColor = Self.markColor
+        markedOnlyLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        markedOnlyLabel.textColor = .labelColor
+        let close = NSButton(title: L10n.t("ui.showAll", "显示全部"), target: self, action: #selector(toggleMarkedOnly(_:)))
+        close.isBordered = false
+        close.font = .systemFont(ofSize: 12)
+        close.contentTintColor = .secondaryLabelColor
+        let stack = NSStackView(views: [icon, markedOnlyLabel, close])
+        stack.spacing = 6
+        stack.setCustomSpacing(12, after: markedOnlyLabel)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        markedOnlyPill.addSubview(stack)
+        view.addSubview(markedOnlyPill)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: markedOnlyPill.leadingAnchor, constant: 10),
+            stack.trailingAnchor.constraint(equalTo: markedOnlyPill.trailingAnchor, constant: -10),
+            stack.topAnchor.constraint(equalTo: markedOnlyPill.topAnchor, constant: 5),
+            stack.bottomAnchor.constraint(equalTo: markedOnlyPill.bottomAnchor, constant: -5),
+            markedOnlyPill.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            markedOnlyPill.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
+        ])
+    }
+
+    private func updateMarkedOnlyPill() {
+        markedOnlyPill.isHidden = !folder.markedOnly || cleanup != nil
+        markedOnlyLabel.stringValue = L10n.f("ui.markedOnlyPill", "只看已标记 · %1$d / %2$d",
+                                             folder.markedCount, folder.totalCount)
     }
 
     // MARK: - 新版本提示
@@ -2447,6 +2616,46 @@ final class ViewerViewController: NSViewController {
     }
 
     /// --ratingtest <文件夹>：各格式写入 / 读回评分，像素不变；按键 4 给同名 RAW+JPG 一起打分；菜单取消评分
+    /// --marktest <截图目录> <文件夹>：按 P 标记第 1、3 张和 pair.jpg，⇧P 只看已标记，筛选中取消一张，再切回全部；
+    /// 每步记录列表、磁盘上的标签和截图
+    func runMarkTest(outDir: String) {
+        func key(_ chars: String, _ code: UInt16, _ mods: NSEvent.ModifierFlags = []) {
+            if let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: mods, timestamp: 0, windowNumber: view.window?.windowNumber ?? 0,
+                                        context: nil, characters: chars, charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) {
+                imageView.keyDown(with: e)
+            }
+        }
+        func report(_ tag: String) {
+            let onDisk = folder.allItems.filter { Marks.isMarked(URL(fileURLWithPath: $0.url.path)) }.map(\.url.lastPathComponent)
+            NSLog("MARK %@ | shown=%d/%d markedOnly=%d current=%@ marked=%d badge=%d pill=%d strip=%d | disk=[%@] model=%d",
+                  tag, folder.count, folder.totalCount, folder.markedOnly ? 1 : 0, folder.current?.url.lastPathComponent ?? "-",
+                  folder.current?.marked == true ? 1 : 0, markBadge.isHidden ? 0 : 1, markedOnlyPill.isHidden ? 0 : 1,
+                  filmstrip.collectionView.numberOfItems(inSection: 0), onDisk.joined(separator: ","), folder.markedCount)
+        }
+        let pairIndex = folder.items.firstIndex { $0.url.lastPathComponent == "pair.jpg" } ?? 1
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.0) { self.goTo(0); }
+        at(0.6) { key("p", 35) }
+        at(0.6) { report("1-mark first"); self.captureWindow(to: "\(outDir)/1-marked.png", raw: true) }
+        at(0.2) { self.goTo(2) }
+        at(0.6) { key("p", 35) }
+        at(0.4) { self.goTo(pairIndex) }
+        at(0.6) { key("p", 35) }
+        at(0.6) { report("2-marked 1st,3rd,pair (pair raw follows)") }
+        at(0.2) { self.goTo(1) }
+        at(0.6) { key("P", 35, .shift) }
+        at(0.8) { report("3-marked only, started from unmarked #2"); self.captureWindow(to: "\(outDir)/2-marked-only.png", raw: true) }
+        at(0.2) { key("p", 35) }
+        at(0.6) { report("4-unmark inside filter (stays listed)") }
+        at(0.2) { key("P", 35, .shift) }
+        at(0.8) { report("5-show all") }
+        at(0.2) { key("P", 35, .shift) }
+        at(0.8) { report("6-marked only again (unmarked one gone)") }
+        at(0.2) { key("P", 35, .shift) }
+        at(0.6) { NSApp.terminate(nil) }
+    }
+
     func runRatingTest() {
         func pixelHash(_ url: URL) -> Int {
             guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
@@ -3106,6 +3315,7 @@ extension ViewerViewController: NSCollectionViewDataSource, NSCollectionViewDele
         item.itemIndex = idx
         guard idx < folder.count else { return item }
         let url = folder.items[idx].url
+        item.setMarked(folder.items[idx].marked)
         if let cached = loader.cachedThumb(for: url) {
             item.setThumbnail(cached)
         } else {
@@ -3259,6 +3469,14 @@ extension ViewerViewController: NSMenuItemValidation {
             return folder.current != nil
         } else if menuItem.action == #selector(toggleSortReversed(_:)) {
             menuItem.state = folder.sortReversed ? .on : .off
+        } else if menuItem.action == #selector(toggleToolbar(_:)) {
+            menuItem.state = Self.showToolbar ? .on : .off
+        } else if menuItem.action == #selector(toggleMark(_:)) {
+            menuItem.title = Self.markMenuTitle(folder.current?.marked ?? false)
+            return folder.current != nil
+        } else if menuItem.action == #selector(toggleMarkedOnly(_:)) {
+            menuItem.state = folder.markedOnly ? .on : .off
+            return folder.current != nil
         }
         return true
     }

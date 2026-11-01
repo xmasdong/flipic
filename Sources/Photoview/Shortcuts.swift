@@ -80,6 +80,7 @@ enum ShortcutAction: String, CaseIterable {
     case rename, trash, edit, reveal, exportAs, saveRotation
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
+    case mark, markedOnly
 
     /// 评分快捷键对应的星数
     var stars: Int? {
@@ -95,12 +96,13 @@ enum ShortcutAction: String, CaseIterable {
     }
 
     enum Group: CaseIterable {
-        case global, browse, rating, view, file, tools
+        case global, browse, rating, pick, view, file, tools
         var title: String {
             switch self {
             case .global: return L10n.t("sc.group.global", "全局（在其他软件里也能用）")
             case .browse: return L10n.t("sc.group.browse", "浏览")
             case .rating: return L10n.t("sc.group.rating", "评分")
+            case .pick: return L10n.t("sc.group.pick", "挑片")
             case .view: return L10n.t("sc.group.view", "显示")
             case .file: return L10n.t("sc.group.file", "文件")
             case .tools: return L10n.t("sc.group.tools", "工具")
@@ -117,6 +119,7 @@ enum ShortcutAction: String, CaseIterable {
         case .rename, .trash, .edit, .reveal, .exportAs, .saveRotation: return .file
         case .cleanup, .batchConvert, .batchRename, .wallpaper: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
+        case .mark, .markedOnly: return .pick
         }
     }
 
@@ -153,6 +156,8 @@ enum ShortcutAction: String, CaseIterable {
         case .wallpaper: return L10n.t("menu.wallpaper", "设为桌面壁纸")
         case .rate0: return L10n.t("rating.none", "未评分")
         case .rate1, .rate2, .rate3, .rate4, .rate5: return Rating.stars(stars ?? 0)
+        case .mark: return L10n.t("sc.a.mark", "标记 / 取消标记")
+        case .markedOnly: return L10n.t("menu.markedOnly", "只看已标记")
         }
     }
 
@@ -191,6 +196,8 @@ enum ShortcutAction: String, CaseIterable {
         case .rate4: return KeyCombo(keyCode: 21, chars: "4")
         case .rate5: return KeyCombo(keyCode: 23, chars: "5")
         case .rate0: return nil
+        case .mark: return KeyCombo(keyCode: 35, chars: "p")
+        case .markedOnly: return KeyCombo(keyCode: 35, mods: .shift, chars: "p")
         }
     }
 }

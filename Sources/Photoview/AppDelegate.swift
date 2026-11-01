@@ -88,6 +88,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--bothtest"), i + 1 < CommandLine.arguments.count {
+            // --bothtest <文件...>：同一张照片上标记和评星互不影响（评星改写文件后标签还在）
+            for path in CommandLine.arguments[(i + 1)...] where !path.hasPrefix("-") {
+                let url = URL(fileURLWithPath: path)
+                func tags() -> String { ((try? URL(fileURLWithPath: url.path).resourceValues(forKeys: [.tagNamesKey]))?.tagNames ?? []).joined(separator: ",") }
+                NSLog("BOTH %@ start tags=[%@] rating=%d", url.lastPathComponent, tags(), Rating.read(url))
+                NSLog("BOTH %@ mark ok=%d tags=[%@]", url.lastPathComponent, Marks.set(true, for: url) ? 1 : 0, tags())
+                NSLog("BOTH %@ rate3 ok=%d tags=[%@] rating=%d", url.lastPathComponent, Rating.write(3, to: url) ? 1 : 0, tags(), Rating.read(url))
+                NSLog("BOTH %@ unmark ok=%d tags=[%@] rating=%d", url.lastPathComponent, Marks.set(false, for: url) ? 1 : 0, tags(), Rating.read(url))
+                NSLog("BOTH %@ mark ok=%d, rate0 ok=%d tags=[%@] rating=%d", url.lastPathComponent, Marks.set(true, for: url) ? 1 : 0,
+                      Rating.write(0, to: url) ? 1 : 0, tags(), Rating.read(url))
+            }
+            NSApp.terminate(nil)
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--multiwintest"), i + 1 < CommandLine.arguments.count {
             // --multiwintest <文件...>：模拟从访达逐个打开、一次打开多张、关掉一个、改设置、关掉开关后替换
             let files = CommandLine.arguments[(i + 1)...].filter { !$0.hasPrefix("-") && !$0.hasPrefix("(") }.map { URL(fileURLWithPath: $0) }
@@ -291,6 +306,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runRatingShot(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--marktest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runMarkTest(outDir: outDir) }
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--ratingtest"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
@@ -618,6 +640,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(ratingMenu, L10n.t("rating.none", "未评分"), #selector(ViewerViewController.setRatingMenu(_:))).tag = 0
             ratingItem.submenu = ratingMenu
             m.addItem(ratingItem)
+            item(m, L10n.t("menu.mark", "标记这张"), #selector(ViewerViewController.toggleMark(_:)))
+            item(m, L10n.t("menu.markedOnly", "只看已标记"), #selector(ViewerViewController.toggleMarkedOnly(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.rename", "重命名…"), #selector(ViewerViewController.renameCurrent(_:)))
             item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)))
@@ -640,6 +664,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             item(m, L10n.t("menu.info", "照片信息"), #selector(ViewerViewController.toggleInfoPanel(_:)))
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
+            item(m, L10n.t("menu.toolbar", "工具条"), #selector(ViewerViewController.toggleToolbar(_:)))
             item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
             m.addItem(.separator())
             let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")

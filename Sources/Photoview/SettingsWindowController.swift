@@ -342,6 +342,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let hdrNote = note("")
     private let autoUpdate = NSButton(checkboxWithTitle: L10n.t("set.autoUpdate", "自动检查更新（每天一次）"), target: nil, action: nil)
     private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
+    private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
     private let editorName = NSTextField(labelWithString: "")
     private let editorIcon = NSImageView()
     private lazy var clearEditor = pillButton(L10n.t("set.clear", "清除"), self, #selector(clearEditorApp))
@@ -373,6 +374,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         fade.target = self; fade.action = #selector(fadeChanged)
         escCloses.target = self; escCloses.action = #selector(escChanged)
         ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
+        toolbarCheck.target = self; toolbarCheck.action = #selector(toolbarChanged)
         openPeek.target = self; openPeek.action = #selector(openPeekChanged)
         newWindow.target = self; newWindow.action = #selector(newWindowChanged)
         autoUpdate.target = self; autoUpdate.action = #selector(autoUpdateChanged)
@@ -404,6 +406,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.sort", "排序方式：")), sortRow],
             [label(L10n.t("set.paging", "翻页：")), fade],
             [label(L10n.t("set.rating", "评分：")), ratingBadge],
+            [label(L10n.t("set.toolbar", "工具条：")), toolbarCheck],
             [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
             [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
             [label(L10n.t("set.slideFadeLabel", "幻灯片渐变：")), slideFadeRow],
@@ -418,10 +421,10 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         ])
         g.row(at: 1).topPadding = -4
         g.row(at: 4).topPadding = -4
-        g.row(at: 12).topPadding = -4
-        g.row(at: 14).topPadding = -4
-        g.row(at: 16).topPadding = -4
-        g.row(at: 18).topPadding = -4
+        g.row(at: 13).topPadding = -4
+        g.row(at: 15).topPadding = -4
+        g.row(at: 17).topPadding = -4
+        g.row(at: 19).topPadding = -4
         view = host(g)
         reload()
     }
@@ -434,6 +437,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         intervalPopup.selectItem(withTag: ViewerViewController.slideshowIntervals.contains(sec) ? sec : 3)
         escCloses.state = ViewerViewController.escCloses ? .on : .off
         ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
+        toolbarCheck.state = ViewerViewController.showToolbar ? .on : .off
         thumbPopup.selectItem(withTag: Int(FilmstripView.thumbSize))
         openPeek.state = ViewerViewController.openInPeek ? .on : .off
         newWindow.state = AppDelegate.openInNewWindow ? .on : .off
@@ -515,6 +519,11 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     @objc private func thumbSizeChanged() {
         FilmstripView.thumbSize = CGFloat(thumbPopup.selectedTag())
         SettingsWindowController.notify("thumbs")
+    }
+
+    @objc private func toolbarChanged() {
+        ViewerViewController.showToolbar = toolbarCheck.state == .on
+        SettingsWindowController.notify("toolbar")
     }
 
     @objc private func ratingBadgeChanged() {

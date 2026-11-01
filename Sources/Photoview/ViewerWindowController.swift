@@ -38,6 +38,7 @@ final class ViewerWindowController: NSWindowController {
     func runFadeSequence(outDir: String) { viewerVC?.runFadeSequence(outDir: outDir) }
     func runSlideFadeTest() { viewerVC?.runSlideFadeTest() }
     func runRatingTest() { viewerVC?.runRatingTest() }
+    func runMarkTest(outDir: String) { viewerVC?.runMarkTest(outDir: outDir) }
     func runRatingShot(outDir: String) { viewerVC?.runRatingShot(outDir: outDir) }
     func runSettingsTest(outDir: String) { viewerVC?.runSettingsTest(outDir: outDir) }
     func runXhsShots(outDir: String) { viewerVC?.runXhsShots(outDir: outDir) }

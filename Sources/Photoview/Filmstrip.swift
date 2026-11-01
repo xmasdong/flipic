@@ -82,6 +82,33 @@ final class FilmstripItem: NSCollectionViewItem {
         holder.layer?.contents = image
     }
 
+    /// 右上角的绿色勾：这张标记过
+    private lazy var markIcon: NSImageView = {
+        let iv = NSImageView(image: NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 13, weight: .bold)) ?? NSImage())
+        iv.contentTintColor = ViewerViewController.markColor
+        iv.wantsLayer = true
+        iv.layer?.shadowOpacity = 0.6
+        iv.layer?.shadowRadius = 2
+        iv.layer?.shadowOffset = .zero
+        iv.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(iv)
+        NSLayoutConstraint.activate([
+            iv.topAnchor.constraint(equalTo: view.topAnchor, constant: 3),
+            iv.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -3),
+        ])
+        return iv
+    }()
+
+    /// 没标记过的格子不创建勾的视图
+    private var hasMarkIcon = false
+
+    func setMarked(_ on: Bool) {
+        guard on || hasMarkIcon else { return }
+        hasMarkIcon = true
+        markIcon.isHidden = !on
+    }
+
     override var isSelected: Bool {
         didSet {
             view.layer?.borderWidth = isSelected ? 2 : 0
