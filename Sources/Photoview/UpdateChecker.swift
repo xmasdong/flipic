@@ -8,7 +8,7 @@ enum UpdateChecker {
         ?? URL(string: "https://flipic.app/version.json")!
     static let fallbackDownload = URL(string: "https://github.com/xmasdong/flipic/releases/latest/download/Flipic.dmg")!
 
-    /// 每次读到 version.json 都交一份给这里（Pro 用它读作废的激活码名单）
+    /// 每次读到 version.json 都交一份给这里，需要里面别的字段的地方自己取
     static var onFeed: (([String: Any]) -> Void)?
 
     struct Release {
