@@ -3732,6 +3732,8 @@ final class ViewerViewController: NSViewController {
         window.setFrame(CGRect(x: 0, y: 0, width: 1440, height: 900), display: true)
         window.center()
         try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        // --no-strip：收起缩略图栏，照片和窗口一样大，截出来没有黑边
+        if CommandLine.arguments.contains("--no-strip"), filmstripHeight.constant > 0 { toggleFilmstrip(nil) }
         let total = folder.count
         for i in 0..<total {
             let t = 0.4 + Double(i) * 1.6

@@ -15,6 +15,9 @@ VERSION = json.loads((DOCS / "version.json").read_text())["version"]
 SIZE = "2.4 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
+# 截图也一样：放进按内容命名的子文件夹，换了图地址就变
+SHOTS_V = hashlib.sha1(b"".join(f.read_bytes() for f in sorted((REPO / "docs/shots").iterdir()) if f.is_file())).hexdigest()[:8]
+SHOTS = f"/shots/{SHOTS_V}/"
 ASSET_V = hashlib.sha1((ROOT / "src/site.css").read_bytes() + (ROOT / "src/site.js").read_bytes()).hexdigest()[:10]
 GITHUB = "https://github.com/xmasdong/flipic"
 
@@ -186,7 +189,7 @@ def app_schema(lang, desc):
         "operatingSystem": "macOS 13+", "applicationCategory": "MultimediaApplication",
         "softwareVersion": VERSION, "fileSize": SIZE.replace(" ", ""),
         "downloadUrl": f"{BASE}/download/Flipic.dmg", "installUrl": f"{BASE}/download/Flipic.dmg",
-        "image": f"{BASE}/og.jpg", "screenshot": f"{BASE}/shots/browse-01.webp",
+        "image": f"{BASE}/og.jpg", "screenshot": f"{BASE}{SHOTS}browse-01.webp",
         "url": f"{BASE}{T[lang]['home']}", "inLanguage": T[lang]["lang"],
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
         "license": "https://opensource.org/licenses/MIT", "isAccessibleForFree": True,
@@ -209,7 +212,7 @@ def crumbs_schema(lang, title, path):
 
 def shot(name, alt, w=1440, h=900, eager=False):
     load = 'fetchpriority="high"' if eager else 'loading="lazy" decoding="async"'
-    return f'<img class="shot" src="/shots/{name}" alt="{esc(alt)}" width="{w}" height="{h}" {load}>'
+    return f'<img class="shot" src="{SHOTS}{name}" alt="{esc(alt)}" width="{w}" height="{h}" {load}>'
 
 
 # ---------------------------------------------------------------- 首页内容
@@ -499,7 +502,7 @@ def render_home(lang):
     schema = [app_schema(lang, h["desc"]), faq_schema(h["faq"]),
               {"@context": "https://schema.org", "@type": "WebSite", "name": "Flipic", "url": f"{BASE}{path}", "inLanguage": t["lang"]}]
     out = head(lang, path, h["title"], h["desc"], schema) + header(lang, path)
-    first = f'<img class="on" src="/shots/browse-01.webp" alt="{esc(h["deck_alt"].format(n=1))}" width="1440" height="900" fetchpriority="high">'
+    first = f'<img class="on" src="{SHOTS}browse-01.webp" alt="{esc(h["deck_alt"].format(n=1))}" width="1440" height="900" fetchpriority="high">'
     out += f"""<main id="main">
 <section class="wrap hero">
   <p class="eyebrow rise">{h['eyebrow']}</p>
@@ -508,7 +511,7 @@ def render_home(lang):
   <div class="rise">{download_block(lang)}</div>
 </section>
 <section class="wrap stage" aria-label="{'翻页演示' if lang == 'zh' else 'Paging demo'}">
-  <div class="frame" id="frame" data-total="8" data-base="/shots/" data-alt="{esc(h['deck_alt'])}">{first}</div>
+  <div class="frame" id="frame" data-total="8" data-base="{SHOTS}" data-alt="{esc(h['deck_alt'])}">{first}</div>
   <div class="deck">
     <span class="hint-keys">{h['deck_hint']}</span>
     <span class="keys">
@@ -708,7 +711,7 @@ def main():
     OUT.mkdir(parents=True)
     for name in ["favicon.png", "icon-256.png", "og.jpg", "version.json"]:
         shutil.copy(DOCS / name, OUT / name)
-    shutil.copytree(DOCS / "shots", OUT / "shots")
+    shutil.copytree(DOCS / "shots", OUT / "shots" / SHOTS_V)
     shutil.copytree(DOCS / "download", OUT / "download")
     shutil.copy(ROOT / "src/site.css", OUT / "site.css")
     shutil.copy(ROOT / "src/site.js", OUT / "site.js")
