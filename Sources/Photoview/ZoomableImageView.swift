@@ -147,18 +147,20 @@ final class ZoomableImageView: NSView {
     /// 照片没铺满窗口时周围露出来的底：纯黑、磨砂玻璃（透出窗口后面的桌面再模糊，系统材质）、照片色磨砂
     enum BackdropStyle: Int { case black, glass, photo }
 
-    /// 设置 › 通用 › 背景，默认磨砂玻璃
+    /// 设置 › 通用 › 背景，默认照片色磨砂
     static var backdropStyle: BackdropStyle {
         get {
             let d = UserDefaults.standard
-            if let v = d.object(forKey: "backdropStyle") as? Int, let s = BackdropStyle(rawValue: v) { return s }
-            return .glass
+            if d.object(forKey: "backdropStyle") != nil, let s = BackdropStyle(rawValue: d.integer(forKey: "backdropStyle")) { return s }
+            return .photo
         }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: "backdropStyle") }
     }
 
     private static let backdropQueue = DispatchQueue(label: "flipic.backdrop", qos: .utility)
-    private static let ciContext = CIContext(options: [.cacheIntermediates: false])
+    /// 在 sRGB（非线性）里算：压暗的系数就是看起来的亮度比例，不会像线性空间那样一压就灰
+    private static let ciContext = CIContext(options: [.cacheIntermediates: false,
+                                                       .workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
 
     /// 换图、旋转、改设置时重做底图。只处理一张几十像素的小图，在后台做，不影响翻页
     func refreshBackdrop(fade: TimeInterval? = nil) {
@@ -197,9 +199,10 @@ final class ZoomableImageView: NSView {
         }
     }
 
-    /// 缩到 48 像素宽，高斯模糊，压到四成亮度；mono 时去掉颜色、压得更暗
+    /// 缩到 64 像素宽，高斯模糊，保留六成五亮度、略加饱和（和 iPhone 上照片模糊做背景的感觉接近）；
+    /// mono 时去掉颜色、压暗到两成
     static func makeBackdrop(_ src: CGImage, mono: Bool = false) -> CGImage? {
-        let w = 48, h = max(1, Int((CGFloat(src.height) / CGFloat(max(src.width, 1)) * 48).rounded()))
+        let w = 64, h = max(1, Int((CGFloat(src.height) / CGFloat(max(src.width, 1)) * 64).rounded()))
         guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
                                   space: CGColorSpace(name: CGColorSpace.sRGB)!,
                                   bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
@@ -208,12 +211,12 @@ final class ZoomableImageView: NSView {
         guard let small = ctx.makeImage() else { return nil }
         let input = CIImage(cgImage: small)
         let out = input.clampedToExtent()
-            .applyingGaussianBlur(sigma: 4)
-            .applyingFilter("CIColorControls", parameters: [kCIInputBrightnessKey: 0, kCIInputSaturationKey: mono ? 0 : 0.9])
+            .applyingGaussianBlur(sigma: 2.6)
+            .applyingFilter("CIColorControls", parameters: [kCIInputBrightnessKey: 0, kCIInputSaturationKey: mono ? 0 : 1.1])
             .applyingFilter("CIColorMatrix", parameters: [
-                "inputRVector": CIVector(x: mono ? 0.035 : 0.42, y: 0, z: 0, w: 0),
-                "inputGVector": CIVector(x: 0, y: mono ? 0.035 : 0.42, z: 0, w: 0),
-                "inputBVector": CIVector(x: 0, y: 0, z: mono ? 0.035 : 0.42, w: 0),
+                "inputRVector": CIVector(x: mono ? 0.22 : 0.65, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: mono ? 0.22 : 0.65, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: mono ? 0.22 : 0.65, w: 0),
             ])
             .cropped(to: input.extent)
         return ciContext.createCGImage(out, from: input.extent)

@@ -2467,7 +2467,7 @@ final class ViewerViewController: NSViewController {
         // 全屏时系统材质没东西可透，换成照片明暗做的底，系统材质收起来
         glassView.isHidden = style != .glass || isFull
         glassDim.isHidden = glassView.isHidden
-        grainView.isHidden = style != .glass
+        grainView.isHidden = style == .black
         imageView.monoBackdrop = style == .glass && isFull
         imageView.backdropOverride = nil
         if style == .glass && isFull { loadWallpaperBackdrop() }

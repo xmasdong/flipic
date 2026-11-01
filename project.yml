@@ -43,7 +43,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.xmasdong.photoview
-        MARKETING_VERSION: "0.8.4"
+        MARKETING_VERSION: "0.8.5"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: Resources/Info.plist

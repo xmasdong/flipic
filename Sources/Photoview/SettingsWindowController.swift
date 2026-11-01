@@ -380,7 +380,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         escCloses.target = self; escCloses.action = #selector(escChanged)
         ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
         toolbarCheck.target = self; toolbarCheck.action = #selector(toolbarChanged)
-        for (t, title) in [(1, L10n.t("set.bg.glass", "磨砂玻璃")), (2, L10n.t("set.bg.photo", "照片色磨砂")), (0, L10n.t("set.bg.black", "纯黑"))] {
+        for (t, title) in [(2, L10n.t("set.bg.photo", "照片色磨砂")), (1, L10n.t("set.bg.glass", "磨砂玻璃")), (0, L10n.t("set.bg.black", "纯黑"))] {
             backdropPopup.addItem(withTitle: title)
             backdropPopup.lastItem?.tag = t
         }
@@ -539,7 +539,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     @objc private func keepRunningChanged() { AppDelegate.keepRunning = keepRunning.state == .on }
 
     @objc private func backdropChanged() {
-        ZoomableImageView.backdropStyle = ZoomableImageView.BackdropStyle(rawValue: backdropPopup.selectedTag()) ?? .glass
+        ZoomableImageView.backdropStyle = ZoomableImageView.BackdropStyle(rawValue: backdropPopup.selectedTag()) ?? .photo
         SettingsWindowController.notify("backdrop")
     }
 
