@@ -469,3 +469,16 @@ Return  表示中の画像を名称変更
 "pro.openAllInfo" = "写真が多いと編集アプリに時間がかかります。数を減らすなら、先に「マークのみ表示」や「評価で絞り込み」を使ってください。";
 "pro.pairs" = "同名ファイル：";
 "pro.trashGo" = "ゴミ箱に入れる";
+"set.backdrop" = "背景：";
+"tip.pin" = "ほかのアプリより手前に表示";
+"tip.unpin" = "手前に表示をやめる";
+"tip.share" = "共有";
+"menu.share" = "共有…";
+"menu.pin" = "ウインドウを常に手前に表示";
+"msg.pinned" = "ウインドウをほかのアプリより手前に表示します";
+"msg.unpinned" = "手前に表示をやめました";
+"set.bg.glass" = "すりガラス";
+"set.bg.photo" = "写真の色でぼかす";
+"set.bg.black" = "黒";
+"set.background" = "バックグラウンド：";
+"set.keepRunning" = "ウインドウを閉じても終了せず、次に写真を速く開く";

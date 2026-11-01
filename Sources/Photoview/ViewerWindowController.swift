@@ -13,9 +13,12 @@ final class ViewerWindowController: NSWindowController {
         window.backgroundColor = .black
         window.isOpaque = true
         window.minSize = NSSize(width: 640, height: 420)
-        window.setFrameAutosaveName("PixDeckMainWindow")  // 沿用改名前的键，保留老用户的窗口大小
-        window.center()
+        // 沿用改名前的键，保留老用户的窗口大小和位置；第一次打开才居中。
+        // 自动保存的名字要设在窗口控制器上：设在窗口上会被控制器自己的空名字盖掉，位置一直存不下来
+        if !window.setFrameUsingName("PixDeckMainWindow") { window.center() }
         self.init(window: window)
+        shouldCascadeWindows = false
+        windowFrameAutosaveName = "PixDeckMainWindow"
         contentViewController = ViewerViewController()
     }
 

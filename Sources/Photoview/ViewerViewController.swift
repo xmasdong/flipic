@@ -21,6 +21,34 @@ final class ViewerViewController: NSViewController {
     let emptyHint = NSTextField(labelWithString: "")
     private let toolbarView = NSVisualEffectView()
     private var slideshowButton: NSButton?
+    private var pinButton: NSButton?
+    /// 「磨砂玻璃」背景：系统材质，透出窗口后面的内容再模糊
+    private let glassView = NSVisualEffectView()
+    /// 叠在磨砂上的细颗粒，看起来才像毛玻璃；全屏时没东西可透，全靠它出质感
+    private let grainView = NSView()
+    private let glassDim = NSView()
+
+    /// 128 点见方的随机颗粒，按屏幕像素生成（Retina 下不发糊），平铺使用
+    private static let grainColor: CGColor = {
+        let px = 256
+        guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: px, pixelsHigh: px, bitsPerSample: 8,
+                                         samplesPerPixel: 2, hasAlpha: true, isPlanar: false,
+                                         colorSpaceName: .calibratedWhite, bytesPerRow: px * 2, bitsPerPixel: 16),
+              let data = rep.bitmapData else { return NSColor.clear.cgColor }
+        var rng = SystemRandomNumberGenerator()
+        for i in 0..<(px * px) {
+            // 一半偏亮一半偏暗，透明度各不相同；预乘 alpha
+            let a = UInt8.random(in: 0...40, using: &rng)
+            let light = Bool.random(using: &rng)
+            data[i * 2] = light ? a : 0
+            data[i * 2 + 1] = a
+        }
+        rep.size = NSSize(width: 128, height: 128)
+        let image = NSImage(size: rep.size)
+        image.addRepresentation(rep)
+        return NSColor(patternImage: image).cgColor
+    }()
+    private var shareButton: NSButton?
     private var prevArrowContainer: NSView!
     private var nextArrowContainer: NSView!
     private var prevArrowButton: ToolbarButton!
@@ -102,6 +130,31 @@ final class ViewerViewController: NSViewController {
         dropView.onMouseExited = { [weak self] in self?.scheduleControlsHide() }
         view = dropView
 
+        glassView.material = .hudWindow
+        glassView.blendingMode = .behindWindow
+        glassView.state = .active
+        glassView.appearance = NSAppearance(named: .darkAqua)
+        glassView.translatesAutoresizingMaskIntoConstraints = false
+        dropView.addSubview(glassView)
+        // 系统材质偏灰，压一层半透明黑，像深色烟熏玻璃
+        glassDim.wantsLayer = true
+        glassDim.layer?.backgroundColor = NSColor(calibratedWhite: 0, alpha: 0.38).cgColor
+        glassDim.translatesAutoresizingMaskIntoConstraints = false
+        dropView.addSubview(glassDim)
+        grainView.wantsLayer = true
+        grainView.layer?.backgroundColor = Self.grainColor
+        grainView.translatesAutoresizingMaskIntoConstraints = false
+        dropView.addSubview(grainView)
+        for v in [glassView, glassDim, grainView] {
+            NSLayoutConstraint.activate([
+                v.leadingAnchor.constraint(equalTo: dropView.leadingAnchor),
+                v.trailingAnchor.constraint(equalTo: dropView.trailingAnchor),
+                v.topAnchor.constraint(equalTo: dropView.topAnchor),
+                v.bottomAnchor.constraint(equalTo: dropView.bottomAnchor),
+            ])
+        }
+
+        imageView.allowsBackdrop = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.onZoomChange = { [weak self] _ in self?.updateHUD() }
         imageView.onNeedsDetail = { [weak self] in self?.loadFullResolution() }
@@ -151,6 +204,8 @@ final class ViewerViewController: NSViewController {
 
         NotificationCenter.default.addObserver(self, selector: #selector(windowDidExitFullScreen(_:)),
                                                name: NSWindow.didExitFullScreenNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(windowDidEnterFullScreen(_:)),
+                                               name: NSWindow.didEnterFullScreenNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowWillClose(_:)),
                                                name: NSWindow.willCloseNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(settingsDidChange(_:)),
@@ -379,6 +434,8 @@ final class ViewerViewController: NSViewController {
             [("rotate.left", L10n.t("tip.rotateCCW", "向左旋转 90°（L）"), #selector(rotateCCW(_:))),
              ("rotate.right", L10n.t("tip.rotateCW", "向右旋转 90°（R）"), #selector(rotateCW(_:)))],
             [("play.fill", L10n.t("tip.slideshow", "幻灯片放映（S）"), #selector(toggleSlideshow(_:)))],
+            [("pin", L10n.t("tip.pin", "窗口置顶：浮在其他软件上面"), #selector(togglePinned(_:))),
+             ("square.and.arrow.up", L10n.t("tip.share", "分享"), #selector(shareCurrent(_:)))],
             [("info.circle", L10n.t("tip.info", "照片信息（I）"), #selector(toggleInfoPanel(_:))),
              ("photo.on.rectangle", L10n.t("tip.strip", "底部缩略图栏开关（T）"), #selector(toggleFilmstrip(_:)))],
             [("folder.badge.plus", L10n.t("tip.exportFolder", "把当前显示的照片复制或移动到文件夹（⇧⌘E）"), #selector(exportToFolder(_:))),
@@ -397,6 +454,8 @@ final class ViewerViewController: NSViewController {
                                                      size: NSSize(width: 36, height: 32), cornerRadius: 7,
                                                      tint: d.symbol == "trash" ? .systemRed : .labelColor)
                 if d.symbol == "play.fill" { slideshowButton = button }
+                if d.symbol == "pin" { pinButton = button }
+                if d.symbol == "square.and.arrow.up" { shareButton = button }
                 if let a = Self.shortcutAction(for: d.action) { shortcutTips.append((button, d.tip, a)) }
                 stack.addArrangedSubview(container)
             }
@@ -1094,6 +1153,8 @@ final class ViewerViewController: NSViewController {
         case .comparePane: compareCyclePane()
         case .compareSync: toggleCompareSync(nil)
         case .exportFolder: exportToFolder(nil)
+        case .pinWindow: togglePinned(nil)
+        case .share: shareCurrent(nil)
         #if FLIPIC_PRO
         case .beforeAfter: toggleBeforeAfter(nil)
         case .splitByRating: splitByRating(nil)
@@ -1124,6 +1185,8 @@ final class ViewerViewController: NSViewController {
             filmstrip.collectionView.reloadData()
             syncFilmstripSelection()
             if imageView.isFit { imageView.fit() }
+        case "backdrop":
+            applyBackdropStyle()
         case "hdr":
             // 解码方式变了，缓存里的图作废，当前这张重新解码
             loader.purge()
@@ -1372,11 +1435,20 @@ final class ViewerViewController: NSViewController {
     @objc private func windowDidExitFullScreen(_ note: Notification) {
         guard (note.object as? NSWindow) === view.window else { return }
         stopSlideshow()
+        applyBackdropStyle()
+    }
+
+    /// 进入全屏完成后再换底：在「将要进入」时换，进入失败（被取消）窗口就一直是不透明的
+    @objc private func windowDidEnterFullScreen(_ note: Notification) {
+        guard (note.object as? NSWindow) === view.window else { return }
+        applyBackdropStyle(fullScreen: true)
     }
 
     @objc private func windowWillClose(_ note: Notification) {
         guard (note.object as? NSWindow) === view.window else { return }
         stopSlideshow()
+        // 贴合照片比例时关窗：先回到普通大小，记住的是普通窗口的位置和大小，不是那个照片形状的小窗
+        if let saved = peekSaved { view.window?.setFrame(saved.frame, display: false) }
     }
 
     // MARK: - 交给后期软件
@@ -1531,6 +1603,7 @@ final class ViewerViewController: NSViewController {
         add(Self.markMenuTitle(folder.current?.marked ?? false), #selector(toggleMark(_:)))
         add(L10n.t("menu.markedOnly", "只看已标记"), #selector(toggleMarkedOnly(_:)))
         add(L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(exportToFolder(_:)))
+        add(L10n.t("menu.share", "分享…"), #selector(shareCurrent(_:)))
         menu.addItem(.separator())
         add(L10n.t("menu.reveal", "在 Finder 中显示"), #selector(revealInFinder(_:)))
         add(L10n.t("menu.trash", "移到废纸篓"), #selector(trashCurrent(_:)))
@@ -2375,6 +2448,145 @@ final class ViewerViewController: NSViewController {
             return nil
         }
         if let b = find(banner) { updateBannerSkip(b) }
+    }
+
+    // MARK: - 背景
+
+    override func viewWillAppear() {
+        super.viewWillAppear()
+        applyBackdropStyle()
+    }
+
+    /// 磨砂玻璃要窗口本身透明，纯黑和照片色磨砂用不透明的深色底。
+    /// 全屏时窗口后面没有桌面可透，系统只会透出全屏空间的底色（常常发蓝），改成在窗口里渲染的中性深灰
+    func applyBackdropStyle(fullScreen: Bool? = nil) {
+        let style = ZoomableImageView.backdropStyle
+        let isFull = fullScreen ?? (view.window?.styleMask.contains(.fullScreen) ?? false)
+        glassView.blendingMode = isFull ? .withinWindow : .behindWindow
+        let glass = style == .glass && !isFull
+        // 全屏时系统材质没东西可透，换成照片明暗做的底，系统材质收起来
+        glassView.isHidden = style != .glass || isFull
+        glassDim.isHidden = glassView.isHidden
+        grainView.isHidden = style != .glass
+        imageView.monoBackdrop = style == .glass && isFull
+        imageView.backdropOverride = nil
+        if style == .glass && isFull { loadWallpaperBackdrop() }
+        // 全屏时底下是平的深灰，颗粒要明显一点才看得出来
+        grainView.alphaValue = isFull ? 1 : 0.6
+        view.layer?.backgroundColor = glass ? NSColor.clear.cgColor : NSColor(calibratedWhite: 0.055, alpha: 1).cgColor
+        if let w = view.window {
+            w.isOpaque = !glass
+            w.backgroundColor = glass ? .clear : .black
+        }
+        imageView.refreshBackdrop()
+    }
+
+    /// 全屏时的磨砂玻璃：读当前桌面壁纸，缩小、模糊、压暗，和窗口模式下透出来的桌面看起来一样。
+    /// 读不到（动态视频壁纸等）就保持照片明暗做的深色底
+    private func loadWallpaperBackdrop() {
+        guard let screen = view.window?.screen ?? NSScreen.main,
+              let url = NSWorkspace.shared.desktopImageURL(for: screen) else { return }
+        let size = screen.frame.size
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let img = Self.makeWallpaperBackdrop(url, aspect: size)
+            DispatchQueue.main.async {
+                guard let self, let img, ZoomableImageView.backdropStyle == .glass,
+                      self.view.window?.styleMask.contains(.fullScreen) == true else { return }
+                self.imageView.backdropOverride = img
+            }
+        }
+    }
+
+    private static func makeWallpaperBackdrop(_ url: URL, aspect: CGSize) -> CGImage? {
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let thumb = CGImageSourceCreateThumbnailAtIndex(src, 0, [
+                kCGImageSourceCreateThumbnailFromImageAlways: true,
+                kCGImageSourceThumbnailMaxPixelSize: 160,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+              ] as CFDictionary) else { return nil }
+        let input = CIImage(cgImage: thumb)
+        let blurred = input.clampedToExtent().applyingGaussianBlur(sigma: 9)
+            .applyingFilter("CIColorControls", parameters: [kCIInputSaturationKey: 0.85])
+            .cropped(to: input.extent)
+        let ctx = CIContext(options: [.cacheIntermediates: false])
+        guard let cg = ctx.createCGImage(blurred, from: input.extent) else { return nil }
+        // 和窗口模式一样压暗：系统深色材质加一层 38% 的黑
+        let w = cg.width, h = cg.height
+        guard let out = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        let r = CGRect(x: 0, y: 0, width: w, height: h)
+        out.draw(cg, in: r)
+        out.setFillColor(CGColor(gray: 0.12, alpha: 0.55))
+        out.fill(r)
+        return out.makeImage()
+    }
+
+    // MARK: - 窗口置顶、分享
+
+    /// 置顶：窗口浮在其他软件上面，切到别的桌面或别的软件全屏时也跟着；每个窗口单独设，关掉窗口就没了
+    var isPinned: Bool { view.window?.level == .floating }
+
+    @objc func togglePinned(_ sender: Any?) {
+        guard let w = view.window else { return }
+        let on = !isPinned
+        w.level = on ? .floating : .normal
+        if on {
+            w.collectionBehavior.insert([.canJoinAllSpaces, .fullScreenAuxiliary])
+        } else {
+            w.collectionBehavior.remove([.canJoinAllSpaces, .fullScreenAuxiliary])
+        }
+        refreshPinButton()
+        flash(on ? L10n.t("msg.pinned", "窗口已置顶，会浮在其他软件上面") : L10n.t("msg.unpinned", "已取消置顶"), seconds: 1.5)
+    }
+
+    private func refreshPinButton() {
+        let on = isPinned
+        pinButton?.image = NSImage(systemSymbolName: on ? "pin.fill" : "pin", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 15, weight: .medium))
+        pinButton?.contentTintColor = on ? .controlAccentColor : .labelColor
+        pinButton?.toolTip = on ? L10n.t("tip.unpin", "取消置顶") : L10n.t("tip.pin", "窗口置顶：浮在其他软件上面")
+    }
+
+    /// --pintest <输出文件夹>：置顶开关、工具条截图
+    func runPinTest(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        func state(_ tag: String) {
+            let w = view.window
+            NSLog("PIN %@ level=%d allSpaces=%d fsAux=%d pinned=%d", tag, w?.level.rawValue ?? -1,
+                  w?.collectionBehavior.contains(.canJoinAllSpaces) == true ? 1 : 0,
+                  w?.collectionBehavior.contains(.fullScreenAuxiliary) == true ? 1 : 0, isPinned ? 1 : 0)
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        view.window?.makeKeyAndOrderFront(nil)
+        state("start")
+        let ev = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [.command, .option], timestamp: 0,
+                                  windowNumber: view.window?.windowNumber ?? 0, context: nil, characters: "†",
+                                  charactersIgnoringModifiers: "t", isARepeat: false, keyCode: 17)
+        let handled = ev.map { NSApp.mainMenu?.performKeyEquivalent(with: $0) ?? false } ?? false
+        state("after ⌥⌘T handled=\(handled ? 1 : 0)")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            self.pokeControls()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.captureWindow(to: "\(outDir)/pinned.png", raw: true)
+                self.togglePinned(nil)
+                state("after toggle off")
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
+    /// 系统的分享菜单：隔空投送、信息、邮件，以及装了分享扩展的微信等
+    @objc func shareCurrent(_ sender: Any?) {
+        guard cleanup == nil, let url = folder.current?.url else { return }
+        let picker = NSSharingServicePicker(items: [url])
+        if let b = shareButton, !toolbarView.isHidden, toolbarView.alphaValue > 0, b.window != nil {
+            controlsHideTimer?.invalidate()
+            picker.show(relativeTo: b.bounds, of: b, preferredEdge: .maxY)
+        } else {
+            let r = NSRect(x: view.bounds.midX - 1, y: view.bounds.midY - 1, width: 2, height: 2)
+            picker.show(relativeTo: r, of: view, preferredEdge: .minY)
+        }
     }
 
     // MARK: - 设为桌面壁纸
@@ -4110,6 +4322,10 @@ extension ViewerViewController: NSMenuItemValidation {
         } else if menuItem.action == #selector(toggleCompareSync(_:)) {
             menuItem.state = compareSynced ? .on : .off
             return compareView != nil
+        } else if menuItem.action == #selector(togglePinned(_:)) {
+            menuItem.state = isPinned ? .on : .off
+        } else if menuItem.action == #selector(shareCurrent(_:)) {
+            return folder.current != nil && cleanup == nil
         } else if menuItem.action == #selector(toggleToolbar(_:)) {
             menuItem.state = Self.showToolbar ? .on : .off
         } else if menuItem.action == #selector(toggleMark(_:)) {

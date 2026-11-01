@@ -346,6 +346,8 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let autoUpdate = NSButton(checkboxWithTitle: L10n.t("set.autoUpdate", "自动检查更新（每天一次）"), target: nil, action: nil)
     private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
     private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
+    private let backdropPopup = NSPopUpButton()
+    private let keepRunning = NSButton(checkboxWithTitle: L10n.t("set.keepRunning", "关掉窗口后留在后台，再打开图片更快"), target: nil, action: nil)
     private let editorName = NSTextField(labelWithString: "")
     private let editorIcon = NSImageView()
     private lazy var clearEditor = pillButton(L10n.t("set.clear", "清除"), self, #selector(clearEditorApp))
@@ -378,6 +380,12 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         escCloses.target = self; escCloses.action = #selector(escChanged)
         ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
         toolbarCheck.target = self; toolbarCheck.action = #selector(toolbarChanged)
+        for (t, title) in [(1, L10n.t("set.bg.glass", "磨砂玻璃")), (2, L10n.t("set.bg.photo", "照片色磨砂")), (0, L10n.t("set.bg.black", "纯黑"))] {
+            backdropPopup.addItem(withTitle: title)
+            backdropPopup.lastItem?.tag = t
+        }
+        backdropPopup.target = self; backdropPopup.action = #selector(backdropChanged)
+        keepRunning.target = self; keepRunning.action = #selector(keepRunningChanged)
         openPeek.target = self; openPeek.action = #selector(openPeekChanged)
         newWindow.target = self; newWindow.action = #selector(newWindowChanged)
         autoUpdate.target = self; autoUpdate.action = #selector(autoUpdateChanged)
@@ -410,6 +418,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.paging", "翻页：")), fade],
             [label(L10n.t("set.rating", "评分：")), ratingBadge],
             [label(L10n.t("set.toolbar", "工具条：")), toolbarCheck],
+            [label(L10n.t("set.backdrop", "背景：")), backdropPopup],
             [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
             [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
             [label(L10n.t("set.slideFadeLabel", "幻灯片渐变：")), slideFadeRow],
@@ -419,15 +428,16 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             spacerRow(hdrNote),
             [label(L10n.t("set.editor", "后期软件：")), editorRow],
             spacerRow(note(L10n.t("set.editorNote", "「在后期软件中编辑」用它打开当前照片，同名 RAW 也在时打开 RAW。"))),
+            [label(L10n.t("set.background", "后台：")), keepRunning],
             [label(L10n.t("set.update", "更新：")), updateRow],
             spacerRow(note(L10n.t("set.updateNote", "Flipic 默认不联网。打开后每天最多查一次，只向官网请求最新版本号，不发送任何数据。"))),
         ])
         g.row(at: 1).topPadding = -4
         g.row(at: 4).topPadding = -4
-        g.row(at: 13).topPadding = -4
-        g.row(at: 15).topPadding = -4
-        g.row(at: 17).topPadding = -4
-        g.row(at: 19).topPadding = -4
+        g.row(at: 14).topPadding = -4
+        g.row(at: 16).topPadding = -4
+        g.row(at: 18).topPadding = -4
+        g.row(at: 21).topPadding = -4
         view = host(g)
         reload()
     }
@@ -441,6 +451,8 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         escCloses.state = ViewerViewController.escCloses ? .on : .off
         ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
         toolbarCheck.state = ViewerViewController.showToolbar ? .on : .off
+        backdropPopup.selectItem(withTag: ZoomableImageView.backdropStyle.rawValue)
+        keepRunning.state = AppDelegate.keepRunning ? .on : .off
         thumbPopup.selectItem(withTag: Int(FilmstripView.thumbSize))
         openPeek.state = ViewerViewController.openInPeek ? .on : .off
         newWindow.state = AppDelegate.openInNewWindow ? .on : .off
@@ -522,6 +534,13 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     @objc private func thumbSizeChanged() {
         FilmstripView.thumbSize = CGFloat(thumbPopup.selectedTag())
         SettingsWindowController.notify("thumbs")
+    }
+
+    @objc private func keepRunningChanged() { AppDelegate.keepRunning = keepRunning.state == .on }
+
+    @objc private func backdropChanged() {
+        ZoomableImageView.backdropStyle = ZoomableImageView.BackdropStyle(rawValue: backdropPopup.selectedTag()) ?? .glass
+        SettingsWindowController.notify("backdrop")
     }
 
     @objc private func toolbarChanged() {

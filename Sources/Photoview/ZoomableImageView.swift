@@ -1,5 +1,6 @@
 import AppKit
 import QuartzCore
+import CoreImage
 
 /// 以 CALayer 承载 CGImage 的可缩放平移视图。
 /// scale 是「每个原图像素对应多少屏幕点」，origin 是图像左上角在视图（翻转坐标系）里的位置。
@@ -33,6 +34,15 @@ final class ZoomableImageView: NSView {
     private enum Mode { case fit, free }
 
     private let imageLayer = CALayer()
+    /// 照片没铺满时露出来的底：这张照片缩成几十像素再模糊、压暗后铺满整个视图
+    private let backdropLayer = CALayer()
+    private var backdropGeneration = 0
+    /// 只有主看图界面用磨砂底；并排对比、修图前后对比要比颜色，保持纯黑
+    var allowsBackdrop = false { didSet { refreshBackdrop() } }
+    /// 全屏时的「磨砂玻璃」：窗口后面没东西可透，改用照片的明暗（去掉颜色）模糊出来当底
+    var monoBackdrop = false { didSet { if oldValue != monoBackdrop { refreshBackdrop() } } }
+    /// 固定的底图（全屏时模糊过的桌面壁纸），设了就不再按照片生成
+    var backdropOverride: CGImage? { didSet { refreshBackdrop() } }
     private var image: CGImage?          // 当前显示（已应用旋转）的图
     private var baseImage: CGImage?      // 未旋转原图
     private var quarterTurns = 0
@@ -51,6 +61,10 @@ final class ZoomableImageView: NSView {
     init() {
         super.init(frame: .zero)
         wantsLayer = true
+        backdropLayer.contentsGravity = .resizeAspectFill
+        backdropLayer.magnificationFilter = .linear
+        backdropLayer.isHidden = true
+        layer?.addSublayer(backdropLayer)
         layer?.addSublayer(imageLayer)
         imageLayer.isHidden = true
         imageLayer.magnificationFilter = .trilinear
@@ -119,6 +133,7 @@ final class ZoomableImageView: NSView {
             crossfade(from: oldContents, frame: oldFrame, duration: fade)
         }
         imageLayer.isHidden = (displayed == nil)
+        if isNew || displayed == nil { refreshBackdrop(fade: fade) }
         // 换了新图一律适应窗口并居中；只有预览换原图（isNew = false）时保持当前缩放
         if resetToFit || isNew || mode == .fit || displayed == nil {
             fit()
@@ -126,6 +141,85 @@ final class ZoomableImageView: NSView {
             apply()
         }
     }
+
+    // MARK: - 磨砂底
+
+    /// 照片没铺满窗口时周围露出来的底：纯黑、磨砂玻璃（透出窗口后面的桌面再模糊，系统材质）、照片色磨砂
+    enum BackdropStyle: Int { case black, glass, photo }
+
+    /// 设置 › 通用 › 背景，默认磨砂玻璃
+    static var backdropStyle: BackdropStyle {
+        get {
+            let d = UserDefaults.standard
+            if let v = d.object(forKey: "backdropStyle") as? Int, let s = BackdropStyle(rawValue: v) { return s }
+            return .glass
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: "backdropStyle") }
+    }
+
+    private static let backdropQueue = DispatchQueue(label: "flipic.backdrop", qos: .utility)
+    private static let ciContext = CIContext(options: [.cacheIntermediates: false])
+
+    /// 换图、旋转、改设置时重做底图。只处理一张几十像素的小图，在后台做，不影响翻页
+    func refreshBackdrop(fade: TimeInterval? = nil) {
+        backdropGeneration += 1
+        let gen = backdropGeneration
+        if allowsBackdrop, let fixed = backdropOverride {
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            backdropLayer.contents = fixed
+            backdropLayer.isHidden = false
+            CATransaction.commit()
+            return
+        }
+        guard allowsBackdrop, Self.backdropStyle == .photo || monoBackdrop, let src = image else {
+            backdropLayer.isHidden = true
+            backdropLayer.contents = nil
+            return
+        }
+        let mono = monoBackdrop
+        Self.backdropQueue.async { [weak self] in
+            let blurred = Self.makeBackdrop(src, mono: mono)
+            DispatchQueue.main.async {
+                guard let self, self.backdropGeneration == gen else { return }
+                if let fade, fade > 0, !self.backdropLayer.isHidden {
+                    let t = CATransition()
+                    t.type = .fade
+                    t.duration = fade
+                    self.backdropLayer.add(t, forKey: "fade")
+                }
+                CATransaction.begin()
+                CATransaction.setDisableActions(fade == nil)
+                self.backdropLayer.contents = blurred
+                self.backdropLayer.isHidden = blurred == nil
+                CATransaction.commit()
+            }
+        }
+    }
+
+    /// 缩到 48 像素宽，高斯模糊，压到四成亮度；mono 时去掉颜色、压得更暗
+    static func makeBackdrop(_ src: CGImage, mono: Bool = false) -> CGImage? {
+        let w = 48, h = max(1, Int((CGFloat(src.height) / CGFloat(max(src.width, 1)) * 48).rounded()))
+        guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        ctx.interpolationQuality = .medium
+        ctx.draw(src, in: CGRect(x: 0, y: 0, width: w, height: h))
+        guard let small = ctx.makeImage() else { return nil }
+        let input = CIImage(cgImage: small)
+        let out = input.clampedToExtent()
+            .applyingGaussianBlur(sigma: 4)
+            .applyingFilter("CIColorControls", parameters: [kCIInputBrightnessKey: 0, kCIInputSaturationKey: mono ? 0 : 0.9])
+            .applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: mono ? 0.035 : 0.42, y: 0, z: 0, w: 0),
+                "inputGVector": CIVector(x: 0, y: mono ? 0.035 : 0.42, z: 0, w: 0),
+                "inputBVector": CIVector(x: 0, y: 0, z: mono ? 0.035 : 0.42, w: 0),
+            ])
+            .cropped(to: input.extent)
+        return ciContext.createCGImage(out, from: input.extent)
+    }
+
+    var debugBackdropVisible: Bool { !backdropLayer.isHidden && backdropLayer.contents != nil }
 
     // MARK: - 渐变
 
@@ -239,6 +333,7 @@ final class ZoomableImageView: NSView {
         quarterTurns = ((quarterTurns + turns) % 4 + 4) % 4
         image = baseImage.flatMap { ImageLoader.rotated($0, quarterTurns: quarterTurns) }
         imageLayer.contents = image
+        refreshBackdrop()
         fit(animate: true)
     }
 
@@ -363,6 +458,10 @@ final class ZoomableImageView: NSView {
 
     override func layout() {
         super.layout()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        backdropLayer.frame = bounds
+        CATransaction.commit()
         if mode == .fit {
             scale = min(fitScale, 4)
             centerOrigin()

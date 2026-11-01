@@ -7,6 +7,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var controllers: [ViewerWindowController] = []
 
     /// 从访达打开照片时开新窗口（可以同时开几个），关掉就换掉当前窗口的内容；默认开
+    /// 关掉最后一个窗口后留在后台（Dock 上还在，再打开图片不用重新启动），默认打开
+    static var keepRunning: Bool {
+        get { UserDefaults.standard.object(forKey: "keepRunningWhenClosed") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "keepRunningWhenClosed") }
+    }
+
     static var openInNewWindow: Bool {
         get { !UserDefaults.standard.bool(forKey: "openInSameWindow") }
         set { UserDefaults.standard.set(!newValue, forKey: "openInSameWindow") }
@@ -47,7 +53,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func newWindowAction(_ sender: Any?) {
         newViewerWindow().openFolderPanel()
     }
-    private var pendingURL: URL?
+    /// 启动完成前从访达打开的文件（选中几张一起打开时有好几个），启动完一起打开
+    private var pendingURLs: [URL] = []
+    private var launched = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         if let i = CommandLine.arguments.firstIndex(of: "--peekopentest"), i + 1 < CommandLine.arguments.count {
@@ -351,6 +359,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runRatingShot(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--fstest"), i + 2 < CommandLine.arguments.count {
+            // --fstest <输出文件夹> <照片>：全屏时磨砂玻璃换成窗口内的中性深灰
+            let outDir = CommandLine.arguments[i + 1], file = URL(fileURLWithPath: CommandLine.arguments[i + 2])
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                guard let self, let wc = self.windowController, let w = wc.window else { return }
+                wc.open(file)
+                NSApp.activate(ignoringOtherApps: true)
+                w.makeKeyAndOrderFront(nil)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    NSLog("FS start full=%d opaque=%d", w.styleMask.contains(.fullScreen) ? 1 : 0, w.isOpaque ? 1 : 0)
+                    w.toggleFullScreen(nil)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        NSLog("FS full=%d opaque=%d", w.styleMask.contains(.fullScreen) ? 1 : 0, w.isOpaque ? 1 : 0)
+                        (wc.contentViewController as? ViewerViewController)?.debugCapture(to: "\(outDir)/fullscreen.png")
+                        w.toggleFullScreen(nil)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            NSLog("FS after exit full=%d opaque=%d", w.styleMask.contains(.fullScreen) ? 1 : 0, w.isOpaque ? 1 : 0)
+                            NSApp.terminate(nil)
+                        }
+                    }
+                }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--closetest"), i + 2 < CommandLine.arguments.count {
+            // --closetest <照片1> <照片2>：关掉最后一个窗口后是否留在后台、再打开照片能不能新开窗口、窗口位置记不记得
+            let a = URL(fileURLWithPath: CommandLine.arguments[i + 1]), b = URL(fileURLWithPath: CommandLine.arguments[i + 2])
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                guard let self else { return }
+                self.windowController?.open(a)
+                let w = self.windowController?.window
+                w?.setFrameOrigin(NSPoint(x: 123, y: 234))
+                NSLog("CLOSE opened, frame=%@ keepRunning=%d", NSStringFromRect(w?.frame ?? .zero), Self.keepRunning ? 1 : 0)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    w?.performClose(nil)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        NSLog("CLOSE after close: running=1 visibleWindows=%d", NSApp.windows.filter { $0.isVisible && $0.windowController is ViewerWindowController }.count)
+                        NSLog("CLOSE saved=%@", UserDefaults.standard.string(forKey: "NSWindow Frame PixDeckMainWindow") ?? "-")
+                        self.application(NSApp, open: [a, b])
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            let ws = NSApp.windows.filter { $0.isVisible && $0.windowController is ViewerWindowController }
+                            NSLog("CLOSE reopened two: visibleWindows=%d titles=%@ firstOrigin=%@", ws.count, ws.map(\.title).joined(separator: ","),
+                                  NSStringFromPoint(self.controllers.first?.window?.frame.origin ?? .zero))
+                            NSApp.terminate(nil)
+                        }
+                    }
+                }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--pintest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runPinTest(outDir: outDir)
+                }
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--exporttest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
             let folder = CommandLine.arguments[i + 2]
@@ -496,10 +559,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         } else if CommandLine.arguments.contains("--shot") {
             // shot 模式的文件夹加载在下方单独编排，不走红路径
-        } else if let pending = pendingURL {
+        } else if !pendingURLs.isEmpty {
             scheduleAutoUpdateCheck()
-            windowController.open(pending)
-            pendingURL = nil
+            let pending = pendingURLs
+            pendingURLs = []
+            launched = true
+            application(NSApp, open: pending)
         } else {
             scheduleAutoUpdateCheck()
             let paths = CommandLine.arguments.dropFirst()
@@ -510,6 +575,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 windowController.openFolderPanel()
             }
         }
+        launched = true
         if CommandLine.arguments.contains("--selftest") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
                 self?.windowController?.runSelfTest()
@@ -539,22 +605,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // flipic:// 链接（付款后激活）不是文件
         let urls = urls.filter { $0.isFileURL }
         guard let first = urls.first else { return }
-        guard windowController != nil else {
-            pendingURL = first
+        guard launched || windowController != nil else {
+            pendingURLs += urls
             return
         }
         let batch = urls.count <= 6 ? urls : [first]
         for url in batch {
-            if let wc = activeController, (wc.contentViewController as? ViewerViewController)?.isEmpty ?? true {
+            if let wc = activeController, wc.window?.isVisible == true,
+               (wc.contentViewController as? ViewerViewController)?.isEmpty ?? true {
                 wc.showWindow(nil)
                 wc.open(url)
-            } else if Self.openInNewWindow {
+            } else if Self.openInNewWindow || activeController?.window?.isVisible != true {
+                // 窗口都关了（留在后台时）也走这里，新开一个
                 newViewerWindow().open(url)
             } else {
                 activeController?.showWindow(nil)
                 activeController?.open(url)
             }
         }
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     /// 「打开方式」子菜单每次展开时按当前照片现列可用的软件
@@ -562,7 +631,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         activeViewer?.populateOpenWithMenu(menu)
     }
 
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { !Self.keepRunning }
+
+    /// 留在后台时点 Dock 图标：没有窗口就开一个
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag { newViewerWindow().openFolderPanel() }
+        return true
+    }
 
     // MARK: - 菜单栏
 
@@ -588,6 +663,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.batchRename(_:)): .batchRename,
         #selector(ViewerViewController.toggleCleanup(_:)): .cleanup,
         #selector(ViewerViewController.setWallpaper(_:)): .wallpaper,
+        #selector(ViewerViewController.togglePinned(_:)): .pinWindow,
+        #selector(ViewerViewController.shareCurrent(_:)): .share,
     ]
     #if FLIPIC_PRO
     private static let proMenuActions: [Selector: ShortcutAction] = [
@@ -735,6 +812,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             item(m, L10n.t("menu.exportAs", "导出为…"), #selector(ViewerViewController.exportAs(_:)))
             item(m, L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(ViewerViewController.exportToFolder(_:)))
+            item(m, L10n.t("menu.share", "分享…"), #selector(ViewerViewController.shareCurrent(_:)))
             #if FLIPIC_PRO
             let sendItem = NSMenuItem(title: L10n.t("menu.sendTo", "发送到"), action: nil, keyEquivalent: "")
             let sendMenu = NSMenu(title: sendItem.title)
@@ -812,6 +890,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         addMenu(L10n.t("menu.window", "窗口")) { m in
             item(m, L10n.t("menu.miniaturize", "最小化"), #selector(NSWindow.performMiniaturize(_:)), "m")
             item(m, L10n.t("menu.windowZoom", "缩放"), #selector(NSWindow.performZoom(_:)))
+            item(m, L10n.t("menu.pin", "窗口置顶"), #selector(ViewerViewController.togglePinned(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.front", "前置全部窗口"), #selector(NSApplication.arrangeInFront(_:)))
         }

@@ -469,3 +469,16 @@ Return  重新命名目前圖片
 "pro.openAllInfo" = "照片多時後製軟體可能要花一會兒。想少開幾張，可以先用「只看已標記」或「只看星級」篩一下。";
 "pro.pairs" = "同名檔案：";
 "pro.trashGo" = "移到垃圾桶";
+"set.backdrop" = "背景：";
+"tip.pin" = "視窗置頂：浮在其他軟體上面";
+"tip.unpin" = "取消置頂";
+"tip.share" = "分享";
+"menu.share" = "分享…";
+"menu.pin" = "視窗置頂";
+"msg.pinned" = "視窗已置頂，會浮在其他軟體上面";
+"msg.unpinned" = "已取消置頂";
+"set.bg.glass" = "磨砂玻璃";
+"set.bg.photo" = "照片色磨砂";
+"set.bg.black" = "純黑";
+"set.background" = "背景執行：";
+"set.keepRunning" = "關掉視窗後留在背景，再打開圖片更快";

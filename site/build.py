@@ -12,7 +12,7 @@ OUT = ROOT / "public"
 BASE = "https://flipic.app"
 UPDATED = "2026-10-31"
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "2.4 MB"
+SIZE = "2.5 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -220,7 +220,7 @@ def shot(name, alt, w=1440, h=900, eager=False):
 HOME = {
     "zh": {
         "title": "Flipic：免费开源的 Mac 看图软件，双击图片用左右键看下一张",
-        "desc": "Flipic 是一个免费开源的 Mac 看图软件。双击一张图片，用左右方向键就能看同一个文件夹里的其他图片，也能放大看细节、给照片打星、把 HEIC 批量转成 JPG。安装包 2.4 MB，已通过 Apple 公证。",
+        "desc": "Flipic 是一个免费开源的 Mac 看图软件。双击一张图片，用左右方向键就能看同一个文件夹里的其他图片，也能放大看细节、给照片打星、把 HEIC 批量转成 JPG。安装包 2.5 MB，已通过 Apple 公证。",
         "eyebrow": "免费开源的 Mac 看图软件",
         "h1": "双击一张图片，<br>用方向键往下翻",
         "lede": "Mac 自带的「预览」打开一张图片以后，没法直接看同一个文件夹里的下一张，得回访达全选再打开。Flipic 就是为这个做的：双击任意一张，按 → 就是下一张。另外加了放大看细节、打星、挑片这些看照片时常用的功能。",
@@ -247,6 +247,7 @@ HOME = {
         "more": [
             ("标记和筛选", "按 P 标记想留的照片，⇧P 只看标记过的，也可以只看几星以上的。挑好以后按 ⇧⌘E 一起导出到别的文件夹。"),
             ("并排对比", "按 C 把两张照片并排放，⇧C 一次看四张，放大和拖动时几张一起动。"),
+            ("窗口置顶和分享", "点工具条上的图钉，窗口就一直浮在其他软件上面，适合对照参考图。分享按钮可以用隔空投送、信息、邮件发出去。"),
             ("用后期软件打开", "按 ⌘E 用 Photoshop、Lightroom 或 Capture One 打开当前照片，有同名 RAW 时打开 RAW。"),
             ("幻灯片", "每张停 1 到 10 秒，切换的渐变时长也能调。单击暂停，暂停时可以手动翻页和打星。"),
             ("HEIC 批量转 JPG", "整个文件夹一次转成 JPEG、PNG 或 HEIC，转好的放在子文件夹里，原图不动。"),
@@ -308,6 +309,7 @@ HOME = {
         "more": [
             ("Marks and filters", "Press P to mark the photos you want to keep and ⇧P to show only those, or show only photos with a certain rating or higher. Then ⇧⌘E exports them to another folder."),
             ("Side by side", "Press C to put two photos next to each other, or ⇧C to see four. Zooming and dragging move them together."),
+            ("Keep on top and share", "Click the pin in the toolbar to keep the window above other apps, handy for a reference image. The share button sends the photo by AirDrop, Messages or Mail."),
             ("Open in your editor", "⌘E opens the current photo in Photoshop, Lightroom or Capture One, or its RAW file if there is one with the same name."),
             ("Slideshow", "Each photo stays 1 to 10 seconds and the crossfade length is adjustable. Click to pause; while paused you can page and rate."),
             ("Batch convert HEIC to JPG", "Convert a whole folder to JPEG, PNG or HEIC. The new files go into a subfolder and the originals are left alone."),
@@ -396,7 +398,7 @@ guide("zh", "/guides/windows-image-viewer-for-mac/", "从 Windows 换到 Mac，H
 <h2>Honeyview 和 IrfanView 有 Mac 版吗</h2>
 <p>没有。Honeyview 由 Bandisoft 开发，只出了 Windows 版；IrfanView 官方也只支持 Windows。网上的「Mac 版」要么是别的软件，要么是用 Wine 套壳运行，不建议装来路不明的安装包。</p>
 <h2>Mac 上可以用的替代</h2>
-<p><strong>Flipic</strong>：免费开源，安装包 2.4 MB。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
+<p><strong>Flipic</strong>：免费开源，安装包 2.5 MB。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
 <p><strong>XnView MP</strong>：功能很全的跨平台看图和管理软件，个人使用免费。适合需要大量格式转换、元数据编辑的人，界面比较复杂。</p>
 <p><strong>qView</strong>：开源的极简看图软件，界面几乎只有图片。功能少，适合只想打开看看的人。</p>
 <h2>换过来后常见的几处不同</h2>
@@ -463,7 +465,7 @@ guide("en", "/en/guides/irfanview-for-mac/", "IrfanView for Mac? Free alternativ
 <h2>Is there an IrfanView for Mac?</h2>
 <p>No. IrfanView officially supports Windows only, and Honeyview from Bandisoft is Windows-only too. Anything labeled "for Mac" is either a different app or Windows software wrapped in Wine, so be careful with unofficial installers.</p>
 <h2>Alternatives that run natively on a Mac</h2>
-<p><strong>Flipic</strong>: free and open source, a 2.4 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
+<p><strong>Flipic</strong>: free and open source, a 2.5 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
 <p><strong>XnView MP</strong>: a full-featured cross-platform viewer and organizer, free for personal use; great for heavy conversion and metadata work, busier interface.</p>
 <p><strong>qView</strong>: a minimal open-source viewer that is little more than the image; few features by design.</p>
 <h2>Things that work differently on a Mac</h2>

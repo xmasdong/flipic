@@ -469,3 +469,16 @@ Return  현재 이미지 이름 변경
 "pro.openAllInfo" = "사진이 많으면 편집 앱이 시간이 걸릴 수 있습니다. 줄이려면 먼저 표시한 사진만 보기나 별점 필터로 거르세요.";
 "pro.pairs" = "같은 이름 파일:";
 "pro.trashGo" = "휴지통으로 이동";
+"set.backdrop" = "배경:";
+"tip.pin" = "다른 앱 위에 항상 표시";
+"tip.unpin" = "항상 위에 표시 끄기";
+"tip.share" = "공유";
+"menu.share" = "공유…";
+"menu.pin" = "창을 항상 위에";
+"msg.pinned" = "창이 다른 앱 위에 계속 표시됩니다";
+"msg.unpinned" = "항상 위에 표시를 껐습니다";
+"set.bg.glass" = "반투명 유리";
+"set.bg.photo" = "사진 색으로 흐림";
+"set.bg.black" = "검정";
+"set.background" = "백그라운드:";
+"set.keepRunning" = "창을 닫아도 계속 실행해 다음에 사진을 더 빨리 열기";

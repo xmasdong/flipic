@@ -26,7 +26,7 @@
 
 ![Flipic browsing a folder](docs/screenshot-browse.jpg)
 
-Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 2.4 MB, the app makes no network connections by default, and there is no account to create.
+Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 2.5 MB, the app makes no network connections by default, and there is no account to create.
 
 ## Install
 
