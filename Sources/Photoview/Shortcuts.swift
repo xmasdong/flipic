@@ -81,6 +81,18 @@ enum ShortcutAction: String, CaseIterable {
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
     case mark, markedOnly, compare, compare4, comparePane, compareSync
+    case beforeAfter, splitByRating
+
+    /// Pro 功能；开源版里没有，不在快捷键设置里列出
+    var isPro: Bool { self == .beforeAfter || self == .splitByRating }
+
+    var isAvailable: Bool {
+        #if FLIPIC_PRO
+        return true
+        #else
+        return !isPro
+        #endif
+    }
 
     /// 评分快捷键对应的星数
     var stars: Int? {
@@ -108,7 +120,7 @@ enum ShortcutAction: String, CaseIterable {
             case .tools: return L10n.t("sc.group.tools", "工具")
             }
         }
-        var actions: [ShortcutAction] { ShortcutAction.allCases.filter { $0.group == self } }
+        var actions: [ShortcutAction] { ShortcutAction.allCases.filter { $0.group == self && $0.isAvailable } }
     }
 
     var group: Group {
@@ -119,7 +131,7 @@ enum ShortcutAction: String, CaseIterable {
         case .rename, .trash, .edit, .reveal, .exportAs, .exportFolder, .saveRotation: return .file
         case .cleanup, .batchConvert, .batchRename, .wallpaper: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
-        case .mark, .markedOnly, .compare, .compare4, .comparePane, .compareSync: return .pick
+        case .mark, .markedOnly, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating: return .pick
         }
     }
 
@@ -163,6 +175,8 @@ enum ShortcutAction: String, CaseIterable {
         case .compare4: return L10n.t("menu.compare4", "并排对比 4 张")
         case .comparePane: return L10n.t("sc.a.comparePane", "对比时切换当前格")
         case .compareSync: return L10n.t("menu.compareSync", "对比时同步缩放和位置")
+        case .beforeAfter: return L10n.t("menu.beforeAfter", "修图前后对比") + " (Pro)"
+        case .splitByRating: return plain(L10n.t("menu.splitByRating", "按星级分到子文件夹…")) + " (Pro)"
         }
     }
 
@@ -208,6 +222,8 @@ enum ShortcutAction: String, CaseIterable {
         case .compare4: return KeyCombo(keyCode: 8, mods: .shift, chars: "c")
         case .comparePane: return KeyCombo(keyCode: 48, chars: "\t")
         case .compareSync: return KeyCombo(keyCode: 37, mods: .shift, chars: "l")
+        case .beforeAfter: return KeyCombo(keyCode: 11, chars: "b")
+        case .splitByRating: return nil
         }
     }
 }
@@ -261,7 +277,7 @@ enum Shortcuts {
 
     /// 已经被别的操作占用时返回那个操作
     static func owner(of combo: KeyCombo, excluding action: ShortcutAction? = nil) -> ShortcutAction? {
-        ShortcutAction.allCases.first { $0 != action && same(Shortcuts.combo(for: $0), combo) }
+        ShortcutAction.allCases.first { $0 != action && $0.isAvailable && same(Shortcuts.combo(for: $0), combo) }
     }
 
     private static func same(_ a: KeyCombo?, _ b: KeyCombo) -> Bool {

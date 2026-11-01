@@ -26,7 +26,7 @@
 
 ![Flipic browsing a folder](docs/screenshot-browse.jpg)
 
-Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 1.8 MB, the app makes no network connections by default, and there is no account to create.
+Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 2.3 MB, the app makes no network connections by default, and there is no account to create.
 
 ## Install
 
@@ -114,6 +114,12 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 | ⇧⌘K | Cleanup Mode |
 | ⇧⌘C / ⇧⌘B | Batch convert / batch rename |
 | ⌘, | Settings (change any shortcut here) |
+
+## Pro
+
+Viewing, rating, marking, filtering, exporting, side-by-side comparison and Cleanup Mode stay free, and all of that code is in this repository (MIT).
+
+Flipic Pro adds batch tools for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 14-day trial: before/after comparison (hold `\` to switch, split line, opacity), sort into subfolders by rating, and favorite folders on ⌥1–⌥9. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
 
 ## Privacy
 

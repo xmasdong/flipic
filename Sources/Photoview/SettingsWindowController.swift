@@ -7,7 +7,7 @@ final class SettingsWindowController: NSWindowController {
     static let didChange = Notification.Name("FlipicSettingsDidChange")
     static let shared = SettingsWindowController()
 
-    enum Pane: Int { case general, mouse, shortcuts }
+    enum Pane: Int { case general, mouse, shortcuts, pro }
 
     private let root = SettingsRoot()
 
@@ -27,6 +27,9 @@ final class SettingsWindowController: NSWindowController {
             (L10n.t("set.tab.mouse", "鼠标与触控板"), "computermouse", MouseSettingsPane()),
             (L10n.t("set.tab.shortcuts", "快捷键"), "keyboard", ShortcutSettingsPane()),
         ]
+        #if FLIPIC_PRO
+        root.panes.append(("Pro", "seal", ProSettingsPane()))
+        #endif
         window.contentViewController = root
         window.center()
     }
@@ -233,7 +236,7 @@ private final class SettingsTabButton: NSButton {
 }
 
 /// 无边框按钮：浅色圆角底，悬停略亮，同看图工具条
-private final class PillButton: NSButton {
+final class PillButton: NSButton {
     private var trackingArea: NSTrackingArea?
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
@@ -252,7 +255,7 @@ private final class PillButton: NSButton {
     }
 }
 
-private func pillButton(_ title: String, _ target: AnyObject, _ action: Selector) -> NSButton {
+func pillButton(_ title: String, _ target: AnyObject, _ action: Selector) -> NSButton {
     let b = PillButton(title: title, target: target, action: action)
     b.isBordered = false
     b.wantsLayer = true
@@ -264,7 +267,7 @@ private func pillButton(_ title: String, _ target: AnyObject, _ action: Selector
 }
 
 /// 圆角半透明面板，同看图界面右上角的照片信息
-private func settingsPanel() -> NSVisualEffectView {
+func settingsPanel() -> NSVisualEffectView {
     let p = NSVisualEffectView()
     p.material = .hudWindow
     p.blendingMode = .withinWindow
@@ -280,13 +283,13 @@ private func settingsPanel() -> NSVisualEffectView {
 
 // MARK: - 共用的小控件
 
-private func label(_ s: String) -> NSTextField {
+func label(_ s: String) -> NSTextField {
     let l = NSTextField(labelWithString: s)
     l.alignment = .right
     return l
 }
 
-private func note(_ s: String) -> NSTextField {
+func note(_ s: String) -> NSTextField {
     let l = NSTextField(wrappingLabelWithString: s)
     l.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
     l.textColor = .secondaryLabelColor
@@ -294,7 +297,7 @@ private func note(_ s: String) -> NSTextField {
     return l
 }
 
-private func grid(_ rows: [[NSView]]) -> NSGridView {
+func grid(_ rows: [[NSView]]) -> NSGridView {
     let g = NSGridView(views: rows)
     g.translatesAutoresizingMaskIntoConstraints = false
     g.rowSpacing = 10
@@ -304,7 +307,7 @@ private func grid(_ rows: [[NSView]]) -> NSGridView {
     return g
 }
 
-private func host(_ g: NSGridView, width: CGFloat = 600) -> NSView {
+func host(_ g: NSGridView, width: CGFloat = 600) -> NSView {
     let v = NSView()
     let p = settingsPanel()
     v.addSubview(p)
@@ -323,7 +326,7 @@ private func host(_ g: NSGridView, width: CGFloat = 600) -> NSView {
 }
 
 /// 网格里给说明文字留的空行（第一列空着）
-private func spacerRow(_ v: NSView) -> [NSView] { [NSGridCell.emptyContentView, v] }
+func spacerRow(_ v: NSView) -> [NSView] { [NSGridCell.emptyContentView, v] }
 
 // MARK: - 通用
 
@@ -573,12 +576,12 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
         radios.alignment = .leading
         radios.spacing = 6
         let g = grid([
-            [label(L10n.t("set.wheel", "鼠标滚轮：")), radios],
+            [label(L10n.t("set.wheel", "滚轮 / 双指上下：")), radios],
             spacerRow(wheelNote),
             [label(L10n.t("set.navDirection", "翻页方向：")), invertNav],
             spacerRow(note(L10n.t("set.invertNavNote", "默认手指往下滑是下一张。勾上后照片跟着手指走，往下滑回到上一张、往上滑是下一张，和刷手机一样。鼠标滚轮和触控板都适用。"))),
             [label(L10n.t("set.zoomDirection", "缩放方向：")), invert],
-            spacerRow(note(L10n.t("set.invertNote", "用 Mos 之类的工具改过滚轮方向后，如果滚轮缩放反了，就勾上这一项。只影响滚轮缩放，不影响触控板捏合和滚轮翻页。"))),
+            spacerRow(note(L10n.t("set.invertNote", "用 Mos 之类的工具改过滚轮方向后，如果缩放反了，就勾上这一项。对滚轮缩放和触控板双指上下滑缩放都有效，不影响双指捏合和翻页。"))),
             [label(L10n.t("set.trackpad", "触控板：")), note(L10n.t("set.trackpadNote", "双指左右滑翻页（往左滑是下一张），双指捏合缩放，双指轻点两下在适应窗口和 100% 之间切换，拖动平移。"))],
         ])
         g.row(at: 0).rowAlignment = .none

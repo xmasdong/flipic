@@ -205,6 +205,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         newViewerWindow()
         NSApp.activate(ignoringOtherApps: true)
 
+        #if FLIPIC_PRO
+        if let i = CommandLine.arguments.firstIndex(of: "--protest"), i + 3 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            let keyFile = CommandLine.arguments[i + 3]
+            for (name, stars) in [("a.jpg", 5), ("b.jpg", 4), ("c.jpg", 4)] {
+                _ = Rating.write(stars, to: URL(fileURLWithPath: folder).appendingPathComponent(name))
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runProTest(outDir: outDir, keyFile: keyFile)
+                }
+            }
+            return
+        }
+        #endif
         if let i = CommandLine.arguments.firstIndex(of: "--xhs-shots"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
             let folder = CommandLine.arguments[i + 2]
@@ -497,6 +514,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// 从访达打开：空窗口直接用；已经在看照片时开新窗口（选中几张一起打开就是几个窗口，太多只开第一张）
     func application(_ application: NSApplication, open urls: [URL]) {
+        #if FLIPIC_PRO
+        for l in urls where l.scheme == "flipic" { _ = License.handle(url: l) }
+        #endif
+        // flipic:// 链接（付款后激活）不是文件
+        let urls = urls.filter { $0.isFileURL }
         guard let first = urls.first else { return }
         guard windowController != nil else {
             pendingURL = first
@@ -548,6 +570,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.toggleCleanup(_:)): .cleanup,
         #selector(ViewerViewController.setWallpaper(_:)): .wallpaper,
     ]
+    #if FLIPIC_PRO
+    private static let proMenuActions: [Selector: ShortcutAction] = [
+        #selector(ViewerViewController.toggleBeforeAfter(_:)): .beforeAfter,
+        #selector(ViewerViewController.splitByRating(_:)): .splitByRating,
+    ]
+    #endif
 
     // MARK: - 检查更新
 
@@ -598,7 +626,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         func walk(_ menu: NSMenu) {
             for it in menu.items {
                 if let sub = it.submenu { walk(sub) }
-                guard let sel = it.action, let action = Self.shortcutMenuActions[sel] else { continue }
+                guard let sel = it.action else { continue }
+                #if FLIPIC_PRO
+                let mapped = Self.shortcutMenuActions[sel] ?? Self.proMenuActions[sel]
+                #else
+                let mapped = Self.shortcutMenuActions[sel]
+                #endif
+                guard let action = mapped else { continue }
                 if let c = Shortcuts.combo(for: action), c.isMenuCombo {
                     it.keyEquivalent = c.menuKey
                     it.keyEquivalentModifierMask = c.modifiers
@@ -681,6 +715,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             item(m, L10n.t("menu.exportAs", "导出为…"), #selector(ViewerViewController.exportAs(_:)))
             item(m, L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(ViewerViewController.exportToFolder(_:)))
+            #if FLIPIC_PRO
+            let sendItem = NSMenuItem(title: L10n.t("menu.sendTo", "发送到"), action: nil, keyEquivalent: "")
+            let sendMenu = NSMenu(title: sendItem.title)
+            for i in 1...9 {
+                let it = item(sendMenu, SendTo.menuTitle(i), #selector(ViewerViewController.sendToSlot(_:)), "\(i)", .option)
+                it.tag = i
+            }
+            sendMenu.addItem(.separator())
+            item(sendMenu, L10n.t("pro.sendMovesMenu", "发送时移动文件"), #selector(ViewerViewController.toggleSendToMoves(_:)))
+            item(sendMenu, L10n.t("pro.sendSetup", "设置常用文件夹…"), #selector(ViewerViewController.showProSettings(_:)))
+            sendItem.submenu = sendMenu
+            m.addItem(sendItem)
+            item(m, L10n.t("menu.splitByRating", "按星级分到子文件夹…"), #selector(ViewerViewController.splitByRating(_:)))
+            #endif
             m.addItem(.separator())
             item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
             m.addItem(.separator())
@@ -703,6 +751,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.compare2", "并排对比 2 张"), #selector(ViewerViewController.toggleCompare(_:)))
             item(m, L10n.t("menu.compare4", "并排对比 4 张"), #selector(ViewerViewController.toggleCompare4(_:)))
             item(m, L10n.t("menu.compareSync", "对比时同步缩放和位置"), #selector(ViewerViewController.toggleCompareSync(_:)))
+            #if FLIPIC_PRO
+            item(m, L10n.t("menu.beforeAfter", "修图前后对比"), #selector(ViewerViewController.toggleBeforeAfter(_:)))
+            #endif
             item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
             m.addItem(.separator())
             let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")

@@ -4,11 +4,11 @@ import UniformTypeIdentifiers
 
 final class ViewerViewController: NSViewController {
 
-    private let folder = FolderModel()
-    private let loader = ImageLoader.shared
+    let folder = FolderModel()
+    let loader = ImageLoader.shared
 
-    private let imageView = ZoomableImageView()
-    private let filmstrip = FilmstripView()
+    let imageView = ZoomableImageView()
+    let filmstrip = FilmstripView()
     private let hudView = NSVisualEffectView()
     private let hudStack = NSStackView()
     private let hudNameLabel = NSTextField(labelWithString: "")
@@ -17,15 +17,15 @@ final class ViewerViewController: NSViewController {
     private let hudExifLabel2 = NSTextField(labelWithString: "")
     private let exifPanel = NSVisualEffectView()
     private let exifStack = NSStackView()
-    private let emptyState = NSStackView()
-    private let emptyHint = NSTextField(labelWithString: "")
+    let emptyState = NSStackView()
+    let emptyHint = NSTextField(labelWithString: "")
     private let toolbarView = NSVisualEffectView()
     private var slideshowButton: NSButton?
     private var prevArrowContainer: NSView!
     private var nextArrowContainer: NSView!
     private var prevArrowButton: ToolbarButton!
     private var nextArrowButton: ToolbarButton!
-    private var controlsHideTimer: Timer?
+    var controlsHideTimer: Timer?
     private var controlsVisible = true
     private var filmstripHeight: NSLayoutConstraint!
     /// 平时图片停在缩略图栏上方；幻灯片放映时图片铺到底，缩略图栏浮在上面，跟着控件一起自动隐藏
@@ -33,7 +33,7 @@ final class ViewerViewController: NSViewController {
     private var imageToBottom: NSLayoutConstraint!
     private var generation = 0
     private var slideshowTimer: Timer?
-    private var isProcessing = false
+    var isProcessing = false
     private var qualityLabel: NSTextField?
     private var flashItem: DispatchWorkItem?
     private var isFlashing = false
@@ -52,7 +52,7 @@ final class ViewerViewController: NSViewController {
         ("JPEG", .jpeg, "jpg"), ("PNG", .png, "png"), ("HEIC", .heic, "heic"),
     ]
     private var warmupGeneration = 0
-    private var prefetchedURLs = Set<URL>()
+    var prefetchedURLs = Set<URL>()
     private var lastNavDirection = 1
     private var fullRequested = false
     private var folderGeneration = 0
@@ -61,10 +61,10 @@ final class ViewerViewController: NSViewController {
     /// 按住空格预览：进入前的窗口与界面状态，退出时原样恢复；非 nil 即正在预览
     private var peekSaved: (frame: NSRect, minSize: NSSize, filmstripHidden: Bool, infoHidden: Bool)?
     /// 清理模式开着时盖在整个看图界面上
-    private var cleanup: CleanupController?
+    var cleanup: CleanupController?
 
     /// 当前图解码：最多 2 路并行（新图预览 + 旧图全分辨率不互相堵）；翻页即取消过期任务
-    private let decodeQueue = ViewerViewController.makeQueue("decode", width: 2, qos: .userInitiated)
+    let decodeQueue = ViewerViewController.makeQueue("decode", width: 2, qos: .userInitiated)
     /// 预取串行：后台一次只解一张，不与前台抢 CPU 和内存带宽
     private let prefetchQueue = ViewerViewController.makeQueue("prefetch", width: 1, qos: .utility)
     private let thumbQueue = ViewerViewController.makeQueue("thumb", width: 2, qos: .utility)
@@ -235,7 +235,7 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 控件自动隐藏
 
-    private func pokeControls() {
+    func pokeControls() {
         guard peekSaved == nil, compareView == nil else { return }
         setControlsVisible(true)
         controlsHideTimer?.invalidate()
@@ -255,7 +255,7 @@ final class ViewerViewController: NSViewController {
         controlsHideTimer = timer
     }
 
-    private func setControlsVisible(_ visible: Bool) {
+    func setControlsVisible(_ visible: Bool) {
         guard visible != controlsVisible else { return }
         controlsVisible = visible
         var targets: [NSView] = [prevArrowContainer!, nextArrowContainer!]
@@ -278,7 +278,7 @@ final class ViewerViewController: NSViewController {
         })
     }
 
-    private func updateControlsPresence() {
+    func updateControlsPresence() {
         let present = folder.current != nil
         for t in [toolbarView, prevArrowContainer!, nextArrowContainer!] { t.isHidden = !present }
         if !Self.showToolbar { toolbarView.isHidden = true }
@@ -599,7 +599,7 @@ final class ViewerViewController: NSViewController {
         }
     }
 
-    private var previewPixelTarget: CGFloat {
+    var previewPixelTarget: CGFloat {
         let scale = view.window?.backingScaleFactor ?? 2
         let b = view.bounds
         return min(max(max(b.width, b.height) * scale, 1024), 8192)
@@ -607,7 +607,7 @@ final class ViewerViewController: NSViewController {
 
     /// 加载管线：缓存命中直出 → 降采样预览秒开 → 放大到预览不够清晰时才解全分辨率。
     /// 主线程只做缓存查询，文件 I/O 与解码全部在限流队列里
-    private func showImage(resetToFit: Bool) {
+    func showImage(resetToFit: Bool) {
         generation += 1
         let gen = generation
         fullRequested = false
@@ -619,6 +619,12 @@ final class ViewerViewController: NSViewController {
         updateSmartCache()
         updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)
         updateMarkedOnlyPill()
+        #if FLIPIC_PRO
+        if beforeAfter != nil {
+            reloadBeforeAfter()
+            return
+        }
+        #endif
 
         let fitPx = previewPixelTarget
         if let info = loader.cachedInfo(for: url),
@@ -713,7 +719,7 @@ final class ViewerViewController: NSViewController {
 
     var debugZoomState: String { imageView.fitDiagnostics }
 
-    private func navigate(_ delta: Int) {
+    func navigate(_ delta: Int) {
         // 手动翻页不带幻灯片的渐变
         if !advancingSlideshow { imageView.pendingFadeDuration = nil }
         if BenchProbe.traceNav { NSLog("TRACE navigate delta=%d slideshow=%d from=%d", delta, advancingSlideshow ? 1 : 0, folder.index) }
@@ -897,7 +903,7 @@ final class ViewerViewController: NSViewController {
     /// 异步读取当前图的 EXIF 摘要与文件大小，读完后刷新信息条
 
     /// 面板打开时才读完整 EXIF，在后台读完再回主线程排版
-    private func updateExifPanel() {
+    func updateExifPanel() {
         guard !exifPanel.isHidden, let item = folder.current else { return }
         let gen = generation
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -967,7 +973,7 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 只改选中态，不 reloadData（整条重建会让所有可见格子重新取缩略图）
-    private func syncFilmstripSelection() {
+    func syncFilmstripSelection() {
         let cv = filmstrip.collectionView
         guard !folder.items.isEmpty else { return }
         let target = IndexPath(item: folder.index, section: 0)
@@ -1061,7 +1067,7 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 自定义快捷键里那些看图界面不直接处理的操作（改成单键后菜单不再接管，由这里转发）
-    private func perform(_ action: ShortcutAction) {
+    func perform(_ action: ShortcutAction) {
         switch action {
         case .edit: openInEditor(nil)
         case .reveal: revealInFinder(nil)
@@ -1079,6 +1085,10 @@ final class ViewerViewController: NSViewController {
         case .comparePane: compareCyclePane()
         case .compareSync: toggleCompareSync(nil)
         case .exportFolder: exportToFolder(nil)
+        #if FLIPIC_PRO
+        case .beforeAfter: toggleBeforeAfter(nil)
+        case .splitByRating: splitByRating(nil)
+        #endif
         default: break
         }
     }
@@ -1195,7 +1205,7 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - HUD 临时提示
 
-    private func flash(_ msg: String, seconds: Double = 2) {
+    func flash(_ msg: String, seconds: Double = 2) {
         isFlashing = true
         hudNameLabel.stringValue = msg
         hudDimsLabel.isHidden = true
@@ -1227,7 +1237,7 @@ final class ViewerViewController: NSViewController {
 
     /// 放映中暂停：计时器停掉但仍在放映状态（全屏、缩略图栏自动隐藏），可以翻页、打星，再点一下继续
     private var slideshowPaused = false
-    private var slideshowActive: Bool { slideshowTimer != nil || slideshowPaused }
+    var slideshowActive: Bool { slideshowTimer != nil || slideshowPaused }
 
     private func toggleSlideshowPause() {
         guard slideshowActive else { return }
@@ -1339,7 +1349,7 @@ final class ViewerViewController: NSViewController {
         pokeControls()
     }
 
-    private func stopSlideshow() {
+    func stopSlideshow() {
         guard slideshowActive else { return }
         slideshowTimer?.invalidate()
         slideshowTimer = nil
@@ -1520,12 +1530,12 @@ final class ViewerViewController: NSViewController {
     // MARK: - 评分
 
     /// 读过的评分；写入后同步更新，避免每次翻页都去读文件
-    private var ratingCache: [URL: Int] = [:]
-    private let ratingQueue = DispatchQueue(label: "flipic.rating", qos: .userInitiated)
+    var ratingCache: [URL: Int] = [:]
+    let ratingQueue = DispatchQueue(label: "flipic.rating", qos: .userInitiated)
 
     var currentRating: Int { folder.current.flatMap { ratingCache[$0.url] } ?? 0 }
 
-    private func loadRating(for url: URL) {
+    func loadRating(for url: URL) {
         if ratingCache[url] != nil { updateRatingLabel(); return }
         updateRatingLabel()
         ratingQueue.async { [weak self] in
@@ -1540,7 +1550,7 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 同名的 RAW 和 JPG 当成一张照片，一起打分
-    private func ratingTargets(for url: URL) -> [URL] {
+    func ratingTargets(for url: URL) -> [URL] {
         let base = url.deletingPathExtension().lastPathComponent
         let dir = url.deletingLastPathComponent()
         let siblings = folder.allItems.map(\.url).filter {
@@ -1627,7 +1637,7 @@ final class ViewerViewController: NSViewController {
 
     static let starColor = NSColor(calibratedRed: 1.0, green: 0.8, blue: 0.25, alpha: 1)
 
-    private func updateRatingLabel() {
+    func updateRatingLabel() {
         let r = currentRating
         let badge = Self.showRatingBadge
         ratingBadgeLabel.stringValue = String(repeating: "★", count: r)
@@ -1767,9 +1777,13 @@ final class ViewerViewController: NSViewController {
             self.filterDidChange()
             done?()
         }
+        loadMissingRatings(finish)
+    }
+
+    /// 星级只在翻到某张时才读，要按星级处理整个文件夹前先把没读过的都读一遍（只读元数据，很快）
+    func loadMissingRatings(_ then: @escaping () -> Void) {
         let missing = folder.urlsMissingRating
-        guard !missing.isEmpty else { finish(); return }
-        // 星级只在翻到某张时才读，筛选前把整个文件夹的都读一遍（只读元数据，很快）
+        guard !missing.isEmpty else { then(); return }
         if missing.count > 40 { flash(L10n.t("msg.readingRatings", "正在读取评分…"), seconds: 5) }
         let gen = folderGeneration
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -1783,7 +1797,7 @@ final class ViewerViewController: NSViewController {
                     self.folder.setRating(r, url: u)
                     self.ratingCache[u] = r
                 }
-                finish()
+                then()
             }
         }
     }
@@ -1842,7 +1856,7 @@ final class ViewerViewController: NSViewController {
         if folder.filter != nil, folder.setFilter(nil) { filterDidChange() }
     }
 
-    private func updateMarkedOnlyPill() {
+    func updateMarkedOnlyPill() {
         markedOnlyPill.isHidden = folder.filter == nil || cleanup != nil
         switch folder.filter {
         case .minRating(let n):
@@ -1913,13 +1927,10 @@ final class ViewerViewController: NSViewController {
         }
     }
 
-    /// 同名的一组文件（比如 RAW 的星级旁车 .xmp）一起走，用同一个新名字；目标里已有同名文件时加编号，不覆盖
-    private func runFolderExport(_ urls: [URL], to target: URL, from source: URL, move: Bool) {
-        guard target.standardizedFileURL.path != source.standardizedFileURL.path else {
-            flash(L10n.t("msg.exportSameFolder", "目标就是当前文件夹，换一个文件夹"), seconds: 3)
-            return
-        }
-        isProcessing = true
+    /// 同名的一组文件（比如 RAW 的星级旁车 .xmp）一起走，用同一个新名字；目标里已有同名文件时加编号，不覆盖。
+    /// 在后台线程跑；progress 收到已处理的张数
+    static func transfer(_ urls: [URL], to target: URL, move: Bool,
+                         progress: ((Int) -> Void)? = nil) -> (done: Set<URL>, failed: Int) {
         let fm = FileManager.default
         var groups: [(base: String, files: [URL])] = []
         var groupIndex: [String: Int] = [:]
@@ -1935,33 +1946,66 @@ final class ViewerViewController: NSViewController {
                 groups.append((base, files))
             }
         }
+        try? fm.createDirectory(at: target, withIntermediateDirectories: true)
+        var done = Set<URL>()
+        var failed = 0
+        var processed = 0
+        for g in groups {
+            // 找一个这组所有扩展名都不冲突的名字：base、base 2、base 3…
+            var name = g.base
+            var n = 1
+            while g.files.contains(where: { fm.fileExists(atPath: target.appendingPathComponent(name).appendingPathExtension($0.pathExtension).path) }) {
+                n += 1
+                name = "\(g.base) \(n)"
+            }
+            for f in g.files {
+                let dest = target.appendingPathComponent(name).appendingPathExtension(f.pathExtension)
+                do {
+                    if move { try fm.moveItem(at: f, to: dest) } else { try fm.copyItem(at: f, to: dest) }
+                    if urls.contains(f) { done.insert(f) }
+                } catch {
+                    if urls.contains(f) { failed += 1 }
+                }
+            }
+            processed += g.files.filter { urls.contains($0) }.count
+            progress?(processed)
+        }
+        return (done, failed)
+    }
+
+    /// 移走的照片从列表里拿掉，显示剩下的；全移走了就回到全部照片或空状态
+    func removeTransferred(_ done: Set<URL>) {
+        guard !done.isEmpty else { return }
+        for u in done { loader.evict(url: u) }
+        folder.remove(urls: done)
+        prefetchedURLs.removeAll()
+        filmstrip.collectionView.reloadData()
+        if folder.count > 0 {
+            showImage(resetToFit: true)
+        } else if folder.filter != nil, folder.setFilter(nil), folder.count > 0 {
+            // 筛出来的都移走了，回到剩下的全部照片
+            filmstrip.collectionView.reloadData()
+            showImage(resetToFit: true)
+        } else {
+            imageView.set(image: nil, resetToFit: true, isNew: true)
+            emptyState.isHidden = false
+            updateControlsPresence()
+            emptyHint.stringValue = L10n.t("ui.noMore", "文件夹里没有更多图片了")
+        }
+        updateMarkedOnlyPill()
+    }
+
+    private func runFolderExport(_ urls: [URL], to target: URL, from source: URL, move: Bool) {
+        guard target.standardizedFileURL.path != source.standardizedFileURL.path else {
+            flash(L10n.t("msg.exportSameFolder", "目标就是当前文件夹，换一个文件夹"), seconds: 3)
+            return
+        }
+        isProcessing = true
         let total = urls.count
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            var done = Set<URL>()
-            var failed = 0
-            var processed = 0
-            for g in groups {
-                // 找一个这组所有扩展名都不冲突的名字：base、base 2、base 3…
-                var name = g.base
-                var n = 1
-                while g.files.contains(where: { fm.fileExists(atPath: target.appendingPathComponent(name).appendingPathExtension($0.pathExtension).path) }) {
-                    n += 1
-                    name = "\(g.base) \(n)"
-                }
-                for f in g.files {
-                    let dest = target.appendingPathComponent(name).appendingPathExtension(f.pathExtension)
-                    do {
-                        if move { try fm.moveItem(at: f, to: dest) } else { try fm.copyItem(at: f, to: dest) }
-                        if urls.contains(f) { done.insert(f) }
-                    } catch {
-                        if urls.contains(f) { failed += 1 }
-                    }
-                }
-                processed += g.files.filter { urls.contains($0) }.count
-                if total > 30, processed % 20 == 0 {
-                    let p = processed
-                    DispatchQueue.main.async { self?.flash(L10n.f("msg.exporting", "正在处理 %1$d / %2$d", p, total), seconds: 5) }
-                }
+            let (done, failed) = Self.transfer(urls, to: target, move: move) { processed in
+                guard total > 30, processed % 20 == 0 else { return }
+                DispatchQueue.main.async { self?.flash(L10n.f("msg.exporting", "正在处理 %1$d / %2$d", processed, total), seconds: 5) }
             }
             DispatchQueue.main.async {
                 guard let self else { return }
@@ -1970,25 +2014,7 @@ final class ViewerViewController: NSViewController {
                 var msg = move ? L10n.f("msg.exportedMove", "已移动 %1$d 张到「%2$@」", done.count, folderName)
                                : L10n.f("msg.exportedCopy", "已复制 %1$d 张到「%2$@」", done.count, folderName)
                 if failed > 0 { msg += " · " + L10n.f("msg.exportFailed", "%d 个文件没能处理", failed) }
-                if move, !done.isEmpty {
-                    for u in done { self.loader.evict(url: u) }
-                    self.folder.remove(urls: done)
-                    self.prefetchedURLs.removeAll()
-                    self.filmstrip.collectionView.reloadData()
-                    if self.folder.count > 0 {
-                        self.showImage(resetToFit: true)
-                    } else if self.folder.filter != nil, self.folder.setFilter(nil), self.folder.count > 0 {
-                        // 筛出来的都移走了，回到剩下的全部照片
-                        self.filmstrip.collectionView.reloadData()
-                        self.showImage(resetToFit: true)
-                    } else {
-                        self.imageView.set(image: nil, resetToFit: true, isNew: true)
-                        self.emptyState.isHidden = false
-                        self.updateControlsPresence()
-                        self.emptyHint.stringValue = L10n.t("ui.noMore", "文件夹里没有更多图片了")
-                    }
-                    self.updateMarkedOnlyPill()
-                }
+                if move { self.removeTransferred(done) }
                 self.flash(msg, seconds: 3.5)
             }
         }
@@ -1997,7 +2023,11 @@ final class ViewerViewController: NSViewController {
     // MARK: - 并排对比
 
     /// 非 nil 时在并排对比：2 格或 4 格，各格缩放和位置同步，当前格的照片就是 folder.current
-    private var compareView: CompareView?
+    var compareView: CompareView?
+    #if FLIPIC_PRO
+    /// 非 nil 时在修图前后对比
+    var beforeAfter: BeforeAfterView?
+    #endif
     private var compareActive = 0
     /// 最后一次缩放 / 拖动后的状态；换图的格子照着它摆，nil 表示适应窗口
     private var compareState: ZoomableImageView.ViewState?
@@ -2018,6 +2048,9 @@ final class ViewerViewController: NSViewController {
     }
 
     private func enterCompare(_ want: Int) {
+        #if FLIPIC_PRO
+        exitBeforeAfter()
+        #endif
         guard cleanup == nil, folder.count >= 2 else {
             flash(L10n.t("msg.compareNeedsTwo", "至少要两张照片才能并排对比"))
             return
@@ -2064,6 +2097,9 @@ final class ViewerViewController: NSViewController {
     }
 
     func exitCompare() {
+        #if FLIPIC_PRO
+        exitBeforeAfter()
+        #endif
         guard let cv = compareView else { return }
         cv.removeFromSuperview()
         compareView = nil
@@ -3758,7 +3794,7 @@ final class ViewerViewController: NSViewController {
     /// 抓取自身窗口（.optionIncludingWindow 只渲染窗口自身内容，不受遮挡影响）；
     /// sheet 弹窗单独抓取后合成到相对位置。系统允许应用抓取自己的窗口，无需 TCC 授权
     /// raw：按窗口原尺寸保存，不规格化到商店截图尺寸
-    private func captureWindow(to path: String, includePanel: NSWindow? = nil, raw: Bool = false) {
+    func captureWindow(to path: String, includePanel: NSWindow? = nil, raw: Bool = false) {
         guard let window = view.window, let screen = window.screen ?? NSScreen.main else { return }
         let wid = CGWindowID(window.windowNumber)
         // AppKit 坐标（左下原点）→ CG 坐标（左上原点），限定只抓窗口矩形
@@ -4067,6 +4103,19 @@ extension ViewerViewController: NSMenuItemValidation {
             menuItem.state = folder.markedOnly ? .on : .off
             return folder.current != nil
         }
+        #if FLIPIC_PRO
+        if menuItem.action == #selector(toggleBeforeAfter(_:)) {
+            menuItem.state = beforeAfter != nil ? .on : .off
+            return folder.current != nil
+        } else if menuItem.action == #selector(sendToSlot(_:)) {
+            menuItem.title = SendTo.menuTitle(menuItem.tag)
+            return folder.current != nil && !isProcessing
+        } else if menuItem.action == #selector(toggleSendToMoves(_:)) {
+            menuItem.state = SendTo.moves ? .on : .off
+        } else if menuItem.action == #selector(splitByRating(_:)) {
+            return folder.totalCount > 0 && !isProcessing
+        }
+        #endif
         return true
     }
 }

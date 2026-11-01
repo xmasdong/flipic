@@ -12,7 +12,7 @@ OUT = ROOT / "public"
 BASE = "https://flipic.app"
 UPDATED = "2026-10-31"
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "1.8 MB"
+SIZE = "2.3 MB"
 GITHUB = "https://github.com/xmasdong/flipic"
 
 
@@ -41,7 +41,12 @@ PAIRS = {
     "/guides/heic-to-jpg-mac/": "/en/guides/batch-convert-heic-to-jpg-mac/",
     "/guides/windows-image-viewer-for-mac/": "/en/guides/irfanview-for-mac/",
     "/guides/cull-event-photos/": "/en/guides/cull-photos-on-mac/",
+    "/pro/": "/en/pro/",
 }
+
+# Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
+PRO_BUY_URL = "https://buy.stripe.com/9B66oI6Rg3uocmU2BAcbC02"
+PRO_PRICE = {"zh": "¥68", "en": "$12.99"}
 PAIRS_REV = {v: k for k, v in PAIRS.items()}
 
 DOWNLOAD_ICON = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
@@ -131,6 +136,7 @@ def header(lang, path):
     <a href="{home}#features">{t['features']}</a>
     <a href="{home}#guides">{t['guides']}</a>
     <a href="{home}#faq">{t['faq']}</a>
+    <a href="{'/pro/' if lang == 'zh' else '/en/pro/'}">Pro</a>
     <a class="lang" href="{other}" hreflang="{'en' if lang == 'zh' else 'zh-CN'}">{t['other']}</a>
     {gh_button(lang)}
   </nav>
@@ -208,7 +214,7 @@ def shot(name, alt, w=1440, h=900, eager=False):
 HOME = {
     "zh": {
         "title": "Flipic：免费开源的 Mac 看图软件，双击图片用左右键看下一张",
-        "desc": "Flipic 是免费开源的 Mac 看图软件。双击任意图片，用左右方向键翻完整个文件夹；在鼠标处放大到 100%、打星、挑废片、HEIC 批量转 JPG。安装包 1.8 MB，已通过 Apple 公证。",
+        "desc": "Flipic 是免费开源的 Mac 看图软件。双击任意图片，用左右方向键翻完整个文件夹；在鼠标处放大到 100%、打星、挑废片、HEIC 批量转 JPG。安装包 2.3 MB，已通过 Apple 公证。",
         "eyebrow": "免费开源的 Mac 看图软件",
         "h1": "双击一张图，<br>左右键翻完整个文件夹",
         "lede": "系统自带的「预览」打开一张图，就只给你看这一张。Flipic 只管看图这件事：往下翻、放大看细节、给照片打星，按键和手感照着 Windows 上顺手的看图软件来做。",
@@ -380,7 +386,7 @@ guide("zh", "/guides/windows-image-viewer-for-mac/", "从 Windows 换到 Mac，H
 <h2>Honeyview 和 IrfanView 有 Mac 版吗</h2>
 <p>没有。Honeyview 由 Bandisoft 开发，只出了 Windows 版；IrfanView 官方也只支持 Windows。网上的「Mac 版」要么是别的软件，要么是用 Wine 套壳运行，不建议装来路不明的安装包。</p>
 <h2>Mac 上可以用的替代</h2>
-<p><strong>Flipic</strong>：免费开源，安装包 1.8 MB。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
+<p><strong>Flipic</strong>：免费开源，安装包 2.3 MB。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
 <p><strong>XnView MP</strong>：功能很全的跨平台看图和管理软件，个人使用免费。适合需要大量格式转换、元数据编辑的人，界面比较复杂。</p>
 <p><strong>qView</strong>：开源的极简看图软件，界面几乎只有图片。功能少，适合只想打开看看的人。</p>
 <h2>换过来后常见的几处不同</h2>
@@ -447,7 +453,7 @@ guide("en", "/en/guides/irfanview-for-mac/", "IrfanView for Mac? Free alternativ
 <h2>Is there an IrfanView for Mac?</h2>
 <p>No. IrfanView officially supports Windows only, and Honeyview from Bandisoft is Windows-only too. Anything labeled "for Mac" is either a different app or Windows software wrapped in Wine, so be careful with unofficial installers.</p>
 <h2>Alternatives that run natively on a Mac</h2>
-<p><strong>Flipic</strong>: free and open source, a 1.8 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
+<p><strong>Flipic</strong>: free and open source, a 2.3 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
 <p><strong>XnView MP</strong>: a full-featured cross-platform viewer and organizer, free for personal use; great for heavy conversion and metadata work, busier interface.</p>
 <p><strong>qView</strong>: a minimal open-source viewer that is little more than the image; few features by design.</p>
 <h2>Things that work differently on a Mac</h2>
@@ -552,6 +558,107 @@ def render_guide(lang, g):
     return out + footer(lang)
 
 
+# ---------------------------------------------------------------- Pro 页
+
+PRO = {
+    "zh": {
+        "path": "/pro/",
+        "title": "Flipic Pro：修图前后对比、按星级分文件夹、常用文件夹一键送达",
+        "desc": "Flipic Pro 是给大量挑片、修图的摄影师准备的批量功能，一次买断，离线激活，下载 Flipic 就有 14 天免费试用。",
+        "h1": "Flipic Pro",
+        "lede": "看图、评星、标记、筛选、导出一直免费。Pro 给一次要处理几百张照片的人：挑完片、修完图，少点几下。",
+        "buy": "购买 Pro", "soon": "即将开放购买。现在下载 Flipic，Pro 功能可以先免费试用 14 天。",
+        "price_note": "一次买断，之后的更新都能用。付款后马上拿到激活码，离线激活，不用注册账号。",
+        "trial": "下载 Flipic 就有 14 天试用，试用期里所有 Pro 功能都能用。",
+        "features_title": "Pro 里有什么",
+        "features": [
+            ("修图前后对比", "原片和修过的那张叠在一起，按住 \\ 看修图前、松开看修图后；也可以拖一条分割线左右对照，或者调修图后的透明度。两张一起缩放、一起拖动。按文件名自动配对：IMG_1234.RAF 对 IMG_1234-编辑.jpg，或者导出文件夹里同名的那张。"),
+            ("按星级分到子文件夹", "评完星，一键把整个文件夹按星级复制或移动到「5 星」「4 星」…子文件夹，同名的 RAW、JPG 和 .xmp 一起走。"),
+            ("常用文件夹一键送达", "设好最多 9 个文件夹，看图时按 ⌥1–⌥9 把当前照片复制或移动过去。"),
+        ],
+        "next_title": "接下来会加",
+        "next": ["JPG 和 RAW 合并成一张显示", "自定义哪些扩展名算同一张", "挑完后一键删除未标记的照片", "把选中的照片一次送进 Lightroom、Photoshop"],
+        "free_title": "免费和 Pro",
+        "free_head": ("功能", "免费", "Pro"),
+        "free_rows": [("看图、RAW 秒开、HDR、幻灯片", "有", "有"), ("评星、标记、只看几星以上", "有", "有"),
+                      ("导出到文件夹、并排对比、清理模式", "有", "有"), ("修图前后对比", "", "有"),
+                      ("按星级分到子文件夹", "", "有"), ("常用文件夹 ⌥1–⌥9", "", "有")],
+        "faq": [
+            ("激活码怎么用？", "付款成功的页面上有激活码和「在 Flipic 中激活」按钮，点一下就激活了。也可以复制激活码，粘贴到 Flipic「设置 › Pro」里。"),
+            ("要联网验证吗？", "不用。激活码在 Mac 上离线验证，Flipic 照样默认不联网。"),
+            ("能装在几台 Mac 上？", "你自己的 Mac 都可以用同一个激活码。"),
+            ("激活码丢了怎么办？", "在 <a href=\"https://pay.flipic.app/recover?lang=zh\">找回激活码</a> 页面输入付款邮箱和卡号后四位就能找回。"),
+            ("Flipic 还是开源的吗？", "是。看图和挑片的核心功能继续开源（MIT），Pro 功能的代码不在公开仓库里。"),
+        ],
+    },
+    "en": {
+        "path": "/en/pro/",
+        "title": "Flipic Pro: before/after comparison, sort by rating into folders, favorite folders",
+        "desc": "Flipic Pro adds batch tools for photographers who cull and edit a lot. One-time purchase, offline activation, and a 14-day free trial in every download.",
+        "h1": "Flipic Pro",
+        "lede": "Viewing, rating, marking, filtering and exporting stay free. Pro is for people who go through hundreds of photos at a time and want fewer clicks after culling and editing.",
+        "buy": "Buy Pro", "soon": "Purchases open soon. Download Flipic now and try every Pro feature free for 14 days.",
+        "price_note": "One-time purchase with future updates included. You get your key right after paying. Offline activation, no account.",
+        "trial": "Every download includes a 14-day trial with all Pro features.",
+        "features_title": "What’s in Pro",
+        "features": [
+            ("Before & after", "Stack the original and the edit. Hold \\ to see the original, let go to see the edit. Or drag a split line, or fade the edit’s opacity. Both zoom and pan together. Pairs are found by file name: IMG_1234.RAF with IMG_1234-Edit.jpg, or the same name in an export folder."),
+            ("Sort into folders by rating", "After rating, copy or move the whole folder into “5 stars”, “4 stars”… subfolders in one step. RAW, JPG and .xmp files with the same name go together."),
+            ("Favorite folders", "Set up to nine folders and press ⌥1–⌥9 to copy or move the current photo there."),
+        ],
+        "next_title": "Coming next",
+        "next": ["Show JPG + RAW pairs as one photo", "Choose which extensions count as the same photo", "Delete unmarked photos after culling", "Send selected photos to Lightroom or Photoshop in one go"],
+        "free_title": "Free and Pro",
+        "free_head": ("Feature", "Free", "Pro"),
+        "free_rows": [("Viewing, instant RAW, HDR, slideshow", "Yes", "Yes"), ("Ratings, marks, show by rating", "Yes", "Yes"),
+                      ("Export to folder, side-by-side, Cleanup Mode", "Yes", "Yes"), ("Before & after", "", "Yes"),
+                      ("Sort into folders by rating", "", "Yes"), ("Favorite folders ⌥1–⌥9", "", "Yes")],
+        "faq": [
+            ("How do I activate?", "The payment confirmation page shows your key and an Activate in Flipic button. Or copy the key and paste it into Flipic › Settings › Pro."),
+            ("Does it need to go online?", "No. The key is verified offline on your Mac, and Flipic stays offline by default."),
+            ("How many Macs?", "Use the same key on all of your own Macs."),
+            ("I lost my key", "Use <a href=\"https://pay.flipic.app/recover?lang=en\">Recover Key</a> with your payment email and the last four digits of your card."),
+            ("Is Flipic still open source?", "Yes. The core viewer and culling features stay open source (MIT). Pro code isn’t in the public repository."),
+        ],
+    },
+}
+
+
+def render_pro(lang):
+    t = T[lang]
+    p = PRO[lang]
+    path = p["path"]
+    schema = [faq_schema(p["faq"])]
+    out = head(lang, path, p["title"], p["desc"], schema) + header(lang, path)
+    price = PRO_PRICE[lang]
+    if PRO_BUY_URL:
+        buy = (f'<div class="get"><a class="btn" href="{PRO_BUY_URL}">{p["buy"]}{" · " + esc(price) if price else ""}</a></div>'
+               f'<p class="alt">{p["price_note"]}</p>')
+    else:
+        buy = f'<p class="alt">{p["soon"]}</p>'
+    feats = "".join(f"<section><h2>{esc(h)}</h2><p>{esc(b)}</p></section>" for h, b in p["features"])
+    nxt = "".join(f"<li>{esc(x)}</li>" for x in p["next"])
+    hd = p["free_head"]
+    rows = "".join(f'<tr><td>{esc(a)}</td><td>{esc(b)}</td><td class="yes">{esc(c)}</td></tr>' for a, b, c in p["free_rows"])
+    faqs = "".join(f"<details><summary>{esc(q)}</summary><p>{a}</p></details>" for q, a in p["faq"])
+    out += f"""<main id="main" class="narrow article">
+<h1>{p['h1']}</h1>
+<p class="lede">{p['lede']}</p>
+{buy}
+{f"<p>{p['trial']}</p>" if PRO_BUY_URL else ""}
+{download_block(lang)}
+<h2 class="pro-h">{p['features_title']}</h2>
+<div class="prose">{feats}</div>
+<h2 class="pro-h">{p['next_title']}</h2>
+<ul class="prose">{nxt}</ul>
+<h2 class="pro-h">{p['free_title']}</h2>
+<table><thead><tr><th>{hd[0]}</th><th>{hd[1]}</th><th>{hd[2]}</th></tr></thead><tbody>{rows}</tbody></table>
+<section class="faq"><h2>{t['faq']}</h2>{faqs}</section>
+</main>
+"""
+    return out + footer(lang)
+
+
 def write(path, text):
     p = OUT / path.lstrip("/")
     if path.endswith("/"):
@@ -578,6 +685,8 @@ def main():
         for g in GUIDES[lang]:
             write(g["path"], render_guide(lang, g))
             urls.append(g["path"])
+        write(PRO[lang]["path"], render_pro(lang))
+        urls.append(PRO[lang]["path"])
 
     # sitemap：每个地址带上中英对应版本
     items = []

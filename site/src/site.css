@@ -200,3 +200,4 @@ footer nav { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; margin-bottom: 1
   .guides li a { grid-template-columns: 2rem 1fr; }
   .guides li a span { grid-column: 2; }
 }
+.pro-h { margin-top: 3rem; }
