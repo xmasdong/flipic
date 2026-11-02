@@ -248,36 +248,38 @@ def shot(name, alt, w=1440, h=900, eager=False):
 
 HOME = {
     "zh": {
-        "title": "Flipic Mac 看图：免费开源的 Mac 看图软件，双击图片用左右键看下一张",
-        "desc": "Flipic 是一个免费开源的 Mac 看图软件。双击一张图片，用左右方向键就能看同一个文件夹里的其他图片，也能放大看细节、给照片打星、把 HEIC 批量转成 JPG。安装包 2.5 MB，已通过 Apple 公证。",
-        "eyebrow": "免费开源的 Mac 看图软件",
-        "h1": "双击一张图片，<br>用方向键往下翻",
-        "lede": "Mac 自带的「预览」打开一张图片以后，没法直接看同一个文件夹里的下一张，得回访达全选再打开。Flipic 就是为这个做的：双击任意一张，按 → 就是下一张。另外加了放大看细节、打星、挑片这些看照片时常用的功能。",
+        "title": "Flipic Mac 看图：摄影师挑片用的免费看图软件，方向键翻页、看焦点、打星",
+        "desc": "Flipic 是给摄影师挑片用的免费 Mac 看图软件。导完卡，双击一张照片，用方向键翻完整个文件夹，按 0 在鼠标处放大到 100% 看焦点，按 1–5 打星、P 标记要留的，星级 Lightroom 和 Capture One 都能读。支持主流相机 RAW，免费开源。",
+        "eyebrow": "给摄影师挑片用的 Mac 看图软件",
+        "h1": "导完卡，<br>用方向键挑一遍",
+        "lede": "拍完一组照片，用 Mac 自带的「预览」只能一张一张打开，用 Lightroom 又得先导入。Flipic 直接打开文件夹：双击任意一张，按 → 看下一张，按 0 在鼠标处放大到 100% 看焦点，按 1–5 打星、按 P 标记要留的。星级按标准 XMP 保存，回到 Lightroom、Capture One 里还在。",
         "deck_hint": "这是 Flipic 的实际界面，按键盘上的 <kbd>←</kbd><kbd>→</kbd> 可以翻页",
         "deck_alt": "Flipic 浏览文件夹中的第 {n} 张照片", "prev": "上一张", "next": "下一张",
         "features": [
-            ("filmstrip.webp", "Flipic 底部缩略图栏与左右翻页按钮", "看完一张，按方向键看下一张",
-             "<p>双击任意一张照片，按 <kbd>→</kbd> 看下一张，<kbd>←</kbd> 回上一张，同一个文件夹里的图片都能翻到。顺序可以按文件名、拍摄时间、修改时间、创建时间或文件大小来排。</p>"
-             "<p>按 <kbd>空格</kbd>，窗口会变成照片的比例，竖着拍的照片就是一个竖长的窗口，跟访达里按空格预览差不多。前后几张会提前在后台准备好，4800 万像素的照片按住方向键连着翻也不卡。</p>"),
-            ("zoom.webp", "Flipic 在鼠标位置放大到 100% 查看细节", "放大到 100% 看细节",
-             "<p>把鼠标移到想看的地方，按 <kbd>0</kbd>，就以那个位置为中心放大到 100%，再按一次回到整张。用触控板捏合或者滚轮缩放时，也是以鼠标所在的位置为中心。</p>"
-             "<p>平时只按屏幕需要的尺寸解码，放大到看得出区别时才读原图，所以连着翻几十张大图，内存也占得不多。</p>"),
-            ("exif.webp", "Flipic 照片信息面板显示相机、镜头与拍摄参数", "需要时再看拍摄参数",
-             "<p>平时界面上只有照片，不显示文件名和参数。按 <kbd>I</kbd> 会在右上角列出相机、镜头、快门、光圈、ISO、拍摄时间和尺寸，按 <kbd>Esc</kbd> 关掉。</p>"
-             "<p>iPhone 拍的 HDR 照片可以按 HDR 显示，亮的地方会比普通的白更亮，跟系统「预览」一样。这个要在设置里打开，屏幕也得支持 HDR。</p>"),
-            ("cleanup.webp", "Flipic 清理模式：相似连拍分组与推荐保留", "从一大堆照片里先挑出废片",
-             "<p>拍完一场活动照片太多的话，可以按 <kbd>⇧⌘K</kbd> 进入清理模式（Beta）。Flipic 在你的 Mac 上检查整个文件夹，把照片分成相似连拍、完全重复、闭眼、模糊四类，每组标出最清楚的那张。</p>"
+            ("filmstrip.webp", "Flipic 底部缩略图栏与左右翻页按钮", "导完卡直接翻，不用先导入",
+             "<p>双击文件夹里任意一张照片，按 <kbd>→</kbd> 看下一张，<kbd>←</kbd> 回上一张。可以按拍摄时间、文件名、修改时间或大小排序，连拍按拍摄时间排最顺。</p>"
+             "<p>前后几张会提前在后台准备好，4800 万像素的照片按住方向键连着翻也不卡。按 <kbd>空格</kbd>，窗口变成照片的比例，竖拍的就是一个竖长窗口。</p>"),
+            ("zoom.webp", "Flipic 在鼠标位置放大到 100% 查看对焦", "按 0 看焦点",
+             "<p>把鼠标移到眼睛或者想确认的地方，按 <kbd>0</kbd>，就以那里为中心放大到 100%，合焦没合焦一眼就知道，再按一次回到整张。触控板捏合和滚轮缩放也以鼠标位置为中心。</p>"
+             "<p>连拍里拿不准哪张更清楚，按 <kbd>C</kbd> 把两张并排放，放大和拖动时两张一起动，对着同一个位置比。</p>"),
+            ("settings.webp", "Flipic 设置窗口：快捷键可以自己改", "打星、标记，Lightroom 里也看得到",
+             "<p>按 <kbd>1</kbd> 到 <kbd>5</kbd> 打星，按 <kbd>P</kbd> 标记要留的。星级按 XMP 标准保存，Lightroom、Bridge、Capture One 都能读到：JPEG 和 HEIC 只改元数据、不重新压缩，相机 RAW 写在同名的 .xmp 文件里。标记存成访达标签，换软件也不丢。</p>"
+             "<p>挑完按 <kbd>⇧P</kbd> 只看标记过的，或者只看几星以上的，再按 <kbd>⇧⌘E</kbd> 一起拷到别的文件夹。每个快捷键都能在设置里改。</p>"),
+            ("cleanup.webp", "Flipic 清理模式：相似连拍分组与推荐保留", "连拍、闭眼、模糊，先挑出来",
+             "<p>拍完一场活动，按 <kbd>⇧⌘K</kbd> 进入清理模式。Flipic 在你的 Mac 上检查整个文件夹，把照片分成相似连拍、完全重复、闭眼、模糊四类，每组标出最清楚的那张。</p>"
              "<p>删不删你自己定，点了「移到废纸篓」才会删，删错了按 <kbd>⌘Z</kbd> 撤销。同名的 RAW 和 JPG 会一起处理。</p>"),
-            ("settings.webp", "Flipic 设置窗口：快捷键可以自己改", "打星，改快捷键",
-             "<p>按 <kbd>1</kbd> 到 <kbd>5</kbd> 给照片打星。星级按 XMP 标准写进文件，Lightroom、Bridge、Capture One 都能读到。JPEG 和 HEIC 只改元数据，不会重新压缩；相机 RAW 的星级写在同名的 .xmp 文件里。</p>"
-             "<p>设置窗口（<kbd>⌘,</kbd>）里每个快捷键都能改。还可以设一个全局快捷键，比如在 Photoshop 里按一下就把 Flipic 叫出来，再按一下收起来。</p>"),
+            ("exif.webp", "Flipic 照片信息面板显示相机、镜头与拍摄参数", "需要时再看拍摄参数",
+             "<p>平时画面上只有照片。按 <kbd>I</kbd> 在右上角列出相机、镜头、快门、光圈、ISO 和拍摄时间，按 <kbd>Esc</kbd> 关掉。</p>"
+             "<p>iPhone 拍的 HDR 照片可以按 HDR 显示，亮部比普通的白更亮，和系统「预览」一样。这个要在设置里打开，屏幕也得支持 HDR。</p>"),
         ],
         "more_title": "其他功能",
         "more": [
-            ("标记和筛选", "按 P 标记想留的照片，⇧P 只看标记过的，也可以只看几星以上的。挑好以后按 ⇧⌘E 一起导出到别的文件夹。"),
-            ("并排对比", "按 C 把两张照片并排放，⇧C 一次看四张，放大和拖动时几张一起动。"),
-            ("窗口置顶和分享", "点工具条上的图钉，窗口就一直浮在其他软件上面，适合对照参考图。分享按钮可以用隔空投送、信息、邮件发出去。"),
+            ("一次看四张", "按 ⇧C 把四张连拍并排放，放大和拖动时几张一起动。"),
             ("用后期软件打开", "按 ⌘E 用 Photoshop、Lightroom 或 Capture One 打开当前照片，有同名 RAW 时打开 RAW。"),
+            ("RAW 和 JPG 当一张看（Pro）", "同时拍 RAW 和 JPG 时，同名的两个文件只显示一张，按 V 切换看哪一张。打星、标记、删除都按一张算。"),
+            ("修图前后对比（Pro）", "修好导出的照片和原片放在一起，按住 \\ 看原片，松开看修过的。"),
+            ("按星级分文件夹（Pro）", "挑完以后，按星级一次分到子文件夹；也可以按 ⌥1 到 ⌥9 把照片送进常用文件夹。"),
+            ("窗口置顶和分享", "点右上角的图钉，窗口就一直浮在其他软件上面，修图时对照参考图很方便。分享按钮可以用隔空投送、信息、邮件发出去。"),
             ("幻灯片", "每张停 1 到 10 秒，切换的渐变时长也能调。单击暂停，暂停时可以手动翻页和打星。"),
             ("HEIC 批量转 JPG", "整个文件夹一次转成 JPEG、PNG 或 HEIC，转好的放在子文件夹里，原图不动。"),
             ("旋转", "JPEG 和 HEIC 旋转后只改方向标记，画质没有损失。"),
@@ -291,6 +293,7 @@ HOME = {
             ("在鼠标处放大到 100%", "没有单键操作", "按 0"),
             ("打星（Lightroom 能读）", "不支持", "按 1–5"),
             ("挑出连拍、闭眼、模糊", "不支持", "清理模式"),
+            ("同名 RAW 和 JPG 一起处理", "不支持", "删除、清理时一起走"),
             ("HEIC 批量转 JPG", "可以，要逐步导出", "整个文件夹一次转完"),
         ],
         "keys_title": "常用快捷键",
@@ -301,6 +304,7 @@ HOME = {
         "faq": [
             ("Flipic 收费吗？", "看图、评星、标记、筛选、导出、清理这些都免费，没有广告，也不用注册账号，代码以 MIT 协议开源在 GitHub。另有可选的 <a href=\"/pro/\">Pro</a>，一次买断，只加了批量处理和几个专业功能，大多数人用不上。"),
             ("从网上下载的安全吗？", "安装包用 Developer ID 签名，并通过了 Apple 公证，macOS 安装时会自动校验。Flipic 默认不联网，不收集任何数据。"),
+            ("能代替 Lightroom 挑片吗？", "挑片可以，修图不行。在 Flipic 里翻片、看焦点、打星、标记、删废片，星级回到 Lightroom 或 Capture One 里能读到；调色修图还是用原来的软件，按 ⌘E 直接打开当前照片。"),
             ("Mac 上怎么看下一张图片？", "用 Flipic 双击任意一张图片，按右方向键就是下一张，左方向键是上一张，同一个文件夹里的图片都能翻到。"),
             ("怎么设为默认看图软件？", "打开 Flipic 的设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 一次设好。"),
             ("支持哪些格式？", "JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（macOS 14 起），以及索尼、佳能、尼康、富士等相机 RAW。"),
@@ -310,36 +314,38 @@ HOME = {
         "end": "下载 Flipic",
     },
     "en": {
-        "title": "Flipic for Mac: free, open-source image viewer with arrow-key browsing",
-        "desc": "A free, open-source image viewer for Mac. Double-click a photo and use the arrow keys to see the other images in the folder. You can also zoom in on details, rate photos and batch convert HEIC to JPG.",
-        "eyebrow": "Free, open-source image viewer for Mac",
-        "h1": "Double-click a photo,<br>then use the arrow keys",
-        "lede": "When you open an image in Preview, you can’t just go on to the next one in the folder; you have to go back to Finder, select them all and open them again. Flipic was made for that: double-click any photo and press → for the next one. It also does the things you usually want while looking through photos, like zooming in, rating and picking keepers.",
+        "title": "Flipic for Mac: a free photo viewer for culling, with arrow keys, focus check and star ratings",
+        "desc": "A free, open-source photo viewer for photographers on Mac. Double-click a photo from the card and arrow through the folder, press 0 to check focus at 100%, rate with 1–5 and mark keepers with P. Lightroom and Capture One read the ratings. Supports camera RAW.",
+        "eyebrow": "A Mac photo viewer for culling a shoot",
+        "h1": "Offload the card,<br>cull with the arrow keys",
+        "lede": "After a shoot, Preview makes you open photos one at a time, and Lightroom wants an import first. Flipic opens the folder as it is: double-click any photo, press → for the next one, 0 to zoom to 100% at the pointer and check focus, 1–5 to rate and P to mark keepers. Ratings are saved as standard XMP, so they are still there in Lightroom and Capture One.",
         "deck_hint": "This is the real Flipic window. Press <kbd>←</kbd><kbd>→</kbd> on your keyboard to page through",
         "deck_alt": "Flipic showing photo {n} in a folder", "prev": "Previous", "next": "Next",
         "features": [
-            ("filmstrip.webp", "Flipic thumbnail strip and navigation arrows", "Go to the next photo with an arrow key",
-             "<p>Double-click any photo and press <kbd>→</kbd> for the next one or <kbd>←</kbd> for the previous one, across the whole folder. You can sort by name, date taken, date modified, date created or size.</p>"
-             "<p>Press <kbd>Space</kbd> and the window takes the shape of the photo, so a portrait shot gets a tall, narrow window, much like Quick Look in Finder. The next few photos are prepared in the background, so even 48-megapixel images keep up when you hold an arrow key.</p>"),
-            ("zoom.webp", "Flipic zooming to 100% at the pointer", "Zoom to 100% to check details",
-             "<p>Move the pointer to the spot you want to check and press <kbd>0</kbd> to zoom to 100% around it. Press it again to see the whole photo. Pinching and scroll-wheel zoom also center on the pointer.</p>"
-             "<p>Flipic only decodes the size your screen needs and loads the original when you zoom in far enough to see a difference, so memory stays low even after a few dozen large photos.</p>"),
-            ("exif.webp", "Flipic photo info panel with camera, lens and exposure", "See shooting details when you need them",
-             "<p>Normally the window shows only the photo, with no file name or settings. Press <kbd>I</kbd> to see the camera, lens, shutter speed, aperture, ISO, date taken and size in the corner, and <kbd>Esc</kbd> to close it.</p>"
-             "<p>HDR photos from an iPhone can be shown in HDR, with highlights brighter than normal white, the same as in Preview. Turn it on in Settings; your display needs to support HDR.</p>"),
-            ("cleanup-en.webp", "Flipic Cleanup Mode grouping similar bursts", "Find the rejects in a big shoot first",
-             "<p>When an event leaves you with too many photos, press <kbd>⇧⌘K</kbd> for Cleanup Mode (Beta). Flipic checks the folder on your Mac and groups similar bursts, exact duplicates, closed eyes and blurry shots, marking the sharpest photo in each group.</p>"
+            ("filmstrip.webp", "Flipic thumbnail strip and navigation arrows", "Page through the card, no import",
+             "<p>Double-click any photo in the folder and press <kbd>→</kbd> for the next one or <kbd>←</kbd> for the previous one. Sort by date taken, name, date modified or size; date taken keeps bursts in order.</p>"
+             "<p>The next few photos are prepared in the background, so even 48-megapixel images keep up when you hold an arrow key. Press <kbd>Space</kbd> and the window takes the shape of the photo, tall for portrait shots.</p>"),
+            ("zoom.webp", "Flipic zooming to 100% at the pointer to check focus", "Press 0 to check focus",
+             "<p>Point at the eyes or whatever needs to be sharp and press <kbd>0</kbd> to zoom to 100% around it; you can tell at once whether it’s in focus. Press it again to see the whole photo. Pinch and scroll-wheel zoom also center on the pointer.</p>"
+             "<p>Not sure which frame in a burst is sharper? Press <kbd>C</kbd> to put two side by side; zooming and dragging move both, so you compare the same spot.</p>"),
+            ("settings-en.webp", "Flipic Settings window with editable shortcuts", "Ratings and marks that Lightroom sees",
+             "<p>Press <kbd>1</kbd> to <kbd>5</kbd> to rate and <kbd>P</kbd> to mark keepers. Ratings are saved as standard XMP, which Lightroom, Bridge and Capture One read: JPEG and HEIC only get their metadata changed and are not recompressed, and camera RAW ratings go into a .xmp file with the same name. Marks are Finder tags, so they survive a change of app.</p>"
+             "<p>When you’re done, <kbd>⇧P</kbd> shows only marked photos, or show only a minimum rating, and <kbd>⇧⌘E</kbd> copies them to another folder. Every shortcut can be changed in Settings.</p>"),
+            ("cleanup-en.webp", "Flipic Cleanup Mode grouping similar bursts", "Bursts, closed eyes and blur, found for you",
+             "<p>After an event, press <kbd>⇧⌘K</kbd> for Cleanup Mode. Flipic checks the folder on your Mac and groups similar bursts, exact duplicates, closed eyes and blurry shots, marking the sharpest photo in each group.</p>"
              "<p>You decide what goes. Nothing is deleted until you click Move to Trash, and <kbd>⌘Z</kbd> undoes it. RAW and JPG files with the same name are handled together.</p>"),
-            ("settings-en.webp", "Flipic Settings window with editable shortcuts", "Ratings and shortcuts",
-             "<p>Press <kbd>1</kbd> to <kbd>5</kbd> to rate a photo. Ratings are saved as standard XMP, so Lightroom, Bridge and Capture One can read them. JPEG and HEIC files only get their metadata changed and are not recompressed; ratings for camera RAW go into a .xmp file with the same name.</p>"
-             "<p>Every shortcut can be changed in Settings (<kbd>⌘,</kbd>). You can also set a global shortcut, for example to bring Flipic up from Photoshop with one key and hide it again with the same key.</p>"),
+            ("exif.webp", "Flipic photo info panel with camera, lens and exposure", "Shooting details when you need them",
+             "<p>Normally the window shows only the photo. Press <kbd>I</kbd> to see the camera, lens, shutter speed, aperture, ISO and date taken in the top-right corner, and <kbd>Esc</kbd> to close it.</p>"
+             "<p>HDR photos from an iPhone can be shown in HDR, with highlights brighter than normal white, the same as in Preview. Turn it on in Settings; your display needs to support HDR.</p>"),
         ],
         "more_title": "More features",
         "more": [
-            ("Marks and filters", "Press P to mark the photos you want to keep and ⇧P to show only those, or show only photos with a certain rating or higher. Then ⇧⌘E exports them to another folder."),
-            ("Side by side", "Press C to put two photos next to each other, or ⇧C to see four. Zooming and dragging move them together."),
-            ("Keep on top and share", "Click the pin in the toolbar to keep the window above other apps, handy for a reference image. The share button sends the photo by AirDrop, Messages or Mail."),
+            ("Four at once", "Press ⇧C to put four frames of a burst side by side; zooming and dragging move them together."),
             ("Open in your editor", "⌘E opens the current photo in Photoshop, Lightroom or Capture One, or its RAW file if there is one with the same name."),
+            ("RAW and JPG as one (Pro)", "If you shoot RAW + JPG, the two files with the same name show as one photo; press V to switch between them. Ratings, marks and deletes count once."),
+            ("Before and after (Pro)", "Put an edited export next to its original: hold \\ to see the original, release to see the edit."),
+            ("Sort by rating (Pro)", "When you’re done, split the folder into subfolders by stars in one go, or send photos to favorite folders with ⌥1 to ⌥9."),
+            ("Keep on top and share", "Click the pin at the top right to keep the window above other apps, handy for a reference image while editing. The share button sends the photo by AirDrop, Messages or Mail."),
             ("Slideshow", "Each photo stays 1 to 10 seconds and the crossfade length is adjustable. Click to pause; while paused you can page and rate."),
             ("Batch convert HEIC to JPG", "Convert a whole folder to JPEG, PNG or HEIC. The new files go into a subfolder and the originals are left alone."),
             ("Rotate", "Rotating a JPEG or HEIC only changes its orientation tag, so there is no quality loss."),
@@ -353,6 +359,7 @@ HOME = {
             ("Zoom to 100% at the pointer", "No single key", "Press 0"),
             ("Star ratings Lightroom can read", "No", "Press 1–5"),
             ("Find bursts, closed eyes, blur", "No", "Cleanup Mode"),
+            ("RAW and JPG pairs handled together", "No", "When deleting and cleaning up"),
             ("Batch convert HEIC to JPG", "Yes, export step by step", "A whole folder at once"),
         ],
         "keys_title": "Keyboard shortcuts",
@@ -363,6 +370,7 @@ HOME = {
         "faq": [
             ("Is Flipic free?", "Viewing, ratings, marks, filtering, export and Cleanup Mode are free, with no ads and no account, and the code is MIT licensed on GitHub. There is an optional <a href=\"/en/pro/\">Pro</a> one-time purchase that only adds batch and pro tools; most people won’t need it."),
             ("Is the download safe?", "It is signed with a Developer ID and notarized by Apple; macOS checks it on install. Flipic is offline by default and collects no data."),
+            ("Can it replace Lightroom for culling?", "For culling, yes; for editing, no. Page through, check focus, rate, mark and delete rejects in Flipic, and Lightroom or Capture One will read the ratings. Edit in the app you already use; ⌘E opens the current photo there."),
             ("How do I see the next image on a Mac?", "Double-click any image in Flipic and press the right arrow key for the next one, the left arrow for the previous one, across the whole folder."),
             ("How do I make it my default viewer?", "Open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go."),
             ("Which formats are supported?", "JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and camera RAW from Sony, Canon, Nikon, Fujifilm and others."),
@@ -440,7 +448,7 @@ guide("zh", "/guides/cull-event-photos/", "活动照片几百张，怎么在 Mac
       "先清废片，再打星，最后交给后期",
       f"""<p>活动照片最花时间的不是修图，是从几百张里挑出能用的几十张。下面这个流程用 Flipic 一个软件就能走完，照片不用导进任何图库。</p>
 <h2>第一步：先让软件挑出明显的废片</h2>
-<p>用 Flipic 打开整个文件夹，按 <kbd>⇧⌘K</kbd> 进入清理模式（Beta）。它在本机检查每一张，分成四类：相似连拍、内容完全相同、闭眼、模糊或虚焦。连拍组里推荐保留最清楚、没人闭眼的那张，其余默认勾上。</p>
+<p>用 Flipic 打开整个文件夹，按 <kbd>⇧⌘K</kbd> 进入清理模式。它在本机检查每一张，分成四类：相似连拍、内容完全相同、闭眼、模糊或虚焦。连拍组里推荐保留最清楚、没人闭眼的那张，其余默认勾上。</p>
 <figure>{shot('cleanup.webp', 'Flipic 清理模式按相似连拍分组并推荐保留', 1440, 967)}<figcaption>闭眼的照片会框出是哪张脸，空格放大检查。</figcaption></figure>
 <p>只有你按「移到废纸篓」才会删除，删错了 <kbd>⌘Z</kbd> 撤销。自动判断会有误判，删之前过一眼。</p>
 <h2>第二步：快速翻看，用星级标出要的</h2>
@@ -507,7 +515,7 @@ guide("en", "/en/guides/cull-photos-on-mac/", "How to cull hundreds of event pho
       "Clear the rejects, rate the rest, hand off to your editor",
       f"""<p>The slow part of an event shoot isn't editing; it's finding the fifty usable frames among hundreds. This workflow runs in Flipic alone, with no catalog import.</p>
 <h2>1. Let the app find the obvious rejects</h2>
-<p>Open the folder in Flipic and press <kbd>⇧⌘K</kbd> for Cleanup Mode (Beta). It checks every photo on your Mac and groups similar bursts, exact duplicates, closed eyes and blurry or out-of-focus shots, suggesting the sharpest blink-free frame of each burst.</p>
+<p>Open the folder in Flipic and press <kbd>⇧⌘K</kbd> for Cleanup Mode. It checks every photo on your Mac and groups similar bursts, exact duplicates, closed eyes and blurry or out-of-focus shots, suggesting the sharpest blink-free frame of each burst.</p>
 <figure>{shot('cleanup-en.webp', 'Flipic Cleanup Mode grouping bursts and suggesting a keeper', 1440, 967)}<figcaption>Faces flagged for closed eyes are outlined; Space zooms in to check.</figcaption></figure>
 <p>Nothing is deleted until you press Move to Trash, and <kbd>⌘Z</kbd> undoes it. Detection can be wrong, so look before you delete.</p>
 <h2>2. Page through and rate</h2>
@@ -947,7 +955,7 @@ def main():
 Key facts:
 - Paging: ← → through every image in the folder; Space wraps the window to the photo; 0 zooms to 100% at the pointer.
 - Star ratings 1–5 written as XMP (embedded for JPEG/HEIC/TIFF, .xmp sidecar for proprietary RAW), readable by Lightroom, Bridge and Capture One.
-- Cleanup Mode (Beta): finds similar bursts, exact duplicates, closed eyes and blurry photos on-device.
+- Cleanup Mode: finds similar bursts, exact duplicates, closed eyes and blurry photos on-device.
 - Batch convert HEIC/JPEG/PNG, batch rename, lossless rotate, slideshow with adjustable crossfade and click-to-pause.
 - Optional HDR display, customizable shortcuts, global show/hide shortcut, ⌘E hand-off to Photoshop/Lightroom/Capture One.
 - Formats: JPEG, PNG, HEIC, WebP, GIF, TIFF, AVIF, JPEG XL, camera RAW (Sony, Canon, Nikon, Fujifilm, more).
