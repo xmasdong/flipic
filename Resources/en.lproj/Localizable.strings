@@ -505,3 +505,7 @@ Drop a folder or image to open";
 "menu.paste" = "Paste";
 "menu.selectAll" = "Select All";
 "menu.photo" = "Photo";
+"live.badge" = "LIVE";
+"tip.live" = "Live Photo: hover to play";
+"live.none" = "This isn’t a Live Photo";
+"menu.playLive" = "Play Live Photo";

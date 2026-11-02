@@ -493,3 +493,7 @@ Arrastra una carpeta o imagen para abrir";
 "menu.paste" = "Pegar";
 "menu.selectAll" = "Seleccionar todo";
 "menu.photo" = "Foto";
+"live.badge" = "LIVE";
+"tip.live" = "Live Photo: pasa el puntero por encima para reproducirla";
+"live.none" = "Esta foto no es una Live Photo";
+"menu.playLive" = "Reproducir Live Photo";

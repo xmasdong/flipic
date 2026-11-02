@@ -505,3 +505,7 @@ Esc  先关掉右上角的照片信息
 "menu.paste" = "粘贴";
 "menu.selectAll" = "全选";
 "menu.photo" = "照片";
+"live.badge" = "实况";
+"tip.live" = "实况照片：鼠标移上来播放";
+"live.none" = "这张不是实况照片";
+"menu.playLive" = "播放实况照片";

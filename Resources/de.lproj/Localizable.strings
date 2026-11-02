@@ -493,3 +493,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "menu.paste" = "Einsetzen";
 "menu.selectAll" = "Alles auswählen";
 "menu.photo" = "Foto";
+"live.badge" = "LIVE";
+"tip.live" = "Live Photo: zum Abspielen mit dem Zeiger darüberfahren";
+"live.none" = "Das ist kein Live Photo";
+"menu.playLive" = "Live Photo abspielen";

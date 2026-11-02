@@ -493,3 +493,7 @@ Déposez un dossier ou une image pour ouvrir";
 "menu.paste" = "Coller";
 "menu.selectAll" = "Tout sélectionner";
 "menu.photo" = "Photo";
+"live.badge" = "LIVE";
+"tip.live" = "Live Photo : survolez pour la lire";
+"live.none" = "Ce n’est pas une Live Photo";
+"menu.playLive" = "Lire la Live Photo";

@@ -71,6 +71,9 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 - Side-by-side compare: C for two photos, Shift-C for four, with zoom and position synced so you can check focus and expressions across a burst. Hold ⌥ to nudge one pane on its own, and Shift-L turns syncing off.
 - The bottom toolbar can be turned off in Settings if you prefer shortcuts and menus.
 - Open several windows at once: opening another photo from Finder while one is showing starts a new window (Settings can switch back to replacing it), and File › New Window is ⌘N.
+- Live Photos: when a HEIC or JPG has a same-named MOV carrying Apple's Live Photo marker, a LIVE label appears at the top left; hover over it to play the clip over the photo, or press Option-L. Deleting, moving, copying and renaming take the MOV along, so a pair is never split.
+- While the photo fits the window, drag anywhere on it to move the window; once zoomed in, dragging pans the photo.
+- Move the pointer and the file name shows at the top left, with photo info, pin and share at the top right; they fade together with the toolbar.
 - Page through every image in the folder with ← →, sorted by name, date taken, date modified, date created or file size. Your sort order is remembered.
 - Press Space for a Quick Look style preview: the window wraps itself to the photo's aspect ratio. Press Space again to go back. Turn on wrapping when opening a photo in Settings and photos opened from Finder start this way, with every photo you page to wrapped as well.
 - Rest the pointer on any detail and press 0 to zoom to 100% right there; press 0 again to go back. Swipe left or right with two fingers on the trackpad to change photos (left for the next one). Pinch to zoom on the trackpad; double-click also toggles between fit-to-window and 100%. Photos are decoded at screen size first, and the full-resolution original loads only when you zoom in far enough to need it, which keeps memory use low.
@@ -170,6 +173,7 @@ Sources/Photoview/
   ViewerViewController.swift   Main viewer: paging, prefetch, HUD, toolbar, export and batch tools
   ZoomableImageView.swift      Zoom, pan, gestures, keyboard and scroll wheel
   AppInfo.swift                App name (from Info.plist); UI text is renamed through it
+  LivePhoto.swift              Live Photos: find the same-named MOV, check the marker, play it
   ImageLoader.swift            ImageIO downsampled decoding and memory-aware caches
   FolderModel.swift            File list and sorting
   Filmstrip.swift              Thumbnail strip

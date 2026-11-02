@@ -493,3 +493,7 @@ Açmak için klasör veya resim sürükleyin";
 "menu.paste" = "Yapıştır";
 "menu.selectAll" = "Tümünü Seç";
 "menu.photo" = "Fotoğraf";
+"live.badge" = "CANLI";
+"tip.live" = "Live Photo: oynatmak için işaretçiyi üzerine getirin";
+"live.none" = "Bu bir Live Photo değil";
+"menu.playLive" = "Live Photo'yu Oynat";

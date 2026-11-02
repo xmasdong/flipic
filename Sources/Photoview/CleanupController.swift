@@ -405,7 +405,9 @@ final class CleanupController: NSViewController {
     @objc private func trashChecked(_ sender: Any?) {
         let sel = checkedUnits
         guard !sel.isEmpty else { return }
-        let urls = sel.flatMap(\.allURLs)
+        // 实况照片的同名 MOV 也一起删，不留下拆开的一半
+        var urls = sel.flatMap(\.allURLs)
+        for u in urls { for f in ViewerViewController.companions(of: u) where !urls.contains(f) { urls.append(f) } }
         NSWorkspace.shared.recycle(urls) { [weak self] moved, _ in
             DispatchQueue.main.async {
                 guard let self else { return }

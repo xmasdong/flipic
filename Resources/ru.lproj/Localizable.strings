@@ -493,3 +493,7 @@ Return  Переименовать текущее изображение
 "menu.paste" = "Вставить";
 "menu.selectAll" = "Выбрать все";
 "menu.photo" = "Фото";
+"live.badge" = "LIVE";
+"tip.live" = "Live Photo: наведите указатель, чтобы воспроизвести";
+"live.none" = "Это не Live Photo";
+"menu.playLive" = "Воспроизвести Live Photo";

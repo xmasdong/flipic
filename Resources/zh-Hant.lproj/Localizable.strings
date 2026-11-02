@@ -493,3 +493,7 @@ Return  重新命名目前圖片
 "menu.paste" = "貼上";
 "menu.selectAll" = "全選";
 "menu.photo" = "照片";
+"live.badge" = "原況";
+"tip.live" = "原況照片：滑鼠移上來播放";
+"live.none" = "這張不是原況照片";
+"menu.playLive" = "播放原況照片";

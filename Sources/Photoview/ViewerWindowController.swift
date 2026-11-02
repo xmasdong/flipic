@@ -38,6 +38,7 @@ final class ViewerWindowController: NSWindowController {
     func runPauseTest() { viewerVC?.runPauseTest() }
     func runWindowDragTest() { viewerVC?.runWindowDragTest() }
     func runPeekKeepTest() { viewerVC?.runPeekKeepTest() }
+    func runLiveTest(outDir: String) { viewerVC?.runLiveTest(outDir: outDir) }
     func runHDRTest() { viewerVC?.runHDRTest() }
     func runSlideStripTest(outDir: String) { viewerVC?.runSlideStripTest(outDir: outDir) }
     func runFadeSequence(outDir: String) { viewerVC?.runFadeSequence(outDir: outDir) }

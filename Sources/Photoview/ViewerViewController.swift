@@ -1,5 +1,6 @@
 import AppKit
 import ImageIO
+import PhotosUI
 import UniformTypeIdentifiers
 
 final class ViewerViewController: NSViewController {
@@ -29,6 +30,10 @@ final class ViewerViewController: NSViewController {
     /// 衬一块和右上角同样的半透明底，亮色照片上也看得清
     private let fileNameLabel = NSTextField(labelWithString: "")
     private let fileNameBar = NSVisualEffectView()
+    /// 实况照片：文件名下面的「实况」标签，鼠标移上去在照片上播放同名的 .MOV
+    private let liveBadge = LiveBadge()
+    private var liveMovie: URL?
+    private var liveView: PHLivePhotoView?
     private var fileNameLeading: NSLayoutConstraint!
     private var slideshowButton: NSButton?
     private var pinButton: NSButton?
@@ -327,6 +332,7 @@ final class ViewerViewController: NSViewController {
         var targets: [NSView] = [prevArrowContainer!, nextArrowContainer!]
         if Self.showToolbar { targets += [toolbarView, cornerBar] }
         if Self.showFileName { targets.append(fileNameBar) }
+        if liveMovie != nil { targets.append(liveBadge) }
         if visible { placeFileName() }
         if filmstripFloating && filmstripHeight.constant > 0 { targets.append(filmstrip) }
         if visible {
@@ -351,6 +357,7 @@ final class ViewerViewController: NSViewController {
         for t in [toolbarView, cornerBar, fileNameBar, prevArrowContainer!, nextArrowContainer!] { t.isHidden = !present }
         if !Self.showToolbar { toolbarView.isHidden = true; cornerBar.isHidden = true }
         if !Self.showFileName { fileNameBar.isHidden = true }
+        if liveMovie == nil { liveBadge.isHidden = true }
         if present { pokeControls() }
     }
 
@@ -477,6 +484,10 @@ final class ViewerViewController: NSViewController {
         fileNameBar.addSubview(fileNameLabel)
         view.addSubview(fileNameBar)
         fileNameLeading = fileNameBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 78)
+        liveBadge.isHidden = true
+        liveBadge.onHover = { [weak self] inside in inside ? self?.playLivePhoto(nil) : self?.stopLivePhoto() }
+        liveBadge.onClick = { [weak self] in self?.playLivePhoto(nil) }
+        view.addSubview(liveBadge)
 
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: cornerBar.topAnchor),
@@ -493,6 +504,8 @@ final class ViewerViewController: NSViewController {
             fileNameLabel.leadingAnchor.constraint(equalTo: fileNameBar.leadingAnchor, constant: 8),
             fileNameLabel.trailingAnchor.constraint(equalTo: fileNameBar.trailingAnchor, constant: -8),
             fileNameLabel.centerYAnchor.constraint(equalTo: fileNameBar.centerYAnchor),
+            liveBadge.leadingAnchor.constraint(equalTo: fileNameBar.leadingAnchor),
+            liveBadge.topAnchor.constraint(equalTo: fileNameBar.bottomAnchor, constant: 6),
         ])
     }
 
@@ -504,6 +517,56 @@ final class ViewerViewController: NSViewController {
         } else {
             fileNameLeading.constant = 16
         }
+    }
+
+    // MARK: - 实况照片
+
+    /// 换了照片：停掉正在放的，查这张有没有带实况标记的同名 .MOV，有就显示「实况」标签
+    private func updateLivePhoto(for url: URL) {
+        stopLivePhoto()
+        liveMovie = nil
+        liveBadge.isHidden = true
+        LivePhoto.check(url) { [weak self] mov in
+            guard let self, self.folder.current?.url == url else { return }
+            self.liveMovie = mov
+            self.liveBadge.isHidden = mov == nil || !self.controlsVisible || self.peekSaved != nil
+            self.liveBadge.alphaValue = self.liveBadge.isHidden ? 0 : 1
+        }
+    }
+
+    /// 在照片上播一遍实况（适应窗口时播，放大着就先回到整张）；不是实况照片时提示一下
+    @objc func playLivePhoto(_ sender: Any?) {
+        guard let item = folder.current, compareView == nil else { return }
+        guard let mov = liveMovie else {
+            if sender != nil || NSApp.currentEvent?.type == .keyDown { flash(L10n.t("live.none", "这张不是实况照片"), seconds: 1.2) }
+            return
+        }
+        if !imageView.viewState.fit { zoomFit(nil) }
+        let scale = view.window?.backingScaleFactor ?? 2
+        let size = CGSize(width: imageView.bounds.width * scale, height: imageView.bounds.height * scale)
+        LivePhoto.load(photo: item.url, movie: mov, targetSize: size) { [weak self] live in
+            guard let self, let live, self.folder.current?.url == item.url else { return }
+            let v = self.liveView ?? {
+                let v = PHLivePhotoView()
+                v.delegate = self
+                v.contentMode = .aspectFit
+                self.view.addSubview(v, positioned: .above, relativeTo: self.imageView)
+                self.liveView = v
+                return v
+            }()
+            v.frame = self.imageView.frame
+            v.livePhoto = live
+            // 系统控件自己也画一个 LIVE 角标，和左上角的「实况」重复，藏掉
+            v.livePhotoBadgeView?.isHidden = true
+            v.isHidden = false
+            v.startPlayback(with: .full)
+        }
+    }
+
+    func stopLivePhoto() {
+        guard let v = liveView else { return }
+        v.stopPlayback()
+        v.isHidden = true
     }
 
     // MARK: - 悬浮工具条
@@ -787,6 +850,7 @@ final class ViewerViewController: NSViewController {
         // 「窗口」菜单里按文件名区分多个窗口（标题栏本身是隐藏的）；左上角也显示
         view.window?.title = url.lastPathComponent
         fileNameLabel.stringValue = url.lastPathComponent
+        updateLivePhoto(for: url)
         decodeQueue.cancelAllOperations()
         updateSmartCache()
         updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)
@@ -1184,9 +1248,9 @@ final class ViewerViewController: NSViewController {
         exitCompare()
         guard let item = folder.current else { return }
         let gen = generation
-        // 合并显示的那一对、设好的附属文件一起删
+        // 合并显示的那一对、实况照片的同名 MOV、设好的附属文件一起删
         var urls = folder.withHiddenPartners([item.url])
-        for u in urls { for f in Self.linkedFiles?(u) ?? [] where !urls.contains(f) { urls.append(f) } }
+        for u in urls { for f in Self.companions(of: u) where !urls.contains(f) { urls.append(f) } }
         NSWorkspace.shared.recycle(urls) { [weak self] _, _ in
             DispatchQueue.main.async {
                 guard let self, self.generation == gen else { return }
@@ -1265,6 +1329,7 @@ final class ViewerViewController: NSViewController {
         case .exportFolder: exportToFolder(nil)
         case .pinWindow: togglePinned(nil)
         case .share: shareCurrent(nil)
+        case .playLive: playLivePhoto(nil)
         #if FLIPIC_PRO
         case .beforeAfter: toggleBeforeAfter(nil)
         case .splitByRating: splitByRating(nil)
@@ -2130,6 +2195,28 @@ final class ViewerViewController: NSViewController {
     /// 跟着照片一起复制、移动、删除的附属文件（Pro 里可以设扩展名）；nil 时只带星级用的 .xmp
     static var linkedFiles: ((URL) -> [URL])?
 
+    /// 跟照片绑在一起的文件：实况照片的同名 .MOV，加上 Pro 里设的附属文件
+    static func companions(of url: URL) -> [URL] {
+        var out: [URL] = []
+        if let mov = LivePhoto.movie(for: url) { out.append(mov) }
+        for f in linkedFiles?(url) ?? [] where !out.contains(f) { out.append(f) }
+        return out
+    }
+
+    /// 照片改了名，同名的 .MOV 和星级 .xmp 跟着改成同一个名字；目标已有同名文件就不动它
+    static func renameCompanions(of old: URL, to new: URL) {
+        let fm = FileManager.default
+        var files = companions(of: old)
+        let side = Rating.sidecarURL(for: old)
+        if fm.fileExists(atPath: side.path), !files.contains(side) { files.append(side) }
+        let base = new.deletingPathExtension()
+        for f in files {
+            let dest = base.appendingPathExtension(f.pathExtension)
+            guard dest.path != f.path, !fm.fileExists(atPath: dest.path) else { continue }
+            try? fm.moveItem(at: f, to: dest)
+        }
+    }
+
     static func transfer(_ urls: [URL], to target: URL, move: Bool,
                          progress: ((Int) -> Void)? = nil) -> (done: Set<URL>, failed: Int) {
         let fm = FileManager.default
@@ -2140,7 +2227,7 @@ final class ViewerViewController: NSViewController {
             var files = [u]
             let side = Rating.sidecarURL(for: u)
             if fm.fileExists(atPath: side.path) { files.append(side) }
-            for f in linkedFiles?(u) ?? [] where !files.contains(f) { files.append(f) }
+            for f in companions(of: u) where !files.contains(f) { files.append(f) }
             if let gi = groupIndex[base] {
                 for f in files where !groups[gi].files.contains(f) { groups[gi].files.append(f) }
             } else {
@@ -2867,7 +2954,15 @@ final class ViewerViewController: NSViewController {
         alert.addButton(withTitle: L10n.t("alert.renameButton", "重命名"))
         alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        let newName = field.stringValue.trimmingCharacters(in: .whitespaces)
+        renameCurrent(to: field.stringValue)
+    }
+
+    /// 把当前照片改名（不含扩展名）；同名的实况 MOV、星级 .xmp 跟着改
+    func renameCurrent(to input: String) {
+        guard let item = folder.current else { return }
+        let ext = item.url.pathExtension
+        let base = item.url.deletingPathExtension().lastPathComponent
+        let newName = input.trimmingCharacters(in: .whitespaces)
         guard !newName.isEmpty else {
             flash(L10n.t("msg.prefixEmpty", "前缀不能为空"))
             return
@@ -2888,6 +2983,7 @@ final class ViewerViewController: NSViewController {
         }
         do {
             try fm.moveItem(at: item.url, to: folderURL.appendingPathComponent(candidate))
+            Self.renameCompanions(of: item.url, to: folderURL.appendingPathComponent(candidate))
         } catch {
             flash(L10n.f("msg.renameFailed", "重命名失败： %@", error.localizedDescription))
             return
@@ -3854,6 +3950,57 @@ final class ViewerViewController: NSViewController {
         }
     }
 
+    /// --livetest <输出目录> <文件夹>：识别实况（带标记的才算）、悬停/快捷键播放、改名和删除时同名 MOV 跟着走
+    func runLiveTest(outDir: String) {
+        let fm = FileManager.default
+        let dir = folder.current?.url.deletingLastPathComponent()
+        func files() -> String { ((try? fm.contentsOfDirectory(atPath: dir?.path ?? "")) ?? []).sorted().joined(separator: ",") }
+        func log(_ s: String) { NSLog("LIVETEST %@", s) }
+        var names: [String] = []
+        var i = 0
+        func step() {
+            guard i < folder.count else { return finish() }
+            jump(i)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                names.append("\(self.folder.current?.url.lastPathComponent ?? "-")=\(self.liveMovie == nil ? "plain" : "live")")
+                i += 1; step()
+            }
+        }
+        func jump(_ n: Int) { folder.jump(to: n); showImage(resetToFit: true) }
+        func finish() {
+            log("detect: " + names.joined(separator: " "))
+            guard let idx = folder.items.firstIndex(where: { $0.url.lastPathComponent == "LIVE_0001.JPG" }) else { return log("no LIVE_0001") }
+            jump(idx)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                self.pokeControls()
+                log("badge visible=\(self.liveBadge.isHidden ? 0 : 1)")
+                self.liveBadge.onHover?(true)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+                    let v = self.liveView
+                    log("playing: view=\(v != nil ? 1 : 0) hidden=\(v?.isHidden ?? true ? 1 : 0) livePhoto=\(v?.livePhoto != nil ? 1 : 0) frameMatchesImage=\(v?.frame == self.imageView.frame ? 1 : 0)")
+                    self.captureWindow(to: outDir + "/live-playing.png", raw: true)
+                    self.liveBadge.onHover?(false)
+                    log("after hover out hidden=\(self.liveView?.isHidden ?? true ? 1 : 0)")
+                    self.renameCurrent(to: "Renamed")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        log("after rename: " + files())
+                        self.trashCurrent(nil)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            log("after trash: " + files())
+                            let out = URL(fileURLWithPath: outDir).appendingPathComponent("copied")
+                            try? fm.removeItem(at: out)
+                            let src = dir!.appendingPathComponent("LIVE_0002.JPG")
+                            _ = Self.transfer([src], to: out, move: false)
+                            log("copied: " + (((try? fm.contentsOfDirectory(atPath: out.path)) ?? []).sorted().joined(separator: ",")))
+                            NSApp.terminate(nil)
+                        }
+                    }
+                }
+            }
+        }
+        step()
+    }
+
     /// --peekkeeptest <文件夹>：贴合预览里把窗口挪开再翻页，开关打开时窗口中心留在挪到的位置，关掉时回到进入预览前的中心
     func runPeekKeepTest() {
         guard let w = view.window else { return }
@@ -4335,6 +4482,7 @@ final class ViewerViewController: NSViewController {
             }
             if candidate != item.url.lastPathComponent {
                 if (try? fm.moveItem(at: item.url, to: folderURL.appendingPathComponent(candidate))) != nil {
+                    Self.renameCompanions(of: item.url, to: folderURL.appendingPathComponent(candidate))
                     renamedCount += 1
                     if item.url == oldCurrentURL { newNameOfCurrent = candidate }
                 }
@@ -4589,4 +4737,10 @@ extension ViewerViewController: NSMenuItemValidation {
 
 extension ViewerViewController: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) { populateOpenWithMenu(menu) }
+}
+
+extension ViewerViewController: PHLivePhotoViewDelegate {
+    func livePhotoView(_ livePhotoView: PHLivePhotoView, didEndPlaybackWith playbackStyle: PHLivePhotoViewPlaybackStyle) {
+        livePhotoView.isHidden = true
+    }
 }

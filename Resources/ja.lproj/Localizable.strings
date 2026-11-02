@@ -493,3 +493,7 @@ Return  表示中の画像を名称変更
 "menu.paste" = "ペースト";
 "menu.selectAll" = "すべてを選択";
 "menu.photo" = "写真";
+"live.badge" = "ライブ";
+"tip.live" = "Live Photos：ポインタを重ねると再生";
+"live.none" = "この写真は Live Photos ではありません";
+"menu.playLive" = "Live Photos を再生";

@@ -299,6 +299,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     NSLog("MENU [%@] %@", top.submenu?.title ?? "-", items.joined(separator: " · "))
                 }
                 NSLog("MENU windowsMenu=%@ helpMenu=%@", NSApp.windowsMenu?.title ?? "nil", NSApp.helpMenu?.title ?? "nil")
+                // 默认快捷键不能撞车（实况照片曾经和对比同步撞在 ⇧L 上）
+                var seen: [String: ShortcutAction] = [:]
+                for a in ShortcutAction.allCases {
+                    guard let c = Shortcuts.combo(for: a) else { continue }
+                    let k = "\(c.keyCode)-\(c.mods)"
+                    if let other = seen[k] { NSLog("MENU DUPLICATE shortcut %@ %@ / %@", c.display, a.rawValue, other.rawValue) }
+                    seen[k] = a
+                }
+                NSLog("MENU shortcuts checked=%d", seen.count)
+                if let live = NSApp.mainMenu?.items.compactMap({ $0.submenu?.items.first { $0.action == #selector(ViewerViewController.playLivePhoto(_:)) } }).first {
+                    NSLog("MENU playLive key=%@ mods=%lu", live.keyEquivalent, live.keyEquivalentModifierMask.rawValue)
+                }
                 let w = NSWindow(contentRect: NSRect(x: 200, y: 200, width: 320, height: 80), styleMask: [.titled], backing: .buffered, defer: false)
                 let field = NSTextField(frame: NSRect(x: 20, y: 30, width: 280, height: 24))
                 w.contentView?.addSubview(field)
@@ -317,6 +329,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 cmd("a", 0)
                 NSLog("MENU selected length after ⌘A: %d", (field.currentEditor()?.selectedRange.length ?? -1))
                 NSApp.terminate(nil)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--livetest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runLiveTest(outDir: outDir) }
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--peekkeeptest"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
@@ -743,6 +762,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.setWallpaper(_:)): .wallpaper,
         #selector(ViewerViewController.togglePinned(_:)): .pinWindow,
         #selector(ViewerViewController.shareCurrent(_:)): .share,
+        #selector(ViewerViewController.playLivePhoto(_:)): .playLive,
     ]
     #if FLIPIC_PRO
     private static let proMenuActions: [Selector: ShortcutAction] = [
@@ -924,6 +944,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             sortItem.submenu = sortMenu
             m.addItem(sortItem)
             m.addItem(.separator())
+            item(m, L10n.t("menu.playLive", "播放实况照片"), #selector(ViewerViewController.playLivePhoto(_:)))
             item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
             item(m, L10n.t("menu.fullscreen", "进入全屏"), #selector(NSWindow.toggleFullScreen(_:)), "f", [.control, .command])
         }

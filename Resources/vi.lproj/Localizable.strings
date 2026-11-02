@@ -493,3 +493,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "menu.paste" = "Dán";
 "menu.selectAll" = "Chọn tất cả";
 "menu.photo" = "Ảnh";
+"live.badge" = "LIVE";
+"tip.live" = "Live Photo: di con trỏ lên để phát";
+"live.none" = "Đây không phải là Live Photo";
+"menu.playLive" = "Phát Live Photo";

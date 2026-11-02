@@ -493,3 +493,7 @@ Arraste uma pasta ou imagem para abrir";
 "menu.paste" = "Colar";
 "menu.selectAll" = "Selecionar Tudo";
 "menu.photo" = "Foto";
+"live.badge" = "LIVE";
+"tip.live" = "Live Photo: passe o ponteiro por cima para reproduzir";
+"live.none" = "Esta foto não é uma Live Photo";
+"menu.playLive" = "Reproduzir Live Photo";

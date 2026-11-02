@@ -493,3 +493,7 @@ Return  إعادة تسمية الصورة الحالية
 "menu.paste" = "لصق";
 "menu.selectAll" = "تحديد الكل";
 "menu.photo" = "صورة";
+"live.badge" = "LIVE";
+"tip.live" = "صورة حية: مرّر المؤشر فوقها لتشغيلها";
+"live.none" = "هذه ليست صورة حية";
+"menu.playLive" = "تشغيل الصورة الحية";
