@@ -11,3 +11,6 @@ site/public/
 # Pro 功能源码只在开发目录，不进公开仓库
 Sources/Photoview/Pro/
 pro-worker/
+
+# 本机私有配置（Mac App Store 版名字等）
+site/private.json

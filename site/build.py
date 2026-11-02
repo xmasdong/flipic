@@ -56,6 +56,19 @@ PAIRS = {
 # Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
 PRO_BUY_URL = "https://buy.stripe.com/9B66oI6Rg3uocmU2BAcbC02"
 PRO_PRICE = {"zh": "¥68", "en": "$12.99"}
+# 隐私政策和用户协议里要写明的三项，由用户填写；有一项没填，这两页就不生成，页脚也不放链接
+LEGAL = {
+    "operator": {"zh": "Flipic 团队", "en": "Flipic Team"},   # 运营主体
+    "email": "support@flipic.app",      # 联系邮箱，Cloudflare Email Routing 转发
+    "refund_days": 14,                  # 官网购买 Pro 后几天内可以退款
+    "effective": "2026-11-02",          # 生效日期
+}
+# Mac App Store 版的名字只放在本机的 site/private.json（不进公开仓库）；没有时页面写「Mac App Store 版」
+_private = ROOT / "private.json"
+STORE_NAME = json.loads(_private.read_text()).get("store_app_name", "") if _private.exists() else ""
+LEGAL_READY = bool(LEGAL["operator"]["zh"] and LEGAL["operator"]["en"] and LEGAL["email"] and LEGAL["refund_days"])
+if LEGAL_READY:
+    PAIRS.update({"/privacy/": "/en/privacy/", "/terms/": "/en/terms/"})
 PAIRS_REV = {v: k for k, v in PAIRS.items()}
 
 DOWNLOAD_ICON = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
@@ -74,6 +87,7 @@ T = {
         "footer_credit": "截图中的照片来自 Wikimedia Commons，均为 CC0：圣托里尼 Aidan Meyer、Anthony Delanoix，布莱德湖 Aleš Krivec，哈尔施塔特 Fineas Anton、Martin Horák，冰岛 Alexandre Godreau，优胜美地 John Salzarulo，阳朔 Manon Boyer。",
         "footer_line": "Flipic {v} · MIT 开源 · 原名 PixDeck",
         "src": "源代码", "feedback": "反馈问题", "releases": "历史版本",
+        "privacy": "隐私政策", "terms": "用户协议",
     },
     "en": {
         "lang": "en", "home": "/en/", "features": "Features", "guides": "Guides", "faq": "FAQ",
@@ -87,6 +101,7 @@ T = {
         "footer_credit": "Photos in the screenshots are from Wikimedia Commons, all CC0: Santorini by Aidan Meyer and Anthony Delanoix, Lake Bled by Aleš Krivec, Hallstatt by Fineas Anton and Martin Horák, Iceland by Alexandre Godreau, Yosemite by John Salzarulo, Yangshuo by Manon Boyer.",
         "footer_line": "Flipic {v} · MIT licensed · formerly PixDeck",
         "src": "Source code", "feedback": "Feedback", "releases": "All releases",
+        "privacy": "Privacy", "terms": "Terms",
     },
 }
 
@@ -171,13 +186,21 @@ def download_block(lang, big=True):
 <div class="on-phone"><p>{t['phone']}</p><button class="copy" type="button" data-url="https://flipic.app" data-done="{t['phone_done']}">{t['phone_btn']}</button></div>"""
 
 
+def legal_links(lang):
+    if not LEGAL_READY:
+        return ""
+    t = T[lang]
+    pre = "" if lang == "zh" else "/en"
+    return f' · <a href="{pre}/privacy/">{t["privacy"]}</a> · <a href="{pre}/terms/">{t["terms"]}</a>'
+
+
 def footer(lang):
     t = T[lang]
     links = [(g["path"], g["short"]) for g in GUIDES[lang]]
     nav = "".join(f'<a href="{p}">{esc(n)}</a>' for p, n in links)
     return f"""<footer class="wrap">
   <nav>{nav}</nav>
-  <p>{t['footer_line'].format(v=VERSION)} · <a href="{GITHUB}">{t['src']}</a> · <a href="{GITHUB}/issues">{t['feedback']}</a> · <a href="{GITHUB}/releases">{t['releases']}</a></p>
+  <p>{t['footer_line'].format(v=VERSION)} · <a href="{GITHUB}">{t['src']}</a> · <a href="{GITHUB}/issues">{t['feedback']}</a> · <a href="{GITHUB}/releases">{t['releases']}</a>{legal_links(lang)}</p>
   <p>{t['footer_credit']}</p>
 </footer>
 <script src="/site.js?v={ASSET_V}" defer></script>
@@ -755,6 +778,116 @@ def render_pro(lang):
 """
     return out + footer(lang)
 
+STRIPE_PRIVACY = "https://stripe.com/privacy"
+APPLE_PRIVACY = "https://www.apple.com/legal/privacy/"
+APPLE_EULA = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
+APPLE_REFUND = "https://reportaproblem.apple.com/"
+
+
+def legal_pages(lang):
+    """隐私政策和用户协议。只写软件、付款服务和网站实际做的事；改了代码里的联网或存储行为要同步改这里"""
+    op = esc(LEGAL["operator"][lang])
+    store = esc(STORE_NAME)
+    if lang == "zh":
+        both = f"Flipic 和 {store}" if store else "Flipic"
+        store_full = f"{store}（同一款软件在 Mac App Store 上的版本）" if store else "Flipic 的 Mac App Store 版"
+        store_short = f" {store} " if store else "Mac App Store 版"
+    else:
+        both = f"Flipic and {store}" if store else "Flipic"
+        store_full = f"{store} (the same app on the Mac App Store)" if store else "the Mac App Store version of Flipic"
+        store_short = store or "The Mac App Store version"
+    mail = esc(LEGAL["email"])
+    m = f'<a href="mailto:{mail}">{mail}</a>'
+    days = LEGAL["refund_days"]
+    eff = LEGAL["effective"]
+    if lang == "zh":
+        privacy = ("/privacy/", "隐私政策", f"{both} 的隐私政策：照片只在你的 Mac 上处理，不收集个人信息；购买 Pro 时付款信息由 Stripe 或 Apple 处理。", f"""
+<p class="lede">生效日期：{eff}</p>
+<div class="prose">
+<p>这份政策适用于 Flipic（从 flipic.app 和 GitHub 下载的版本）、{store_full}、flipic.app 网站和 pay.flipic.app 付款服务。运营者是{op}。</p>
+<h2>软件本身</h2>
+<p>照片只在你的 Mac 上读取和显示，不会上传到任何地方。软件不需要账号，没有广告、统计和崩溃上报，也不收集设备信息。</p>
+<p>你给照片打的星级写进照片的 XMP 信息，相机 RAW 写在同名的 .xmp 文件里；挑片标记是访达标签；设置保存在这台 Mac 上。这些都留在你自己的电脑上。</p>
+<p>Flipic 默认不联网。只有你打开「自动检查更新」或点「检查更新」时，才会向 flipic.app 请求一个只写着最新版本号的文件，请求里除了软件版本号没有别的信息，也不保存 cookie。你点「立即更新」时，安装包从 GitHub 下载。</p>
+<p>{store_short}付费下载即是完整版，没有 App 内购买；它不检查更新，更新和付款都由 App Store 负责，App 本身不联网。</p>
+<h2>购买 Pro</h2>
+<p>在官网购买时，付款由 Stripe 处理，银行卡等支付信息由 Stripe 收集，我们看不到完整卡号。付款完成后，pay.flipic.app 从 Stripe 读取这笔订单的邮箱和订单号，生成激活码。激活码里包含邮箱和订单号，在你的 Mac 上离线验证。我们没有另外的数据库，订单记录保存在我们的 Stripe 账户里，用来帮你找回激活码、处理退款和记账。Stripe 如何处理信息见 <a href="{STRIPE_PRIVACY}">Stripe 隐私政策</a>。</p>
+<p>找回激活码时，你填写的邮箱和卡号后四位（或收据号）只用来在 Stripe 里查找订单，不会保存。为了防止有人反复试探，找回页面按 IP 地址限制每分钟的请求次数，IP 地址不保存。</p>
+<p>在 App Store 购买时，付款和账户都由 Apple 处理，我们收不到你的姓名、邮箱或支付信息。见 <a href="{APPLE_PRIVACY}">Apple 隐私政策</a>。</p>
+<h2>网站</h2>
+<p>flipic.app 托管在 Cloudflare 上。网站不使用 cookie，没有统计脚本、广告和第三方字体。Cloudflare 为了安全和正常运行会记录访问日志（比如 IP 地址和浏览器类型），我们只查看汇总的访问量和下载量。</p>
+<h2>查询和删除</h2>
+<p>如果你想知道我们保存了哪些和你的订单有关的信息，或者希望删除，请发邮件到 {m}。按照财务和税务法规必须保留的付款记录除外。</p>
+<h2>政策变化</h2>
+<p>软件或服务处理信息的方式有变化时，我们会更新这一页并修改生效日期。</p>
+</div>""")
+        terms = ("/terms/", "用户协议", f"{both} 的使用条款：免费功能、Pro 一次买断、退款方式和免责说明。", f"""
+<p class="lede">生效日期：{eff}</p>
+<div class="prose">
+<p>这份协议适用于 Flipic（从 flipic.app 和 GitHub 下载的版本）和 {store_full}，由{op}提供。使用软件即表示你同意这份协议。</p>
+<h2>免费使用</h2>
+<p>Flipic 的源代码以 <a href="https://opensource.org/license/mit">MIT 协议</a>在 <a href="{GITHUB}">GitHub</a> 开源。看图、评星、标记、筛选、导出、清理这些功能免费使用，不需要注册。</p>
+<h2>Pro</h2>
+<p>Pro 是一次性购买，不是订阅。买过以后，之后发布的更新里的 Pro 功能都可以用。Pro 供购买者本人在自己的 Mac 上使用。</p>
+<p>官网购买得到的激活码请不要公开分享。被公开传播的激活码，以及已经退款或拒付的订单对应的激活码，会被作废。</p>
+<h2>退款</h2>
+<p>在官网购买 Pro 后 {days} 天内，发邮件到 {m} 并附上付款邮箱，我们会全额退款，不需要说明理由。退款后对应的激活码作废。</p>
+<p>在 App Store 购买的，退款按 Apple 的规定办理，请到 <a href="{APPLE_REFUND}">reportaproblem.apple.com</a> 申请。</p>
+<h2>App Store 版</h2>
+<p>从 Mac App Store 获得的{store_short}付费下载即包含 Pro 的全部功能，同时适用 <a href="{APPLE_EULA}">Apple 标准最终用户许可协议</a>。两者不一致的地方，以 Apple 的协议为准。</p>
+<h2>责任</h2>
+<p>软件按现状提供。删除、移动、批量整理照片会改动你的文件；删除的照片会先移到废纸篓。处理重要照片前请先备份。在法律允许的范围内，我们不对使用软件造成的数据丢失或其他间接损失承担责任。</p>
+<h2>联系和变更</h2>
+<p>有问题请发邮件到 {m}。协议有变化时，我们会更新这一页并修改生效日期。</p>
+</div>""")
+    else:
+        privacy = ("/en/privacy/", "Privacy Policy", f"Privacy policy for {both}: photos stay on your Mac and no personal data is collected; Pro payments are handled by Stripe or Apple.", f"""
+<p class="lede">Effective {eff}</p>
+<div class="prose">
+<p>This policy covers Flipic (the version downloaded from flipic.app and GitHub), {store_full}, the flipic.app website and the pay.flipic.app payment service. They are run by {op}.</p>
+<h2>The app</h2>
+<p>Your photos are read and shown only on your Mac and are never uploaded. The app has no account, no ads, no analytics and no crash reporting, and it doesn’t collect device information.</p>
+<p>Star ratings are written into each photo’s XMP data, or into a matching .xmp file for camera RAW; marks are Finder tags; settings are stored on your Mac. All of this stays on your computer.</p>
+<p>Flipic is offline by default. Only when you turn on automatic update checks or click Check for Updates does it request a small file from flipic.app that contains the latest version number. The request carries nothing but the app’s version number and stores no cookies. When you click Update Now, the installer is downloaded from GitHub.</p>
+<p>{store_short} is a paid download that includes everything, with no in-app purchases. It doesn’t check for updates; the App Store handles updates and payment, and the app itself doesn’t go online.</p>
+<h2>Buying Pro</h2>
+<p>On flipic.app, payment is handled by Stripe. Stripe collects your card details; we never see the full card number. After you pay, pay.flipic.app reads the order’s email address and order ID from Stripe and generates your license key. The key contains the email and order ID and is checked offline on your Mac. We keep no separate database; order records stay in our Stripe account and are used to recover keys, handle refunds and keep accounts. See the <a href="{STRIPE_PRIVACY}">Stripe Privacy Policy</a>.</p>
+<p>When you recover a key, the email and last four card digits (or receipt number) you enter are used only to look up the order in Stripe and are not stored. To stop repeated guessing, the recovery page limits requests per minute by IP address; the address is not stored.</p>
+<p>On the App Store, Apple handles the payment and your account. We don’t receive your name, email or payment details. See the <a href="{APPLE_PRIVACY}">Apple Privacy Policy</a>.</p>
+<h2>The website</h2>
+<p>flipic.app is hosted on Cloudflare. It uses no cookies, no analytics scripts, no ads and no third-party fonts. Cloudflare keeps access logs (such as IP address and browser type) for security and operation; we only look at total visits and downloads.</p>
+<h2>Questions and deletion</h2>
+<p>To find out what we hold about your order, or to ask us to delete it, email {m}. Payment records we must keep for tax and accounting law are excepted.</p>
+<h2>Changes</h2>
+<p>If the way the app or services handle information changes, we’ll update this page and its effective date.</p>
+</div>""")
+        terms = ("/en/terms/", "Terms of Use", f"Terms of use for {both}: free features, the one-time Pro purchase, refunds and disclaimers.", f"""
+<p class="lede">Effective {eff}</p>
+<div class="prose">
+<p>These terms cover Flipic (the version downloaded from flipic.app and GitHub) and {store_full}, provided by {op}. By using the app you agree to them.</p>
+<h2>Free use</h2>
+<p>Flipic’s source code is available under the <a href="https://opensource.org/license/mit">MIT License</a> on <a href="{GITHUB}">GitHub</a>. Viewing, ratings, marks, filtering, export and Cleanup Mode are free and need no account.</p>
+<h2>Pro</h2>
+<p>Pro is a one-time purchase, not a subscription. Once bought, the Pro features in later updates are included. Pro is for the buyer’s own use on their own Macs.</p>
+<p>Please don’t share a license key from flipic.app publicly. Keys that are shared publicly, and keys for orders that were refunded or disputed, are revoked.</p>
+<h2>Refunds</h2>
+<p>Within {days} days of buying Pro on flipic.app, email {m} with the address you paid with and we’ll refund you in full, no reason needed. The key is revoked after the refund.</p>
+<p>For App Store purchases, refunds follow Apple’s rules; request one at <a href="{APPLE_REFUND}">reportaproblem.apple.com</a>.</p>
+<h2>App Store version</h2>
+<p>{store_short} obtained from the Mac App Store includes all Pro features with the purchase and is also subject to the <a href="{APPLE_EULA}">Apple Standard EULA</a>. Where the two differ, Apple’s agreement applies.</p>
+<h2>Liability</h2>
+<p>The app is provided as is. Deleting, moving and batch-sorting photos changes your files; deleted photos go to the Trash first. Back up important photos before working on them. To the extent the law allows, we aren’t liable for data loss or other indirect damage from using the app.</p>
+<h2>Contact and changes</h2>
+<p>Questions go to {m}. If these terms change, we’ll update this page and its effective date.</p>
+</div>""")
+    return [privacy, terms]
+
+
+def render_legal(lang, page):
+    path, title, desc, body = page
+    out = head(lang, path, title + (" | Flipic" ), desc, []) + header(lang, path)
+    return out + f'<main id="main" class="narrow article">\n<h1>{title}</h1>{body}\n</main>\n' + footer(lang)
+
 
 def write(path, text):
     p = OUT / path.lstrip("/")
@@ -784,6 +917,12 @@ def main():
             urls.append(g["path"])
         write(PRO[lang]["path"], render_pro(lang))
         urls.append(PRO[lang]["path"])
+        if LEGAL_READY:
+            for page in legal_pages(lang):
+                write(page[0], render_legal(lang, page))
+                urls.append(page[0])
+    if not LEGAL_READY:
+        print("注意：LEGAL 没填完（运营主体、邮箱、退款天数），隐私政策和用户协议这次没有生成")
 
     # sitemap：每个地址带上中英对应版本
     items = []
