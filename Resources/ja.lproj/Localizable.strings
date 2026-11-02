@@ -127,7 +127,7 @@ Esc  写真情報パネルを先に閉じる
 表示 › Esc でウインドウを閉じる をオンにすると：全体表示中は Esc で閉じ、拡大中はまず全体表示に戻る
 ⌘⇧C  一括変換    ⌘⇧B  一括リネーム    ⌘⇧D  壁紙に設定
 ⌘E  編集アプリで編集（同名の RAW があれば RAW を開く）
-⌘⇧K  整理モード Beta：重複・目つぶり・ブレ
+⌘⇧K  整理モード：重複・目つぶり・ブレ
 ⌘S  圧縮コピーを書き出す    ⌘⇧E  書き出し…
 Return  表示中の画像を名称変更
 ⌘⌥S  回転をファイルに保存
@@ -152,7 +152,7 @@ Return  表示中の画像を名称変更
 "sort.descending" = "降順";
 
 /* 清理模式 */
-"menu.cleanup" = "整理モード Beta";
+"menu.cleanup" = "整理モード";
 "cleanup.title" = "整理モード";
 "cleanup.similar" = "似た連写";
 "cleanup.duplicate" = "完全な重複";
@@ -483,3 +483,13 @@ Return  表示中の画像を名称変更
 "set.background" = "バックグラウンド：";
 "set.keepRunning" = "ウインドウを閉じても終了せず、次に写真を速く開く";
 "menu.closePhotos" = "写真を閉じる";
+"set.peekKeep" = "フィットプレビューで前後の写真に移るとき、ウインドウの位置を保つ";
+"set.fileNameCheck" = "ポインタを動かすと左上にファイル名を表示";
+"menu.edit" = "編集";
+"menu.undo" = "取り消す";
+"menu.redo" = "やり直す";
+"menu.cut" = "カット";
+"menu.copy" = "コピー";
+"menu.paste" = "ペースト";
+"menu.selectAll" = "すべてを選択";
+"menu.photo" = "写真";

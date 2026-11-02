@@ -291,6 +291,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runPanTest() }
             }
+        } else if CommandLine.arguments.contains("--menutest") {
+            // 菜单结构、窗口菜单挂对没有，以及输入框里 ⌘V / ⌘A 是否通过「编辑」菜单生效
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                for top in NSApp.mainMenu?.items ?? [] {
+                    let items = (top.submenu?.items ?? []).map { $0.isSeparatorItem ? "|" : $0.title }
+                    NSLog("MENU [%@] %@", top.submenu?.title ?? "-", items.joined(separator: " · "))
+                }
+                NSLog("MENU windowsMenu=%@ helpMenu=%@", NSApp.windowsMenu?.title ?? "nil", NSApp.helpMenu?.title ?? "nil")
+                let w = NSWindow(contentRect: NSRect(x: 200, y: 200, width: 320, height: 80), styleMask: [.titled], backing: .buffered, defer: false)
+                let field = NSTextField(frame: NSRect(x: 20, y: 30, width: 280, height: 24))
+                w.contentView?.addSubview(field)
+                w.makeKeyAndOrderFront(nil)
+                w.makeFirstResponder(field)
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString("FP1-pastetest", forType: .string)
+                func cmd(_ c: String, _ code: UInt16) {
+                    guard let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command, timestamp: 0,
+                                                   windowNumber: w.windowNumber, context: nil, characters: c,
+                                                   charactersIgnoringModifiers: c, isARepeat: false, keyCode: code) else { return }
+                    NSLog("MENU ⌘%@ handled=%d", c, NSApp.mainMenu?.performKeyEquivalent(with: e) == true ? 1 : 0)
+                }
+                cmd("v", 9)
+                NSLog("MENU field after ⌘V: %@", field.stringValue)
+                cmd("a", 0)
+                NSLog("MENU selected length after ⌘A: %d", (field.currentEditor()?.selectedRange.length ?? -1))
+                NSApp.terminate(nil)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--peekkeeptest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runPeekKeepTest() }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--windragtest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runWindowDragTest() }
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--pausetest"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -813,45 +852,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             item(m, L10n.t("menu.quit", "退出 Flipic"), #selector(NSApplication.terminate(_:)), "q")
         }
+        // 文件：打开、交出去、改动文件本身
         addMenu(L10n.t("menu.file", "文件")) { m in
             item(m, L10n.t("menu.newWindow", "新建窗口"), #selector(AppDelegate.newWindowAction(_:)), "n").target = self
             item(m, L10n.t("menu.open", "打开…"), #selector(ViewerViewController.openFolderPanel(_:)), "o")
-            item(m, L10n.t("menu.reveal", "在 Finder 中显示"), #selector(ViewerViewController.revealInFinder(_:)))
-            m.addItem(.separator())
-            item(m, L10n.t("menu.editChoose", "在后期软件中编辑…"), #selector(ViewerViewController.openInEditor(_:)))
             let openWith = NSMenuItem(title: L10n.t("menu.openWith", "打开方式"), action: nil, keyEquivalent: "")
             let openWithMenu = NSMenu(title: openWith.title)
             openWithMenu.delegate = self
             openWith.submenu = openWithMenu
             m.addItem(openWith)
-            let ratingItem = NSMenuItem(title: L10n.t("menu.rating", "评分"), action: nil, keyEquivalent: "")
-            let ratingMenu = NSMenu(title: ratingItem.title)
-            for n in stride(from: 5, through: 1, by: -1) {
-                item(ratingMenu, Rating.stars(n), #selector(ViewerViewController.setRatingMenu(_:))).tag = n
-            }
-            ratingMenu.addItem(.separator())
-            item(ratingMenu, L10n.t("rating.none", "未评分"), #selector(ViewerViewController.setRatingMenu(_:))).tag = 0
-            ratingItem.submenu = ratingMenu
-            m.addItem(ratingItem)
-            item(m, L10n.t("menu.mark", "标记这张"), #selector(ViewerViewController.toggleMark(_:)))
-            item(m, L10n.t("menu.markedOnly", "只看已标记"), #selector(ViewerViewController.toggleMarkedOnly(_:)))
-            let filterItem = NSMenuItem(title: L10n.t("menu.ratingFilter", "只看星级"), action: nil, keyEquivalent: "")
-            let filterMenu = NSMenu(title: filterItem.title)
-            item(filterMenu, L10n.t("menu.ratingFilterAll", "全部照片"), #selector(ViewerViewController.setRatingFilter(_:))).tag = 0
-            filterMenu.addItem(.separator())
-            for n in stride(from: 5, through: 1, by: -1) {
-                item(filterMenu, L10n.f("menu.ratingAtLeast", "%@及以上", String(repeating: "★", count: n)),
-                     #selector(ViewerViewController.setRatingFilter(_:))).tag = n
-            }
-            filterItem.submenu = filterMenu
-            m.addItem(filterItem)
+            item(m, L10n.t("menu.editChoose", "在后期软件中编辑…"), #selector(ViewerViewController.openInEditor(_:)))
+            item(m, L10n.t("menu.reveal", "在 Finder 中显示"), #selector(ViewerViewController.revealInFinder(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.rename", "重命名…"), #selector(ViewerViewController.renameCurrent(_:)))
-            item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)))
+            item(m, L10n.t("menu.close", "关闭窗口"), #selector(AppDelegate.closePhotosOrWindow(_:)), "w")
             m.addItem(.separator())
             item(m, L10n.t("menu.exportAs", "导出为…"), #selector(ViewerViewController.exportAs(_:)))
             item(m, L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(ViewerViewController.exportToFolder(_:)))
-            item(m, L10n.t("menu.share", "分享…"), #selector(ViewerViewController.shareCurrent(_:)))
             #if FLIPIC_PRO
             let sendItem = NSMenuItem(title: L10n.t("menu.sendTo", "发送到"), action: nil, keyEquivalent: "")
             let sendMenu = NSMenu(title: sendItem.title)
@@ -864,40 +880,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(sendMenu, L10n.t("pro.sendSetup", "设置常用文件夹…"), #selector(ViewerViewController.showProSettings(_:)))
             sendItem.submenu = sendMenu
             m.addItem(sendItem)
-            item(m, L10n.t("menu.splitByRating", "按星级分到子文件夹…"), #selector(ViewerViewController.splitByRating(_:)))
-            item(m, L10n.t("menu.openAllInEditor", "全部在后期软件中打开…"), #selector(ViewerViewController.openAllInEditor(_:)))
-            item(m, L10n.t("menu.trashUnmarked", "没标记的移到废纸篓…"), #selector(ViewerViewController.trashUnpicked(_:))).tag = 0
-            item(m, L10n.t("menu.trashUnrated", "没评星的移到废纸篓…"), #selector(ViewerViewController.trashUnpicked(_:))).tag = 1
+            #endif
+            item(m, L10n.t("menu.share", "分享…"), #selector(ViewerViewController.shareCurrent(_:)))
+            m.addItem(.separator())
+            item(m, L10n.t("menu.rename", "重命名…"), #selector(ViewerViewController.renameCurrent(_:)))
+            item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)))
+            item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
+            #if FLIPIC_PRO
             item(m, L10n.t("menu.restoreTrash", "放回刚才删掉的照片"), #selector(ViewerViewController.restoreLastTrash(_:)))
             #endif
-            m.addItem(.separator())
-            item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
-            m.addItem(.separator())
-            item(m, L10n.t("menu.close", "关闭窗口"), #selector(AppDelegate.closePhotosOrWindow(_:)), "w")
         }
+        // 标准「编辑」菜单：输入框（激活码、重命名、设置）里的 ⌘V、⌘C、⌘A 都靠这些菜单项生效
+        addMenu(L10n.t("menu.edit", "编辑")) { m in
+            item(m, L10n.t("menu.undo", "撤销"), Selector(("undo:")), "z")
+            item(m, L10n.t("menu.redo", "重做"), Selector(("redo:")), "z", [.command, .shift])
+            m.addItem(.separator())
+            item(m, L10n.t("menu.cut", "剪切"), #selector(NSText.cut(_:)), "x")
+            item(m, L10n.t("menu.copy", "拷贝"), #selector(NSText.copy(_:)), "c")
+            item(m, L10n.t("menu.paste", "粘贴"), #selector(NSText.paste(_:)), "v")
+            item(m, L10n.t("menu.selectAll", "全选"), #selector(NSText.selectAll(_:)), "a")
+        }
+        // 显示：怎么看（缩放、旋转、界面元素、排序、全屏）
         addMenu(L10n.t("menu.view", "显示")) { m in
             item(m, L10n.t("menu.zoomIn", "放大"), #selector(ViewerViewController.zoomIn(_:)), "=")
             item(m, L10n.t("menu.zoomOut", "缩小"), #selector(ViewerViewController.zoomOut(_:)), "-")
-            m.addItem(.separator())
             item(m, L10n.t("menu.actualSize", "实际大小 (100%)"), #selector(ViewerViewController.zoomActual(_:)), "1")
             item(m, L10n.t("menu.fit", "适应窗口"), #selector(ViewerViewController.zoomFit(_:)), "0")
             m.addItem(.separator())
-            item(m, L10n.t("menu.rotateCW", "向右旋转 90°"), #selector(ViewerViewController.rotateCW(_:)))
             item(m, L10n.t("menu.rotateCCW", "向左旋转 90°"), #selector(ViewerViewController.rotateCCW(_:)))
+            item(m, L10n.t("menu.rotateCW", "向右旋转 90°"), #selector(ViewerViewController.rotateCW(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.info", "照片信息"), #selector(ViewerViewController.toggleInfoPanel(_:)))
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
             item(m, L10n.t("menu.toolbar", "工具条"), #selector(ViewerViewController.toggleToolbar(_:)))
-            m.addItem(.separator())
-            item(m, L10n.t("menu.compare2", "并排对比 2 张"), #selector(ViewerViewController.toggleCompare(_:)))
-            item(m, L10n.t("menu.compare4", "并排对比 4 张"), #selector(ViewerViewController.toggleCompare4(_:)))
-            item(m, L10n.t("menu.compareSync", "对比时同步缩放和位置"), #selector(ViewerViewController.toggleCompareSync(_:)))
-            #if FLIPIC_PRO
-            item(m, L10n.t("menu.beforeAfter", "修图前后对比"), #selector(ViewerViewController.toggleBeforeAfter(_:)))
-            item(m, L10n.t("menu.mergePairs", "合并显示 JPG 和 RAW"), #selector(ViewerViewController.toggleMergePairs(_:)))
-            item(m, L10n.t("menu.switchPair", "切换看 JPG / RAW"), #selector(ViewerViewController.switchPairMember(_:)))
-            #endif
-            item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
             m.addItem(.separator())
             let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")
             let sortMenu = NSMenu(title: sortItem.title)
@@ -909,7 +924,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             sortItem.submenu = sortMenu
             m.addItem(sortItem)
             m.addItem(.separator())
+            item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
             item(m, L10n.t("menu.fullscreen", "进入全屏"), #selector(NSWindow.toggleFullScreen(_:)), "f", [.control, .command])
+        }
+        // 照片：挑片（评星、标记、筛选、对比）
+        addMenu(L10n.t("menu.photo", "照片")) { m in
+            let ratingItem = NSMenuItem(title: L10n.t("menu.rating", "评分"), action: nil, keyEquivalent: "")
+            let ratingMenu = NSMenu(title: ratingItem.title)
+            for n in stride(from: 5, through: 1, by: -1) {
+                item(ratingMenu, Rating.stars(n), #selector(ViewerViewController.setRatingMenu(_:))).tag = n
+            }
+            ratingMenu.addItem(.separator())
+            item(ratingMenu, L10n.t("rating.none", "未评分"), #selector(ViewerViewController.setRatingMenu(_:))).tag = 0
+            ratingItem.submenu = ratingMenu
+            m.addItem(ratingItem)
+            item(m, L10n.t("menu.mark", "标记这张"), #selector(ViewerViewController.toggleMark(_:)))
+            m.addItem(.separator())
+            let filterItem = NSMenuItem(title: L10n.t("menu.ratingFilter", "只看星级"), action: nil, keyEquivalent: "")
+            let filterMenu = NSMenu(title: filterItem.title)
+            item(filterMenu, L10n.t("menu.ratingFilterAll", "全部照片"), #selector(ViewerViewController.setRatingFilter(_:))).tag = 0
+            filterMenu.addItem(.separator())
+            for n in stride(from: 5, through: 1, by: -1) {
+                item(filterMenu, L10n.f("menu.ratingAtLeast", "%@及以上", String(repeating: "★", count: n)),
+                     #selector(ViewerViewController.setRatingFilter(_:))).tag = n
+            }
+            filterItem.submenu = filterMenu
+            m.addItem(filterItem)
+            item(m, L10n.t("menu.markedOnly", "只看已标记"), #selector(ViewerViewController.toggleMarkedOnly(_:)))
+            m.addItem(.separator())
+            item(m, L10n.t("menu.compare2", "并排对比 2 张"), #selector(ViewerViewController.toggleCompare(_:)))
+            item(m, L10n.t("menu.compare4", "并排对比 4 张"), #selector(ViewerViewController.toggleCompare4(_:)))
+            item(m, L10n.t("menu.compareSync", "对比时同步缩放和位置"), #selector(ViewerViewController.toggleCompareSync(_:)))
+            #if FLIPIC_PRO
+            m.addItem(.separator())
+            item(m, L10n.t("menu.beforeAfter", "修图前后对比"), #selector(ViewerViewController.toggleBeforeAfter(_:)))
+            item(m, L10n.t("menu.mergePairs", "合并显示 JPG 和 RAW"), #selector(ViewerViewController.toggleMergePairs(_:)))
+            item(m, L10n.t("menu.switchPair", "切换看 JPG / RAW"), #selector(ViewerViewController.switchPairMember(_:)))
+            #endif
         }
         addMenu(L10n.t("menu.go", "前往")) { m in
             item(m, L10n.t("menu.prev", "上一张"), #selector(ViewerViewController.navigateBackward(_:)))
@@ -918,20 +969,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.first", "第一张"), #selector(ViewerViewController.goFirst(_:)))
             item(m, L10n.t("menu.last", "最后一张"), #selector(ViewerViewController.goLast(_:)))
         }
+        // 工具：一次处理一批
         addMenu(L10n.t("menu.tools", "工具")) { m in
             item(m, L10n.t("menu.batchConvert", "批量转换格式…"), #selector(ViewerViewController.batchConvert(_:)))
             item(m, L10n.t("menu.batchRename", "批量重命名…"), #selector(ViewerViewController.batchRename(_:)))
+            #if FLIPIC_PRO
+            item(m, L10n.t("menu.splitByRating", "按星级分到子文件夹…"), #selector(ViewerViewController.splitByRating(_:)))
+            item(m, L10n.t("menu.openAllInEditor", "全部在后期软件中打开…"), #selector(ViewerViewController.openAllInEditor(_:)))
             m.addItem(.separator())
-            item(m, L10n.t("menu.cleanup", "清理模式 Beta"), #selector(ViewerViewController.toggleCleanup(_:)))
+            item(m, L10n.t("menu.trashUnmarked", "没标记的移到废纸篓…"), #selector(ViewerViewController.trashUnpicked(_:))).tag = 0
+            item(m, L10n.t("menu.trashUnrated", "没评星的移到废纸篓…"), #selector(ViewerViewController.trashUnpicked(_:))).tag = 1
+            #endif
+            m.addItem(.separator())
+            item(m, L10n.t("menu.cleanup", "清理模式"), #selector(ViewerViewController.toggleCleanup(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.wallpaper", "设为桌面壁纸"), #selector(ViewerViewController.setWallpaper(_:)))
         }
+        var windowMenu: NSMenu?
         addMenu(L10n.t("menu.window", "窗口")) { m in
             item(m, L10n.t("menu.miniaturize", "最小化"), #selector(NSWindow.performMiniaturize(_:)), "m")
             item(m, L10n.t("menu.windowZoom", "缩放"), #selector(NSWindow.performZoom(_:)))
             item(m, L10n.t("menu.pin", "窗口置顶"), #selector(ViewerViewController.togglePinned(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.front", "前置全部窗口"), #selector(NSApplication.arrangeInFront(_:)))
+            windowMenu = m
         }
 
         let helpItem = NSMenuItem()
@@ -947,7 +1008,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NotificationCenter.default.addObserver(self, selector: #selector(applyShortcuts),
                                                name: Shortcuts.didChange, object: nil)
         HotKey.onPress = { [weak self] in self?.toggleAppVisibility() }
-        NSApp.windowsMenu = main.item(at: 5)?.submenu
+        // 按引用找，不按位置：菜单顺序改了也不会挂错
+        NSApp.windowsMenu = windowMenu
         NSApp.helpMenu = helpMenu
     }
 }

@@ -4,7 +4,7 @@ import Foundation
 /// Resources/<lang>.lproj/Localizable.strings 由 build.sh 拷进 App Bundle
 enum L10n {
     static func t(_ key: String, _ fallback: String) -> String {
-        NSLocalizedString(key, tableName: nil, bundle: .main, value: fallback, comment: "")
+        AppInfo.branded(NSLocalizedString(key, tableName: nil, bundle: .main, value: fallback, comment: ""))
     }
 
     static func f(_ key: String, _ fallback: String, _ args: CVarArg...) -> String {

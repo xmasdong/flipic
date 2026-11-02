@@ -165,7 +165,7 @@ enum ShortcutAction: String, CaseIterable {
         case .exportAs: return plain(L10n.t("menu.exportAs", "导出为…"))
         case .exportFolder: return plain(L10n.t("menu.exportFolder", "导出到文件夹…"))
         case .saveRotation: return L10n.t("menu.saveRotation", "保存旋转")
-        case .cleanup: return L10n.t("menu.cleanup", "清理模式 Beta")
+        case .cleanup: return L10n.t("menu.cleanup", "清理模式")
         case .batchConvert: return plain(L10n.t("menu.batchConvert", "批量转换格式…"))
         case .batchRename: return plain(L10n.t("menu.batchRename", "批量重命名…"))
         case .wallpaper: return L10n.t("menu.wallpaper", "设为桌面壁纸")

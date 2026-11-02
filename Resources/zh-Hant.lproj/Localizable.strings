@@ -127,7 +127,7 @@ Esc  先關掉右上角的照片資訊
 開啟「顯示 › 按 Esc 關閉視窗」後：符合視窗時 Esc 直接關閉，放大時先恢復
 ⌘⇧C  批次轉換    ⌘⇧B  批次重新命名    ⌘⇧D  設為背景
 ⌘E  在後製軟體中編輯（有同名 RAW 時打開 RAW）
-⌘⇧K  清理模式 Beta：重複、閉眼、模糊
+⌘⇧K  清理模式：重複、閉眼、模糊
 ⌘S  快速匯出    ⌘⇧E  匯出為…
 Return  重新命名目前圖片
 ⌘⌥S  儲存旋轉到檔案
@@ -152,7 +152,7 @@ Return  重新命名目前圖片
 "sort.descending" = "倒序";
 
 /* 清理模式 */
-"menu.cleanup" = "清理模式 Beta";
+"menu.cleanup" = "清理模式";
 "cleanup.title" = "清理模式";
 "cleanup.similar" = "相似連拍";
 "cleanup.duplicate" = "完全重複";
@@ -483,3 +483,13 @@ Return  重新命名目前圖片
 "set.background" = "背景執行：";
 "set.keepRunning" = "關掉視窗後留在背景，再打開圖片更快";
 "menu.closePhotos" = "關閉照片";
+"set.peekKeep" = "貼合預覽翻上一張、下一張時，視窗留在原地";
+"set.fileNameCheck" = "移動指標時在左上角顯示檔名";
+"menu.edit" = "編輯";
+"menu.undo" = "還原";
+"menu.redo" = "重做";
+"menu.cut" = "剪下";
+"menu.copy" = "拷貝";
+"menu.paste" = "貼上";
+"menu.selectAll" = "全選";
+"menu.photo" = "照片";

@@ -75,10 +75,7 @@ final class CleanupController: NSViewController {
 
         let title = NSTextField(labelWithString: L10n.t("cleanup.title", "清理模式"))
         title.font = .systemFont(ofSize: 15, weight: .semibold)
-        let beta = NSTextField(labelWithString: "Beta")
-        beta.font = .systemFont(ofSize: 11, weight: .medium)
-        beta.textColor = .secondaryLabelColor
-        let titleRow = NSStackView(views: [title, beta])
+        let titleRow = NSStackView(views: [title])
         titleRow.orientation = .horizontal
         titleRow.alignment = .firstBaseline
         titleRow.spacing = 6

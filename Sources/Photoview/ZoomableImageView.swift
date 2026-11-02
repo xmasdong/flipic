@@ -483,6 +483,8 @@ final class ZoomableImageView: NSView {
     private var pinchEndTime = Date.distantPast
     private var dragStartOrigin: CGPoint?
     private var dragStartPoint: CGPoint?
+    /// 照片适应窗口时按住拖动是移动窗口（不用非得拖顶栏）；放大后才是平移照片。全屏时窗口不能动，照旧平移
+    private var windowDragStart: (frame: CGPoint, mouse: CGPoint)?
 
     /// 触控板捏合：magnification 是相对上一事件的增量，(1 + delta) 乘当前缩放即严格跟手
     override func magnify(with event: NSEvent) {
@@ -650,9 +652,22 @@ final class ZoomableImageView: NSView {
         if event.clickCount >= 2 { pendingSingleClick?.cancel(); pendingSingleClick = nil }
         dragStartOrigin = origin
         dragStartPoint = convert(event.locationInWindow, from: nil)
+        if mode == .fit, let w = window, !w.styleMask.contains(.fullScreen) {
+            windowDragStart = (w.frame.origin, w.convertPoint(toScreen: event.locationInWindow))
+        } else {
+            windowDragStart = nil
+        }
     }
 
     override func mouseDragged(with event: NSEvent) {
+        if let start = windowDragStart, let w = window {
+            // 用屏幕坐标算位移：窗口跟着动，窗口内坐标会变，只能换算到屏幕上比
+            let m = w.convertPoint(toScreen: event.locationInWindow)
+            if hypot(m.x - start.mouse.x, m.y - start.mouse.y) > 3 { mouseMovedSinceDown = true }
+            guard mouseMovedSinceDown else { return }
+            w.setFrameOrigin(CGPoint(x: start.frame.x + m.x - start.mouse.x, y: start.frame.y + m.y - start.mouse.y))
+            return
+        }
         guard let o = dragStartOrigin, let s = dragStartPoint else { return }
         let p = convert(event.locationInWindow, from: nil)
         if hypot(p.x - s.x, p.y - s.y) > 3 { mouseMovedSinceDown = true }
@@ -663,6 +678,7 @@ final class ZoomableImageView: NSView {
     }
 
     override func mouseUp(with event: NSEvent) {
+        windowDragStart = nil
         dragStartOrigin = nil
         dragStartPoint = nil
         pendingSingleClick?.cancel()

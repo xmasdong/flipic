@@ -127,7 +127,7 @@ Esc  사진 정보 패널을 먼저 닫음
 보기 › Esc로 윈도우 닫기를 켜면: 맞춤 상태에서는 Esc로 닫고, 확대 중에는 먼저 맞춤으로 돌아감
 ⌘⇧C  일괄 변환    ⌘⇧B  일괄 이름 변경    ⌘⇧D  배경으로 설정
 ⌘E  편집 앱에서 편집 (같은 이름의 RAW가 있으면 RAW를 엶)
-⌘⇧K  정리 모드 Beta: 중복, 눈 감음, 흔들림
+⌘⇧K  정리 모드: 중복, 눈 감음, 흔들림
 ⌘S  빠른 내보내기    ⌘⇧E  다른 이름으로 내보내기…
 Return  현재 이미지 이름 변경
 ⌘⌥S  회전을 파일에 저장
@@ -152,7 +152,7 @@ Return  현재 이미지 이름 변경
 "sort.descending" = "내림차순";
 
 /* 清理模式 */
-"menu.cleanup" = "정리 모드 Beta";
+"menu.cleanup" = "정리 모드";
 "cleanup.title" = "정리 모드";
 "cleanup.similar" = "비슷한 연사";
 "cleanup.duplicate" = "완전 중복";
@@ -483,3 +483,13 @@ Return  현재 이미지 이름 변경
 "set.background" = "백그라운드:";
 "set.keepRunning" = "창을 닫아도 계속 실행해 다음에 사진을 더 빨리 열기";
 "menu.closePhotos" = "사진 닫기";
+"set.peekKeep" = "맞춤 미리보기에서 이전·다음 사진으로 넘길 때 윈도우 위치 유지";
+"set.fileNameCheck" = "포인터를 움직이면 왼쪽 상단에 파일 이름 표시";
+"menu.edit" = "편집";
+"menu.undo" = "실행 취소";
+"menu.redo" = "실행 복귀";
+"menu.cut" = "오려두기";
+"menu.copy" = "복사하기";
+"menu.paste" = "붙여넣기";
+"menu.selectAll" = "전체 선택";
+"menu.photo" = "사진";

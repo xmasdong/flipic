@@ -1,9 +1,9 @@
 import Foundation
 
-/// 挑片标记：「这张我要」。存成访达标签「Flipic」（绿色），不改照片文件本身，
+/// 挑片标记：「这张我要」。存成访达标签「Flipic」（跟随软件名，绿色），不改照片文件本身，
 /// RAW、PSD 等任何格式都能标；在访达侧边栏点这个标签就能看到所有标记过的照片，换软件也不丢
 enum Marks {
-    static let tagName = "Flipic"
+    static let tagName = AppInfo.name
     /// 访达标签颜色序号：1 灰 2 绿 3 紫 4 蓝 5 黄 6 红 7 橙
     private static let colorIndex = 2
     private static let attr = "com.apple.metadata:_kMDItemUserTags"

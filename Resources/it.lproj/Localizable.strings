@@ -127,7 +127,7 @@ Esc  Chiude prima il pannello info
 Con Vista › Esc chiude la finestra: Esc chiude se la foto è adattata, con lo zoom prima torna ad adattare
 ⌘⇧C  Conversione in blocco    ⌘⇧B  Rinomina in blocco    ⌘⇧D  Immagine scrivania
 ⌘E  Modifica nell’editor foto (apre il RAW con lo stesso nome se c’è)
-⌘⇧K  Modalità pulizia Beta: duplicati, occhi chiusi, sfocature
+⌘⇧K  Modalità pulizia: duplicati, occhi chiusi, sfocature
 ⌘S  Esportazione rapida    ⌘⇧E  Esporta come…
 Return  Rinomina l'immagine attuale
 ⌘⌥S  Salva rotazione nel file
@@ -152,7 +152,7 @@ Trascina una cartella o un'immagine per aprire";
 "sort.descending" = "Decrescente";
 
 /* 清理模式 */
-"menu.cleanup" = "Modalità pulizia Beta";
+"menu.cleanup" = "Modalità pulizia";
 "cleanup.title" = "Modalità pulizia";
 "cleanup.similar" = "Raffiche simili";
 "cleanup.duplicate" = "Duplicati esatti";
@@ -483,3 +483,13 @@ Trascina una cartella o un'immagine per aprire";
 "set.background" = "In background:";
 "set.keepRunning" = "Resta aperto dopo aver chiuso l’ultima finestra, per aprire le foto più in fretta";
 "menu.closePhotos" = "Chiudi foto";
+"set.peekKeep" = "Lascia la finestra dov’è quando passi alla foto precedente o successiva nell’anteprima adattata";
+"set.fileNameCheck" = "Mostra il nome del file in alto a sinistra quando muovi il puntatore";
+"menu.edit" = "Composizione";
+"menu.undo" = "Annulla";
+"menu.redo" = "Ripeti";
+"menu.cut" = "Taglia";
+"menu.copy" = "Copia";
+"menu.paste" = "Incolla";
+"menu.selectAll" = "Seleziona tutto";
+"menu.photo" = "Foto";

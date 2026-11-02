@@ -338,6 +338,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let thumbPopup = NSPopUpButton()
     private let newWindow = NSButton(checkboxWithTitle: L10n.t("set.newWindowCheck", "在新窗口里打开，可以同时开几个"), target: nil, action: nil)
     private let openPeek = NSButton(checkboxWithTitle: L10n.t("set.openPeekCheck", "窗口贴合照片比例（和按空格一样）"), target: nil, action: nil)
+    private let peekKeep = NSButton(checkboxWithTitle: L10n.t("set.peekKeep", "贴合预览翻上一张、下一张时，窗口留在原地"), target: nil, action: nil)
     private let slideFade = NSButton(checkboxWithTitle: L10n.t("set.slideFade", "切换时渐变"), target: nil, action: nil)
     private let fadePopup = NSPopUpButton()
     private let escCloses = NSButton(checkboxWithTitle: L10n.t("menu.escCloses", "按 Esc 关闭窗口"), target: nil, action: nil)
@@ -346,6 +347,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let autoUpdate = NSButton(checkboxWithTitle: L10n.t("set.autoUpdate", "自动检查更新（每天一次）"), target: nil, action: nil)
     private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
     private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
+    private let fileNameCheck = NSButton(checkboxWithTitle: L10n.t("set.fileNameCheck", "移动鼠标时在左上角显示文件名"), target: nil, action: nil)
     private let backdropPopup = NSPopUpButton()
     private let keepRunning = NSButton(checkboxWithTitle: L10n.t("set.keepRunning", "关掉窗口后留在后台，再打开图片更快"), target: nil, action: nil)
     private let editorName = NSTextField(labelWithString: "")
@@ -380,6 +382,11 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         escCloses.target = self; escCloses.action = #selector(escChanged)
         ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
         toolbarCheck.target = self; toolbarCheck.action = #selector(toolbarChanged)
+        fileNameCheck.target = self; fileNameCheck.action = #selector(fileNameChanged)
+        let toolbarRow = NSStackView(views: [toolbarCheck, fileNameCheck])
+        toolbarRow.orientation = .vertical
+        toolbarRow.alignment = .leading
+        toolbarRow.spacing = 6
         for (t, title) in [(2, L10n.t("set.bg.photo", "照片色磨砂")), (1, L10n.t("set.bg.glass", "磨砂玻璃")), (0, L10n.t("set.bg.black", "纯黑"))] {
             backdropPopup.addItem(withTitle: title)
             backdropPopup.lastItem?.tag = t
@@ -387,6 +394,11 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         backdropPopup.target = self; backdropPopup.action = #selector(backdropChanged)
         keepRunning.target = self; keepRunning.action = #selector(keepRunningChanged)
         openPeek.target = self; openPeek.action = #selector(openPeekChanged)
+        peekKeep.target = self; peekKeep.action = #selector(peekKeepChanged)
+        let peekRow = NSStackView(views: [openPeek, peekKeep])
+        peekRow.orientation = .vertical
+        peekRow.alignment = .leading
+        peekRow.spacing = 6
         newWindow.target = self; newWindow.action = #selector(newWindowChanged)
         autoUpdate.target = self; autoUpdate.action = #selector(autoUpdateChanged)
         hdr.target = self; hdr.action = #selector(hdrChanged)
@@ -412,12 +424,12 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.default", "默认看图：")), defaultRow],
             spacerRow(note(L10n.t("set.defaultNote", "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相机 RAW 双击都用 Flipic 打开。也可以在访达里右键一张图，按住 ⌥ 键，选「始终以此打开」› Flipic。"))),
             [label(L10n.t("set.openPeek", "打开照片时：")), newWindow],
-            [NSGridCell.emptyContentView, openPeek],
+            [NSGridCell.emptyContentView, peekRow],
             spacerRow(note(L10n.t("set.openPeekNote", "从访达双击照片打开时，窗口直接收成照片的比例；按空格或 Esc 回到普通窗口。打开文件夹时还是普通窗口。"))),
             [label(L10n.t("set.sort", "排序方式：")), sortRow],
             [label(L10n.t("set.paging", "翻页：")), fade],
             [label(L10n.t("set.rating", "评分：")), ratingBadge],
-            [label(L10n.t("set.toolbar", "工具条：")), toolbarCheck],
+            [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
             [label(L10n.t("set.backdrop", "背景：")), backdropPopup],
             [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
             [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
@@ -451,10 +463,12 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         escCloses.state = ViewerViewController.escCloses ? .on : .off
         ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
         toolbarCheck.state = ViewerViewController.showToolbar ? .on : .off
+        fileNameCheck.state = ViewerViewController.showFileName ? .on : .off
         backdropPopup.selectItem(withTag: ZoomableImageView.backdropStyle.rawValue)
         keepRunning.state = AppDelegate.keepRunning ? .on : .off
         thumbPopup.selectItem(withTag: Int(FilmstripView.thumbSize))
         openPeek.state = ViewerViewController.openInPeek ? .on : .off
+        peekKeep.state = ViewerViewController.peekKeepsPosition ? .on : .off
         newWindow.state = AppDelegate.openInNewWindow ? .on : .off
         slideFade.state = ViewerViewController.slideshowFade ? .on : .off
         autoUpdate.state = UpdateChecker.autoCheck ? .on : .off
@@ -530,6 +544,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     @objc private func newWindowChanged() { AppDelegate.openInNewWindow = newWindow.state == .on }
 
     @objc private func openPeekChanged() { ViewerViewController.openInPeek = openPeek.state == .on }
+    @objc private func peekKeepChanged() { ViewerViewController.peekKeepsPosition = peekKeep.state == .on }
 
     @objc private func thumbSizeChanged() {
         FilmstripView.thumbSize = CGFloat(thumbPopup.selectedTag())
@@ -541,6 +556,11 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     @objc private func backdropChanged() {
         ZoomableImageView.backdropStyle = ZoomableImageView.BackdropStyle(rawValue: backdropPopup.selectedTag()) ?? .photo
         SettingsWindowController.notify("backdrop")
+    }
+
+    @objc private func fileNameChanged() {
+        ViewerViewController.showFileName = fileNameCheck.state == .on
+        SettingsWindowController.notify("fileName")
     }
 
     @objc private func toolbarChanged() {

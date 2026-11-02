@@ -127,7 +127,7 @@ Esc  Önce fotoğraf bilgi panelini kapatır
 Görüntü › Esc pencereyi kapatır açıkken: sığdırılmışken Esc kapatır, yakınlaştırılmışken önce sığdırır
 ⌘⇧C  Toplu dönüştürme    ⌘⇧B  Toplu yeniden adlandırma    ⌘⇧D  Duvar kağıdı
 ⌘E  Fotoğraf düzenleyicide düzenle (aynı adlı RAW varsa onu açar)
-⌘⇧K  Temizlik modu Beta: kopyalar, kapalı gözler, bulanıklık
+⌘⇧K  Temizlik modu: kopyalar, kapalı gözler, bulanıklık
 ⌘S  Hızlı dışa aktarma    ⌘⇧E  Farklı dışa aktar…
 Return  Geçerli resmi yeniden adlandır
 ⌘⌥S  Döndürmeyi dosyaya kaydet
@@ -152,7 +152,7 @@ Açmak için klasör veya resim sürükleyin";
 "sort.descending" = "Azalan";
 
 /* 清理模式 */
-"menu.cleanup" = "Temizlik modu Beta";
+"menu.cleanup" = "Temizlik modu";
 "cleanup.title" = "Temizlik modu";
 "cleanup.similar" = "Benzer seriler";
 "cleanup.duplicate" = "Birebir kopyalar";
@@ -483,3 +483,13 @@ Açmak için klasör veya resim sürükleyin";
 "set.background" = "Arka plan:";
 "set.keepRunning" = "Son pencere kapanınca açık kal, fotoğraflar daha hızlı açılsın";
 "menu.closePhotos" = "Fotoğrafları kapat";
+"set.peekKeep" = "Sığdırılmış önizlemede önceki veya sonraki fotoğrafa geçerken pencereyi yerinde tut";
+"set.fileNameCheck" = "İşaretçi hareket edince sol üst köşede dosya adını göster";
+"menu.edit" = "Düzen";
+"menu.undo" = "Geri Al";
+"menu.redo" = "Yinele";
+"menu.cut" = "Kes";
+"menu.copy" = "Kopyala";
+"menu.paste" = "Yapıştır";
+"menu.selectAll" = "Tümünü Seç";
+"menu.photo" = "Fotoğraf";

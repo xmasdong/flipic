@@ -20,6 +20,16 @@ final class ViewerViewController: NSViewController {
     let emptyState = NSStackView()
     let emptyHint = NSTextField(labelWithString: "")
     private let toolbarView = NSVisualEffectView()
+    /// 右上角：照片信息、置顶、分享（和「照片」「预览」一样：信息按钮和它打开的面板在同一个角，分享在最右），
+    /// 跟工具条一起出现和淡出
+    private let cornerBar = NSVisualEffectView()
+    private var infoButton: NSButton?
+    private var infoPanelObservation: NSKeyValueObservation?
+    /// 左上角文件名，紧挨窗口的红黄绿按钮，和工具条一起出现和淡出；
+    /// 衬一块和右上角同样的半透明底，亮色照片上也看得清
+    private let fileNameLabel = NSTextField(labelWithString: "")
+    private let fileNameBar = NSVisualEffectView()
+    private var fileNameLeading: NSLayoutConstraint!
     private var slideshowButton: NSButton?
     private var pinButton: NSButton?
     /// 「磨砂玻璃」背景：系统材质，透出窗口后面的内容再模糊
@@ -246,7 +256,8 @@ final class ViewerViewController: NSViewController {
             hudView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             hudView.topAnchor.constraint(equalTo: view.topAnchor, constant: 44),
 
-            exifPanel.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
+            // 让开右上角的置顶、分享
+            exifPanel.topAnchor.constraint(equalTo: view.topAnchor, constant: 46),
             exifPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
             exifPanel.widthAnchor.constraint(equalToConstant: 300),
 
@@ -314,7 +325,9 @@ final class ViewerViewController: NSViewController {
         guard visible != controlsVisible else { return }
         controlsVisible = visible
         var targets: [NSView] = [prevArrowContainer!, nextArrowContainer!]
-        if Self.showToolbar { targets.append(toolbarView) }
+        if Self.showToolbar { targets += [toolbarView, cornerBar] }
+        if Self.showFileName { targets.append(fileNameBar) }
+        if visible { placeFileName() }
         if filmstripFloating && filmstripHeight.constant > 0 { targets.append(filmstrip) }
         if visible {
             for t in targets where folder.current != nil { t.isHidden = false }
@@ -335,8 +348,9 @@ final class ViewerViewController: NSViewController {
 
     func updateControlsPresence() {
         let present = folder.current != nil
-        for t in [toolbarView, prevArrowContainer!, nextArrowContainer!] { t.isHidden = !present }
-        if !Self.showToolbar { toolbarView.isHidden = true }
+        for t in [toolbarView, cornerBar, fileNameBar, prevArrowContainer!, nextArrowContainer!] { t.isHidden = !present }
+        if !Self.showToolbar { toolbarView.isHidden = true; cornerBar.isHidden = true }
+        if !Self.showFileName { fileNameBar.isHidden = true }
         if present { pokeControls() }
     }
 
@@ -377,9 +391,9 @@ final class ViewerViewController: NSViewController {
         imageView.fit()
     }
 
-    /// 窗口按图片比例重新取形：以原图 100% 的点尺寸为上限，超出屏幕可见区 90% 则等比缩小，
-    /// 中心对准进入预览前的窗口中心
-    private func wrapWindowToImage() {
+    /// 窗口按图片比例重新取形：以原图 100% 的点尺寸为上限，超出屏幕可见区 90% 则等比缩小。
+    /// 刚进入预览时中心对准进入前的窗口；翻页时按设置对准当前窗口（用户拖过去的位置）或进入前的窗口
+    private func wrapWindowToImage(keepingCurrent: Bool = false) {
         guard let window = view.window, let saved = peekSaved,
               let screen = window.screen ?? NSScreen.main else { return }
         let px = imageView.pixelSize
@@ -395,10 +409,101 @@ final class ViewerViewController: NSViewController {
             w *= g; h *= g
         }
         var frame = window.frameRect(forContentRect: NSRect(x: 0, y: 0, width: w, height: h))
-        frame.origin = CGPoint(x: saved.frame.midX - frame.width / 2, y: saved.frame.midY - frame.height / 2)
+        let anchor = keepingCurrent ? window.frame : saved.frame
+        frame.origin = CGPoint(x: anchor.midX - frame.width / 2, y: anchor.midY - frame.height / 2)
         frame.origin.x = min(max(frame.origin.x, visible.minX), visible.maxX - frame.width)
         frame.origin.y = min(max(frame.origin.y, visible.minY), visible.maxY - frame.height)
         window.setFrame(frame, display: true, animate: true)
+    }
+
+    // MARK: - 顶部：左上文件名、右上置顶和分享
+
+    static var showFileName: Bool {
+        get { UserDefaults.standard.object(forKey: "showFileName") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "showFileName") }
+    }
+
+    private func buildTopCorners() {
+        cornerBar.material = .hudWindow
+        cornerBar.blendingMode = .withinWindow
+        cornerBar.state = .active
+        cornerBar.wantsLayer = true
+        cornerBar.layer?.cornerRadius = 10
+        cornerBar.layer?.masksToBounds = true
+        cornerBar.translatesAutoresizingMaskIntoConstraints = false
+        cornerBar.isHidden = true
+        let stack = NSStackView()
+        stack.orientation = .horizontal
+        stack.spacing = 2
+        stack.edgeInsets = NSEdgeInsets(top: 3, left: 4, bottom: 3, right: 4)
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        for (symbol, tip, action) in [("info.circle", L10n.t("tip.info", "照片信息（I）"), #selector(toggleInfoPanel(_:))),
+                                      ("pin", L10n.t("tip.pin", "窗口置顶：浮在其他软件上面"), #selector(togglePinned(_:))),
+                                      ("square.and.arrow.up", L10n.t("tip.share", "分享"), #selector(shareCurrent(_:)))] {
+            let (container, button) = iconButton(symbol: symbol, tip: tip, action: action,
+                                                 size: NSSize(width: 32, height: 28), cornerRadius: 7, tint: .labelColor)
+            switch symbol {
+            case "info.circle": infoButton = button
+            case "pin": pinButton = button
+            default: shareButton = button
+            }
+            if let a = Self.shortcutAction(for: action) { shortcutTips.append((button, tip, a)) }
+            stack.addArrangedSubview(container)
+        }
+        cornerBar.addSubview(stack)
+        view.addSubview(cornerBar)
+        // 信息面板开着时 i 按钮高亮，和置顶的图钉一样；面板在很多地方开关，直接观察它的显示状态
+        infoPanelObservation = exifPanel.observe(\.isHidden, options: [.initial, .new]) { [weak self] panel, _ in
+            let on = !panel.isHidden
+            self?.infoButton?.image = NSImage(systemSymbolName: on ? "info.circle.fill" : "info.circle", accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: 15, weight: .medium))
+            self?.infoButton?.contentTintColor = on ? .controlAccentColor : .labelColor
+        }
+
+        fileNameLabel.font = .systemFont(ofSize: 12, weight: .medium)
+        fileNameLabel.textColor = .labelColor
+        fileNameLabel.lineBreakMode = .byTruncatingMiddle
+        fileNameLabel.cell?.truncatesLastVisibleLine = true
+        fileNameLabel.translatesAutoresizingMaskIntoConstraints = false
+        fileNameLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        fileNameBar.material = .hudWindow
+        fileNameBar.blendingMode = .withinWindow
+        fileNameBar.state = .active
+        fileNameBar.wantsLayer = true
+        fileNameBar.layer?.cornerRadius = 7
+        fileNameBar.layer?.masksToBounds = true
+        fileNameBar.translatesAutoresizingMaskIntoConstraints = false
+        fileNameBar.isHidden = true
+        fileNameBar.addSubview(fileNameLabel)
+        view.addSubview(fileNameBar)
+        fileNameLeading = fileNameBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 78)
+
+        NSLayoutConstraint.activate([
+            stack.topAnchor.constraint(equalTo: cornerBar.topAnchor),
+            stack.bottomAnchor.constraint(equalTo: cornerBar.bottomAnchor),
+            stack.leadingAnchor.constraint(equalTo: cornerBar.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: cornerBar.trailingAnchor),
+            cornerBar.topAnchor.constraint(equalTo: view.topAnchor, constant: 6),
+            cornerBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
+            fileNameLeading,
+            // 和红黄绿按钮在同一条水平线（标题栏高 28，按钮中心离顶边 14）
+            fileNameBar.centerYAnchor.constraint(equalTo: view.topAnchor, constant: 14),
+            fileNameBar.heightAnchor.constraint(equalToConstant: 22),
+            fileNameBar.trailingAnchor.constraint(lessThanOrEqualTo: cornerBar.leadingAnchor, constant: -12),
+            fileNameLabel.leadingAnchor.constraint(equalTo: fileNameBar.leadingAnchor, constant: 8),
+            fileNameLabel.trailingAnchor.constraint(equalTo: fileNameBar.trailingAnchor, constant: -8),
+            fileNameLabel.centerYAnchor.constraint(equalTo: fileNameBar.centerYAnchor),
+        ])
+    }
+
+    /// 文件名紧跟在缩放按钮右边；全屏时红黄绿按钮不在，贴左边
+    private func placeFileName() {
+        guard let window = view.window else { return }
+        if !window.styleMask.contains(.fullScreen), let zoom = window.standardWindowButton(.zoomButton) {
+            fileNameLeading.constant = zoom.frame.maxX + 12
+        } else {
+            fileNameLeading.constant = 16
+        }
     }
 
     // MARK: - 悬浮工具条
@@ -434,10 +539,7 @@ final class ViewerViewController: NSViewController {
             [("rotate.left", L10n.t("tip.rotateCCW", "向左旋转 90°（L）"), #selector(rotateCCW(_:))),
              ("rotate.right", L10n.t("tip.rotateCW", "向右旋转 90°（R）"), #selector(rotateCW(_:)))],
             [("play.fill", L10n.t("tip.slideshow", "幻灯片放映（S）"), #selector(toggleSlideshow(_:)))],
-            [("pin", L10n.t("tip.pin", "窗口置顶：浮在其他软件上面"), #selector(togglePinned(_:))),
-             ("square.and.arrow.up", L10n.t("tip.share", "分享"), #selector(shareCurrent(_:)))],
-            [("info.circle", L10n.t("tip.info", "照片信息（I）"), #selector(toggleInfoPanel(_:))),
-             ("photo.on.rectangle", L10n.t("tip.strip", "底部缩略图栏开关（T）"), #selector(toggleFilmstrip(_:)))],
+            [("photo.on.rectangle", L10n.t("tip.strip", "底部缩略图栏开关（T）"), #selector(toggleFilmstrip(_:)))],
             [("folder.badge.plus", L10n.t("tip.exportFolder", "把当前显示的照片复制或移动到文件夹（⇧⌘E）"), #selector(exportToFolder(_:))),
              ("square.and.arrow.down", L10n.t("tip.export", "导出压缩副本（⌘S）"), #selector(exportAs(_:))),
              ("pencil", L10n.t("tip.rename", "重命名（回车）"), #selector(renameCurrent(_:))),
@@ -461,6 +563,7 @@ final class ViewerViewController: NSViewController {
             }
         }
         view.addSubview(toolbarView)
+        buildTopCorners()
 
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: toolbarView.topAnchor),
@@ -597,7 +700,7 @@ final class ViewerViewController: NSViewController {
         emptyState.spacing = 12
         emptyState.translatesAutoresizingMaskIntoConstraints = false
 
-        let title = NSTextField(labelWithString: "Flipic")
+        let title = NSTextField(labelWithString: AppInfo.name)
         title.font = .systemFont(ofSize: 30, weight: .semibold)
         title.textColor = .tertiaryLabelColor
         emptyHint.stringValue = L10n.t("ui.emptyHint", "把文件夹或图片拖进这个窗口，或点击「打开…」")
@@ -616,6 +719,12 @@ final class ViewerViewController: NSViewController {
     // MARK: - 打开与加载
 
     /// 从访达打开单张照片时，窗口直接贴合照片比例（同空格预览）；打开文件夹还是普通窗口。默认关，设置里打开
+    /// 贴合预览里翻上一张、下一张时，窗口留在用户拖到的位置（以当前窗口中心对齐）；关掉则回到进入预览前的中心。默认打开
+    static var peekKeepsPosition: Bool {
+        get { UserDefaults.standard.object(forKey: "peekKeepsPosition") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "peekKeepsPosition") }
+    }
+
     static var openInPeek: Bool {
         get { UserDefaults.standard.bool(forKey: "openInPeek") }
         set { UserDefaults.standard.set(newValue, forKey: "openInPeek") }
@@ -675,8 +784,9 @@ final class ViewerViewController: NSViewController {
         fullRequested = false
         guard let item = folder.current else { return }
         let url = item.url
-        // 「窗口」菜单里按文件名区分多个窗口（标题栏本身是隐藏的）
+        // 「窗口」菜单里按文件名区分多个窗口（标题栏本身是隐藏的）；左上角也显示
         view.window?.title = url.lastPathComponent
+        fileNameLabel.stringValue = url.lastPathComponent
         decodeQueue.cancelAllOperations()
         updateSmartCache()
         updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)
@@ -730,7 +840,7 @@ final class ViewerViewController: NSViewController {
         folder.setCurrentPixelSize(logicalSize)
         imageView.set(image: image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew)
         if isNew { BenchProbe.adopted() } else { BenchProbe.fullWidth = image.width }
-        if isNew, peekSaved != nil { wrapWindowToImage() }
+        if isNew, peekSaved != nil { wrapWindowToImage(keepingCurrent: Self.peekKeepsPosition) }
         if isNew, peekOnFirstImage {
             peekOnFirstImage = false
             DispatchQueue.main.async { [weak self] in
@@ -1176,6 +1286,11 @@ final class ViewerViewController: NSViewController {
         case "toolbar":
             toolbarView.isHidden = !Self.showToolbar || folder.current == nil || !controlsVisible
             toolbarView.alphaValue = toolbarView.isHidden ? 0 : 1
+            cornerBar.isHidden = toolbarView.isHidden
+            cornerBar.alphaValue = toolbarView.alphaValue
+        case "fileName":
+            fileNameBar.isHidden = !Self.showFileName || folder.current == nil || !controlsVisible
+            fileNameBar.alphaValue = fileNameBar.isHidden ? 0 : 1
             ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible)
         case "thumbs":
             // 缩略图大小变了：格子、栏高一起改，按新尺寸重新取缩略图
@@ -2293,6 +2408,7 @@ final class ViewerViewController: NSViewController {
         filmstrip.scrollTo(index: folder.index)
         if let url = folder.current?.url {
             view.window?.title = url.lastPathComponent
+            fileNameLabel.stringValue = url.lastPathComponent
             loadRating(for: url)
         }
         updateExifPanel()
@@ -2559,7 +2675,7 @@ final class ViewerViewController: NSViewController {
         updateRatingLabel()
         refreshMarks()
         updateMarkedOnlyPill()
-        view.window?.title = "Flipic"
+        view.window?.title = AppInfo.name
     }
 
     // MARK: - 窗口置顶、分享
@@ -3009,7 +3125,7 @@ final class ViewerViewController: NSViewController {
         para.paragraphSpacing = 6
 
         let out = NSMutableAttributedString()
-        out.append(NSAttributedString(string: "Flipic \(version)\n\n", attributes: [
+        out.append(NSAttributedString(string: "\(AppInfo.name) \(version)\n\n", attributes: [
             .font: NSFont.systemFont(ofSize: 22, weight: .bold),
             .foregroundColor: NSColor.labelColor,
             .paragraphStyle: para,
@@ -3734,6 +3850,70 @@ final class ViewerViewController: NSViewController {
         at(15.0) { NSLog("HDR off after 20s screenHeadroomNow=%.2f", self.view.window?.screen?.maximumExtendedDynamicRangeColorComponentValue ?? 0) }
         at(0.3) {
             if let saved { UserDefaults.standard.set(saved, forKey: "hdrEnabled") } else { UserDefaults.standard.removeObject(forKey: "hdrEnabled") }
+            NSApp.terminate(nil)
+        }
+    }
+
+    /// --peekkeeptest <文件夹>：贴合预览里把窗口挪开再翻页，开关打开时窗口中心留在挪到的位置，关掉时回到进入预览前的中心
+    func runPeekKeepTest() {
+        guard let w = view.window else { return }
+        let saved = ViewerViewController.peekKeepsPosition
+        func center() -> String { String(format: "(%.0f,%.0f) size=%.0fx%.0f", w.frame.midX, w.frame.midY, w.frame.width, w.frame.height) }
+        _ = beginPeek()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            NSLog("PEEKKEEP entered: %@", center())
+            w.setFrameOrigin(CGPoint(x: w.frame.minX + 200, y: w.frame.minY - 100))
+            NSLog("PEEKKEEP moved +200,-100: %@", center())
+            ViewerViewController.peekKeepsPosition = true
+            self.goTo(self.folder.index + 1)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                NSLog("PEEKKEEP next (keep on): %@", center())
+                ViewerViewController.peekKeepsPosition = false
+                self.goTo(self.folder.index + 1)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    NSLog("PEEKKEEP next (keep off): %@", center())
+                    ViewerViewController.peekKeepsPosition = saved
+                    NSApp.terminate(nil)
+                }
+            }
+        }
+    }
+
+    /// --windragtest <文件夹>：适应窗口时拖照片移动窗口、照片不动；放大后拖动平移照片、窗口不动；单击、双击照旧
+    func runWindowDragTest() {
+        guard let w = view.window else { return }
+        let center = imageView.convert(NSPoint(x: imageView.bounds.midX, y: imageView.bounds.midY), to: nil)
+        func mouse(_ type: NSEvent.EventType, _ p: NSPoint) {
+            guard let e = NSEvent.mouseEvent(with: type, location: p, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                             windowNumber: w.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) else { return }
+            switch type {
+            case .leftMouseDown: imageView.mouseDown(with: e)
+            case .leftMouseDragged: imageView.mouseDragged(with: e)
+            default: imageView.mouseUp(with: e)
+            }
+        }
+        // 窗口移动后，同一个屏幕位置在窗口里的坐标会变；按屏幕坐标模拟真实拖动
+        func drag(by d: CGVector) {
+            let startScreen = w.convertPoint(toScreen: center)
+            mouse(.leftMouseDown, center)
+            for k in 1...10 {
+                let target = CGPoint(x: startScreen.x + d.dx * CGFloat(k) / 10, y: startScreen.y + d.dy * CGFloat(k) / 10)
+                mouse(.leftMouseDragged, w.convertPoint(fromScreen: target))
+            }
+            mouse(.leftMouseUp, w.convertPoint(fromScreen: CGPoint(x: startScreen.x + d.dx, y: startScreen.y + d.dy)))
+        }
+        func state() -> String {
+            let v = imageView.viewState
+            return String(format: "win=(%.0f,%.0f) fit=%d zoom=%.2f center=(%.3f,%.3f)", w.frame.minX, w.frame.minY, v.fit ? 1 : 0, v.zoom, v.center.x, v.center.y)
+        }
+        NSLog("WINDRAG before: %@", state())
+        drag(by: CGVector(dx: 120, dy: -80))
+        NSLog("WINDRAG after fit drag (+120,-80): %@", state())
+        imageView.toggleFitActual(at: imageView.convert(center, from: nil))
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            NSLog("WINDRAG zoomed: %@", state())
+            drag(by: CGVector(dx: 120, dy: -80))
+            NSLog("WINDRAG after zoomed drag (+120,-80): %@", state())
             NSApp.terminate(nil)
         }
     }

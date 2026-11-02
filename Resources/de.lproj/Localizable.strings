@@ -127,7 +127,7 @@ Esc  Schließt zuerst das Foto-Info-Fenster
 Mit Darstellung › Esc schließt das Fenster: Esc schließt im eingepassten Zustand, bei Zoom wird zuerst eingepasst
 ⌘⇧C  Stapelkonvertierung    ⌘⇧B  Stapelumbenennung    ⌘⇧D  Schreibtischbild
 ⌘E  In der Bildbearbeitung bearbeiten (öffnet die gleichnamige RAW-Datei, falls vorhanden)
-⌘⇧K  Aufräummodus Beta: Duplikate, geschlossene Augen, Unschärfe
+⌘⇧K  Aufräummodus: Duplikate, geschlossene Augen, Unschärfe
 ⌘S  Schnellexport    ⌘⇧E  Exportieren unter…
 Return  Angezeigtes Bild umbenennen
 ⌘⌥S  Drehung in Datei sichern
@@ -152,7 +152,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "sort.descending" = "Absteigend";
 
 /* 清理模式 */
-"menu.cleanup" = "Aufräummodus Beta";
+"menu.cleanup" = "Aufräummodus";
 "cleanup.title" = "Aufräumen";
 "cleanup.similar" = "Ähnliche Serien";
 "cleanup.duplicate" = "Exakte Duplikate";
@@ -483,3 +483,13 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.background" = "Hintergrund:";
 "set.keepRunning" = "Nach dem Schließen des letzten Fensters weiterlaufen, damit Fotos schneller öffnen";
 "menu.closePhotos" = "Fotos schließen";
+"set.peekKeep" = "Fensterposition beim Blättern in der angepassten Vorschau beibehalten";
+"set.fileNameCheck" = "Dateinamen oben links anzeigen, wenn der Zeiger bewegt wird";
+"menu.edit" = "Bearbeiten";
+"menu.undo" = "Widerrufen";
+"menu.redo" = "Wiederholen";
+"menu.cut" = "Ausschneiden";
+"menu.copy" = "Kopieren";
+"menu.paste" = "Einsetzen";
+"menu.selectAll" = "Alles auswählen";
+"menu.photo" = "Foto";

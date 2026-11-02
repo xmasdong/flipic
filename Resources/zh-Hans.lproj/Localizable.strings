@@ -138,7 +138,7 @@ Esc  先关掉右上角的照片信息
 打开「显示 › 按 Esc 关闭窗口」后：适应窗口时 Esc 直接关闭，放大时先恢复
 ⌘⇧C  批量转换格式    ⌘⇧B  批量重命名    ⌘⇧D  设为壁纸
 ⌘E  在后期软件中编辑（有同名 RAW 时打开 RAW）
-⌘⇧K  清理模式 Beta：重复、闭眼、模糊
+⌘⇧K  清理模式：重复、闭眼、模糊
 ⌘S  快速导出压缩副本    ⌘⇧E  导出为…
 回车 
 ⌘⌥S  保存旋转到文件 重命名当前图片
@@ -164,7 +164,7 @@ Esc  先关掉右上角的照片信息
 "sort.descending" = "倒序";
 
 /* 清理模式 */
-"menu.cleanup" = "清理模式 Beta";
+"menu.cleanup" = "清理模式";
 "cleanup.title" = "清理模式";
 "cleanup.similar" = "相似连拍";
 "cleanup.duplicate" = "完全重复";
@@ -495,3 +495,13 @@ Esc  先关掉右上角的照片信息
 "set.background" = "后台：";
 "set.keepRunning" = "关掉窗口后留在后台，再打开图片更快";
 "menu.closePhotos" = "关闭照片";
+"set.peekKeep" = "贴合预览翻上一张、下一张时，窗口留在原地";
+"set.fileNameCheck" = "移动鼠标时在左上角显示文件名";
+"menu.edit" = "编辑";
+"menu.undo" = "撤销";
+"menu.redo" = "重做";
+"menu.cut" = "剪切";
+"menu.copy" = "拷贝";
+"menu.paste" = "粘贴";
+"menu.selectAll" = "全选";
+"menu.photo" = "照片";

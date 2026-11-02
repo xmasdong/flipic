@@ -127,7 +127,7 @@ Esc  Cierra primero el panel de información
 Con Visualización › Esc cierra la ventana: Esc cierra cuando la foto está ajustada y, con zoom, primero vuelve a ajustar
 ⌘⇧C  Conversión por lotes    ⌘⇧B  Renombrar por lotes    ⌘⇧D  Fondo de escritorio
 ⌘E  Editar en el editor de fotos (abre el RAW del mismo nombre si existe)
-⌘⇧K  Modo limpieza Beta: duplicados, ojos cerrados, desenfoque
+⌘⇧K  Modo limpieza: duplicados, ojos cerrados, desenfoque
 ⌘S  Exportación rápida    ⌘⇧E  Exportar como…
 Retorno  Renombrar la imagen actual
 ⌘⌥S  Guardar rotación en el archivo
@@ -152,7 +152,7 @@ Arrastra una carpeta o imagen para abrir";
 "sort.descending" = "Descendente";
 
 /* 清理模式 */
-"menu.cleanup" = "Modo limpieza Beta";
+"menu.cleanup" = "Modo limpieza";
 "cleanup.title" = "Modo limpieza";
 "cleanup.similar" = "Ráfagas similares";
 "cleanup.duplicate" = "Duplicados exactos";
@@ -483,3 +483,13 @@ Arrastra una carpeta o imagen para abrir";
 "set.background" = "Segundo plano:";
 "set.keepRunning" = "Seguir abierto al cerrar la última ventana para abrir fotos más rápido";
 "menu.closePhotos" = "Cerrar fotos";
+"set.peekKeep" = "Mantener la ventana en su sitio al pasar a la foto anterior o siguiente en la vista ajustada";
+"set.fileNameCheck" = "Mostrar el nombre del archivo arriba a la izquierda al mover el puntero";
+"menu.edit" = "Edición";
+"menu.undo" = "Deshacer";
+"menu.redo" = "Rehacer";
+"menu.cut" = "Cortar";
+"menu.copy" = "Copiar";
+"menu.paste" = "Pegar";
+"menu.selectAll" = "Seleccionar todo";
+"menu.photo" = "Foto";

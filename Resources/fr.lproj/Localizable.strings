@@ -127,7 +127,7 @@ I  Infos photo    T  Bande de vignettes    F  Plein écran
 Avec Présentation › Échap ferme la fenêtre : Échap ferme quand la photo est ajustée, et revient d’abord à l’ajustement si elle est agrandie
 ⌘⇧C  Conversion par lot    ⌘⇧B  Renommage par lot    ⌘⇧D  Fond d'écran
 ⌘E  Modifier dans l’éditeur photo (ouvre le RAW du même nom s’il existe)
-⌘⇧K  Mode tri Beta : doublons, yeux fermés, flou
+⌘⇧K  Mode tri : doublons, yeux fermés, flou
 ⌘S  Export rapide    ⌘⇧E  Exporter sous…
 Retour  Renommer l'image affichée
 ⌘⌥S  Enregistrer la rotation dans le fichier
@@ -152,7 +152,7 @@ Déposez un dossier ou une image pour ouvrir";
 "sort.descending" = "Ordre décroissant";
 
 /* 清理模式 */
-"menu.cleanup" = "Mode tri Beta";
+"menu.cleanup" = "Mode tri";
 "cleanup.title" = "Mode tri";
 "cleanup.similar" = "Rafales similaires";
 "cleanup.duplicate" = "Doublons exacts";
@@ -483,3 +483,13 @@ Déposez un dossier ou une image pour ouvrir";
 "set.background" = "Arrière-plan :";
 "set.keepRunning" = "Rester ouvert après la fermeture de la dernière fenêtre pour rouvrir plus vite";
 "menu.closePhotos" = "Fermer les photos";
+"set.peekKeep" = "Garder la fenêtre en place en passant à la photo précédente ou suivante dans l’aperçu ajusté";
+"set.fileNameCheck" = "Afficher le nom du fichier en haut à gauche quand le pointeur bouge";
+"menu.edit" = "Édition";
+"menu.undo" = "Annuler";
+"menu.redo" = "Rétablir";
+"menu.cut" = "Couper";
+"menu.copy" = "Copier";
+"menu.paste" = "Coller";
+"menu.selectAll" = "Tout sélectionner";
+"menu.photo" = "Photo";

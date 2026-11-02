@@ -127,7 +127,7 @@ Esc  Đóng bảng thông tin ảnh trước
 Khi bật Hiển thị › Esc đóng cửa sổ: Esc đóng khi ảnh vừa cửa sổ, còn khi phóng to thì trước hết về vừa cửa sổ
 ⌘⇧C  Chuyển đổi hàng loạt    ⌘⇧B  Đổi tên hàng loạt    ⌘⇧D  Hình nền
 ⌘E  Sửa trong trình chỉnh ảnh (mở RAW cùng tên nếu có)
-⌘⇧K  Chế độ dọn dẹp Beta: trùng lặp, nhắm mắt, ảnh mờ
+⌘⇧K  Chế độ dọn dẹp: trùng lặp, nhắm mắt, ảnh mờ
 ⌘S  Xuất nhanh    ⌘⇧E  Xuất thành…
 Return  Đổi tên ảnh đang xem
 ⌘⌥S  Lưu kiểu xoay vào tệp
@@ -152,7 +152,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "sort.descending" = "Giảm dần";
 
 /* 清理模式 */
-"menu.cleanup" = "Chế độ dọn dẹp Beta";
+"menu.cleanup" = "Chế độ dọn dẹp";
 "cleanup.title" = "Chế độ dọn dẹp";
 "cleanup.similar" = "Ảnh chụp liên tiếp giống nhau";
 "cleanup.duplicate" = "Trùng lặp hoàn toàn";
@@ -483,3 +483,13 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.background" = "Chạy nền:";
 "set.keepRunning" = "Vẫn chạy sau khi đóng cửa sổ cuối để mở ảnh nhanh hơn";
 "menu.closePhotos" = "Đóng ảnh";
+"set.peekKeep" = "Giữ cửa sổ tại chỗ khi chuyển sang ảnh trước hoặc sau trong chế độ xem vừa khung";
+"set.fileNameCheck" = "Hiện tên tệp ở góc trên bên trái khi di chuyển con trỏ";
+"menu.edit" = "Sửa";
+"menu.undo" = "Hoàn tác";
+"menu.redo" = "Làm lại";
+"menu.cut" = "Cắt";
+"menu.copy" = "Sao chép";
+"menu.paste" = "Dán";
+"menu.selectAll" = "Chọn tất cả";
+"menu.photo" = "Ảnh";
