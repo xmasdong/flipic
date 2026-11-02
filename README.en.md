@@ -7,7 +7,7 @@
 <p align="center"><a href="README.md">简体中文</a> · <b>English</b></p>
 
 <p align="center">
-  A lightweight image viewer for macOS. Double-click one photo, then page through the whole folder with the arrow keys.<br>Formerly PixDeck; renamed Flipic in 0.5.0.
+  A Mac photo viewer for culling a shoot. Offload the card, double-click one photo, cull with the arrow keys.<br>Formerly PixDeck; renamed Flipic in 0.5.0.
 </p>
 
 <p align="center">
@@ -26,7 +26,29 @@
 
 ![Flipic browsing a folder](docs/screenshot-browse.jpg)
 
-Open a single image in Preview and that is all you get: to see the next one, you have to go back to Finder, select the whole set and open it again. Flipic is built for exactly this. Double-click any photo, press → and you are on the next one, across the entire folder. The download is 2.5 MB, the app makes no network connections by default, and there is no account to create.
+After a shoot I wanted to go through the photos first, but Preview opens them one at a time and Lightroom wants an import. So I made Flipic: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is 2.5 MB, it makes no network connections by default, and there is no account.
+
+## Culling a shoot
+
+1. Copy the card to your Mac and double-click any photo. There is no import and no library; Flipic reads the folder as it is.
+2. Page with ← →. To check focus, point at the eyes and press 0 to zoom to 100%. Not sure which frame of a burst to keep? Press C to put two side by side.
+3. Rate with 1–5, mark keepers with P.
+4. For an event with hundreds of shots, press ⇧⌘K and let Cleanup Mode group similar bursts, closed eyes and blurry frames first; you decide what to delete.
+5. When you're done, ⇧P shows only marked photos (or show only a minimum rating) and ⇧⌘E copies them out. ⌘E opens a photo in Lightroom or Capture One, where your ratings are already waiting.
+
+## Why it works this way
+
+**No import.** Flipic doesn't copy your photos or build a library of its own, so closing it leaves nothing behind. The photos stay in their folders and you keep organizing them however you already do. The only thing written elsewhere is Cleanup Mode's analysis, in `~/Library/Caches/Flipic`, which is safe to delete.
+
+**Ratings as XMP.** Stars are saved as standard XMP, which Lightroom, Bridge and Capture One read, so you never rate twice. JPEG and HEIC only get their metadata changed and are not recompressed; camera RAW ratings go into a .xmp file with the same name, and the RAW itself is never touched.
+
+**Marks as Finder tags.** P adds a Finder tag called Flipic instead of changing the photo. Click the tag in the Finder sidebar and every marked photo is there, with or without Flipic.
+
+**Fast paging.** Photos are decoded at the size your screen needs, and the original is read only when you zoom in far enough to see a difference. The next few photos are prepared one at a time in the background so they don't compete with the one you're looking at, and the cache is capped by how much memory your Mac has, so an 8 GB machine isn't swamped. That's why 48-megapixel images keep up when you hold an arrow key.
+
+**Files that belong together move together.** RAW + JPG pairs and RAW .xmp files are deleted, moved and exported together, so you never end up with half a pair.
+
+**Cleanup runs on your Mac.** It uses macOS's own Vision framework to measure sharpness, find faces and closed eyes, and compare similarity on your machine; nothing is uploaded. It only groups and suggests; you decide what goes.
 
 ## Install
 
@@ -62,7 +84,7 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 
 Press 1 to 5 to give a photo one to five stars; the Rating submenu in the right-click menu has No Rating to clear it. Rated photos show their stars at the bottom center of the window. Ratings are written as standard XMP: into the file itself for JPEG, HEIC and TIFF (metadata only, no recompression), and into a same-name .xmp sidecar for proprietary RAW formats such as Sony, Canon and Nikon, so the RAW file is never touched. Lightroom, Bridge and Capture One read them. A RAW and the JPEG with the same name are rated together.
 
-**Culling (Cleanup Mode, Beta)**
+**Cleanup Mode**
 
 After an event or a conference shoot with hundreds of frames, press ⇧⌘K. Flipic checks the whole folder on your Mac and sorts the results into four groups: similar bursts, exact duplicates, closed eyes, and blurry or out-of-focus shots. In every burst it suggests the sharpest frame where nobody is blinking as the keeper and checks the rest; for closed eyes, it outlines the face it flagged.
 
@@ -147,6 +169,7 @@ Sources/Photoview/
   AppDelegate.swift            Menu bar and launch arguments
   ViewerViewController.swift   Main viewer: paging, prefetch, HUD, toolbar, export and batch tools
   ZoomableImageView.swift      Zoom, pan, gestures, keyboard and scroll wheel
+  AppInfo.swift                App name (from Info.plist); UI text is renamed through it
   ImageLoader.swift            ImageIO downsampled decoding and memory-aware caches
   FolderModel.swift            File list and sorting
   Filmstrip.swift              Thumbnail strip
