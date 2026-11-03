@@ -615,3 +615,10 @@ Return  重新命名目前圖片
 "wb.compareTip" = "兩張並排，一起縮放";
 "wb.hintCompare" = "← → 選左右 · ⇧← ⇧→ 換這一邊的照片 · %1$@–%2$@ 評星 · %3$@ 標記 · %4$@ 放大到眼睛 · Esc 返回";
 "wb.f.closed" = "閉眼";
+"menu.copyText" = "拷貝圖中全部文字";
+"ocr.none" = "圖中沒有辨識到文字";
+"ocr.copied1" = "已拷貝 1 行文字";
+"ocr.copied" = "已拷貝 %d 行文字";
+"set.text" = "文字：";
+"set.liveText" = "自動辨識圖中文字";
+"set.liveTextNote" = "在一張照片上停留片刻後辨識圖中文字，可以直接選取、拷貝、查詢。關掉後，「拷貝圖中全部文字」仍可使用。";

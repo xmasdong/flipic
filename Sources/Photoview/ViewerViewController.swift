@@ -109,6 +109,12 @@ final class ViewerViewController: NSViewController {
     private var peekSaved: (frame: NSRect, minSize: NSSize, filmstripHidden: Bool, infoHidden: Bool)?
     /// 清理模式开着时盖在整个看图界面上
     var cleanup: CleanupController?
+    /// 照片上的实况文本（系统支持时才有）；停在一张照片上半秒后才分析，连翻时不分析
+    private(set) var liveText: LiveTextController?
+    private var liveTextWork: DispatchWorkItem?
+    private var liveTextStepAt: CFAbsoluteTime = 0
+    /// 已经开始分析的是第几次换图（generation）：预览换成原图时不再分析一遍
+    private var liveTextGen = -1
 
     /// 当前图解码：最多 2 路并行（新图预览 + 旧图全分辨率不互相堵）；翻页即取消过期任务
     let decodeQueue = ViewerViewController.makeQueue("decode", width: 2, qos: .userInitiated)
@@ -245,6 +251,16 @@ final class ViewerViewController: NSViewController {
         }
         imageView.menu = buildContextMenu()
         view.addSubview(imageView)
+        if TextRecognition.liveTextSupported {
+            liveText = LiveTextController(imageView: imageView)
+            imageView.onImageFrameChange = { [weak self] in self?.liveText?.imageFrameChanged() }
+            imageView.onRotate = { [weak self] in
+                self?.liveText?.reset()
+                self?.scheduleLiveText(restart: true)
+            }
+            imageView.onMouseDown = { [weak self] in self?.liveText?.clearSelection() }
+            imageView.ignoresDoubleClick = { [weak self] p in self?.liveText?.hasInteractiveItem(at: p) ?? false }
+        }
 
         NotificationCenter.default.addObserver(self, selector: #selector(windowDidExitFullScreen(_:)),
                                                name: NSWindow.didExitFullScreenNotification, object: nil)
@@ -888,6 +904,7 @@ final class ViewerViewController: NSViewController {
         shownResetToFit = resetToFit
         let fast = fastStep
         fastStep = false
+        scheduleLiveText(restart: true)
         guard let item = folder.current else { return }
         let url = item.url
         // 「窗口」菜单里按文件名区分多个窗口（标题栏本身是隐藏的）；左上角也显示
@@ -1117,6 +1134,7 @@ final class ViewerViewController: NSViewController {
         imageView.set(image: image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew, draft: draft)
         if isNew { BenchProbe.adopted() } else if !draft { BenchProbe.fullWidth = image.width }
         if !draft { BenchProbe.sharpShown() }
+        if !draft { scheduleLiveText() }
         #if FLIPIC_PRO
         if isNew { restoreZoomAfterPaging() }
         #endif
@@ -1621,6 +1639,7 @@ final class ViewerViewController: NSViewController {
         case .pinWindow: togglePinned(nil)
         case .share: shareCurrent(nil)
         case .playLive: playLivePhoto(nil)
+        case .copyText: copyAllText(nil)
         case .zoomEye:
             #if FLIPIC_PRO
             zoomToEye(nil)
@@ -1662,6 +1681,8 @@ final class ViewerViewController: NSViewController {
             if imageView.isFit { imageView.fit() }
         case "backdrop":
             applyBackdropStyle()
+        case "liveText":
+            scheduleLiveText(restart: true)
         case "hdr":
             // 解码方式变了，缓存里的图作废，当前这张重新解码
             loader.purge()
@@ -1767,6 +1788,85 @@ final class ViewerViewController: NSViewController {
         }
         flashItem = item
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: item)
+    }
+
+    // MARK: - 图中文字
+
+    /// 停在一张照片上多久才分析：每翻一页都从头计时，连翻时一直往后推，不会分析
+    private static let liveTextDwell: CFTimeInterval = 0.5
+
+    /// restart：换了图（或旋转、改了设置），先收掉上一张的结果，从现在起重新计停留时间
+    private func scheduleLiveText(restart: Bool = false) {
+        guard let liveText else { return }
+        if restart {
+            liveText.reset()
+            liveTextGen = -1
+            liveTextStepAt = CFAbsoluteTimeGetCurrent()
+        }
+        liveTextWork?.cancel()
+        liveTextWork = nil
+        guard TextRecognition.autoAnalyze, liveTextGen != generation else { return }
+        let wait = max(Self.liveTextDwell - (CFAbsoluteTimeGetCurrent() - liveTextStepAt), 0.05)
+        let gen = generation
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.generation == gen else { return }
+            self.liveTextWork = nil
+            self.startLiveTextIfSettled()
+        }
+        liveTextWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + wait, execute: work)
+    }
+
+    /// 只分析停下来以后屏幕上的清晰图（预览；放大后已经换成原图就用原图），草图、动图、对比、清理、放映时都不分析
+    private func startLiveTextIfSettled() {
+        guard let liveText, TextRecognition.autoAnalyze, liveTextGen != generation, shown == .sharp, !rapidPaging,
+              mainViewerActive, cleanup == nil, slideshowTimer == nil, !imageView.isAnimated,
+              let image = textSourceImage() else { return }
+        liveTextGen = generation
+        liveText.analyze(image)
+    }
+
+    /// 实测 7000 像素宽的图能分析，4500 万像素（8256 宽）的原图系统直接分析失败
+    private static let textMaxPixel = 7000
+
+    /// 识别文字用的图：屏幕上的图（放大后已经换成原图就是原图）；原图大到系统分析不了时，改用同一张的屏幕尺寸预览
+    private func textSourceImage() -> CGImage? {
+        guard let image = imageView.currentImage else { return nil }
+        if max(image.width, image.height) <= Self.textMaxPixel { return image }
+        guard let url = folder.current?.url, let pv = loader.cachedPreview(for: url, maxPixel: previewPixelTarget) else { return nil }
+        let turns = imageView.rotationTurns
+        return turns == 0 ? pv : ImageLoader.rotated(pv, quarterTurns: turns)
+    }
+
+    /// 测试用：最近一次「复制图中全部文字」用的是现成的分析结果还是重新识别
+    private(set) var debugCopyTextSource = ""
+
+    /// 照片菜单、右键菜单：把整张图的文字放到剪贴板。这张已经分析过就直接用，否则现场识别
+    @objc func copyAllText(_ sender: Any?) {
+        guard TextRecognition.isAvailable, mainViewerActive, cleanup == nil, let image = textSourceImage() else { return }
+        if let t = liveText?.transcript {
+            debugCopyTextSource = "analysis"
+            finishCopyText(TextRecognition.lines(of: t))
+            return
+        }
+        debugCopyTextSource = "vision"
+        TextRecognition.recognizeLines(in: image) { [weak self] lines in self?.finishCopyText(lines) }
+    }
+
+    /// 「编辑 › 拷贝」（⌘C）：照片上选中了文字时拷贝选中的部分
+    @objc func copy(_ sender: Any?) {
+        liveText?.copySelection()
+    }
+
+    private func finishCopyText(_ lines: [String]) {
+        guard !lines.isEmpty else {
+            flash(L10n.t("ocr.none", "图中没有识别到文字"))
+            return
+        }
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.setString(lines.joined(separator: "\n"), forType: .string)
+        flash(lines.count == 1 ? L10n.t("ocr.copied1", "已复制 1 行文字") : L10n.f("ocr.copied", "已复制 %d 行文字", lines.count))
     }
 
     // MARK: - 旋转
@@ -2079,6 +2179,7 @@ final class ViewerViewController: NSViewController {
         add(L10n.t("menu.markedOnly", "只看已标记"), #selector(toggleMarkedOnly(_:)))
         add(L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(exportToFolder(_:)))
         add(L10n.t("menu.share", "分享…"), #selector(shareCurrent(_:)))
+        if TextRecognition.isAvailable { add(L10n.t("menu.copyText", "复制图中全部文字"), #selector(copyAllText(_:))) }
         menu.addItem(.separator())
         add(L10n.t("menu.reveal", "在 Finder 中显示"), #selector(revealInFinder(_:)))
         add(L10n.t("menu.trash", "移到废纸篓"), #selector(trashCurrent(_:)))
@@ -4543,6 +4644,274 @@ final class ViewerViewController: NSViewController {
         }
     }
 
+    /// --ocrtest <输出目录> <文件夹>：图中文字。每张图的识别结果、经菜单复制再读剪贴板、叠加层在适应窗口 / 放大 / 平移时
+    /// 是否对齐、连翻时有没有分析、关掉设置后不再自动分析、叠加层拿到焦点时方向键照常翻页；截图带文字高亮
+    func runOCRTest(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        func log(_ s: String) { NSLog("OCRTEST %@", s) }
+        let savedAuto = TextRecognition.autoAnalyze, savedWrap = Self.wrapAround
+        // 测试会动剪贴板：先存下用户原来的内容，结束时放回去
+        let pb = NSPasteboard.general
+        let savedPB: [NSPasteboardItem] = (pb.pasteboardItems ?? []).map { old in
+            let item = NSPasteboardItem()
+            for t in old.types { if let d = old.data(forType: t) { item.setData(d, forType: t) } }
+            return item
+        }
+        log("supported liveText=\(TextRecognition.liveTextSupported ? 1 : 0) vision=\(TextRecognition.canRecognize ? 1 : 0) locales=\(TextRecognition.analyzerLocales.prefix(6).joined(separator: ","))")
+        let photoMenu = NSApp.mainMenu?.items.compactMap(\.submenu).first { $0.items.contains { $0.action == #selector(toggleCompare(_:)) } }
+        let menuItem = photoMenu?.items.first { $0.action == #selector(copyAllText(_:)) }
+        log("menu item=\(menuItem?.title ?? "nil") key=\(menuItem.map { ($0.keyEquivalentModifierMask.contains(.option) ? "⌥" : "") + "⌘" + $0.keyEquivalent } ?? "-") context=\(imageView.menu?.items.contains { $0.action == #selector(copyAllText(_:)) } == true ? 1 : 0)")
+        TextRecognition.autoAnalyze = true
+        guard let lt = liveText else { log("no liveText"); NSApp.terminate(nil); return }
+        let overlay = lt.debugOverlay
+        var boxes: [String: CGRect] = [:]
+        if let txt = try? String(contentsOfFile: folder.items.first?.url.deletingLastPathComponent().appendingPathComponent("boxes.txt").path ?? "", encoding: .utf8) {
+            for line in txt.split(separator: "\n") {
+                let p = line.split(separator: " ")
+                if p.count == 6, let x = Double(p[2]), let y = Double(p[3]), let w = Double(p[4]), let h = Double(p[5]) {
+                    boxes[String(p[1])] = CGRect(x: x, y: y, width: w, height: h)
+                }
+            }
+        }
+        func index(of name: String) -> Int? { folder.items.firstIndex { $0.url.lastPathComponent == name } }
+        /// 照片像素坐标（左上原点）→ 照片视图里的点
+        func viewPoint(_ px: CGPoint) -> CGPoint {
+            let f = imageView.imageFrame, size = imageView.pixelSize
+            return CGPoint(x: f.minX + px.x / size.width * f.width, y: f.minY + px.y / size.height * f.height)
+        }
+        func align(_ tag: String, textKey: String, offPx: CGPoint) {
+            let f = imageView.imageFrame, b = imageView.bounds
+            let cr = overlay.contentsRect
+            let mapped = CGRect(x: cr.minX * b.width, y: cr.minY * b.height, width: cr.width * b.width, height: cr.height * b.height)
+            let err = max(abs(mapped.minX - f.minX), abs(mapped.minY - f.minY), abs(mapped.maxX - f.maxX), abs(mapped.maxY - f.maxY))
+            var hits = "-"
+            if let box = boxes[textKey] {
+                // 取第一行文字靠左五分之一处（正中可能落在两个词之间的空格上）
+                let c = viewPoint(CGPoint(x: box.minX + box.width * 0.2, y: box.midY))
+                let off = viewPoint(offPx)
+                let inC = b.contains(c), inOff = b.contains(off)
+                let hitOn = inC ? lt.hasInteractiveItem(at: c) : false
+                let hitOff = inOff ? lt.hasInteractiveItem(at: off) : false
+                // 窗口层面的命中：文字上落到叠加层，别处落到照片视图（拖动、平移、双击缩放照常）
+                let winHit = view.window?.contentView?.hitTest(imageView.convert(c, to: view.window?.contentView?.superview))
+                let winOff = view.window?.contentView?.hitTest(imageView.convert(off, to: view.window?.contentView?.superview))
+                hits = String(format: "textCenter=(%.0f,%.0f) visible=%d hasText=%d | off=(%.0f,%.0f) visible=%d hasText=%d | hit text→%@ off→%@ | dblClickIgnored text=%d off=%d",
+                              c.x, c.y, inC ? 1 : 0, hitOn ? 1 : 0, off.x, off.y, inOff ? 1 : 0, hitOff ? 1 : 0,
+                              winHit.map { String(describing: type(of: $0)) } ?? "nil", winOff.map { String(describing: type(of: $0)) } ?? "nil",
+                              (imageView.ignoresDoubleClick?(c) ?? false) ? 1 : 0, (imageView.ignoresDoubleClick?(off) ?? false) ? 1 : 0)
+            }
+            // 文字可点的范围（叠加层自己报的）和这行字在照片上的位置比：按 2pt 网格扫出命中区域的外框
+            if let box = boxes[textKey] {
+                let a = viewPoint(box.origin), z = viewPoint(CGPoint(x: box.maxX, y: box.maxY))
+                let expect = CGRect(x: a.x, y: a.y, width: z.x - a.x, height: z.y - a.y)
+                let search = expect.insetBy(dx: -30, dy: -16 * imageView.displayedScale).intersection(b)
+                var hitBox = CGRect.null
+                for y in stride(from: search.minY, to: search.maxY, by: 2) {
+                    for x in stride(from: search.minX, to: search.maxX, by: 2) where lt.hasInteractiveItem(at: CGPoint(x: x, y: y)) {
+                        hitBox = hitBox.union(CGRect(x: x, y: y, width: 0.01, height: 0.01))
+                    }
+                }
+                let vis = expect.intersection(b)
+                hits += hitBox.isNull ? " | hitBox=none" : String(format: " | textBox(visible)=(%.0f,%.0f %.0fx%.0f) hitBox=(%.0f,%.0f %.0fx%.0f) centerDelta=(%.1f,%.1f)",
+                                                                   vis.minX, vis.minY, vis.width, vis.height, hitBox.minX, hitBox.minY, hitBox.width, hitBox.height,
+                                                                   hitBox.midX - vis.midX, hitBox.midY - vis.midY)
+            }
+            log(String(format: "ALIGN %@ scale=%.3f imageRect=(%.1f,%.1f %.1fx%.1f) overlayContents=(%.1f,%.1f %.1fx%.1f) maxErr=%.2fpt | %@",
+                       tag, imageView.displayedScale, f.minX, f.minY, f.width, f.height, mapped.minX, mapped.minY, mapped.width, mapped.height, err, hits))
+        }
+        var steps: [(Double, () -> Void)] = []
+        func step(_ delay: Double, _ f: @escaping () -> Void) { steps.append((delay, f)) }
+        func run() {
+            guard !steps.isEmpty else { return }
+            let (d, f) = steps.removeFirst()
+            DispatchQueue.main.asyncAfter(deadline: .now() + d) { f(); run() }
+        }
+        func copyViaMenu(_ tag: String, then: @escaping () -> Void) {
+            pb.clearContents()
+            let enabled = menuItem.map { validateMenuItem($0) } ?? false
+            let sent = NSApp.sendAction(#selector(copyAllText(_:)), to: nil, from: menuItem)
+            if !sent { copyAllText(menuItem) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [self] in
+                let text = pb.string(forType: .string) ?? ""
+                log("COPY \(tag) enabled=\(enabled ? 1 : 0) sentViaResponderChain=\(sent ? 1 : 0) source=\(debugCopyTextSource) flash=\"\(hudNameLabel.stringValue)\" pasteboard=\(text.isEmpty ? "(empty)" : text.replacingOccurrences(of: "\n", with: " | "))")
+                then()
+            }
+        }
+        let names = ["01-sign.jpg", "02-screenshot.png", "03-notext.jpg"]
+        // 1. 每张图：停下来以后自动分析的结果，以及直接用 Vision 识别的结果
+        for name in names {
+            step(0) { [self] in if let i = index(of: name) { goTo(i) } }
+            step(0.3) { log("\(name) 0.3s after paging: analyses=\(lt.analysisCount) visible=\(lt.debugVisible ? 1 : 0) (dwell not reached yet)") }
+            step(2.2) { [self] in
+                log("\(name) LIVETEXT analyses=\(lt.analysisCount) visible=\(lt.debugVisible ? 1 : 0) lines=\(TextRecognition.lines(of: lt.transcript ?? "").joined(separator: " | "))")
+                if let img = imageView.currentImage {
+                    log("\(name) analyzed image \(img.width)x\(img.height) of original \(Int(imageView.pixelSize.width))x\(Int(imageView.pixelSize.height))")
+                    TextRecognition.recognizeLines(in: img) { lines in log("\(name) VISION lines=\(lines.joined(separator: " | "))") }
+                }
+            }
+            step(1.5) {}
+        }
+        // 2. 路牌：适应窗口 / 放大 / 平移时叠加层和照片对齐；高亮截图
+        step(0) { [self] in if let i = index(of: "01-sign.jpg") { goTo(i) } }
+        step(2.0) {
+            align("fit", textKey: "人民路_出口", offPx: CGPoint(x: 1505, y: 655))
+            overlay.selectableItemsHighlighted = true
+            log("countBeforeZoom=\(lt.analysisCount)")
+        }
+        step(0.8) { [self] in
+            captureWindow(to: outDir + "/sign-fit-highlight.png", raw: true)
+            imageView.zoomActual(centeredOn: CGPoint(x: 0.47, y: 0.33), animated: false)
+        }
+        step(1.5) { [self] in
+            align("zoomed", textKey: "人民路_出口", offPx: CGPoint(x: 1505, y: 655))
+            captureWindow(to: outDir + "/sign-zoomed-highlight.png", raw: true)
+            imageView.debugPan(dx: -260, dy: 140)
+        }
+        step(0.6) { [self] in
+            align("panned", textKey: "人民路_出口", offPx: CGPoint(x: 1505, y: 655))
+            log("afterZoomPan analyses=\(lt.analysisCount) (full-res swap must not re-analyze) shown image width=\(imageView.currentImage?.width ?? 0)")
+            captureWindow(to: outDir + "/sign-panned-highlight.png", raw: true)
+            imageView.fit()
+        }
+        step(0.5) {
+            align("fit-again", textKey: "人民路_出口", offPx: CGPoint(x: 1505, y: 655))
+            overlay.selectableItemsHighlighted = false
+        }
+        // 3. 菜单复制（有现成分析结果）
+        step(0.2) { copyViaMenu("sign", then: {}) }
+        step(3.0) {}
+        // 4. 截图风格的图：高亮截图 + 菜单复制
+        step(0) { [self] in if let i = index(of: "02-screenshot.png") { goTo(i) } }
+        step(2.0) { [self] in
+            align("shot-fit", textKey: "电话_010-6253-8899", offPx: CGPoint(x: 1400, y: 800))
+            overlay.selectableItemsHighlighted = true
+        }
+        step(0.8) { [self] in
+            captureWindow(to: outDir + "/screenshot-highlight.png", raw: true)
+            overlay.selectableItemsHighlighted = false
+            copyViaMenu("screenshot", then: {})
+        }
+        step(3.0) {}
+        // 5. 没有文字
+        step(0) { [self] in if let i = index(of: "03-notext.jpg") { goTo(i) } }
+        step(2.0) { copyViaMenu("notext", then: {}) }
+        step(3.0) {}
+        // 6. 叠加层拿到键盘焦点（选中过文字）时，方向键照常翻页，翻页后焦点交回照片视图
+        step(0) { [self] in if let i = index(of: "01-sign.jpg") { goTo(i) } }
+        step(2.0) { [self] in
+            guard let w = view.window else { return }
+            // 真实使用时拖选文字后，第一响应者是叠加层里选文字的那个视图
+            let took = w.makeFirstResponder(lt.selectionView ?? overlay)
+            // 「编辑 › 拷贝」（⌘C）这时沿响应链找到的是谁：选中文字后 ⌘C 要落到叠加层上
+            var r: NSResponder? = w.firstResponder, copyTarget: NSResponder?
+            while let cur = r, copyTarget == nil { if cur.responds(to: #selector(NSText.copy(_:))) { copyTarget = cur }; r = cur.nextResponder }
+            log("KEYS copy: firstResponder=\(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nil") copyTarget=\(copyTarget.map { String(describing: type(of: $0)) } ?? "nil")")
+            let before = folder.index
+            if let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: w.windowNumber, context: nil,
+                                        characters: String(Character(UnicodeScalar(NSRightArrowFunctionKey)!)),
+                                        charactersIgnoringModifiers: String(Character(UnicodeScalar(NSRightArrowFunctionKey)!)), isARepeat: false, keyCode: 124) {
+                w.sendEvent(e)
+            }
+            log("KEYS overlayTookFocus=\(took ? 1 : 0) index \(before)→\(folder.index) firstResponderAfter=\(w.firstResponder.map { String(describing: type(of: $0)) } ?? "nil")")
+        }
+        // 6b. 选中文字后「编辑 › 拷贝」：macOS 14 起用 selectedText；再试 macOS 13 的做法（⌘C 交给叠加层）
+        step(0) { [self] in if let i = index(of: "01-sign.jpg") { goTo(i) } }
+        step(2.0) { [self] in
+            guard #available(macOS 14, *) else { log("SELCOPY skipped (macOS 13)"); return }
+            let copyItem = NSMenuItem(title: "", action: #selector(copy(_:)), keyEquivalent: "")
+            let enabledBefore = validateMenuItem(copyItem)
+            let full = overlay.text
+            if let r = full.range(of: "People Road") { overlay.selectedRanges = [r] }
+            let enabledAfter = validateMenuItem(copyItem)
+            pb.clearContents()
+            copy(copyItem)
+            log("SELCOPY selected=\"\(overlay.selectedText)\" copyEnabled before=\(enabledBefore ? 1 : 0) after=\(enabledAfter ? 1 : 0) pasteboard=\(pb.string(forType: .string) ?? "(empty)")")
+            pb.clearContents()
+            lt.copySelection(legacy: true)
+        }
+        step(0.5) {
+            log("SELCOPY legacy(selection view copies itself) pasteboard=\(pb.string(forType: .string) ?? "(empty)")")
+        }
+        // 6c. 放大后原图已经换上来时用原图分析（4500 万像素）：看分析能不能出结果、花多久
+        if index(of: "16-big.jpg") != nil {
+            var t0: CFAbsoluteTime = 0
+            step(0) { [self] in if let i = index(of: "16-big.jpg") { goTo(i) } }
+            step(2.0) { [self] in
+                log("BIG preview analysis visible=\(lt.debugVisible ? 1 : 0) image=\(imageView.currentImage?.width ?? 0)")
+                imageView.zoomActual(centeredOn: CGPoint(x: 0.5, y: 0.5), animated: false)
+            }
+            step(3.0) { [self] in
+                guard let img = imageView.currentImage else { return }
+                t0 = CFAbsoluteTimeGetCurrent()
+                lt.analyze(img)
+                log("BIG analyzing full-res directly \(img.width)x\(img.height)")
+            }
+            step(6.0) { [self] in
+                log(String(format: "BIG full-res direct: hasAnalysis=%d after %.1fs (system fails on images this large)", lt.transcript != nil ? 1 : 0, CFAbsoluteTimeGetCurrent() - t0))
+                // 走正常入口：重新计停留时间，到时候按大小挑图
+                scheduleLiveText(restart: true)
+            }
+            step(3.0) { [self] in log("BIG via viewer: shown=\(imageView.currentImage?.width ?? 0) analyzed=\(lt.analyzedImage?.width ?? 0) hasAnalysis=\(lt.transcript != nil ? 1 : 0) visible=\(lt.debugVisible ? 1 : 0)") }
+            // 路牌原图 4000×3000：放大后换上来的原图直接分析
+            step(0) { [self] in if let i = index(of: "01-sign.jpg") { goTo(i) } }
+            step(1.5) { [self] in imageView.zoomActual(centeredOn: CGPoint(x: 0.5, y: 0.5), animated: false) }
+            step(2.5) { [self] in
+                guard let img = imageView.currentImage else { return }
+                lt.analyze(img)
+                log("BIG sign full-res \(img.width)x\(img.height) bpc=\(img.bitsPerComponent) alpha=\(img.alphaInfo.rawValue)")
+            }
+            step(4.0) { log("BIG sign full-res hasAnalysis=\(lt.transcript != nil ? 1 : 0) lines=\(TextRecognition.lines(of: lt.transcript ?? "").joined(separator: " | "))") }
+        }
+        // 7. 关掉设置：不再自动分析；菜单命令照常可用（走 Vision）
+        step(1.0) { [self] in
+            TextRecognition.autoAnalyze = false
+            SettingsWindowController.notify("liveText")
+            log("SETTING off visibleAfterOff=\(lt.debugVisible ? 1 : 0)")
+            if let i = index(of: "02-screenshot.png") { goTo(i) }
+        }
+        var countAtOff = 0
+        step(0.01) { countAtOff = lt.analysisCount }
+        step(2.0) { [self] in
+            log("SETTING off: analyses \(countAtOff)→\(lt.analysisCount) visible=\(lt.debugVisible ? 1 : 0)")
+            copyViaMenu("screenshot-settingOff", then: {})
+        }
+        step(3.0) {
+            TextRecognition.autoAnalyze = true
+            SettingsWindowController.notify("liveText")
+        }
+        step(2.0) { log("SETTING on again: analyses \(countAtOff)→\(lt.analysisCount) visible=\(lt.debugVisible ? 1 : 0)") }
+        // 8. 连翻：30ms 一张连翻 40 张，期间不应开始任何分析；停下来半秒后只分析停住的那一张
+        var burstStart = 0, maxDuringBurst = 0, rapidSeen = false
+        step(0.5) { [self] in
+            Self.wrapAround = true
+            burstStart = lt.analysisCount
+            var n = 0
+            let timer = Timer(timeInterval: 0.03, repeats: true) { [self] t in
+                navigate(1)
+                rapidSeen = rapidSeen || rapidPaging
+                maxDuringBurst = max(maxDuringBurst, lt.analysisCount - burstStart)
+                n += 1
+                if n >= 40 {
+                    t.invalidate()
+                    log("BURST done steps=\(n) rapidPagingSeen=\(rapidSeen ? 1 : 0) analysesDuringBurst=\(maxDuringBurst) analyzing=\(lt.isAnalyzing ? 1 : 0)")
+                }
+            }
+            RunLoop.main.add(timer, forMode: .common)
+        }
+        step(1.6) { log("BURST at end (+0.4s) analyses=\(lt.analysisCount - burstStart)") }
+        step(0.25) { log("BURST after dwell analyses=\(lt.analysisCount - burstStart) (expect 1, only the photo it stopped on)") }
+        step(2.0) { [self] in
+            log("BURST settled analyses=\(lt.analysisCount - burstStart) visible=\(lt.debugVisible ? 1 : 0) on=\(folder.current?.url.lastPathComponent ?? "-")")
+            TextRecognition.autoAnalyze = savedAuto
+            Self.wrapAround = savedWrap
+            pb.clearContents()
+            if !savedPB.isEmpty { pb.writeObjects(savedPB) }
+            log("done")
+            NSApp.terminate(nil)
+        }
+        run()
+    }
+
     func runPeekKeepTest() {
         guard let w = view.window else { return }
         let saved = ViewerViewController.peekKeepsPosition
@@ -5253,6 +5622,10 @@ extension ViewerViewController: NSMenuItemValidation {
         } else if menuItem.action == #selector(toggleMarkedOnly(_:)) {
             menuItem.state = folder.markedOnly ? .on : .off
             return folder.current != nil
+        } else if menuItem.action == #selector(copy(_:)) {
+            return liveText?.hasTextSelection ?? false
+        } else if menuItem.action == #selector(copyAllText(_:)) {
+            return folder.current != nil && imageView.debugHasImage && mainViewerActive
         }
         #if FLIPIC_PRO
         if menuItem.action == #selector(toggleBeforeAfter(_:)) {

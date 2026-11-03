@@ -398,6 +398,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runLiveTest(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--ocrtest"), i + 2 < CommandLine.arguments.count {
+            // --ocrtest <输出目录> <文件夹>：图中文字（识别、复制、叠加层对齐、连翻不分析、设置开关）
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runOCRTest(outDir: outDir)
+                }
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--wraptest"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -841,6 +851,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.togglePinned(_:)): .pinWindow,
         #selector(ViewerViewController.shareCurrent(_:)): .share,
         #selector(ViewerViewController.playLivePhoto(_:)): .playLive,
+        #selector(ViewerViewController.copyAllText(_:)): .copyText,
     ]
     #if FLIPIC_PRO
     private static let proMenuActions: [Selector: ShortcutAction] = [
@@ -1096,6 +1107,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.compare2", "并排对比 2 张"), #selector(ViewerViewController.toggleCompare(_:)))
             item(m, L10n.t("menu.compare4", "并排对比 4 张"), #selector(ViewerViewController.toggleCompare4(_:)))
             item(m, L10n.t("menu.compareSync", "对比时同步缩放和位置"), #selector(ViewerViewController.toggleCompareSync(_:)))
+            if TextRecognition.isAvailable {
+                m.addItem(.separator())
+                item(m, L10n.t("menu.copyText", "复制图中全部文字"), #selector(ViewerViewController.copyAllText(_:)))
+            }
             #if FLIPIC_PRO
             m.addItem(.separator())
             item(m, L10n.t("menu.beforeAfter", "修图前后对比"), #selector(ViewerViewController.toggleBeforeAfter(_:)))

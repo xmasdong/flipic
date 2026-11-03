@@ -501,6 +501,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
     private let fileNameCheck = NSButton(checkboxWithTitle: L10n.t("set.fileNameCheck", "移动鼠标时在左上角显示文件名"), target: nil, action: nil)
     private let backdropPopup = NSPopUpButton()
+    private let liveText = NSButton(checkboxWithTitle: L10n.t("set.liveText", "自动识别图中文字"), target: nil, action: nil)
 
     override func loadView() {
         for sec in ViewerViewController.slideshowIntervals {
@@ -528,6 +529,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         toolbarCheck.target = self; toolbarCheck.action = #selector(toolbarChanged)
         fileNameCheck.target = self; fileNameCheck.action = #selector(fileNameChanged)
         hdr.target = self; hdr.action = #selector(hdrChanged)
+        liveText.target = self; liveText.action = #selector(liveTextChanged)
         let toolbarRow = NSStackView(views: [toolbarCheck, fileNameCheck])
         toolbarRow.orientation = .vertical
         toolbarRow.alignment = .leading
@@ -543,7 +545,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         pagingRow.spacing = 6
         let slideFadeRow = NSStackView(views: [slideFade, fadePopup])
         slideFadeRow.spacing = 12
-        let rows: [[NSView]] = [
+        var rows: [[NSView]] = [
             [label(L10n.t("set.paging", "翻页：")), pagingRow],
             [label(L10n.t("set.rating", "评分：")), ratingBadge],
             [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
@@ -556,6 +558,13 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
             [label(L10n.t("set.slideFadeLabel", "幻灯片渐变：")), slideFadeRow],
         ]
+        // 系统不支持实况文本时整行不出现
+        if TextRecognition.liveTextSupported {
+            rows.insert(contentsOf: [
+                [label(L10n.t("set.text", "文字：")), liveText],
+                spacerRow(note(L10n.t("set.liveTextNote", "在一张照片上停留片刻后识别图中文字，可以直接选中、复制、查询。关掉后，「复制图中全部文字」仍可使用。"))),
+            ], at: 7)
+        }
         let g = grid(rows)
         // 说明行紧贴上一行
         for (i, r) in rows.enumerated() where r.first === NSGridCell.emptyContentView && i > 0 && !(r.last is NSStackView) {
@@ -586,6 +595,12 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         let fd = ViewerViewController.slideshowFadeDuration
         if let item = fadePopup.itemArray.first(where: { ($0.representedObject as? Double) == fd }) { fadePopup.select(item) }
         fadePopup.isEnabled = slideFade.state == .on
+        liveText.state = TextRecognition.autoAnalyze ? .on : .off
+    }
+
+    @objc private func liveTextChanged() {
+        TextRecognition.autoAnalyze = liveText.state == .on
+        SettingsWindowController.notify("liveText")
     }
 
     @objc private func intervalChanged() {

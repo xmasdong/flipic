@@ -73,6 +73,7 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 - Open several windows at once: opening another photo from Finder while one is showing starts a new window (Settings can switch back to replacing it), and File › New Window is ⌘N.
 - Holding an arrow key keeps up: every key press changes the photo, a slightly soft version first and sharp as soon as you stop, even on Macs short on memory.
 - Paging stops at the last photo with a small bounce instead of jumping back to the first one; turn looping on in Settings › Viewing.
+- Text in photos is selectable: pause on a photo and you can select and copy its text, or right-click to look it up or translate, as in Preview. To grab everything, use Photo › Copy All Text in Image (⌥⌘C). Recognition runs on your Mac and never during fast paging; automatic recognition can be turned off in Settings › Viewing.
 - Live Photos: when a HEIC or JPG has a same-named MOV carrying Apple's Live Photo marker, a LIVE label appears at the top left; hover over it to play the clip over the photo, or press Option-L. Deleting, moving, copying and renaming take the MOV along, so a pair is never split.
 - While the photo fits the window, drag anywhere on it to move the window; once zoomed in, dragging pans the photo.
 - Move the pointer and the file name shows at the top left, with photo info, pin and share at the top right; they fade together with the toolbar.
@@ -136,6 +137,7 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 | S | Slideshow |
 | Return | Rename |
 | ⌘S | Export a compressed copy |
+| ⌥⌘C | Copy All Text in Image |
 | ⌘⌫ | Move to Trash (can be changed to a single key) |
 | ⌘Z | Put back the last deleted photo |
 | ⌘E | Edit in your photo editor |
@@ -176,6 +178,7 @@ Sources/Photoview/
   ViewerViewController.swift   Main viewer: paging, prefetch, HUD, toolbar, export and batch tools
   ZoomableImageView.swift      Zoom, pan, gestures, keyboard and scroll wheel
   AppInfo.swift                App name (from Info.plist); UI text is renamed through it
+  LiveText.swift               Text in photos: Live Text overlay, copy all text
   LivePhoto.swift              Live Photos: find the same-named MOV, check the marker, play it
   ImageLoader.swift            ImageIO downsampled decoding and memory-aware caches
   FolderModel.swift            File list and sorting

@@ -30,6 +30,10 @@ final class ZoomableImageView: NSView {
     /// 并排对比：鼠标按下（用来切换当前格）、缩放或位置变了（同步给其他格）
     var onMouseDown: (() -> Void)?
     var onViewChange: ((ViewState, Bool) -> Void)?
+    /// 照片在视图里的位置变了（缩放、平移、换图、视图变大小）：叠在照片上的实况文本跟着对齐
+    var onImageFrameChange: (() -> Void)?
+    /// 旋转了视图：显示的图换了，之前识别出的文字位置作废
+    var onRotate: (() -> Void)?
 
     private enum Mode { case fit, free }
 
@@ -343,6 +347,7 @@ final class ZoomableImageView: NSView {
         imageLayer.contents = image
         refreshBackdrop()
         fit(animate: true)
+        onRotate?()
     }
 
     // MARK: - 缩放
@@ -394,6 +399,8 @@ final class ZoomableImageView: NSView {
     /// 渐变时旧图那一层的尺寸（测试用：应保持旧图自己的比例）
     var debugGhostFrame: CGRect? { fadeGhost?.frame }
     var debugImageFrame: CGRect { imageLayer.frame }
+    /// 照片在视图里的位置（翻转坐标，左上原点）
+    var imageFrame: CGRect { imageLayer.frame }
     var debugGhostPresentation: Float { fadeGhost?.presentation()?.opacity ?? -1 }
     var debugImagePresentationOpacity: Float { imageLayer.presentation()?.opacity ?? imageLayer.opacity }
 
@@ -472,6 +479,7 @@ final class ZoomableImageView: NSView {
         }
         imageLayer.frame = CGRect(origin: origin, size: CGSize(width: w, height: h))
         CATransaction.commit()
+        onImageFrameChange?()
         onZoomChange?(scale)
         if !applyingViewState { onViewChange?(viewState, animated) }
 
@@ -725,8 +733,13 @@ final class ZoomableImageView: NSView {
         }
     }
 
+    /// 双击处是不是留给别的用途（实况文本里双击文字是选中词），是就不缩放
+    var ignoresDoubleClick: ((CGPoint) -> Bool)?
+
     @objc private func doubleClicked(_ recognizer: NSClickGestureRecognizer) {
-        toggleFitActual(at: recognizer.location(in: self))
+        let p = recognizer.location(in: self)
+        if ignoresDoubleClick?(p) == true { return }
+        toggleFitActual(at: p)
     }
 
     // MARK: - 并排对比同步
