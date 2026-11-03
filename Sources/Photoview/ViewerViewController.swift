@@ -34,6 +34,10 @@ final class ViewerViewController: NSViewController {
     private let liveBadge = LiveBadge()
     private var liveMovie: URL?
     private var liveView: PHLivePhotoView?
+    #if FLIPIC_PRO
+    /// 翻页时要照搬到下一张的放大倍数和位置（Pro）
+    var pendingPageZoom: ZoomableImageView.ViewState?
+    #endif
     private var fileNameLeading: NSLayoutConstraint!
     private var slideshowButton: NSButton?
     private var pinButton: NSButton?
@@ -110,6 +114,8 @@ final class ViewerViewController: NSViewController {
     let decodeQueue = ViewerViewController.makeQueue("decode", width: 2, qos: .userInitiated)
     /// 预取串行：后台一次只解一张，不与前台抢 CPU 和内存带宽
     private let prefetchQueue = ViewerViewController.makeQueue("prefetch", width: 1, qos: .utility)
+    /// 草图：三路并行（JPEG 按 1/4 解码大多走硬件解码器，占 CPU 不多），不和清晰图、预取抢
+    private let draftQueue = ViewerViewController.makeQueue("draft", width: 3, qos: .userInitiated)
     private let thumbQueue = ViewerViewController.makeQueue("thumb", width: 2, qos: .utility)
 
     private static func makeQueue(_ name: String, width: Int, qos: QualityOfService) -> OperationQueue {
@@ -127,7 +133,30 @@ final class ViewerViewController: NSViewController {
         static let previewAhead = 5      // 浏览方向前方多备几张
         static let previewBehind = 2     // 后方留少量，往回翻也快
         static let evictPreviewOutside = 8
+        static let draftAhead = 3        // 快速连翻时浏览方向前方先备草图的张数
+        static let draftKeepAhead = 9    // 内存吃紧时草图留到前方第几张（弱机上要从前方第 3~6 张开始备）
+        static let pressureNear = 2      // 内存吃紧时预览只留前后各 2 张
     }
+
+    /// 当前照片屏幕上已经是什么：还没换过来 / 胶片条缩略图 / 草图 / 清晰图（预览或原图），只升不降
+    private enum Shown: Int { case none, thumb, draft, sharp }
+    private var shown = Shown.none
+    private var shownResetToFit = false
+    /// 快速连翻：翻页比清晰预览解得还快时只出草图，停下来再解清晰图，再按浏览方向预取邻居
+    private var rapidPaging = false
+    private var fastStep = false
+    private var lastStepAt: CFAbsoluteTime = 0
+    private var stepInterval: CFTimeInterval = 1
+    /// 翻页间隔的滑动平均和最近几次：按键事件常常两三个挤在一起到，单看上一次间隔不准
+    private var stepIntervalAvg: CFTimeInterval = 1
+    private var recentIntervals: [CFTimeInterval] = []
+    private var settleTimer: DispatchSourceTimer?
+    /// 正在解的草图（按 URL）：连翻时每一步都会重排，正在解的不再重复排
+    private var draftOps: [URL: Operation] = [:]
+    /// 屏幕尺寸预览实测的解码耗时（滑动平均）：快机 75ms 左右，弱机 150ms 以上
+    private var sharpCost: CFTimeInterval = 0.09
+    /// 草图实测的解码耗时（滑动平均）：4500 万像素 JPEG 快机 35ms 左右，弱机 80ms 以上
+    private var draftCost: CFTimeInterval = 0.05
 
     private static let filmstripID = NSUserInterfaceItemIdentifier("thumb")
 
@@ -783,6 +812,12 @@ final class ViewerViewController: NSViewController {
 
     /// 从访达打开单张照片时，窗口直接贴合照片比例（同空格预览）；打开文件夹还是普通窗口。默认关，设置里打开
     /// 贴合预览里翻上一张、下一张时，窗口留在用户拖到的位置（以当前窗口中心对齐）；关掉则回到进入预览前的中心。默认打开
+    /// 翻过最后一张回到第一张（反之亦然）；默认关：到头了停住，轻轻回弹一下。幻灯片不受影响，照样循环
+    static var wrapAround: Bool {
+        get { UserDefaults.standard.bool(forKey: "wrapAround") }
+        set { UserDefaults.standard.set(newValue, forKey: "wrapAround") }
+    }
+
     static var peekKeepsPosition: Bool {
         get { UserDefaults.standard.object(forKey: "peekKeepsPosition") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "peekKeepsPosition") }
@@ -804,7 +839,9 @@ final class ViewerViewController: NSViewController {
         prefetchedURLs.removeAll()
         decodeQueue.cancelAllOperations()
         prefetchQueue.cancelAllOperations()
+        draftQueue.cancelAllOperations()
         thumbQueue.cancelAllOperations()
+        endRapidPaging()
         folderGeneration += 1
         var isDir: ObjCBool = false
         FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
@@ -840,11 +877,17 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 加载管线：缓存命中直出 → 降采样预览秒开 → 放大到预览不够清晰时才解全分辨率。
+    /// 未命中时先把手头最好的低清图（草图、胶片条缩略图）放上去，每按一下画面都跟着换，清晰图到了原位替换。
+    /// 快速连翻（翻页比清晰预览解得快）时只解草图，停下来才解清晰图。
     /// 主线程只做缓存查询，文件 I/O 与解码全部在限流队列里
     func showImage(resetToFit: Bool) {
         generation += 1
         let gen = generation
         fullRequested = false
+        shown = .none
+        shownResetToFit = resetToFit
+        let fast = fastStep
+        fastStep = false
         guard let item = folder.current else { return }
         let url = item.url
         // 「窗口」菜单里按文件名区分多个窗口（标题栏本身是隐藏的）；左上角也显示
@@ -852,36 +895,204 @@ final class ViewerViewController: NSViewController {
         fileNameLabel.stringValue = url.lastPathComponent
         updateLivePhoto(for: url)
         decodeQueue.cancelAllOperations()
-        updateSmartCache()
+        draftQueue.cancelAllOperations()
         updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)
         updateMarkedOnlyPill()
         #if FLIPIC_PRO
         if beforeAfter != nil {
+            endRapidPaging()
+            updateSmartCache()
             reloadBeforeAfter()
             return
         }
         #endif
 
         let fitPx = previewPixelTarget
-        if let info = loader.cachedInfo(for: url),
-           let hit = loader.cachedFull(for: url) ?? loader.cachedPreview(for: url, maxPixel: fitPx) {
+        let info = loader.cachedInfo(for: url)
+        let sharpHit = info == nil ? nil : loader.cachedFull(for: url) ?? loader.cachedPreview(for: url, maxPixel: fitPx)
+        // 翻得快、清晰图又没备好，进入快速连翻；进去以后直到停下来都按快速连翻走
+        if fast, sharpHit == nil || rapidPaging {
+            rapidPaging = true
+        } else if !fast {
+            endRapidPaging()
+        }
+
+        if let info, let hit = sharpHit {
             fullRequested = loader.cachedFull(for: url) != nil
+            shown = .sharp
             adopt(hit, logicalSize: info.pixelSize, resetToFit: resetToFit, isNew: true)
             if info.isAnimated { imageView.startAnimatedPlayback(url: url) }
+            if rapidPaging {
+                updateSmartCache(prefetch: false)
+                scheduleDrafts(includeCurrent: false)
+                scheduleSettle()
+            } else {
+                updateSmartCache()
+            }
             return
         }
 
-        let loader = self.loader
-        decodeQueue.addOperation { [weak self] in
-            guard self?.generation == gen, let info = loader.info(for: url) else { return }
-            let pv = loader.preview(for: url, maxPixel: fitPx)
-            DispatchQueue.main.async {
-                guard let self, self.generation == gen, let pv else { return }
-                self.adopt(pv, logicalSize: info.pixelSize, resetToFit: resetToFit, isNew: true)
-                // 动图：ImageIO 在主队列按帧时长驱动播放
-                if info.isAnimated { self.imageView.startAnimatedPlayback(url: url) }
+        // 未命中：草图或胶片条缩略图先顶上去（按原图尺寸摆，清晰图来了不跳）
+        if let info, !info.isAnimated {
+            if let d = loader.cachedDraft(for: url) {
+                showDraft(d, level: .draft, info: info)
+            } else if let t = loader.cachedThumb(for: url) {
+                showDraft(t, level: .thumb, info: info)
             }
         }
+        if rapidPaging {
+            updateSmartCache(prefetch: false)
+            scheduleDrafts(includeCurrent: shown != .draft)
+            scheduleSettle()
+            return
+        }
+        // 正常翻页：草图和清晰图同时开解，草图先到先上；原图本来就不大时清晰图本身就快，不另出草图
+        if shown == .none, info.map({ max($0.pixelSize.width, $0.pixelSize.height) > fitPx * 1.6 }) ?? true {
+            enqueueDraft(url)
+        }
+        let op = enqueueSharp(url: url, gen: gen)
+        updateSmartCache(after: op)
+    }
+
+    /// navigate / goTo 调用：记下这一步离上一步多久，判断是不是在快速连翻
+    private func notePagingStep() {
+        let now = CFAbsoluteTimeGetCurrent()
+        stepInterval = now - lastStepAt
+        lastStepAt = now
+        // 停顿过（超过半秒）就重新开始算平均
+        if stepInterval > 0.5 {
+            stepIntervalAvg = 1
+        } else {
+            stepIntervalAvg = stepIntervalAvg > 0.5 ? stepInterval : stepIntervalAvg * 0.7 + stepInterval * 0.3
+        }
+        recentIntervals = Array((recentIntervals + [stepInterval]).suffix(4))
+        // 比清晰预览解得还快（最多 150ms 一张）才算；默认按键重复（约 80~120ms）在快机上照常逐张出清晰图
+        fastStep = stepInterval < min(0.15, max(sharpCost * 1.25, 0.06))
+    }
+
+    private func endRapidPaging() {
+        rapidPaging = false
+        settleTimer?.cancel()
+        settleTimer = nil
+    }
+
+    /// 主看图界面在用（不在并排对比、修图前后对比里）
+    private var mainViewerActive: Bool {
+        #if FLIPIC_PRO
+        if beforeAfter != nil { return false }
+        #endif
+        return compareView == nil
+    }
+
+    /// 屏幕尺寸的清晰预览，解完换到屏幕上（已有草图时原位替换）
+    @discardableResult
+    private func enqueueSharp(url: URL, gen: Int) -> Operation {
+        let loader = self.loader
+        let fitPx = previewPixelTarget
+        let op = BlockOperation { [weak self] in
+            guard self?.generation == gen, let info = loader.info(for: url) else { return }
+            let cached = loader.cachedPreview(for: url, maxPixel: fitPx) != nil
+            let t0 = CFAbsoluteTimeGetCurrent()
+            let pv = loader.preview(for: url, maxPixel: fitPx)
+            let cost = CFAbsoluteTimeGetCurrent() - t0
+            BenchProbe.log("sharp decoded \(url.lastPathComponent) \(Int(cost * 1000))ms")
+            DispatchQueue.main.async {
+                guard let self, self.generation == gen, let pv else { return }
+                if !cached { self.sharpCost = self.sharpCost * 0.7 + cost * 0.3 }
+                self.showSharp(pv, info: info, url: url)
+            }
+        }
+        decodeQueue.addOperation(op)
+        return op
+    }
+
+    private func showSharp(_ image: CGImage, info: ImageInfo, url: URL) {
+        guard shown != .sharp else { return }
+        let first = shown == .none
+        shown = .sharp
+        adopt(image, logicalSize: info.pixelSize, resetToFit: first && shownResetToFit, isNew: first)
+        // 动图：ImageIO 在主队列按帧时长驱动播放
+        if info.isAnimated { imageView.startAnimatedPlayback(url: url) }
+    }
+
+    /// 低清图上屏：第一次算换了新图（重置旋转、按住的缩放照常恢复），之后的更清楚的版本原位替换
+    private func showDraft(_ image: CGImage, level: Shown, info: ImageInfo) {
+        guard level.rawValue > shown.rawValue else { return }
+        let first = shown == .none
+        shown = level
+        adopt(image, logicalSize: info.pixelSize, resetToFit: first && shownResetToFit, isNew: first, draft: true)
+    }
+
+    /// 解一张草图；解完时如果正好停在这张、屏幕上还没有更好的，就放上去
+    private func enqueueDraft(_ url: URL) {
+        draftOps = draftOps.filter { $0.value.isExecuting || (!$0.value.isFinished && !$0.value.isCancelled) }
+        if draftOps[url] != nil { return }
+        let loader = self.loader
+        let fitPx = previewPixelTarget
+        let op = BlockOperation { [weak self] in
+            let t0 = CFAbsoluteTimeGetCurrent()
+            guard let d = loader.draft(for: url, previewPixel: fitPx), let info = loader.cachedInfo(for: url) else { return }
+            let cost = CFAbsoluteTimeGetCurrent() - t0
+            BenchProbe.log("draft \(url.lastPathComponent) \(Int(cost * 1000))ms")
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if cost > 0.003, !d.sharp { self.draftCost = self.draftCost * 0.7 + cost * 0.3 }
+                guard self.folder.current?.url == url, self.mainViewerActive else { return }
+                if d.sharp {
+                    self.showSharp(d.image, info: info, url: url)
+                } else {
+                    self.showDraft(d.image, level: .draft, info: info)
+                }
+            }
+        }
+        draftOps[url] = op
+        draftQueue.addOperation(op)
+    }
+
+    /// 快速连翻：解浏览方向前方几张的草图；上一步排着没开始的已在 showImage 里取消。
+    /// 从解完时才会翻到的那张开始：草图要 40ms、30ms 翻一张时从后面第 2 张起，弱机上草图 90ms 就从第 3、4 张起，
+    /// 解当前这张等解完早翻过去了。翻得比草图慢时当前这张（还没有草图的话）排第一个
+    private func scheduleDrafts(includeCurrent: Bool) {
+        let i = folder.index, n = folder.count
+        guard folder.items.indices.contains(i) else { return }
+        let fitPx = previewPixelTarget
+        let pace = max(stepIntervalAvg, 0.01)
+        let lead = min(max(Int((draftCost / pace).rounded(.up)), 1), 6)
+        var urls: [URL] = includeCurrent && draftCost < pace ? [folder.items[i].url] : []
+        let dir = lastNavDirection >= 0 ? 1 : -1
+        for step in lead..<(lead + CachePolicy.draftAhead) {
+            let j = i + dir * step
+            if !Self.wrapAround, !folder.items.indices.contains(j) { break }
+            let url = folder.items[((j % n) + n) % n].url
+            if urls.contains(url) || loader.cachedDraft(for: url) != nil || loader.cachedPreview(for: url, maxPixel: fitPx) != nil { continue }
+            urls.append(url)
+        }
+        for url in urls { enqueueDraft(url) }
+    }
+
+    /// 停下来（一段时间没有下一步）：先解当前这张的清晰图，解完再按浏览方向预取邻居。
+    /// 等多久跟着翻页节奏走：按键重复 30ms 时等 65ms 左右，最多 150ms；刚隔了一段长的就按它多等一点
+    private func scheduleSettle() {
+        settleTimer?.cancel()
+        let gen = generation
+        // 严格定时：普通 asyncAfter 在窗口不在最前、或系统省电时会被合并推迟上百毫秒
+        let timer = DispatchSource.makeTimerSource(flags: .strict, queue: .main)
+        timer.setEventHandler { [weak self] in
+            guard let self, self.generation == gen else { return }
+            BenchProbe.log("settle")
+            self.endRapidPaging()
+            guard self.mainViewerActive, let url = self.folder.current?.url else { return }
+            if self.shown == .sharp {
+                self.updateSmartCache()
+            } else {
+                self.updateSmartCache(after: self.enqueueSharp(url: url, gen: gen))
+            }
+        }
+        settleTimer = timer
+        let wait = min(max(stepIntervalAvg * 2.2, (recentIntervals.max() ?? 0) * 1.15, 0.06), 0.15)
+        BenchProbe.log(String(format: "settle in %.0fms lead=%.0fms/%.0fms", wait * 1000, draftCost * 1000, stepIntervalAvg * 1000))
+        timer.schedule(deadline: .now() + wait, leeway: .milliseconds(2))
+        timer.resume()
     }
 
     /// 由视图在放大超过预览分辨率时触发：后台解码全分辨率并原位替换
@@ -895,15 +1106,20 @@ final class ViewerViewController: NSViewController {
             let full = loader.fullImage(for: url)
             DispatchQueue.main.async {
                 guard let self, self.generation == gen, let full else { return }
+                self.shown = .sharp
                 self.adopt(full, logicalSize: info.pixelSize, resetToFit: false, isNew: false)
             }
         }
     }
 
-    private func adopt(_ image: CGImage, logicalSize: CGSize, resetToFit: Bool, isNew: Bool) {
+    private func adopt(_ image: CGImage, logicalSize: CGSize, resetToFit: Bool, isNew: Bool, draft: Bool = false) {
         folder.setCurrentPixelSize(logicalSize)
-        imageView.set(image: image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew)
-        if isNew { BenchProbe.adopted() } else { BenchProbe.fullWidth = image.width }
+        imageView.set(image: image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew, draft: draft)
+        if isNew { BenchProbe.adopted() } else if !draft { BenchProbe.fullWidth = image.width }
+        if !draft { BenchProbe.sharpShown() }
+        #if FLIPIC_PRO
+        if isNew { restoreZoomAfterPaging() }
+        #endif
         if isNew, peekSaved != nil { wrapWindowToImage(keepingCurrent: Self.peekKeepsPosition) }
         if isNew, peekOnFirstImage {
             peekOnFirstImage = false
@@ -954,6 +1170,11 @@ final class ViewerViewController: NSViewController {
     }
 
     var debugZoomState: String { imageView.fitDiagnostics }
+    var debugHasImage: Bool { imageView.debugHasImage }
+    var debugShownLevel: String {
+        let px = imageView.debugImage.map { "\($0.width)x\($0.height)" } ?? "-"
+        return "\(shown) \(px) of \(Int(imageView.pixelSize.width))x\(Int(imageView.pixelSize.height)) \(folder.current?.url.lastPathComponent ?? "")"
+    }
 
     func navigate(_ delta: Int) {
         // 手动翻页不带幻灯片的渐变
@@ -962,8 +1183,17 @@ final class ViewerViewController: NSViewController {
         if CommandLine.arguments.contains("--selftest") {
             NSLog("SELFTEST navigate delta=\(delta) index \(folder.index) ->")
         }
+        // 挑片时按住方向键一路翻，到头了不能悄悄绕回第一张，不然会把挑过的又挑一遍
+        if !advancingSlideshow, !Self.wrapAround, folder.count > 0, !(0..<folder.count).contains(folder.index + delta) {
+            bounceAtEnd(delta)
+            return
+        }
         lastNavDirection = delta
         showFirstAfterResort = false
+        notePagingStep()
+        #if FLIPIC_PRO
+        rememberZoomForPaging()
+        #endif
         folder.go(delta)
         showImage(resetToFit: false)
     }
@@ -971,6 +1201,7 @@ final class ViewerViewController: NSViewController {
     private func goTo(_ index: Int) {
         lastNavDirection = index >= folder.index ? 1 : -1
         showFirstAfterResort = false
+        notePagingStep()
         folder.jump(to: index)
         showImage(resetToFit: false)
     }
@@ -1059,8 +1290,9 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 缓存窗口随浏览方向滑动：顺翻时前方多备、后方留少量；窗口外显式淘汰，内存有界。
-    /// 每次翻页重排预取队列：离当前最近的先解，快速连翻时过期任务直接取消
-    private func updateSmartCache() {
+    /// 每次翻页重排预取队列：离当前最近的先解，快速连翻时过期任务直接取消。
+    /// prefetch = false 时只淘汰不预取（快速连翻中）；after 给出时等当前这张的清晰图解完再开始预取
+    private func updateSmartCache(prefetch: Bool = true, after: Operation? = nil) {
         let i = folder.index
         guard folder.items.indices.contains(i) else { return }
         let loader = self.loader
@@ -1079,6 +1311,19 @@ final class ViewerViewController: NSViewController {
         }
         prefetchedURLs.formIntersection(keep)
 
+        // 告诉 ImageLoader 当前看哪张：内存吃紧时留前后 2 张预览、胶片条预热范围内的缩略图
+        let items = folder.items
+        let dir = lastNavDirection >= 0 ? 1 : -1
+        let around = { (r: Int) in Set((-r...r).map { items[((i + $0) % n + n) % n].url }) }
+        let near = around(min(CachePolicy.pressureNear, n / 2))
+        let draftKeep = Set((1...CachePolicy.draftKeepAhead).map { items[((i + dir * $0) % n + n) % n].url })
+        loader.setFocus(owner: self, current: folder.items[i].url, near: near, ahead: draftKeep,
+                        wide: around(min(CachePolicy.warmupLimit / 2, n / 2)))
+
+        prefetchQueue.cancelAllOperations()
+        guard prefetch else { return }
+        // 不在快速连翻了：草图交给清晰预览，只留当前这张的（它的清晰图可能还在解）
+        loader.trimDrafts(keeping: [folder.items[i].url])
         let ahead = lastNavDirection >= 0 ? CachePolicy.previewAhead : CachePolicy.previewBehind
         let behind = lastNavDirection >= 0 ? CachePolicy.previewBehind : CachePolicy.previewAhead
         var order: [URL] = []
@@ -1088,14 +1333,15 @@ final class ViewerViewController: NSViewController {
         }
         let current = folder.items[i].url
         let fitPx = previewPixelTarget
-        prefetchQueue.cancelAllOperations()
         for url in order where url != current {
             prefetchedURLs.insert(url)
             if loader.cachedPreview(for: url, maxPixel: fitPx) != nil { continue }
-            prefetchQueue.addOperation {
+            let op = BlockOperation {
                 _ = loader.info(for: url)
                 _ = loader.preview(for: url, maxPixel: fitPx)
             }
+            if let after { op.addDependency(after) }
+            prefetchQueue.addOperation(op)
         }
     }
 
@@ -1251,8 +1497,10 @@ final class ViewerViewController: NSViewController {
         // 合并显示的那一对、实况照片的同名 MOV、设好的附属文件一起删
         var urls = folder.withHiddenPartners([item.url])
         for u in urls { for f in Self.companions(of: u) where !urls.contains(f) { urls.append(f) } }
-        NSWorkspace.shared.recycle(urls) { [weak self] _, _ in
+        NSWorkspace.shared.recycle(urls) { [weak self] moved, _ in
             DispatchQueue.main.async {
+                // 记下来，⌘Z 或「放回刚才删掉的照片」能放回去
+                if !moved.isEmpty { Self.lastTrash = TrashRecord(moved: moved, photo: item.url) }
                 guard let self, self.generation == gen else { return }
                 for u in urls { self.loader.evict(url: u) }
                 let others = Set(urls.dropFirst())
@@ -1271,6 +1519,42 @@ final class ViewerViewController: NSViewController {
                 }
             }
         }
+    }
+
+    // MARK: - 放回刚才删掉的照片
+
+    /// 一次删除：原位置 → 废纸篓里的位置。photo 是单张删除时删掉的那张，放回后显示它；批量删除时为 nil
+    struct TrashRecord {
+        let moved: [URL: URL]
+        let photo: URL?
+    }
+
+    /// 最近一次删除。单张删除和 Pro 的批量删除共用这一份，新的删除覆盖旧的；所有看图窗口共用
+    static var lastTrash: TrashRecord?
+
+    static var canRestoreTrash: Bool { lastTrash != nil }
+
+    /// 文件菜单「放回刚才删掉的照片」：文件挪回原处，重新打开那个文件夹
+    @objc func restoreLastTrash(_ sender: Any?) {
+        guard let rec = Self.lastTrash, let dir = (rec.photo ?? rec.moved.keys.first)?.deletingLastPathComponent() else { return }
+        Self.lastTrash = nil
+        let fm = FileManager.default
+        var back: [URL] = []
+        for (orig, trashed) in rec.moved where !fm.fileExists(atPath: orig.path) {
+            if (try? fm.moveItem(at: trashed, to: orig)) != nil { back.append(orig) }
+        }
+        // 单张：显示放回来的那张；批量：留在原来看的那张，它也不在了就打开文件夹
+        let cur = folder.current?.url
+        let show = rec.photo.flatMap { back.contains($0) ? $0 : nil }
+            ?? cur.flatMap { fm.fileExists(atPath: $0.path) ? $0 : nil } ?? dir
+        open(url: show)
+        flash(L10n.f("pro.restored", "已放回 %d 个文件", back.count), seconds: 2.5)
+    }
+
+    /// 编辑菜单的「撤销」（⌘Z）：在输入框里时照常撤销文字，否则放回刚才删掉的照片
+    @objc func undo(_ sender: Any?) {
+        if let w = view.window, w.firstResponder is NSText { w.undoManager?.undo(); return }
+        restoreLastTrash(sender)
     }
 
     @objc func zoomIn(_ sender: Any?) { imageView.zoomIn() }
@@ -1293,6 +1577,13 @@ final class ViewerViewController: NSViewController {
         Self.showToolbar.toggle()
         SettingsWindowController.notify("toolbar")
         if Self.showToolbar { pokeControls() }
+    }
+
+    /// 到头了：照片朝按的方向挪一点再弹回来，并提示已是第一张 / 最后一张
+    private func bounceAtEnd(_ delta: Int) {
+        imageView.bounce(direction: delta)
+        flash(delta > 0 ? L10n.t("msg.atLast", "已是最后一张") : L10n.t("msg.atFirst", "已是第一张"), seconds: 1.0)
+        if CommandLine.arguments.contains("--wraptest") { NSLog("WRAPTEST bounce delta=%d index=%d", delta, folder.index) }
     }
 
     @objc func navigateForward(_ sender: Any?) { navigate(1) }
@@ -1330,6 +1621,10 @@ final class ViewerViewController: NSViewController {
         case .pinWindow: togglePinned(nil)
         case .share: shareCurrent(nil)
         case .playLive: playLivePhoto(nil)
+        case .zoomEye:
+            #if FLIPIC_PRO
+            zoomToEye(nil)
+            #endif
         #if FLIPIC_PRO
         case .beforeAfter: toggleBeforeAfter(nil)
         case .splitByRating: splitByRating(nil)
@@ -2409,6 +2704,8 @@ final class ViewerViewController: NSViewController {
             self?.compareNavigate(d)
         }
         iv.onEscape = { [weak self] in self?.exitCompare() }
+        // 删除键设成单个键（比如 ⌫）时对比里也能删，和 ⌘⌫ 走菜单一样
+        iv.onTrash = { [weak self] in self?.trashCurrent(nil) }
         iv.onCommand = { [weak self] action in self?.perform(action) }
         iv.onToggleFilmstrip = { [weak self] in self?.toggleFilmstrip(nil) }
         iv.onToggleInfo = { [weak self] in self?.toggleInfoPanel(nil) }
@@ -2749,7 +3046,9 @@ final class ViewerViewController: NSViewController {
         generation += 1
         decodeQueue.cancelAllOperations()
         prefetchQueue.cancelAllOperations()
+        draftQueue.cancelAllOperations()
         thumbQueue.cancelAllOperations()
+        endRapidPaging()
         folder.clear()
         prefetchedURLs.removeAll()
         imageView.set(image: nil, resetToFit: true, isNew: true)
@@ -3595,13 +3894,16 @@ final class ViewerViewController: NSViewController {
             shot(settings.window, "shortcuts-moved")
         }
         at(0.3) {
+            // 单按 ⌫ 现在是录下 ⌫；清除改用这一行右边的「清除」
             guard let rec = settings.debugRecorder(for: .info), let w = settings.window else { return }
             rec.performClick(nil)
             if let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: w.windowNumber,
                                         context: nil, characters: "\u{7F}", charactersIgnoringModifiers: "\u{7F}", isARepeat: false, keyCode: 51) {
                 rec.keyDown(with: e)
             }
-            NSLog("SET R4-backspace cleared info=%@", Shortcuts.combo(for: .info)?.display ?? "nil")
+            NSLog("SET R4-backspace recorded info=%@", Shortcuts.combo(for: .info)?.display ?? "nil")
+            settings.debugClearButton(for: .info)?.performClick(nil)
+            NSLog("SET R4b-clear button cleared info=%@", Shortcuts.combo(for: .info)?.display ?? "nil")
         }
         at(0.2) { [self] in
             let before = folder.sortKey.rawValue
@@ -4001,7 +4303,246 @@ final class ViewerViewController: NSViewController {
         step()
     }
 
+    /// --deletetest <文件夹> [截图目录]：删除键设成单个 ⌫（走设置页录制按钮同一条路），在看图界面按 ⌫ 删一张
+    /// （实况 MOV、附属文件一起走），⌘Z 放回；换回默认的 ⌘⌫ 再删一张，用「放回刚才删掉的照片」放回；
+    /// 再确认重命名框里按 ⌫ / ⌘⌫ 只删字、不删照片。用户原来的快捷键设置最后原样写回
+    func runDeleteTest(outDir: String?) {
+        let fm = FileManager.default
+        let savedShortcuts = UserDefaults.standard.data(forKey: "customShortcuts")
+        guard let w = view.window, let dir = folder.current?.url.deletingLastPathComponent() else { NSLog("DELTEST no folder"); return }
+        let settings = SettingsWindowController.shared
+        #if FLIPIC_PRO
+        let savedMerge = UserDefaults.standard.object(forKey: "mergeRawJpg")
+        #endif
+        func log(_ s: String) { NSLog("DELTEST %@", s) }
+        func files() -> String {
+            ((try? fm.contentsOfDirectory(atPath: dir.path)) ?? []).filter { !$0.hasPrefix(".") }.sorted().joined(separator: ",")
+        }
+        func state(_ tag: String) {
+            log("\(tag): shown=\(folder.current?.url.lastPathComponent ?? "-") count=\(folder.count) files=[\(files())]")
+        }
+        func record() -> String {
+            guard let r = Self.lastTrash else { return "none" }
+            return r.moved.sorted { $0.key.path < $1.key.path }.map { k, v in
+                "\(k.lastPathComponent)→\(v.deletingLastPathComponent().lastPathComponent)/\(v.lastPathComponent)(inTrash=\(fm.fileExists(atPath: v.path) ? 1 : 0))"
+            }.joined(separator: " ") + " photo=\(r.photo?.lastPathComponent ?? "-")"
+        }
+        func menuItem(_ sel: Selector) -> NSMenuItem? {
+            func find(_ m: NSMenu) -> NSMenuItem? {
+                for it in m.items {
+                    if it.action == sel { return it }
+                    if let sub = it.submenu, let f = find(sub) { return f }
+                }
+                return nil
+            }
+            return NSApp.mainMenu.flatMap(find)
+        }
+        /// 菜单项此刻能不能点：问看图界面的 validateMenuItem（菜单在这个窗口是 key 时问的就是它）
+        func enabled(_ sel: Selector) -> Int {
+            guard let it = menuItem(sel) ?? (sel == Selector(("undo:")) ? NSMenuItem(title: "", action: sel, keyEquivalent: "") : nil) else { return -1 }
+            return validateMenuItem(it) ? 1 : 0
+        }
+        func event(_ code: UInt16, _ ch: String, _ mods: NSEvent.ModifierFlags, _ win: NSWindow) -> NSEvent? {
+            NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: mods, timestamp: 0, windowNumber: win.windowNumber,
+                             context: nil, characters: ch, charactersIgnoringModifiers: ch, isARepeat: false, keyCode: code)
+        }
+        /// 和真按键一样交给 NSApp：带 ⌘ 的先过菜单，其余送到 key 窗口的第一响应者。
+        /// 测试时别的软件在前面、这个窗口当不了 key 时，菜单认不出目标：带 ⌘ 的改成把菜单项的 action 顺着第一响应者往上送
+        func press(_ code: UInt16, _ ch: String, _ mods: NSEvent.ModifierFlags, in win: NSWindow, menuAction: Selector? = nil) {
+            guard let e = event(code, ch, mods, win) else { return }
+            if NSApp.keyWindow === win {
+                log("(key window: NSApp.sendEvent)")
+                NSApp.sendEvent(e)
+            } else if mods.contains(.command), let menuAction {
+                log("(window not key: \(menuAction) up the responder chain from \(win.firstResponder.map { String(describing: type(of: $0)) } ?? "-"))")
+                _ = win.firstResponder?.tryToPerform(menuAction, with: nil)
+            } else {
+                log("(window not key: window.sendEvent / menu key equivalent)")
+                if mods.contains(.command), NSApp.mainMenu?.performKeyEquivalent(with: e) == true { return }
+                win.sendEvent(e)
+            }
+        }
+        /// 设置页里点「移到废纸篓」的录制按钮，再按下这个键
+        func recordTrash(_ code: UInt16, _ ch: String, _ mods: NSEvent.ModifierFlags) {
+            guard let rec = settings.debugRecorder(for: .trash), let sw = settings.window, let e = event(code, ch, mods, sw) else {
+                log("recorder missing"); return
+            }
+            rec.performClick(nil)
+            if !rec.performKeyEquivalent(with: e) { rec.keyDown(with: e) }
+        }
+        func trashState(_ tag: String) {
+            let it = menuItem(#selector(trashCurrent(_:)))
+            let tip = shortcutTips.first { $0.action == .trash }?.button.toolTip ?? "-"
+            log("\(tag): trash shortcut=\(Shortcuts.combo(for: .trash)?.display ?? "none") customized=\(Shortcuts.isCustomized(.trash) ? 1 : 0) "
+                + "menu key=\"\(it?.keyEquivalent == "\u{8}" ? "⌫" : it?.keyEquivalent ?? "-")\" mods=\(it?.keyEquivalentModifierMask.rawValue ?? 0) tooltip=\(tip)")
+        }
+        func shot(_ win: NSWindow?, _ name: String) {
+            guard let outDir, let win, let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(win.windowNumber),
+                                                                          [.bestResolution, .boundsIgnoreFraming]),
+                  let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/\(name).png") as CFURL,
+                                                             "public.png" as CFString, 1, nil) else { return }
+            CGImageDestinationAddImage(dest, img, nil)
+            CGImageDestinationFinalize(dest)
+            log("screenshot \(outDir)/\(name).png")
+        }
+        func focusViewer() {
+            settings.window?.orderOut(nil)
+            NSRunningApplication.current.activate(options: .activateIgnoringOtherApps)
+            NSApp.activate(ignoringOtherApps: true)
+            w.makeKeyAndOrderFront(nil)
+            w.makeFirstResponder(imageView)
+        }
+        func show(_ name: String) {
+            if let i = folder.items.firstIndex(where: { $0.url.lastPathComponent == name }) { goTo(i) }
+        }
+        if let outDir { try? fm.createDirectory(atPath: outDir, withIntermediateDirectories: true) }
+
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.2) { [self] in
+            #if FLIPIC_PRO
+            // 有同名 RAW 时合并显示，删 JPG 连 RAW 一起走（Pro 功能，没激活时跳过）
+            if License.isUnlocked {
+                Pairs.merge = true
+                applyMergePairs()
+                filmstrip.collectionView.reloadData()
+            }
+            log("pro unlocked=\(License.isUnlocked ? 1 : 0) merge=\(Pairs.merge ? 1 : 0) hidden=[\(folder.hidden.map(\.lastPathComponent).sorted().joined(separator: ","))]")
+            #endif
+            log("saved customShortcuts=\(savedShortcuts.map { "\($0.count) bytes" } ?? "none")")
+            show("DSC_2042.jpg")
+            state("0-start")
+            trashState("0-default")
+            settings.show(.shortcuts)
+        }
+        at(0.8) {
+            recordTrash(2, "d", [])
+            trashState("1a-recorded letter D")
+            recordTrash(51, "\u{7F}", [])
+            trashState("1b-recorded plain ⌫")
+            recordTrash(53, "\u{1B}", [])
+            trashState("1c-Esc while recording cancels (still ⌫)")
+            log("1d-clear button on trash row: present=\(settings.debugClearButton(for: .trash) != nil ? 1 : 0) hidden=\(settings.debugClearButton(for: .trash)?.isHidden ?? true ? 1 : 0) title=\(settings.debugClearButton(for: .trash)?.title ?? "-")")
+            _ = settings.debugRecorder(for: .trash)
+        }
+        at(0.6) { shot(settings.window, "shortcuts-backspace") }
+        at(0.3) { focusViewer() }
+        at(0.5) { [self] in
+            focusViewer()
+            log("2-viewer key=\(NSApp.keyWindow === w ? 1 : 0) firstResponder=\(w.firstResponder.map { String(describing: type(of: $0)) } ?? "-") restore menu enabled=\(enabled(#selector(restoreLastTrash(_:))))")
+            press(51, "\u{7F}", [], in: w)
+        }
+        at(1.5) {
+            state("3-after plain ⌫")
+            log("3-trash record: \(record())")
+            log("3-restore menu enabled=\(enabled(#selector(self.restoreLastTrash(_:)))) undo menu enabled=\(enabled(Selector(("undo:"))))")
+            press(6, "z", .command, in: w, menuAction: Selector(("undo:")))
+        }
+        at(1.5) {
+            state("4-after ⌘Z")
+            log("4-record after undo: \(record()) restore menu enabled=\(enabled(#selector(self.restoreLastTrash(_:))))")
+            settings.show(.shortcuts)
+        }
+        at(0.6) {
+            recordTrash(51, "\u{7F}", .command)
+            trashState("5-recorded ⌘⌫ (back to default)")
+            focusViewer()
+            show("DSC_2043.jpg")
+        }
+        at(0.6) {
+            state("6-before ⌘⌫")
+            press(51, "\u{7F}", .command, in: w, menuAction: #selector(self.trashCurrent(_:)))
+        }
+        at(1.5) {
+            state("7-after ⌘⌫")
+            log("7-trash record: \(record())")
+            guard let it = menuItem(#selector(self.restoreLastTrash(_:))) else { return log("restore item missing") }
+            log("7-menu \"\(it.title)\" in [\(it.menu?.title ?? "-")] enabled=\(enabled(#selector(self.restoreLastTrash(_:))))")
+            // 菜单项被点时发出的就是这个 action；窗口不是 key 时直接发给看图界面
+            if !NSApp.sendAction(#selector(self.restoreLastTrash(_:)), to: NSApp.keyWindow === w ? nil : self, from: it) { log("7-sendAction not handled") }
+        }
+        at(1.5) {
+            state("8-after 放回刚才删掉的照片")
+            log("8-restore menu enabled=\(enabled(#selector(self.restoreLastTrash(_:))))")
+        }
+        // 重命名框（模态）里按 ⌫ 和 ⌘⌫：只删输入框里的字，照片不动
+        for (n, combo) in [(9, KeyCombo(keyCode: 51, chars: "\u{7F}")), (10, KeyCombo(keyCode: 51, mods: .command, chars: "\u{7F}"))] {
+            at(0.4) { [self] in
+                Shortcuts.set(combo, for: .trash)
+                trashState("\(n)-rename field test with trash=\(combo.display)")
+                state("\(n)a-before rename")
+                let tick = Timer(timeInterval: 0.6, repeats: false) { _ in
+                    // 重命名框弹出时输入框就是第一响应者（光标在里面）；还没轮到时手动点进去
+                    let mw = NSApp.modalWindow ?? NSApp.keyWindow
+                    func findField(_ v: NSView?) -> NSTextField? {
+                        guard let v else { return nil }
+                        if let f = v as? NSTextField, f.isEditable { return f }
+                        for sub in v.subviews { if let f = findField(sub) { return f } }
+                        return nil
+                    }
+                    mw?.makeKeyAndOrderFront(nil)
+                    if let mw, !(mw.firstResponder is NSTextView), let f = findField(mw.contentView) { mw.makeFirstResponder(f) }
+                    guard let mw, let field = mw.firstResponder as? NSTextView else {
+                        log("\(n) no modal field (modalWindow=\(NSApp.modalWindow != nil ? 1 : 0) firstResponder=\(String(describing: NSApp.keyWindow?.firstResponder)))")
+                        NSApp.abortModal(); return
+                    }
+                    // 光标放到末尾（弹出时是全选），⌫ 应只删最后一个字
+                    field.setSelectedRange(NSRange(location: (field.string as NSString).length, length: 0))
+                    log("\(n)b-modal key=\(NSApp.keyWindow === mw ? 1 : 0) field before=\"\(field.string)\"")
+                    press(51, "\u{7F}", combo.modifiers, in: mw)
+                    log("\(n)c-field after \(combo.display)=\"\(field.string)\"")
+                    NSApp.abortModal()
+                }
+                RunLoop.main.add(tick, forMode: .modalPanel)
+                renameCurrent(nil)
+            }
+            at(1.2) { state("\(n)d-after rename dialog closed (photo must still be there)") }
+        }
+        at(0.3) { [self] in
+            // 中途失败留在废纸篓里的测试文件放回去
+            if Self.lastTrash != nil { log("cleanup: putting back leftover \(record())"); restoreLastTrash(nil) }
+            if let savedShortcuts { UserDefaults.standard.set(savedShortcuts, forKey: "customShortcuts") }
+            else { UserDefaults.standard.removeObject(forKey: "customShortcuts") }
+            #if FLIPIC_PRO
+            if let savedMerge { UserDefaults.standard.set(savedMerge, forKey: "mergeRawJpg") }
+            else { UserDefaults.standard.removeObject(forKey: "mergeRawJpg") }
+            #endif
+            log("11-restored customShortcuts identical=\(UserDefaults.standard.data(forKey: "customShortcuts") == savedShortcuts ? 1 : 0)")
+            log("done")
+            NSApp.terminate(nil)
+        }
+    }
+
     /// --peekkeeptest <文件夹>：贴合预览里把窗口挪开再翻页，开关打开时窗口中心留在挪到的位置，关掉时回到进入预览前的中心
+    /// --wraptest <文件夹>：最后一张再往后翻应停住；打开「回到第一张」后才绕回去
+    func runWrapTest() {
+        let saved = Self.wrapAround
+        goTo(folder.count - 1)
+        Self.wrapAround = false
+        navigate(1)
+        NSLog("WRAPTEST wrap=off after → index=%d of %d", folder.index, folder.count)
+        goTo(0)
+        navigate(-1)
+        NSLog("WRAPTEST wrap=off at first, after ← index=%d", folder.index)
+        goTo(folder.count - 1)
+        Self.wrapAround = true
+        navigate(1)
+        NSLog("WRAPTEST wrap=on after → index=%d", folder.index)
+        // 再停在最后一张按一次，截回弹中途和提示
+        goTo(folder.count - 1)
+        Self.wrapAround = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [self] in
+            navigate(1)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.09) { [self] in
+                if let i = CommandLine.arguments.firstIndex(of: "--wraptest-shot"), i + 1 < CommandLine.arguments.count {
+                    captureWindow(to: CommandLine.arguments[i + 1], raw: true)
+                }
+                Self.wrapAround = saved
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { NSApp.terminate(nil) }
+            }
+        }
+    }
+
     func runPeekKeepTest() {
         guard let w = view.window else { return }
         let saved = ViewerViewController.peekKeepsPosition
@@ -4655,6 +5196,13 @@ extension ViewerViewController: NSMenuItemValidation {
             menuItem.state = .off
             return folder.count > 0
         }
+        if menuItem.action == #selector(restoreLastTrash(_:)) {
+            return Self.canRestoreTrash && !isProcessing
+        }
+        if menuItem.action == #selector(undo(_:)) {
+            if let w = view.window, w.firstResponder is NSText { return w.undoManager?.canUndo ?? false }
+            return Self.canRestoreTrash && !isProcessing
+        }
         if menuItem.action == #selector(setSortKey(_:)) {
             menuItem.state = menuItem.tag == folder.sortKey.rawValue ? .on : .off
         } else if menuItem.action == #selector(toggleEscCloses(_:)) {
@@ -4723,8 +5271,6 @@ extension ViewerViewController: NSMenuItemValidation {
             return Pairs.merge && folder.current != nil
         } else if menuItem.action == #selector(trashUnpicked(_:)) {
             return folder.totalCount > 0 && !isProcessing
-        } else if menuItem.action == #selector(restoreLastTrash(_:)) {
-            return Self.canRestoreTrash
         } else if menuItem.action == #selector(openAllInEditor(_:)) {
             return folder.count > 0
         }

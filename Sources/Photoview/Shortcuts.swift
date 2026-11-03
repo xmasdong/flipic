@@ -82,13 +82,19 @@ enum ShortcutAction: String, CaseIterable {
     case rate1, rate2, rate3, rate4, rate5, rate0
     case mark, markedOnly, compare, compare4, comparePane, compareSync
     case beforeAfter, splitByRating, switchPair
-    case pinWindow, share, playLive
+    case pinWindow, share, playLive, zoomEye, workbench
 
     /// Pro 功能；开源版里没有，不在快捷键设置里列出
-    var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair].contains(self) }
+    /// 快捷键页里 Pro 功能名后面的标；App Store 版全都包含，不加
+    static var proSuffix: String {
+        return " (Pro)"
+    }
+
+    var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair, .zoomEye, .workbench].contains(self) }
 
     var isAvailable: Bool {
         #if FLIPIC_PRO
+        if self == .workbench { return WorkbenchFeature.isEnabled }
         return true
         #else
         return !isPro
@@ -127,11 +133,11 @@ enum ShortcutAction: String, CaseIterable {
     var group: Group {
         switch self {
         case .toggleApp: return .global
-        case .prev, .next, .first, .last, .zoomIn, .zoomOut, .zoomAtPointer, .actualSize, .peek: return .browse
+        case .prev, .next, .first, .last, .zoomIn, .zoomOut, .zoomAtPointer, .actualSize, .peek, .zoomEye: return .browse
         case .fullscreen, .info, .filmstrip, .slideshow, .rotateCW, .rotateCCW: return .view
         case .rename, .trash, .edit, .reveal, .exportAs, .exportFolder, .saveRotation, .share: return .file
         case .pinWindow, .playLive: return .view
-        case .cleanup, .batchConvert, .batchRename, .wallpaper: return .tools
+        case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
         case .mark, .markedOnly, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating, .switchPair: return .pick
         }
@@ -177,12 +183,14 @@ enum ShortcutAction: String, CaseIterable {
         case .compare4: return L10n.t("menu.compare4", "并排对比 4 张")
         case .comparePane: return L10n.t("sc.a.comparePane", "对比时切换当前格")
         case .compareSync: return L10n.t("menu.compareSync", "对比时同步缩放和位置")
-        case .beforeAfter: return L10n.t("menu.beforeAfter", "修图前后对比") + " (Pro)"
-        case .splitByRating: return plain(L10n.t("menu.splitByRating", "按星级分到子文件夹…")) + " (Pro)"
-        case .switchPair: return L10n.t("menu.switchPair", "切换看 JPG / RAW") + " (Pro)"
+        case .beforeAfter: return L10n.t("menu.beforeAfter", "修图前后对比") + ShortcutAction.proSuffix
+        case .splitByRating: return plain(L10n.t("menu.splitByRating", "按星级分到子文件夹…")) + ShortcutAction.proSuffix
+        case .switchPair: return L10n.t("menu.switchPair", "切换看 JPG / RAW") + ShortcutAction.proSuffix
         case .pinWindow: return L10n.t("menu.pin", "窗口置顶")
         case .share: return plain(L10n.t("menu.share", "分享…"))
         case .playLive: return L10n.t("menu.playLive", "播放实况照片")
+        case .zoomEye: return L10n.t("menu.zoomEye", "放大到眼睛") + ShortcutAction.proSuffix
+        case .workbench: return L10n.t("menu.workbench", "工作台") + ShortcutAction.proSuffix
         }
     }
 
@@ -234,6 +242,8 @@ enum ShortcutAction: String, CaseIterable {
         case .pinWindow: return KeyCombo(keyCode: 17, mods: [.command, .option], chars: "t")
         case .share: return nil
         case .playLive: return KeyCombo(keyCode: 37, mods: .option, chars: "l")
+        case .zoomEye: return KeyCombo(keyCode: 14, chars: "e")
+        case .workbench: return KeyCombo(keyCode: 11, mods: [.command, .option], chars: "b")   // ⇧⌘B 已是批量重命名
         }
     }
 }

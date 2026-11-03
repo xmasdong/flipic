@@ -17,8 +17,21 @@ enum CleanupDebug {
                               zip(m.eyeOpenness, m.eyeDarkness).map { String(format: "%.2f/%.2f", $0, $1) }.joined(separator: ","),
                               "\(m.closedFaces.count)", CleanupResult.isBlurry(m) ? "Y" : ""].joined(separator: "\t"))
             }
+            lines.append("\n# faces (x,y,w,h openness)")
+            for u in units {
+                guard let fs = scanner.metrics[u.primary]?.faces, !fs.isEmpty else { continue }
+                let parts: [String] = fs.map { (f: FaceEyes) -> String in
+                    let r = f.rect
+                    return String(format: "%.2f,%.2f,%.2f,%.2f %.2f/%.2f", Double(r.minX), Double(r.minY), Double(r.width), Double(r.height),
+                                  Double(f.openness), Double(f.darkness))
+                }
+                lines.append(u.primary.lastPathComponent + "\t" + parts.joined(separator: " | "))
+            }
             // 按拍摄时间相邻两张的特征距离
-            let timed = units.compactMap { u in scanner.metrics[u.primary].map { (u, $0) } }.sorted { $0.1.captureDate < $1.1.captureDate }
+            let timed: [(CleanupUnit, CleanupMetrics)] = units.compactMap { u in scanner.metrics[u.primary].map { (u, $0) } }.sorted { a, b in
+                if a.1.captureDate != b.1.captureDate { return a.1.captureDate < b.1.captureDate }
+                return a.0.primary.lastPathComponent.localizedStandardCompare(b.0.primary.lastPathComponent) == .orderedAscending
+            }
             lines.append("\n# adjacent distances")
             for (a, b) in zip(timed, timed.dropFirst()) {
                 var d: Float = -1

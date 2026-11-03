@@ -58,6 +58,8 @@ final class FilmstripView: NSScrollView {
 
 final class FilmstripItem: NSCollectionViewItem {
     private let holder = NSView()
+    /// 选中框里面再描一圈细的深色边：白底照片上靠外圈的强调色，深色照片上靠这圈深色和外圈分开
+    private let innerRing = NSView()
     /// SDK 未提供 NSCollectionViewItem.indexPath，手动记录
     var itemIndex: Int = -1
 
@@ -74,6 +76,14 @@ final class FilmstripItem: NSCollectionViewItem {
         holder.layer?.contentsGravity = CALayerContentsGravity.resizeAspectFill
         holder.layer?.contentsScale = 2
         v.addSubview(holder)
+
+        innerRing.frame = v.bounds.insetBy(dx: 3, dy: 3)
+        innerRing.autoresizingMask = [.width, .height]
+        innerRing.wantsLayer = true
+        innerRing.layer?.cornerRadius = 3.5
+        innerRing.layer?.borderColor = NSColor(calibratedWhite: 0, alpha: 0.55).cgColor
+        innerRing.isHidden = true
+        v.addSubview(innerRing)
 
         view = v
     }
@@ -111,9 +121,12 @@ final class FilmstripItem: NSCollectionViewItem {
 
     override var isSelected: Bool {
         didSet {
-            view.layer?.borderWidth = isSelected ? 2 : 0
-            view.layer?.borderColor = NSColor.white.cgColor
-            view.alphaValue = isSelected ? 1 : 0.75
+            // 只用白框的话，白底照片（产品、证件照）上几乎看不见选中的是哪张
+            view.layer?.borderWidth = isSelected ? 3 : 0
+            view.layer?.borderColor = NSColor.controlAccentColor.cgColor
+            innerRing.layer?.borderWidth = 1
+            innerRing.isHidden = !isSelected
+            view.alphaValue = isSelected ? 1 : 0.62
         }
     }
 }

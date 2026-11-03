@@ -1,13 +1,13 @@
 import AppKit
 import UniformTypeIdentifiers
 
-/// 设置窗口（⌘,）：通用 / 鼠标与触控板 / 快捷键。改动直接写进 UserDefaults，
+/// 设置窗口（⌘,）：通用 / 看图 / 鼠标与触控板 / 快捷键 / Pro。改动直接写进 UserDefaults，
 /// 需要看图界面跟着变的（排序、幻灯片间隔）通过通知告诉它
 final class SettingsWindowController: NSWindowController {
     static let didChange = Notification.Name("FlipicSettingsDidChange")
     static let shared = SettingsWindowController()
 
-    enum Pane: Int { case general, mouse, shortcuts, pro }
+    enum Pane { case general, viewing, mouse, shortcuts, pro }
 
     private let root = SettingsRoot()
 
@@ -23,13 +23,11 @@ final class SettingsWindowController: NSWindowController {
         window.title = L10n.t("menu.settings", "设置…").replacingOccurrences(of: "…", with: "")
         super.init(window: window)
         root.panes = [
-            (L10n.t("set.tab.general", "通用"), "gearshape", GeneralSettingsPane()),
-            (L10n.t("set.tab.mouse", "鼠标与触控板"), "computermouse", MouseSettingsPane()),
-            (L10n.t("set.tab.shortcuts", "快捷键"), "keyboard", ShortcutSettingsPane()),
+            (.general, L10n.t("set.tab.general", "通用"), "gearshape", GeneralSettingsPane()),
+            (.viewing, L10n.t("set.tab.viewing", "看图"), "photo", ViewingSettingsPane()),
+            (.mouse, L10n.t("set.tab.mouse", "鼠标与触控板"), "computermouse", MouseSettingsPane()),
+            (.shortcuts, L10n.t("set.tab.shortcuts", "快捷键"), "keyboard", ShortcutSettingsPane()),
         ]
-        #if FLIPIC_PRO
-        root.panes.append(("Pro", "seal", ProSettingsPane()))
-        #endif
         window.contentViewController = root
         window.center()
     }
@@ -37,7 +35,7 @@ final class SettingsWindowController: NSWindowController {
     required init?(coder: NSCoder) { fatalError() }
 
     func show(_ pane: Pane? = nil) {
-        root.select(pane?.rawValue ?? root.selected)
+        root.select(pane.flatMap { p in root.panes.firstIndex { $0.id == p } } ?? root.selected)
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
     }
@@ -64,6 +62,31 @@ final class SettingsWindowController: NSWindowController {
             }
         }
         return window?.contentView.flatMap(find)
+    }
+
+    /// 测试用：某一项右边的「清除」
+    func debugClearButton(for action: ShortcutAction) -> ShortcutClearButton? {
+        (debugRecorder(for: action)?.superview as? NSStackView)?.arrangedSubviews.lazy.compactMap { $0 as? ShortcutClearButton }.first
+    }
+
+    /// --settingspanes <输出文件夹>：依次打开每一页并截图，看分页后每页的内容和长度
+    func debugShotAllPanes(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        showWindow(nil)
+        for (i, p) in root.panes.enumerated() {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6 + Double(i) * 0.8) { [self] in
+                root.select(i)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+                    guard let w = window, let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber),
+                                                                         [.bestResolution, .boundsIgnoreFraming]),
+                          let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/\(i)-\(p.id).png") as CFURL,
+                                                                     "public.png" as CFString, 1, nil) else { return }
+                    CGImageDestinationAddImage(dest, img, nil)
+                    CGImageDestinationFinalize(dest)
+                }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5 + Double(root.panes.count) * 0.8) { NSApp.terminate(nil) }
     }
 
     func debugStatus() -> String {
@@ -120,7 +143,7 @@ enum DefaultViewer {
 
 /// 顶部一排分页按钮 + 下方当前页；切页时窗口高度跟着内容走，左上角不动
 private final class SettingsRoot: NSViewController {
-    var panes: [(title: String, symbol: String, vc: NSViewController)] = []
+    var panes: [(id: SettingsWindowController.Pane, title: String, symbol: String, vc: NSViewController)] = []
     private(set) var selected = 0
     private var buttons: [SettingsTabButton] = []
     private let container = NSView()
@@ -333,22 +356,10 @@ func spacerRow(_ v: NSView) -> [NSView] { [NSGridCell.emptyContentView, v] }
 private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let sortPopup = NSPopUpButton()
     private let descending = NSButton(checkboxWithTitle: L10n.t("sort.descending", "倒序"), target: nil, action: nil)
-    private let fade = NSButton(checkboxWithTitle: L10n.t("menu.fadeTransition", "翻页渐变"), target: nil, action: nil)
-    private let intervalPopup = NSPopUpButton()
-    private let thumbPopup = NSPopUpButton()
     private let newWindow = NSButton(checkboxWithTitle: L10n.t("set.newWindowCheck", "在新窗口里打开，可以同时开几个"), target: nil, action: nil)
     private let openPeek = NSButton(checkboxWithTitle: L10n.t("set.openPeekCheck", "窗口贴合照片比例（和按空格一样）"), target: nil, action: nil)
     private let peekKeep = NSButton(checkboxWithTitle: L10n.t("set.peekKeep", "贴合预览翻上一张、下一张时，窗口留在原地"), target: nil, action: nil)
-    private let slideFade = NSButton(checkboxWithTitle: L10n.t("set.slideFade", "切换时渐变"), target: nil, action: nil)
-    private let fadePopup = NSPopUpButton()
-    private let escCloses = NSButton(checkboxWithTitle: L10n.t("menu.escCloses", "按 Esc 关闭窗口"), target: nil, action: nil)
-    private let hdr = NSButton(checkboxWithTitle: L10n.t("set.hdrCheck", "显示 HDR 照片的高光"), target: nil, action: nil)
-    private let hdrNote = note("")
     private let autoUpdate = NSButton(checkboxWithTitle: L10n.t("set.autoUpdate", "自动检查更新（每天一次）"), target: nil, action: nil)
-    private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
-    private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
-    private let fileNameCheck = NSButton(checkboxWithTitle: L10n.t("set.fileNameCheck", "移动鼠标时在左上角显示文件名"), target: nil, action: nil)
-    private let backdropPopup = NSPopUpButton()
     private let keepRunning = NSButton(checkboxWithTitle: L10n.t("set.keepRunning", "关掉窗口后留在后台，再打开图片更快"), target: nil, action: nil)
     private let editorName = NSTextField(labelWithString: "")
     private let editorIcon = NSImageView()
@@ -358,40 +369,8 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
 
     override func loadView() {
         for key in SortKey.allCases { sortPopup.addItem(withTitle: key.title); sortPopup.lastItem?.tag = key.rawValue }
-        for sec in ViewerViewController.slideshowIntervals {
-            intervalPopup.addItem(withTitle: L10n.f("slide.seconds", "%d 秒", sec))
-            intervalPopup.lastItem?.tag = sec
-        }
-        for d in ViewerViewController.slideshowFadeDurations {
-            fadePopup.addItem(withTitle: L10n.f("slide.fadeSeconds", "%@ 秒", Self.secondsText(d)))
-            fadePopup.lastItem?.representedObject = d
-        }
-        let thumbNames = [L10n.t("set.thumbSmall", "小"), L10n.t("set.thumbMedium", "中"), L10n.t("set.thumbLarge", "大"), L10n.t("set.thumbXL", "特大")]
-        for (name, size) in zip(thumbNames, FilmstripView.thumbSizes) {
-            thumbPopup.addItem(withTitle: name)
-            thumbPopup.lastItem?.tag = Int(size)
-        }
-        thumbPopup.action = #selector(thumbSizeChanged)
-        for c in [sortPopup, intervalPopup, fadePopup, thumbPopup] as [NSControl] { c.target = self }
-        fadePopup.action = #selector(slideFadeChanged)
-        slideFade.target = self; slideFade.action = #selector(slideFadeChanged)
-        sortPopup.action = #selector(sortChanged)
+        sortPopup.target = self; sortPopup.action = #selector(sortChanged)
         descending.target = self; descending.action = #selector(sortChanged)
-        intervalPopup.action = #selector(intervalChanged)
-        fade.target = self; fade.action = #selector(fadeChanged)
-        escCloses.target = self; escCloses.action = #selector(escChanged)
-        ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
-        toolbarCheck.target = self; toolbarCheck.action = #selector(toolbarChanged)
-        fileNameCheck.target = self; fileNameCheck.action = #selector(fileNameChanged)
-        let toolbarRow = NSStackView(views: [toolbarCheck, fileNameCheck])
-        toolbarRow.orientation = .vertical
-        toolbarRow.alignment = .leading
-        toolbarRow.spacing = 6
-        for (t, title) in [(2, L10n.t("set.bg.photo", "照片色磨砂")), (1, L10n.t("set.bg.glass", "磨砂玻璃")), (0, L10n.t("set.bg.black", "纯黑"))] {
-            backdropPopup.addItem(withTitle: title)
-            backdropPopup.lastItem?.tag = t
-        }
-        backdropPopup.target = self; backdropPopup.action = #selector(backdropChanged)
         keepRunning.target = self; keepRunning.action = #selector(keepRunningChanged)
         openPeek.target = self; openPeek.action = #selector(openPeekChanged)
         peekKeep.target = self; peekKeep.action = #selector(peekKeepChanged)
@@ -401,7 +380,6 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         peekRow.spacing = 6
         newWindow.target = self; newWindow.action = #selector(newWindowChanged)
         autoUpdate.target = self; autoUpdate.action = #selector(autoUpdateChanged)
-        hdr.target = self; hdr.action = #selector(hdrChanged)
         let checkNow = pillButton(L10n.t("set.checkNow", "现在检查"), self, #selector(checkNow))
         let updateRow = NSStackView(views: [autoUpdate, checkNow])
         updateRow.spacing = 12
@@ -415,9 +393,6 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         editorRow.setCustomSpacing(12, after: editorName)
         let sortRow = NSStackView(views: [sortPopup, descending])
         sortRow.spacing = 12
-
-        let slideFadeRow = NSStackView(views: [slideFade, fadePopup])
-        slideFadeRow.spacing = 12
         let defaultRow = NSStackView(views: [defaultStatus, makeDefault])
         defaultRow.spacing = 12
         let g = grid([
@@ -427,29 +402,14 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [NSGridCell.emptyContentView, peekRow],
             spacerRow(note(L10n.t("set.openPeekNote", "从访达双击照片打开时，窗口直接收成照片的比例；按空格或 Esc 回到普通窗口。打开文件夹时还是普通窗口。"))),
             [label(L10n.t("set.sort", "排序方式：")), sortRow],
-            [label(L10n.t("set.paging", "翻页：")), fade],
-            [label(L10n.t("set.rating", "评分：")), ratingBadge],
-            [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
-            [label(L10n.t("set.backdrop", "背景：")), backdropPopup],
-            [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
-            [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
-            [label(L10n.t("set.slideFadeLabel", "幻灯片渐变：")), slideFadeRow],
-            [label(L10n.t("set.esc", "Esc 键：")), escCloses],
-            spacerRow(note(L10n.t("set.escNote", "适应窗口时按 Esc 直接关闭，放大时先恢复。配合访达的 ⌘↓ 打开，可以当快速查看用。"))),
-            [label(L10n.t("set.hdr", "HDR：")), hdr],
-            spacerRow(hdrNote),
             [label(L10n.t("set.editor", "后期软件：")), editorRow],
             spacerRow(note(L10n.t("set.editorNote", "「在后期软件中编辑」用它打开当前照片，同名 RAW 也在时打开 RAW。"))),
             [label(L10n.t("set.background", "后台：")), keepRunning],
             [label(L10n.t("set.update", "更新：")), updateRow],
             spacerRow(note(L10n.t("set.updateNote", "Flipic 默认不联网。打开后每天最多查一次，只向官网请求最新版本号，不发送任何数据。"))),
         ])
-        g.row(at: 1).topPadding = -4
-        g.row(at: 4).topPadding = -4
-        g.row(at: 14).topPadding = -4
-        g.row(at: 16).topPadding = -4
-        g.row(at: 18).topPadding = -4
-        g.row(at: 21).topPadding = -4
+        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 后期软件 7 说明 8 后台 9 更新 10 说明
+        for r in [1, 4, 7, 10] { g.row(at: r).topPadding = -4 }
         view = host(g)
         reload()
     }
@@ -457,30 +417,11 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     func reload() {
         sortPopup.selectItem(withTag: UserDefaults.standard.integer(forKey: "sortKey"))
         descending.state = UserDefaults.standard.bool(forKey: "sortReversed") ? .on : .off
-        fade.state = ZoomableImageView.fadeTransition ? .on : .off
-        let sec = UserDefaults.standard.integer(forKey: "slideshowInterval")
-        intervalPopup.selectItem(withTag: ViewerViewController.slideshowIntervals.contains(sec) ? sec : 3)
-        escCloses.state = ViewerViewController.escCloses ? .on : .off
-        ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
-        toolbarCheck.state = ViewerViewController.showToolbar ? .on : .off
-        fileNameCheck.state = ViewerViewController.showFileName ? .on : .off
-        backdropPopup.selectItem(withTag: ZoomableImageView.backdropStyle.rawValue)
         keepRunning.state = AppDelegate.keepRunning ? .on : .off
-        thumbPopup.selectItem(withTag: Int(FilmstripView.thumbSize))
         openPeek.state = ViewerViewController.openInPeek ? .on : .off
         peekKeep.state = ViewerViewController.peekKeepsPosition ? .on : .off
         newWindow.state = AppDelegate.openInNewWindow ? .on : .off
-        slideFade.state = ViewerViewController.slideshowFade ? .on : .off
         autoUpdate.state = UpdateChecker.autoCheck ? .on : .off
-        let hdrOK = ImageLoader.hdrSupported
-        hdr.state = ImageLoader.hdrEnabled && hdrOK ? .on : .off
-        hdr.isEnabled = hdrOK
-        hdrNote.stringValue = hdrOK
-            ? L10n.t("set.hdrNote", "iPhone 等拍的 HDR 照片，亮部会比普通白更亮，和系统「预览」看到的一样。HDR 照片占用的内存是普通照片的两倍。")
-            : L10n.t("set.hdrUnsupported", "需要 macOS 14 或更新版本，以及支持 HDR 的屏幕（如 MacBook Pro 的 XDR 屏）。")
-        let fd = ViewerViewController.slideshowFadeDuration
-        if let item = fadePopup.itemArray.first(where: { ($0.representedObject as? Double) == fd }) { fadePopup.select(item) }
-        fadePopup.isEnabled = slideFade.state == .on
         let isDefault = DefaultViewer.isDefault
         defaultStatus.stringValue = isDefault ? L10n.t("set.isDefault", "Flipic 已是默认看图软件")
             : L10n.f("set.currentDefault", "现在双击照片用「%@」打开", DefaultViewer.currentName)
@@ -510,21 +451,153 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         SettingsWindowController.notify("sort")
     }
 
+    @objc private func autoUpdateChanged() { UpdateChecker.autoCheck = autoUpdate.state == .on }
+
+    @objc private func checkNow() {
+        (NSApp.delegate as? AppDelegate)?.checkForUpdates(nil)
+    }
+
+    @objc private func newWindowChanged() { AppDelegate.openInNewWindow = newWindow.state == .on }
+    @objc private func openPeekChanged() { ViewerViewController.openInPeek = openPeek.state == .on }
+    @objc private func peekKeepChanged() { ViewerViewController.peekKeepsPosition = peekKeep.state == .on }
+    @objc private func keepRunningChanged() { AppDelegate.keepRunning = keepRunning.state == .on }
+
+    @objc private func chooseEditorApp() {
+        let panel = NSOpenPanel()
+        panel.title = L10n.t("panel.chooseEditor", "选择后期软件")
+        panel.prompt = L10n.t("panel.choose", "选择")
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.allowedContentTypes = [.application]
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        guard let window = view.window else { return }
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let url = panel.url else { return }
+            ViewerViewController.storedEditorAppURL = url
+            self?.reload()
+        }
+    }
+
+    @objc private func clearEditorApp() {
+        ViewerViewController.storedEditorAppURL = nil
+        reload()
+    }
+}
+
+// MARK: - 看图
+
+/// 看图时的样子和手感：翻页、星级、工具条、背景、缩略图、HDR、Esc、幻灯片
+private final class ViewingSettingsPane: NSViewController, SettingsPane {
+    private let fade = NSButton(checkboxWithTitle: L10n.t("menu.fadeTransition", "翻页渐变"), target: nil, action: nil)
+    private let wrap = NSButton(checkboxWithTitle: L10n.t("set.wrap", "翻过最后一张回到第一张"), target: nil, action: nil)
+    private let intervalPopup = NSPopUpButton()
+    private let thumbPopup = NSPopUpButton()
+    private let slideFade = NSButton(checkboxWithTitle: L10n.t("set.slideFade", "切换时渐变"), target: nil, action: nil)
+    private let fadePopup = NSPopUpButton()
+    private let escCloses = NSButton(checkboxWithTitle: L10n.t("menu.escCloses", "按 Esc 关闭窗口"), target: nil, action: nil)
+    private let hdr = NSButton(checkboxWithTitle: L10n.t("set.hdrCheck", "显示 HDR 照片的高光"), target: nil, action: nil)
+    private let hdrNote = note("")
+    private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
+    private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
+    private let fileNameCheck = NSButton(checkboxWithTitle: L10n.t("set.fileNameCheck", "移动鼠标时在左上角显示文件名"), target: nil, action: nil)
+    private let backdropPopup = NSPopUpButton()
+
+    override func loadView() {
+        for sec in ViewerViewController.slideshowIntervals {
+            intervalPopup.addItem(withTitle: L10n.f("slide.seconds", "%d 秒", sec))
+            intervalPopup.lastItem?.tag = sec
+        }
+        for d in ViewerViewController.slideshowFadeDurations {
+            fadePopup.addItem(withTitle: L10n.f("slide.fadeSeconds", "%@ 秒", Self.secondsText(d)))
+            fadePopup.lastItem?.representedObject = d
+        }
+        let thumbNames = [L10n.t("set.thumbSmall", "小"), L10n.t("set.thumbMedium", "中"), L10n.t("set.thumbLarge", "大"), L10n.t("set.thumbXL", "特大")]
+        for (name, size) in zip(thumbNames, FilmstripView.thumbSizes) {
+            thumbPopup.addItem(withTitle: name)
+            thumbPopup.lastItem?.tag = Int(size)
+        }
+        thumbPopup.action = #selector(thumbSizeChanged)
+        for c in [intervalPopup, fadePopup, thumbPopup] as [NSControl] { c.target = self }
+        fadePopup.action = #selector(slideFadeChanged)
+        slideFade.target = self; slideFade.action = #selector(slideFadeChanged)
+        intervalPopup.action = #selector(intervalChanged)
+        fade.target = self; fade.action = #selector(fadeChanged)
+        wrap.target = self; wrap.action = #selector(wrapChanged)
+        escCloses.target = self; escCloses.action = #selector(escChanged)
+        ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
+        toolbarCheck.target = self; toolbarCheck.action = #selector(toolbarChanged)
+        fileNameCheck.target = self; fileNameCheck.action = #selector(fileNameChanged)
+        hdr.target = self; hdr.action = #selector(hdrChanged)
+        let toolbarRow = NSStackView(views: [toolbarCheck, fileNameCheck])
+        toolbarRow.orientation = .vertical
+        toolbarRow.alignment = .leading
+        toolbarRow.spacing = 6
+        for (t, title) in [(2, L10n.t("set.bg.photo", "照片色磨砂")), (1, L10n.t("set.bg.glass", "磨砂玻璃")), (0, L10n.t("set.bg.black", "纯黑"))] {
+            backdropPopup.addItem(withTitle: title)
+            backdropPopup.lastItem?.tag = t
+        }
+        backdropPopup.target = self; backdropPopup.action = #selector(backdropChanged)
+        let pagingRow = NSStackView(views: [fade, wrap])
+        pagingRow.orientation = .vertical
+        pagingRow.alignment = .leading
+        pagingRow.spacing = 6
+        let slideFadeRow = NSStackView(views: [slideFade, fadePopup])
+        slideFadeRow.spacing = 12
+        let rows: [[NSView]] = [
+            [label(L10n.t("set.paging", "翻页：")), pagingRow],
+            [label(L10n.t("set.rating", "评分：")), ratingBadge],
+            [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
+            [label(L10n.t("set.backdrop", "背景：")), backdropPopup],
+            [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
+            [label(L10n.t("set.hdr", "HDR：")), hdr],
+            spacerRow(hdrNote),
+            [label(L10n.t("set.esc", "Esc 键：")), escCloses],
+            spacerRow(note(L10n.t("set.escNote", "适应窗口时按 Esc 直接关闭，放大时先恢复。配合访达的 ⌘↓ 打开，可以当快速查看用。"))),
+            [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
+            [label(L10n.t("set.slideFadeLabel", "幻灯片渐变：")), slideFadeRow],
+        ]
+        let g = grid(rows)
+        // 说明行紧贴上一行
+        for (i, r) in rows.enumerated() where r.first === NSGridCell.emptyContentView && i > 0 && !(r.last is NSStackView) {
+            g.row(at: i).topPadding = -4
+        }
+        view = host(g)
+        reload()
+    }
+
+    func reload() {
+        fade.state = ZoomableImageView.fadeTransition ? .on : .off
+        wrap.state = ViewerViewController.wrapAround ? .on : .off
+        let sec = UserDefaults.standard.integer(forKey: "slideshowInterval")
+        intervalPopup.selectItem(withTag: ViewerViewController.slideshowIntervals.contains(sec) ? sec : 3)
+        escCloses.state = ViewerViewController.escCloses ? .on : .off
+        ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
+        toolbarCheck.state = ViewerViewController.showToolbar ? .on : .off
+        fileNameCheck.state = ViewerViewController.showFileName ? .on : .off
+        backdropPopup.selectItem(withTag: ZoomableImageView.backdropStyle.rawValue)
+        thumbPopup.selectItem(withTag: Int(FilmstripView.thumbSize))
+        slideFade.state = ViewerViewController.slideshowFade ? .on : .off
+        let hdrOK = ImageLoader.hdrSupported
+        hdr.state = ImageLoader.hdrEnabled && hdrOK ? .on : .off
+        hdr.isEnabled = hdrOK
+        hdrNote.stringValue = hdrOK
+            ? L10n.t("set.hdrNote", "iPhone 等拍的 HDR 照片，亮部会比普通白更亮，和系统「预览」看到的一样。HDR 照片占用的内存是普通照片的两倍。")
+            : L10n.t("set.hdrUnsupported", "需要 macOS 14 或更新版本，以及支持 HDR 的屏幕（如 MacBook Pro 的 XDR 屏）。")
+        let fd = ViewerViewController.slideshowFadeDuration
+        if let item = fadePopup.itemArray.first(where: { ($0.representedObject as? Double) == fd }) { fadePopup.select(item) }
+        fadePopup.isEnabled = slideFade.state == .on
+    }
+
     @objc private func intervalChanged() {
         UserDefaults.standard.set(intervalPopup.selectedTag(), forKey: "slideshowInterval")
         SettingsWindowController.notify("slideshow")
     }
 
     @objc private func fadeChanged() { ZoomableImageView.fadeTransition = fade.state == .on }
+    @objc private func wrapChanged() { ViewerViewController.wrapAround = wrap.state == .on }
     @objc private func hdrChanged() {
         ImageLoader.hdrEnabled = hdr.state == .on
         SettingsWindowController.notify("hdr")
-    }
-
-    @objc private func autoUpdateChanged() { UpdateChecker.autoCheck = autoUpdate.state == .on }
-
-    @objc private func checkNow() {
-        (NSApp.delegate as? AppDelegate)?.checkForUpdates(nil)
     }
 
     @objc private func slideFadeChanged() {
@@ -541,17 +614,10 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         return f.string(from: NSNumber(value: v)) ?? "\(v)"
     }
 
-    @objc private func newWindowChanged() { AppDelegate.openInNewWindow = newWindow.state == .on }
-
-    @objc private func openPeekChanged() { ViewerViewController.openInPeek = openPeek.state == .on }
-    @objc private func peekKeepChanged() { ViewerViewController.peekKeepsPosition = peekKeep.state == .on }
-
     @objc private func thumbSizeChanged() {
         FilmstripView.thumbSize = CGFloat(thumbPopup.selectedTag())
         SettingsWindowController.notify("thumbs")
     }
-
-    @objc private func keepRunningChanged() { AppDelegate.keepRunning = keepRunning.state == .on }
 
     @objc private func backdropChanged() {
         ZoomableImageView.backdropStyle = ZoomableImageView.BackdropStyle(rawValue: backdropPopup.selectedTag()) ?? .photo
@@ -574,27 +640,6 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     }
 
     @objc private func escChanged() { ViewerViewController.escCloses = escCloses.state == .on }
-
-    @objc private func chooseEditorApp() {
-        let panel = NSOpenPanel()
-        panel.title = L10n.t("panel.chooseEditor", "选择后期软件")
-        panel.prompt = L10n.t("panel.choose", "选择")
-        panel.directoryURL = URL(fileURLWithPath: "/Applications")
-        panel.allowedContentTypes = [.application]
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
-        guard let window = view.window else { return }
-        panel.beginSheetModal(for: window) { [weak self] response in
-            guard response == .OK, let url = panel.url else { return }
-            ViewerViewController.storedEditorAppURL = url
-            self?.reload()
-        }
-    }
-
-    @objc private func clearEditorApp() {
-        ViewerViewController.storedEditorAppURL = nil
-        reload()
-    }
 }
 
 // MARK: - 鼠标与触控板
@@ -655,7 +700,7 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
 
 // MARK: - 快捷键
 
-/// 点一下进入录制，按下新的组合就保存；Esc 取消，单按 ⌫ 清除
+/// 点一下进入录制，按下新的键或组合就保存（单个 ⌫、⌦、字母都可以）；Esc 取消。清除用这一行右边的「清除」
 final class ShortcutRecorder: NSButton {
     var shortcut: ShortcutAction!
     var onRecord: ((KeyCombo?) -> Void)?
@@ -734,14 +779,51 @@ final class ShortcutRecorder: NSButton {
             isRecording = false
             return
         }
-        if (combo.keyCode == 51 || combo.keyCode == 117) && mods.isEmpty {
-            isRecording = false
-            onRecord?(nil)
-            return
-        }
         isRecording = false
         onRecord?(combo)
     }
+
+    /// 「清除」：这一项不再有快捷键
+    func clear() {
+        isRecording = false
+        onRecord?(nil)
+    }
+}
+
+/// 快捷键一行右边的「清除」：小号文字按钮，悬停时变亮
+final class ShortcutClearButton: NSButton {
+    private(set) weak var recorder: ShortcutRecorder?
+    private var trackingArea: NSTrackingArea?
+
+    convenience init(recorder: ShortcutRecorder) {
+        self.init(frame: .zero)
+        self.recorder = recorder
+        isBordered = false
+        target = self
+        action = #selector(clicked)
+        refusesFirstResponder = true
+        toolTip = L10n.t("sc.clearTip", "去掉这一项的快捷键")
+        setContentHuggingPriority(.required, for: .horizontal)
+        style(hover: false)
+    }
+
+    private func style(hover: Bool) {
+        attributedTitle = NSAttributedString(string: L10n.t("sc.clear", "清除"), attributes: [
+            .foregroundColor: hover ? NSColor.labelColor : NSColor.tertiaryLabelColor,
+            .font: NSFont.systemFont(ofSize: 11.5)])
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingArea { removeTrackingArea(trackingArea) }
+        let area = NSTrackingArea(rect: .zero, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self)
+        addTrackingArea(area)
+        trackingArea = area
+    }
+    override func mouseEntered(with event: NSEvent) { style(hover: true) }
+    override func mouseExited(with event: NSEvent) { style(hover: false) }
+
+    @objc private func clicked() { recorder?.clear() }
 }
 
 private final class ShortcutSettingsPane: NSViewController, SettingsPane, NSTableViewDataSource, NSTableViewDelegate {
@@ -770,7 +852,7 @@ private final class ShortcutSettingsPane: NSViewController, SettingsPane, NSTabl
         scroll.borderType = .noBorder
         scroll.translatesAutoresizingMaskIntoConstraints = false
 
-        let hint = note(L10n.t("sc.hint", "点右侧的按键，再按下新的组合。Esc 取消，⌫ 清除。带 ⌘ 的组合在菜单里也能看到。"))
+        let hint = note(L10n.t("sc.hint", "点右侧的按键，再按下新的组合，单个键也行（比如 ⌫）。Esc 取消，点「清除」去掉快捷键。带 ⌘ 的组合在菜单里也能看到。"))
         hint.preferredMaxLayoutWidth = 500
         let fixed = note(L10n.t("sc.fixed", "固定按键：Esc 关闭照片信息、退出预览和全屏；双击在适应窗口和 100% 之间切换；⌘O 打开，⌘W 关闭窗口，⌘= ⌘- 缩放，⌘0 适应窗口，⌘1 实际大小。"))
         fixed.preferredMaxLayoutWidth = 500
@@ -846,7 +928,12 @@ private final class ShortcutSettingsPane: NSViewController, SettingsPane, NSTabl
             title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
             let rec = ShortcutRecorder(action: a)
             rec.onRecord = { [weak self] combo in self?.assign(combo, to: a) }
-            let row = NSStackView(views: [title, rec])
+            // 没有快捷键时「清除」隐藏但占着位置，各行的按键框保持对齐
+            let clear = ShortcutClearButton(recorder: rec)
+            clear.isHidden = Shortcuts.combo(for: a) == nil
+            let row = NSStackView(views: [title, rec, clear])
+            row.detachesHiddenViews = false
+            row.setCustomSpacing(4, after: rec)
             row.distribution = .fill
             row.edgeInsets = NSEdgeInsets(top: 0, left: 18, bottom: 0, right: 12)
             return row

@@ -37,6 +37,8 @@ struct CleanupResult {
     /// 默认建议删除（勾选）的主文件
     var suggested: Set<URL> = []
     var keepers: Set<URL> = []
+    /// 每张照片最终判定为闭眼的人脸框（界面上框出来的就是这些）
+    var closedFaces: [URL: [CGRect]] = [:]
 
     /// 连拍：相邻两张拍摄间隔不超过这个秒数才可能是一组
     static let burstWindow: TimeInterval = 30
@@ -55,11 +57,14 @@ struct CleanupResult {
     }
 
     /// 越大越值得保留：没人闭眼优先，其次看清晰度
-    static func quality(_ m: CleanupMetrics?) -> Float {
+    static func quality(_ m: CleanupMetrics?, closed: [CGRect]? = nil) -> Float {
         guard let m else { return -1 }
         let sharp = m.faceSharpness.map { $0 * 4 } ?? m.sharpness
-        return (m.closedFaces.isEmpty ? 1_000_000 : 0) + sharp
+        return ((closed ?? m.closedFaces).isEmpty ? 1_000_000 : 0) + sharp
     }
+
+    /// Pro：连拍里拿同一个人跟他自己比，返回每张照片里闭眼的人脸框；nil 时按固定阈值判断
+    static var burstClosedEyes: ((_ bursts: [[(URL, CleanupMetrics)]]) -> [URL: [CGRect]])?
 
     static func build(units: [CleanupUnit], scanner: CleanupScanner) -> CleanupResult {
         var r = CleanupResult()
@@ -92,9 +97,14 @@ struct CleanupResult {
                 : $0.1.captureDate < $1.1.captureDate }
         var simGroups: [CleanupGroup] = []
         var current: [(CleanupUnit, CleanupMetrics)] = []
+        // 连拍里谁闭眼由 Pro 的连拍比对决定（有的话），推荐保留的那张也跟着它选
+        var burstClosed: [URL: [CGRect]] = [:]
         func flush() {
             if current.count > 1 {
-                let best = current.max { quality($0.1) < quality($1.1) }!.0.primary
+                if let judge = burstClosedEyes { burstClosed.merge(judge([current.map { ($0.0.primary, $0.1) }])) { a, _ in a } }
+                let best = current.max {
+                    quality($0.1, closed: burstClosed[$0.0.primary]) < quality($1.1, closed: burstClosed[$1.0.primary])
+                }!.0.primary
                 simGroups.append(CleanupGroup(units: current.map(\.0), keeper: best,
                                               date: Date(timeIntervalSince1970: current[0].1.captureDate)))
             }
@@ -127,7 +137,8 @@ struct CleanupResult {
         // 3. 闭眼、4. 模糊：推荐保留的那张不默认勾选
         var closed: [CleanupUnit] = [], blurry: [CleanupUnit] = []
         for (u, m) in timed {
-            if !m.closedFaces.isEmpty { closed.append(u) }
+            let faces = burstClosed[u.primary] ?? m.closedFaces
+            if !faces.isEmpty { closed.append(u); r.closedFaces[u.primary] = faces }
             if isBlurry(m) { blurry.append(u) }
         }
         for u in closed + blurry { r.suggested.insert(u.primary) }

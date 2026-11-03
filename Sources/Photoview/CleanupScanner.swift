@@ -61,10 +61,19 @@ struct CleanupMetrics: Codable {
     var eyeOpenness: [Float]
     /// 每张可判定人脸眼睛区域里深色像素的比例（两眼取大）
     var eyeDarkness: [Float]
+    /// 每张可判定人脸的位置和睁眼数据，连拍里按位置认出同一个人（Pro 的连拍比对用）
+    var faces: [FaceEyes]?
     var featurePrint: Data?
     var printRevision: Int
     /// 分析算法或阈值改了就加一，旧缓存自动作废
     var version: Int
+}
+
+struct FaceEyes: Codable {
+    /// 人脸框（归一化，左上原点）
+    var rect: CGRect
+    var openness: Float
+    var darkness: Float
 }
 
 /// 后台逐张分析文件夹，结果回主线程
@@ -93,7 +102,7 @@ final class CleanupScanner {
     private var prints: [URL: VNFeaturePrintObservation] = [:]
 
     static let analysisMaxPixel: CGFloat = 1280
-    static let metricsVersion = 1
+    static let metricsVersion = 2
 
     init(folder: URL, units: [CleanupUnit], useCache: Bool = true) {
         self.units = units
@@ -112,6 +121,10 @@ final class CleanupScanner {
 
     func start() {
         let started = Date()
+        #if FLIPIC_PRO
+        // 工作台在后台还有没写完的缓存（刚查完又打开同一个文件夹）：等它写完再读；没有时立刻往下走
+        Self.saveQueue.sync {}
+        #endif
         let cached = loadCache()
         var todo: [CleanupUnit] = []
         for u in units {
@@ -202,6 +215,7 @@ final class CleanupScanner {
         var closed: [CGRect] = []
         var openness: [Float] = []
         var darkness: [Float] = []
+        var faceEyes: [FaceEyes] = []
         var faceSharp: Float?
         var faceCount = 0
         var largest: CGFloat = 0
@@ -222,10 +236,12 @@ final class CleanupScanner {
             let o = max(eyeOpenness(l, size), eyeOpenness(r, size))
             // 睁开的眼睛里有一块深色的瞳孔/虹膜，闭上只剩一条睫毛线
             let dark = max(gray.darkFraction(eyeRect(l, size), face: px), gray.darkFraction(eyeRect(r, size), face: px))
+            let rect = CGRect(x: box.minX, y: 1 - box.maxY, width: box.width, height: box.height)
             openness.append(o)
             darkness.append(dark)
+            faceEyes.append(FaceEyes(rect: rect, openness: o, darkness: dark))
             if o < closedEyeThreshold || (o < closedEyeSoftThreshold && dark < closedEyeDarkThreshold) {
-                closed.append(CGRect(x: box.minX, y: 1 - box.maxY, width: box.width, height: box.height))
+                closed.append(rect)
             }
         }
 
@@ -237,7 +253,7 @@ final class CleanupScanner {
         return CleanupMetrics(fileSize: unit.fileSize, modified: unit.modified?.timeIntervalSince1970 ?? 0,
                               captureDate: capture.timeIntervalSince1970,
                               sharpness: gray.sharpness(), faceSharpness: faceSharp, faceCount: faceCount,
-                              closedFaces: closed, eyeOpenness: openness, eyeDarkness: darkness,
+                              closedFaces: closed, eyeOpenness: openness, eyeDarkness: darkness, faces: faceEyes,
                               featurePrint: printData, printRevision: printRevision, version: metricsVersion)
     }
 
@@ -293,8 +309,25 @@ final class CleanupScanner {
         return (try? PropertyListDecoder().decode([String: CleanupMetrics].self, from: data)) ?? [:]
     }
 
+    #if FLIPIC_PRO
+    /// 工作台用：缓存在后台编码写盘，几千张时不卡主线程（清理模式不设，照旧当场写）
+    var savesCacheInBackground = false
+    private static let saveQueue = DispatchQueue(label: "flipic.cleanup.save", qos: .utility)
+    #endif
+
     private func saveCache() {
         guard let cacheURL, !metrics.isEmpty else { return }
+        #if FLIPIC_PRO
+        if savesCacheInBackground {
+            let snapshot = metrics
+            Self.saveQueue.async { Self.write(snapshot, to: cacheURL) }
+            return
+        }
+        #endif
+        Self.write(metrics, to: cacheURL)
+    }
+
+    private static func write(_ metrics: [URL: CleanupMetrics], to cacheURL: URL) {
         var out: [String: CleanupMetrics] = [:]
         for (u, m) in metrics { out[u.lastPathComponent] = m }
         let enc = PropertyListEncoder()

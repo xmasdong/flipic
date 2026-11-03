@@ -56,7 +56,8 @@ final class ViewerWindowController: NSWindowController {
         guard let vc = viewerVC else { return }
         BenchProbe.run(folder: folder, open: { vc.open(url: $0) },
                        forward: { vc.navigateForward(nil) }, zoomActual: { vc.zoomActual(nil) },
-                       state: { vc.debugZoomState })
+                       state: { vc.debugZoomState }, hasImage: { vc.debugHasImage },
+                       capture: { vc.debugCapture(to: $0) }, shownLevel: { vc.debugShownLevel })
     }
 
     func open(_ url: URL) { viewerVC?.open(url: url) }

@@ -48,6 +48,8 @@ final class ZoomableImageView: NSView {
     private var quarterTurns = 0
     private var logicalSize: CGSize = .zero   // 原图（已校正方向、未旋转）像素尺寸
     private var detailRequested = false
+    /// 正在显示快速连翻时的低清草图：清晰预览马上就来，这时不按草图的分辨率去要原图
+    private var showingDraft = false
     private var spacePeeking = false
     private var animationActive = false
     private var animationStopped = false
@@ -105,9 +107,11 @@ final class ZoomableImageView: NSView {
     }
 
     /// resetToFit 时重置为适应窗口；isNew 标记换了新图（重置旋转角度）。
-    /// logicalSize 是原图尺寸，newSrc 可以是它的降采样版本；不传则按 newSrc 本身尺寸
-    func set(image newSrc: CGImage?, logicalSize size: CGSize? = nil, resetToFit: Bool, isNew: Bool) {
+    /// logicalSize 是原图尺寸，newSrc 可以是它的降采样版本；不传则按 newSrc 本身尺寸。
+    /// draft：低清草图，随后会被同一张的清晰图（isNew = false）原位替换
+    func set(image newSrc: CGImage?, logicalSize size: CGSize? = nil, resetToFit: Bool, isNew: Bool, draft: Bool = false) {
         stopAnimation()
+        showingDraft = draft
         if isNew {
             quarterTurns = 0
             detailRequested = false
@@ -121,7 +125,8 @@ final class ZoomableImageView: NSView {
         // 换图默认直接切换；打开「翻页渐变」或幻灯片放映时淡入淡出
         let fade: TimeInterval? = isNew ? (pendingFadeDuration ?? (Self.fadeTransition ? 0.25 : nil)) : nil
         if isNew { pendingFadeDuration = nil }
-        endFade()
+        // 草图换清晰图是同一张照片原位替换：翻页渐变还没走完就让它接着走
+        if isNew || newSrc == nil { endFade() }
         let oldContents = imageLayer.contents
         let oldFrame = imageLayer.frame
         CATransaction.begin()
@@ -393,6 +398,30 @@ final class ZoomableImageView: NSView {
     var debugImagePresentationOpacity: Float { imageLayer.presentation()?.opacity ?? imageLayer.opacity }
 
     /// 适应窗口 ⇄ 100%，以 point 为中心放大；小图本来就不到窗口大小时放大到 200%
+    /// 翻到头时照片朝按键方向挪一点再弹回来（只动照片，背景不动）
+    func bounce(direction: Int) {
+        let a = CAKeyframeAnimation(keyPath: "transform.translation.x")
+        a.values = [0, CGFloat(-direction) * 26, 0]
+        a.keyTimes = [0, 0.35, 1]
+        a.timingFunctions = [CAMediaTimingFunction(name: .easeOut), CAMediaTimingFunction(name: .easeInEaseOut)]
+        a.duration = 0.28
+        a.isAdditive = true
+        imageLayer.add(a, forKey: "endBounce")
+    }
+
+    /// 当前显示的图（已应用旋转），给人脸检测这类需要读画面的功能用
+    var currentImage: CGImage? { image }
+
+    /// 以照片上的某一点（归一化，左上原点）为中心放大到 100%（照片本身比窗口小时放到 200%）
+    func zoomActual(centeredOn p: CGPoint, animated: Bool = true) {
+        guard image != nil, contentSize.width > 0 else { return }
+        let c = contentSize
+        mode = .free
+        scale = fitScale >= 0.999 ? 2 : 1
+        origin = CGPoint(x: bounds.midX - p.x * c.width * scale, y: bounds.midY - p.y * c.height * scale)
+        apply(animated: animated)
+    }
+
     func toggleFitActual(at point: CGPoint?) {
         guard image != nil else { return }
         if mode == .fit {
@@ -447,7 +476,7 @@ final class ZoomableImageView: NSView {
         if !applyingViewState { onViewChange?(viewState, animated) }
 
         // 图层图片的像素少于屏幕实际要显示的像素、且原图还有更多细节时，请求全分辨率
-        if !detailRequested, !animationActive, CGFloat(image.width) < c.width - 1 {
+        if !detailRequested, !animationActive, !showingDraft, CGFloat(image.width) < c.width - 1 {
             let devicePixels = w * (window?.backingScaleFactor ?? 2)
             if CGFloat(image.width) < devicePixels * 0.95 {
                 detailRequested = true
@@ -485,6 +514,8 @@ final class ZoomableImageView: NSView {
     private var dragStartPoint: CGPoint?
     /// 照片适应窗口时按住拖动是移动窗口（不用非得拖顶栏）；放大后才是平移照片。全屏时窗口不能动，照旧平移
     private var windowDragStart: (frame: CGPoint, mouse: CGPoint)?
+    /// 适应窗口时拖动照片是否移动窗口；嵌在别的窗口里（工作台）时关掉，适应窗口时拖动什么都不动，放大后照旧平移
+    var dragsWindowWhenFit = true
 
     /// 触控板捏合：magnification 是相对上一事件的增量，(1 + delta) 乘当前缩放即严格跟手
     override func magnify(with event: NSEvent) {
@@ -652,10 +683,11 @@ final class ZoomableImageView: NSView {
         if event.clickCount >= 2 { pendingSingleClick?.cancel(); pendingSingleClick = nil }
         dragStartOrigin = origin
         dragStartPoint = convert(event.locationInWindow, from: nil)
-        if mode == .fit, let w = window, !w.styleMask.contains(.fullScreen) {
+        if dragsWindowWhenFit, mode == .fit, let w = window, !w.styleMask.contains(.fullScreen) {
             windowDragStart = (w.frame.origin, w.convertPoint(toScreen: event.locationInWindow))
         } else {
             windowDragStart = nil
+            if !dragsWindowWhenFit, mode == .fit { dragStartOrigin = nil }
         }
     }
 

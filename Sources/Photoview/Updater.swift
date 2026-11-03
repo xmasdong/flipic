@@ -112,6 +112,12 @@ final class Updater: NSObject, URLSessionDownloadDelegate {
 
     // MARK: - 校验与安装（后台线程）
 
+    /// 新版本的 bundle id 和现在一样，或者换成了 app.flipic. 开头的新名字（App 的身份名要从旧的换成新主体的命名）。
+    /// 后面照样要求同一个开发团队签名、通过公证，所以别人的包换个名字也装不进来
+    static func acceptsIdentity(_ newID: String, current: String) -> Bool {
+        newID == current || newID.hasPrefix("app.flipic.")
+    }
+
     private func verifyAndInstall(dmg: URL, in dir: URL) -> Result<URL, Failure> {
         let mount = dir.appendingPathComponent("mnt", isDirectory: true)
         try? FileManager.default.createDirectory(at: mount, withIntermediateDirectories: true)
@@ -127,8 +133,8 @@ final class Updater: NSObject, URLSessionDownloadDelegate {
         try? FileManager.default.removeItem(at: staged)
         guard Self.run("/usr/bin/ditto", [found.path, staged.path]) == 0 else { return .failure(.install("ditto")) }
 
-        guard let newBundle = Bundle(url: staged),
-              newBundle.bundleIdentifier == Bundle.main.bundleIdentifier else { return .failure(.signature) }
+        guard let newBundle = Bundle(url: staged), let newID = newBundle.bundleIdentifier,
+              Self.acceptsIdentity(newID, current: Bundle.main.bundleIdentifier ?? "") else { return .failure(.signature) }
         let newVersion = newBundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
         guard UpdateChecker.isNewer(newVersion, than: UpdateChecker.currentVersion) else { return .failure(.notNewer) }
         guard let team = Self.teamID(of: Bundle.main.bundleURL),

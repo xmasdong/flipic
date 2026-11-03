@@ -376,12 +376,12 @@ final class CleanupController: NSViewController {
         guard let u = focusedUnit, let m = Optional(scanner.metrics[u.primary]) else { return }
         var reasons: [String] = []
         if result.keepers.contains(u.primary) { reasons.append(L10n.t("cleanup.keep", "推荐保留")) }
-        if let m, !m.closedFaces.isEmpty { reasons.append(CleanupCategory.closedEyes.title) }
+        if result.closedFaces[u.primary] != nil { reasons.append(CleanupCategory.closedEyes.title) }
         if let m, CleanupResult.isBlurry(m) { reasons.append(CleanupCategory.blurry.title) }
         let state = isChecked(u.primary) ? L10n.t("cleanup.state.checked", "已勾选，回车取消")
             : L10n.t("cleanup.state.unchecked", "未勾选，回车勾选")
         preview.caption = ([u.primary.lastPathComponent] + reasons + [state]).joined(separator: "  ·  ")
-        preview.faces = category == .closedEyes ? (m?.closedFaces ?? []) : []
+        preview.faces = category == .closedEyes ? (result.closedFaces[u.primary] ?? []) : []
         let url = u.primary
         if let hit = ImageLoader.shared.cachedPreview(for: url, maxPixel: 2048) {
             preview.image = hit
@@ -477,7 +477,7 @@ extension CleanupController: NSCollectionViewDataSource, NSCollectionViewDelegat
         item.url = url
         item.isChecked = isChecked(url)
         item.isKeeper = sections[indexPath.section].keeper == url && result.keepers.contains(url)
-        item.faces = category == .closedEyes ? (scanner.metrics[url]?.closedFaces ?? []) : []
+        item.faces = category == .closedEyes ? (result.closedFaces[url] ?? []) : []
         item.badge = u.companions.isEmpty ? nil : u.companions.map { $0.pathExtension.uppercased() }.joined(separator: "+")
         if let t = thumbCache.object(forKey: url as NSURL) {
             item.thumbnail = t

@@ -205,7 +205,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             exit(0)
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--settingspanes"), i + 1 < CommandLine.arguments.count {
+            buildMenu()
+            #if FLIPIC_PRO
+            License.install()
+            #endif
+            SettingsWindowController.shared.debugShotAllPanes(outDir: CommandLine.arguments[i + 1])
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--cleanup-report"), i + 1 < CommandLine.arguments.count {
+            // 默认按 Pro 的连拍比对出结果；加 --free 看免费版（固定阈值）的结果
+            #if FLIPIC_PRO
+            if !CommandLine.arguments.contains("--free") { BurstEyes.install() }
+            NSLog("CLEANUP-REPORT pro=%d unlocked=%d", CleanupResult.burstClosedEyes != nil ? 1 : 0, License.isUnlocked ? 1 : 0)
+            #endif
             CleanupDebug.report(folder: CommandLine.arguments[i + 1])
             return
         }
@@ -213,12 +226,60 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #if FLIPIC_PRO
         License.install()
         Pairs.install()
-        NotificationCenter.default.addObserver(forName: License.didChange, object: nil, queue: .main) { _ in Pairs.install() }
+        BurstEyes.install()
+        NotificationCenter.default.addObserver(forName: License.didChange, object: nil, queue: .main) { _ in Pairs.install(); BurstEyes.install() }
         #endif
         newViewerWindow()
         NSApp.activate(ignoringOtherApps: true)
 
         #if FLIPIC_PRO
+        if let i = CommandLine.arguments.firstIndex(of: "--stripsel-shot"), i + 2 < CommandLine.arguments.count {
+            let out = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runStripSelShot(out: out)
+                }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--strip-shot"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runStripShot(outDir: outDir)
+                }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--cull-shots"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runCullShots(outDir: outDir)
+                }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--workbenchtest"), i + 2 < CommandLine.arguments.count {
+            // --workbenchtest <输出目录> <文件夹…>：工作台第 1 期的主要操作走一遍，每步截图
+            let outDir = CommandLine.arguments[i + 1]
+            let folders = CommandLine.arguments[(i + 2)...].filter { !$0.hasPrefix("-") && !$0.hasPrefix("(") }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { WorkbenchTest.run(outDir: outDir, folders: folders) }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--eyezoomtest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runEyeZoomTest(outDir: outDir)
+                }
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--film-shots"), i + 3 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2], wide = CommandLine.arguments[i + 3]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -336,6 +397,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runLiveTest(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--wraptest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runWrapTest()
+                }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--deletetest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            let outDir = i + 2 < CommandLine.arguments.count && !CommandLine.arguments[i + 2].hasPrefix("-") ? CommandLine.arguments[i + 2] : nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runDeleteTest(outDir: outDir)
+                }
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--peekkeeptest"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
@@ -769,6 +847,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.toggleBeforeAfter(_:)): .beforeAfter,
         #selector(ViewerViewController.splitByRating(_:)): .splitByRating,
         #selector(ViewerViewController.switchPairMember(_:)): .switchPair,
+        #selector(ViewerViewController.zoomToEye(_:)): .zoomEye,
+        #selector(AppDelegate.showWorkbench(_:)): .workbench,
     ]
     #endif
 
@@ -840,6 +920,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if let main = NSApp.mainMenu { walk(main) }
     }
 
+    #if FLIPIC_PRO
+    /// 菜单里不是靠 action 认出来的 Pro 项（比如「发送到」这种子菜单）
+    private var proItems: [NSMenuItem] = []
+
+    /// Pro 功能的菜单项右边挂一个「Pro」标，和设置里的标一致；App Store 版全都包含，不挂
+    private func markProItems(in menu: NSMenu) {
+        let actions: Set<Selector> = [
+            #selector(ViewerViewController.toggleBeforeAfter(_:)), #selector(ViewerViewController.toggleMergePairs(_:)),
+            #selector(ViewerViewController.switchPairMember(_:)), #selector(ViewerViewController.zoomToEye(_:)),
+            #selector(ViewerViewController.splitByRating(_:)), #selector(ViewerViewController.openAllInEditor(_:)),
+            #selector(ViewerViewController.trashUnpicked(_:)), #selector(AppDelegate.showWorkbench(_:)),
+        ]
+        func walk(_ m: NSMenu) {
+            for it in m.items {
+                if proItems.contains(it) || it.action.map(actions.contains) == true { Self.badgePro(it) }
+                if let sub = it.submenu, !proItems.contains(it) { walk(sub) }
+            }
+        }
+        walk(menu)
+        if CommandLine.arguments.contains("--menutest") {
+            func list(_ m: NSMenu) -> [String] {
+                m.items.flatMap { it -> [String] in
+                    var r: [String] = []
+                    if #available(macOS 14.0, *), it.badge != nil { r.append(it.title) }
+                    else if it.title.hasSuffix(" (Pro)") { r.append(it.title) }
+                    return r + (it.submenu.map(list) ?? [])
+                }
+            }
+            NSLog("MENU pro badges: %@", list(menu).joined(separator: " · "))
+        }
+    }
+
+    static func badgePro(_ item: NSMenuItem) {
+        if #available(macOS 14.0, *) {
+            item.badge = NSMenuItemBadge(string: "Pro")
+        } else if !item.title.hasSuffix(" (Pro)") {
+            item.title += " (Pro)"
+        }
+    }
+    #endif
+
     private func buildMenu() {
         let main = NSMenu()
 
@@ -900,15 +1021,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(sendMenu, L10n.t("pro.sendSetup", "设置常用文件夹…"), #selector(ViewerViewController.showProSettings(_:)))
             sendItem.submenu = sendMenu
             m.addItem(sendItem)
+            proItems.append(sendItem)
             #endif
             item(m, L10n.t("menu.share", "分享…"), #selector(ViewerViewController.shareCurrent(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.rename", "重命名…"), #selector(ViewerViewController.renameCurrent(_:)))
             item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)))
             item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
-            #if FLIPIC_PRO
             item(m, L10n.t("menu.restoreTrash", "放回刚才删掉的照片"), #selector(ViewerViewController.restoreLastTrash(_:)))
-            #endif
         }
         // 标准「编辑」菜单：输入框（激活码、重命名、设置）里的 ⌘V、⌘C、⌘A 都靠这些菜单项生效
         addMenu(L10n.t("menu.edit", "编辑")) { m in
@@ -981,6 +1101,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.beforeAfter", "修图前后对比"), #selector(ViewerViewController.toggleBeforeAfter(_:)))
             item(m, L10n.t("menu.mergePairs", "合并显示 JPG 和 RAW"), #selector(ViewerViewController.toggleMergePairs(_:)))
             item(m, L10n.t("menu.switchPair", "切换看 JPG / RAW"), #selector(ViewerViewController.switchPairMember(_:)))
+            m.addItem(.separator())
+            item(m, L10n.t("menu.zoomEye", "放大到眼睛"), #selector(ViewerViewController.zoomToEye(_:)))
             #endif
         }
         addMenu(L10n.t("menu.go", "前往")) { m in
@@ -1011,6 +1133,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.miniaturize", "最小化"), #selector(NSWindow.performMiniaturize(_:)), "m")
             item(m, L10n.t("menu.windowZoom", "缩放"), #selector(NSWindow.performZoom(_:)))
             item(m, L10n.t("menu.pin", "窗口置顶"), #selector(ViewerViewController.togglePinned(_:)))
+            #if FLIPIC_PRO
+            if WorkbenchFeature.isEnabled {
+                m.addItem(.separator())
+                item(m, L10n.t("menu.workbench", "工作台"), #selector(AppDelegate.showWorkbench(_:))).target = self
+            }
+            #endif
             m.addItem(.separator())
             item(m, L10n.t("menu.front", "前置全部窗口"), #selector(NSApplication.arrangeInFront(_:)))
             windowMenu = m
@@ -1025,6 +1153,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         helpItem.submenu = helpMenu
 
         NSApp.mainMenu = main
+        #if FLIPIC_PRO
+        markProItems(in: main)
+        #endif
         applyShortcuts()
         NotificationCenter.default.addObserver(self, selector: #selector(applyShortcuts),
                                                name: Shortcuts.didChange, object: nil)

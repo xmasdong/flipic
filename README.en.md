@@ -71,6 +71,8 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 - Side-by-side compare: C for two photos, Shift-C for four, with zoom and position synced so you can check focus and expressions across a burst. Hold ⌥ to nudge one pane on its own, and Shift-L turns syncing off.
 - The bottom toolbar can be turned off in Settings if you prefer shortcuts and menus.
 - Open several windows at once: opening another photo from Finder while one is showing starts a new window (Settings can switch back to replacing it), and File › New Window is ⌘N.
+- Holding an arrow key keeps up: every key press changes the photo, a slightly soft version first and sharp as soon as you stop, even on Macs short on memory.
+- Paging stops at the last photo with a small bounce instead of jumping back to the first one; turn looping on in Settings › Viewing.
 - Live Photos: when a HEIC or JPG has a same-named MOV carrying Apple's Live Photo marker, a LIVE label appears at the top left; hover over it to play the clip over the photo, or press Option-L. Deleting, moving, copying and renaming take the MOV along, so a pair is never split.
 - While the photo fits the window, drag anywhere on it to move the window; once zoomed in, dragging pans the photo.
 - Move the pointer and the file name shows at the top left, with photo info, pin and share at the top right; they fade together with the toolbar.
@@ -111,7 +113,7 @@ To jump between your editor and Flipic, record a global shortcut in Settings ›
 
 **Settings and shortcuts**
 
-Every setting lives in one window (⌘,): sorting, crossfade, slideshow interval, Esc behavior, photo editor, scroll wheel and default viewer. Every shortcut can be changed there, and combinations with ⌘ show up in the menus.
+Every setting lives in one window (⌘,), split into General, Viewing, Mouse & Trackpad and Shortcuts. Every shortcut can be changed there, including to a single key (for example Delete or D for Move to Trash), and combinations with ⌘ show up in the menus.
 
 **Formats and languages**
 
@@ -134,7 +136,8 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 | S | Slideshow |
 | Return | Rename |
 | ⌘S | Export a compressed copy |
-| ⌘⌫ | Move to Trash |
+| ⌘⌫ | Move to Trash (can be changed to a single key) |
+| ⌘Z | Put back the last deleted photo |
 | ⌘E | Edit in your photo editor |
 | ⇧⌘K | Cleanup Mode |
 | ⇧⌘C / ⇧⌘B | Batch convert / batch rename |
@@ -144,7 +147,7 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 
 Viewing, rating, marking, filtering, exporting, side-by-side comparison and Cleanup Mode stay free, and all of that code is in this repository (MIT).
 
-Flipic Pro adds batch tools for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 7-day trial: before/after comparison (hold `\` to switch, split line, opacity), merged JPG + RAW, sort into subfolders by rating, favorite folders on ⌥1–⌥9, delete what you didn’t pick, send a batch to your editor, and custom linked files. The free version is enough for most people; Pro just saves time for those who cull and edit a lot. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
+Flipic Pro adds batch tools for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 7-day trial: press E to zoom to the eyes (paging keeps the spot), closed-eye checks in Cleanup Mode that compare each person with themselves across a burst, before/after comparison (hold `\` to switch, split line, opacity), merged JPG + RAW, sort into subfolders by rating, favorite folders on ⌥1–⌥9, delete what you didn’t pick, send a batch to your editor, and custom linked files. The free version is enough for most people; Pro just saves time for those who cull and edit a lot. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
 
 ## Privacy
 
