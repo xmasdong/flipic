@@ -12,7 +12,7 @@ OUT = ROOT / "public"
 BASE = "https://flipic.app"
 UPDATED = "2026-10-31"
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "3.7 MB"
+SIZE = "4.1 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -435,7 +435,7 @@ guide("zh", "/guides/windows-image-viewer-for-mac/", "从 Windows 换到 Mac，H
 <h2>Honeyview 和 IrfanView 有 Mac 版吗</h2>
 <p>没有。Honeyview 由 Bandisoft 开发，只出了 Windows 版；IrfanView 官方也只支持 Windows。网上的「Mac 版」要么是别的软件，要么是用 Wine 套壳运行，不建议装来路不明的安装包。</p>
 <h2>Mac 上可以用的替代</h2>
-<p><strong>Flipic</strong>：免费开源，安装包 3.7 MB。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
+<p><strong>Flipic</strong>：免费开源，安装包 4.1 MB。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
 <p><strong>XnView MP</strong>：功能很全的跨平台看图和管理软件，个人使用免费。适合需要大量格式转换、元数据编辑的人，界面比较复杂。</p>
 <p><strong>qView</strong>：开源的极简看图软件，界面几乎只有图片。功能少，适合只想打开看看的人。</p>
 <h2>换过来后常见的几处不同</h2>
@@ -502,7 +502,7 @@ guide("en", "/en/guides/irfanview-for-mac/", "IrfanView for Mac? Free alternativ
 <h2>Is there an IrfanView for Mac?</h2>
 <p>No. IrfanView officially supports Windows only, and Honeyview from Bandisoft is Windows-only too. Anything labeled "for Mac" is either a different app or Windows software wrapped in Wine, so be careful with unofficial installers.</p>
 <h2>Alternatives that run natively on a Mac</h2>
-<p><strong>Flipic</strong>: free and open source, a 3.7 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
+<p><strong>Flipic</strong>: free and open source, a 4.1 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
 <p><strong>XnView MP</strong>: a full-featured cross-platform viewer and organizer, free for personal use; great for heavy conversion and metadata work, busier interface.</p>
 <p><strong>qView</strong>: a minimal open-source viewer that is little more than the image; few features by design.</p>
 <h2>Things that work differently on a Mac</h2>
