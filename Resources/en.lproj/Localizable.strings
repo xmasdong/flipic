@@ -112,7 +112,7 @@
 "msg.rotSaving" = "Saving rotation…";
 "msg.rotHint" = "View rotated · press ⌘⌥S to save to file";
 "about.body" = "■ ABOUT
-A native macOS image viewer: instant opening, buttery folder navigation, gesture zoom and EXIF at a glance. Photos are processed on your Mac; no data collection, no accounts. It only goes online to check for updates, download the recognition model, or send feedback you write.
+A native macOS image viewer: instant opening, buttery folder navigation, gesture zoom and EXIF at a glance. Photos are processed on your Mac; no data collection, no accounts. It only goes online to check for updates, download the recognition model, activate Pro, or send feedback you write.
 
 ■ HOW TO USE
 Drop a folder or image into the window to browse; or right-click an image in Finder and open it with Flipic.
@@ -423,6 +423,8 @@ Drop a folder or image to open";
 "pro.activated" = "Flipic Pro is activated";
 "pro.badKey" = "That key doesn’t work";
 "pro.badKeyInfo" = "Copy the full key again from the payment confirmation page or the key recovery page.";
+"pro.revoked.title" = "This license key has been deactivated";
+"pro.revoked.info" = "If you bought it normally, please let us know via About Flipic › Send Feedback.";
 "pro.buy" = "Buy Pro";
 "pro.choose" = "Choose…";
 "pro.choosePrompt" = "Use as Favorite Folder";

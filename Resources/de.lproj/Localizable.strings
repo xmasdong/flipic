@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Drehung wird gesichert…";
 "msg.rotHint" = "Ansicht gedreht · ⌘⌥S zum Sichern in der Datei";
 "about.body" = "■ ÜBER
-Ein nativer macOS-Bildbetrachter: sofortiges Öffnen, flüssige Ordner-Navigation, Gesten-Zoom und EXIF auf einen Blick. Fotos werden nur auf Ihrem Mac verarbeitet, ohne Datenerfassung und ohne Konto. Online geht die App nur, um nach Updates zu suchen, das Erkennungsmodell zu laden oder Ihr Feedback zu senden.
+Ein nativer macOS-Bildbetrachter: sofortiges Öffnen, flüssige Ordner-Navigation, Gesten-Zoom und EXIF auf einen Blick. Fotos werden nur auf Ihrem Mac verarbeitet, ohne Datenerfassung und ohne Konto. Online geht die App nur, um nach Updates zu suchen, das Erkennungsmodell zu laden, Pro zu aktivieren oder Ihr Feedback zu senden.
 
 ■ BENUTZUNG
 Ordner oder Bild in dieses Fenster ziehen zum Ansehen; oder im Finder Rechtsklick → Mit Flipic öffnen.
@@ -411,6 +411,8 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "pro.activated" = "Flipic Pro ist aktiviert";
 "pro.badKey" = "Dieser Schlüssel funktioniert nicht";
 "pro.badKeyInfo" = "Kopieren Sie den vollständigen Schlüssel erneut von der Zahlungsbestätigung oder der Wiederherstellungsseite.";
+"pro.revoked.title" = "Dieser Lizenzschlüssel wurde deaktiviert";
+"pro.revoked.info" = "Wenn Sie ihn regulär gekauft haben, sagen Sie uns bitte über „Über Flipic › Feedback senden“ Bescheid.";
 "pro.buy" = "Pro kaufen";
 "pro.choose" = "Wählen…";
 "pro.choosePrompt" = "Als Lieblingsordner verwenden";

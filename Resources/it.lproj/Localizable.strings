@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Salvataggio rotazione…";
 "msg.rotHint" = "Vista ruotata · ⌘⌥S per salvare nel file";
 "about.body" = "■ INFORMAZIONI
-Un visualizzatore di immagini nativo per macOS: apertura immediata, navigazione fluida tra cartelle, zoom a gesti ed EXIF a colpo d'occhio. Le foto vengono elaborate sul tuo Mac: nessuna raccolta dati, nessun account. Si connette solo per controllare gli aggiornamenti, scaricare il modello di riconoscimento o inviare il feedback che scrivi.
+Un visualizzatore di immagini nativo per macOS: apertura immediata, navigazione fluida tra cartelle, zoom a gesti ed EXIF a colpo d'occhio. Le foto vengono elaborate sul tuo Mac: nessuna raccolta dati, nessun account. Si connette solo per controllare gli aggiornamenti, scaricare il modello di riconoscimento, attivare Pro o inviare il feedback che scrivi.
 
 ■ UTILIZZO
 Trascina una cartella o un'immagine nella finestra per sfogliare; oppure clic destro su un'immagine nel Finder e apri con Flipic.
@@ -411,6 +411,8 @@ Trascina una cartella o un'immagine per aprire";
 "pro.activated" = "Flipic Pro è attivo";
 "pro.badKey" = "Questa chiave non funziona";
 "pro.badKeyInfo" = "Copia di nuovo la chiave completa dalla pagina di conferma del pagamento o da quella di recupero.";
+"pro.revoked.title" = "Questa chiave di licenza è stata disattivata";
+"pro.revoked.info" = "Se l’hai acquistata regolarmente, faccelo sapere da Informazioni su Flipic › Invia feedback.";
 "pro.buy" = "Acquista Pro";
 "pro.choose" = "Scegli…";
 "pro.choosePrompt" = "Usa come cartella preferita";

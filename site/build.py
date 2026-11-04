@@ -61,7 +61,7 @@ LEGAL = {
     "operator": {"zh": "Flipic 团队", "en": "Flipic Team"},   # 运营主体
     "email": "support@flipic.app",      # 联系邮箱，Cloudflare Email Routing 转发
     "refund_days": 14,                  # 官网购买 Pro 后几天内可以退款
-    "effective": "2026-11-02",          # 生效日期
+    "effective": "2026-11-04",          # 生效日期
 }
 # Mac App Store 版的名字只放在本机的 site/private.json（不进公开仓库）；没有时页面写「Mac App Store 版」
 _private = ROOT / "private.json"
@@ -730,7 +730,7 @@ PRO = {
             ("自定义同名文件", "复制、移动、删除照片时，同名的 xmp、dop、pp3 这类附属文件，或者 JPG 和 RAW，可以设置成跟着一起处理。"),
         ],
         "buy": "购买 Pro",
-        "price_note": "一次买断，之后的更新都能用。付款后马上拿到激活码，离线激活，不用注册账号。",
+        "price_note": "一次买断，之后的更新都能用。付款后马上拿到激活码，不用注册账号。",
         "trial": "下载 Flipic 就带 7 天试用，到期后免费功能照常可用。",
         "free_title": "免费和 Pro",
         "free_head": ("功能", "免费", "Pro"),
@@ -741,7 +741,7 @@ PRO = {
                       ("自定义同名关联", "", "有")],
         "faq": [
             ("激活码怎么用？", "付款成功的页面上有激活码和「在 Flipic 中激活」按钮，点一下就激活了。也可以复制激活码，粘贴到 Flipic「设置 › Pro」里。"),
-            ("要联网验证吗？", "不用。激活码在 Mac 上离线验证，Flipic 照样默认不联网。"),
+            ("要联网验证吗？", "激活时联网登记一次，只发激活码订单号和设备号的哈希，没网也能激活。之后在 Mac 上离线验证，Flipic 照样默认不联网。"),
             ("能装在几台 Mac 上？", "你自己的 Mac 都可以用同一个激活码。"),
             ("激活码丢了怎么办？", "在 <a href=\"https://pay.flipic.app/recover?lang=zh\">找回激活码</a> 页面输入付款邮箱和卡号后四位就能找回。"),
             ("Flipic 还是开源的吗？", "是。看图和挑片的核心功能继续开源（MIT），Pro 功能的代码不在公开仓库里。"),
@@ -808,7 +808,7 @@ PRO = {
             ("Same-name files", "Choose which files with the same name go along when you copy, move or delete a photo, such as xmp, dop and pp3 sidecars, or JPG and RAW."),
         ],
         "buy": "Buy Pro",
-        "price_note": "One-time purchase with future updates included. You get your key right after paying. Offline activation, no account.",
+        "price_note": "One-time purchase with future updates included. You get your key right after paying. No account.",
         "trial": "Every download includes a 7-day trial; after it ends, the free features keep working.",
         "free_title": "Free and Pro",
         "free_head": ("Feature", "Free", "Pro"),
@@ -819,7 +819,7 @@ PRO = {
                       ("Custom linked files", "", "Yes")],
         "faq": [
             ("How do I activate?", "The payment confirmation page shows your key and an Activate in Flipic button. Or copy the key and paste it into Flipic › Settings › Pro."),
-            ("Does it need to go online?", "No. The key is verified offline on your Mac, and Flipic stays offline by default."),
+            ("Does it need to go online?", "Activation registers once, sending only hashes of the order number and device ID, and still works offline. After that the key is checked offline on your Mac, and Flipic stays offline by default."),
             ("How many Macs?", "Use the same key on all of your own Macs."),
             ("I lost my key", "Use <a href=\"https://pay.flipic.app/recover?lang=en\">Recover Key</a> with your payment email and the last four digits of your card."),
             ("Is Flipic still open source?", "Yes. The core viewer and culling features stay open source (MIT). Pro code isn’t in the public repository."),
@@ -947,9 +947,10 @@ def legal_pages(lang):
 <p>照片只在你的 Mac 上读取和显示，不会上传到任何地方。软件不需要账号，没有广告、统计和崩溃上报，也不收集设备信息。</p>
 <p>你给照片打的星级写进照片的 XMP 信息，相机 RAW 写在同名的 .xmp 文件里；挑片标记是访达标签；设置保存在这台 Mac 上。这些都留在你自己的电脑上。</p>
 <p>Flipic 默认不联网。只有你打开「自动检查更新」或点「检查更新」时，才会向 flipic.app 请求一个只写着最新版本号的文件，请求里除了软件版本号没有别的信息，也不保存 cookie。你点「立即更新」时，安装包从 GitHub 下载。</p>
+<p>另外几种情况会联网，都由你主动触发：在设置里下载「更准的中文识别」模型时，从 GitHub 下载；在「关于 Flipic」里发送反馈时，发送你写的内容、你留的邮箱（可以不填）和 App、系统版本，存在 pay.flipic.app 的反馈记录里，用来回复你和改进软件，不含照片和文件；为了防止刷屏，同时保存一个加盐处理过的 IP 哈希，不保存 IP 本身。</p>
 <p>{store_short}付费下载即是完整版，没有 App 内购买；它不检查更新，更新和付款都由 App Store 负责，App 本身不联网。</p>
 <h2>购买 Pro</h2>
-<p>在官网购买时，付款由 Stripe 处理，银行卡等支付信息由 Stripe 收集，我们看不到完整卡号。付款完成后，pay.flipic.app 从 Stripe 读取这笔订单的邮箱和订单号，生成激活码。激活码里包含邮箱和订单号，在你的 Mac 上离线验证。我们没有另外的数据库，订单记录保存在我们的 Stripe 账户里，用来帮你找回激活码、处理退款和记账。Stripe 如何处理信息见 <a href="{STRIPE_PRIVACY}">Stripe 隐私政策</a>。</p>
+<p>在官网购买时，付款由 Stripe 处理，银行卡等支付信息由 Stripe 收集，我们看不到完整卡号。付款完成后，pay.flipic.app 从 Stripe 读取这笔订单的邮箱和订单号，生成激活码。激活码里包含邮箱和订单号，在你的 Mac 上离线验证。订单记录保存在我们的 Stripe 账户里，用来帮你找回激活码、处理退款和记账。激活时，Flipic 向 pay.flipic.app 登记一次：只发送订单号的哈希和这台 Mac 设备号的哈希，不含邮箱和电脑名，用来发现被公开转卖的激活码；IP 地址只用来限制请求频率，不保存。Stripe 如何处理信息见 <a href="{STRIPE_PRIVACY}">Stripe 隐私政策</a>。</p>
 <p>找回激活码时，你填写的邮箱和卡号后四位（或收据号）只用来在 Stripe 里查找订单，不会保存。为了防止有人反复试探，找回页面按 IP 地址限制每分钟的请求次数，IP 地址不保存。</p>
 <p>在 App Store 购买时，付款和账户都由 Apple 处理，我们收不到你的姓名、邮箱或支付信息。见 <a href="{APPLE_PRIVACY}">Apple 隐私政策</a>。</p>
 <h2>网站</h2>
@@ -987,9 +988,10 @@ def legal_pages(lang):
 <p>Your photos are read and shown only on your Mac and are never uploaded. The app has no account, no ads, no analytics and no crash reporting, and it doesn’t collect device information.</p>
 <p>Star ratings are written into each photo’s XMP data, or into a matching .xmp file for camera RAW; marks are Finder tags; settings are stored on your Mac. All of this stays on your computer.</p>
 <p>Flipic is offline by default. Only when you turn on automatic update checks or click Check for Updates does it request a small file from flipic.app that contains the latest version number. The request carries nothing but the app’s version number and stores no cookies. When you click Update Now, the installer is downloaded from GitHub.</p>
+<p>A few other things connect, and only when you trigger them: downloading the more accurate recognition model in Settings fetches it from GitHub; sending feedback from About Flipic sends what you wrote, the email you leave (optional) and the app and macOS versions, stored in pay.flipic.app’s feedback records so we can reply and improve the app. No photos or files are sent. To stop spam we also keep a salted hash of the IP address, not the address itself.</p>
 <p>{store_short} is a paid download that includes everything, with no in-app purchases. It doesn’t check for updates; the App Store handles updates and payment, and the app itself doesn’t go online.</p>
 <h2>Buying Pro</h2>
-<p>On flipic.app, payment is handled by Stripe. Stripe collects your card details; we never see the full card number. After you pay, pay.flipic.app reads the order’s email address and order ID from Stripe and generates your license key. The key contains the email and order ID and is checked offline on your Mac. We keep no separate database; order records stay in our Stripe account and are used to recover keys, handle refunds and keep accounts. See the <a href="{STRIPE_PRIVACY}">Stripe Privacy Policy</a>.</p>
+<p>On flipic.app, payment is handled by Stripe. Stripe collects your card details; we never see the full card number. After you pay, pay.flipic.app reads the order’s email address and order ID from Stripe and generates your license key. The key contains the email and order ID and is checked offline on your Mac. Order records stay in our Stripe account and are used to recover keys, handle refunds and keep accounts. On activation, Flipic registers once with pay.flipic.app, sending only a hash of the order ID and a hash of this Mac’s device ID (no email or computer name), so we can spot keys that are being resold publicly; the IP address is used only for rate limiting and is not stored. See the <a href="{STRIPE_PRIVACY}">Stripe Privacy Policy</a>.</p>
 <p>When you recover a key, the email and last four card digits (or receipt number) you enter are used only to look up the order in Stripe and are not stored. To stop repeated guessing, the recovery page limits requests per minute by IP address; the address is not stored.</p>
 <p>On the App Store, Apple handles the payment and your account. We don’t receive your name, email or payment details. See the <a href="{APPLE_PRIVACY}">Apple Privacy Policy</a>.</p>
 <h2>The website</h2>

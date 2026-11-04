@@ -26,7 +26,7 @@
 
 ![Flipic browsing a folder](docs/screenshot-browse.jpg)
 
-After a shoot I wanted to go through the photos first, but Preview opens them one at a time and Lightroom wants an import. So I made Flipic: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is 2.5 MB, it makes no network connections by default, and there is no account.
+After a shoot I wanted to go through the photos first, but Preview opens them one at a time and Lightroom wants an import. So I made Flipic: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is 4.1 MB, it makes no network connections by default, and there is no account.
 
 ## Culling a shoot
 
@@ -149,11 +149,19 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 
 Viewing, rating, marking, filtering, exporting, side-by-side comparison and Cleanup Mode stay free, and all of that code is in this repository (MIT).
 
-Flipic Pro adds batch tools for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 7-day trial: press E to zoom to the eyes (paging keeps the spot), closed-eye checks in Cleanup Mode that compare each person with themselves across a burst, before/after comparison (hold `\` to switch, split line, opacity), merged JPG + RAW, sort into subfolders by rating, favorite folders on ⌥1–⌥9, delete what you didn’t pick, send a batch to your editor, and custom linked files. The free version is enough for most people; Pro just saves time for those who cull and edit a lot. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
+Flipic Pro is for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 7-day trial. Since 1.0, Pro adds three things:
+
+- **Workbench** (⌥⌘B): one project per shoot; rate, mark and delete in a grid, filter by closed eyes, blur and bursts, with a large preview showing the shooting settings and a histogram
+- **Find by content** (⌘F): type "dog", "beach" or "night" and the matching photos in the current folder are picked out; turn on the more accurate recognition to search with a phrase such as "dog running on the beach" (a one-time download of about 141 MB in Settings, then fully offline)
+- **Find by text in photos**: search "invoice" or "WiFi password" and photos with those words on them come first
+
+![Workbench](docs/shots/pro-workbench-en.webp)
+
+The other Pro features: press E to zoom to the eyes (paging keeps the spot), closed-eye checks in Cleanup Mode that compare each person with themselves across a burst, before/after comparison (hold `\` to switch, split line, opacity), merged JPG + RAW, sort into subfolders by rating, favorite folders on ⌥1–⌥9, delete what you didn’t pick, send a batch to your editor, and custom linked files. The free version is enough for most people; Pro just saves time for those who cull and edit a lot. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
 
 ## Privacy
 
-Flipic makes no network connections by default, has no account and collects no data. It only reads the images you open. Only when you choose Check for Updates… or turn on automatic update checks in Settings does it fetch a version file (version.json) from the website, sending no data (Pro also reads the list of keys revoked after refunds from that file); only Update Now downloads the new version from GitHub Releases, checks its signature and Apple notarization, and replaces the app. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. Only when you rate a photo does Flipic write the rating into its metadata or a same-name .xmp file. All the code is in this repository, so you can check for yourself.
+Flipic makes no network connections by default, has no account and collects no data. It only reads the images you open. Only when you choose Check for Updates… or turn on automatic update checks in Settings does it fetch a version file (version.json) from the website, sending no data (Pro also reads the list of keys revoked after refunds from that file); only Update Now downloads the new version from GitHub Releases, checks its signature and Apple notarization, and replaces the app. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. Only when you rate a photo does Flipic write the rating into its metadata or a same-name .xmp file. Three other things connect, and only when you trigger them: sending feedback from About Flipic sends only what you wrote, your email and the app and macOS versions; activating Pro registers once with pay.flipic.app (only hashes of the key's order number and of this Mac's device ID, no email or computer name, and activation still works if it fails); downloading the more accurate recognition model in Settings fetches it from GitHub Releases. Recognition and search run on your Mac and photos are never uploaded. All the code is in this repository, so you can check for yourself.
 
 ## Building from source
 

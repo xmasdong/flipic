@@ -323,6 +323,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             RevokeTest.run(keyFile: CommandLine.arguments[i + 1])
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--licensepingtest"), i + 1 < CommandLine.arguments.count {
+            // --licensepingtest <激活码文件> [截图文件夹]：激活登记；FLIPIC_LICENSE_PING_URL 指向本地服务器，没设就不跑
+            let outDir = i + 2 < CommandLine.arguments.count && !CommandLine.arguments[i + 2].hasPrefix("-") ? CommandLine.arguments[i + 2] : nil
+            LicensePingTest.run(keyFile: CommandLine.arguments[i + 1], outDir: outDir)
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--protest2"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in

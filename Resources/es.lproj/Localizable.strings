@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Guardando rotación…";
 "msg.rotHint" = "Vista girada · ⌘⌥S para guardar en el archivo";
 "about.body" = "■ ACERCA DE
-Un visor de imágenes nativo para macOS: apertura instantánea, navegación fluida por carpetas, zoom por gestos y EXIF de un vistazo. Las fotos se procesan en tu Mac: sin recopilación de datos ni cuentas. Solo se conecta para buscar actualizaciones, descargar el modelo de reconocimiento o enviar los comentarios que escribas.
+Un visor de imágenes nativo para macOS: apertura instantánea, navegación fluida por carpetas, zoom por gestos y EXIF de un vistazo. Las fotos se procesan en tu Mac: sin recopilación de datos ni cuentas. Solo se conecta para buscar actualizaciones, descargar el modelo de reconocimiento, activar Pro o enviar los comentarios que escribas.
 
 ■ USO
 Arrastra una carpeta o imagen a esta ventana para verla; o clic derecho sobre una imagen en el Finder y abrir con Flipic.
@@ -411,6 +411,8 @@ Arrastra una carpeta o imagen para abrir";
 "pro.activated" = "Flipic Pro está activado";
 "pro.badKey" = "Esa clave no funciona";
 "pro.badKeyInfo" = "Vuelve a copiar la clave completa desde la página de confirmación del pago o la de recuperación.";
+"pro.revoked.title" = "Esta clave de licencia se ha desactivado";
+"pro.revoked.info" = "Si la compraste de forma normal, avísanos en Acerca de Flipic › Enviar comentarios.";
 "pro.buy" = "Comprar Pro";
 "pro.choose" = "Elegir…";
 "pro.choosePrompt" = "Usar como carpeta favorita";

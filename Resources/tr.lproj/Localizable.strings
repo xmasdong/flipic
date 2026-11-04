@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Döndürme kaydediliyor…";
 "msg.rotHint" = "Görünüm döndürüldü · ⌘⌥S ile dosyaya kaydedin";
 "about.body" = "■ HAKKINDA
-macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Fotoğraflar yalnızca Mac'inizde işlenir; veri toplama yok, hesap yok. Yalnızca güncellemeleri denetlemek, tanıma modelini indirmek veya yazdığınız geri bildirimi göndermek için internete bağlanır.
+macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Fotoğraflar yalnızca Mac'inizde işlenir; veri toplama yok, hesap yok. Yalnızca güncellemeleri denetlemek, tanıma modelini indirmek, Pro'yu etkinleştirmek veya yazdığınız geri bildirimi göndermek için internete bağlanır.
 
 ■ KULLANIM
 Gezinmek için bir klasörü veya resmi bu pencereye sürükleyin; ya da Finder'da bir resme sağ tıklayıp Flipic ile açın.
@@ -411,6 +411,8 @@ Açmak için klasör veya resim sürükleyin";
 "pro.activated" = "Flipic Pro etkinleştirildi";
 "pro.badKey" = "Bu anahtar geçersiz";
 "pro.badKeyInfo" = "Anahtarın tamamını ödeme onay sayfasından veya kurtarma sayfasından yeniden kopyalayın.";
+"pro.revoked.title" = "Bu lisans anahtarı devre dışı bırakıldı";
+"pro.revoked.info" = "Normal yoldan satın aldıysanız lütfen «Flipic Hakkında › Geri Bildirim Gönder» üzerinden bize bildirin.";
 "pro.buy" = "Pro satın al";
 "pro.choose" = "Seç…";
 "pro.choosePrompt" = "Sık kullanılan klasör yap";

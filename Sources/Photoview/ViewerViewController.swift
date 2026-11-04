@@ -5275,7 +5275,16 @@ final class ViewerViewController: NSViewController {
                     .appendingPathComponent(String(format: "browse-%02d.png", i + 1)).path)
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4 + Double(total) * 1.6 + 0.5) { NSApp.terminate(nil) }
+        // --idle：最后一张停着不动，等控件自己隐藏后再截一张（宣传片里「工具条自己让开」用）
+        let idle = CommandLine.arguments.contains("--idle")
+        let end = 0.4 + Double(total) * 1.6 + 0.5
+        if idle {
+            DispatchQueue.main.asyncAfter(deadline: .now() + end + 4.5) { [weak self] in
+                self?.captureWindow(to: URL(fileURLWithPath: outDir)
+                    .appendingPathComponent(String(format: "browse-%02d-idle.png", total)).path)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + end + (idle ? 5.5 : 0)) { NSApp.terminate(nil) }
     }
 
     func runShotSequence(outDir: String) {

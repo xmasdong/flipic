@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Salvando rotação…";
 "msg.rotHint" = "Visualização girada · ⌘⌥S para salvar no arquivo";
 "about.body" = "■ SOBRE
-Um visualizador de imagens nativo para macOS: abertura instantânea, navegação fluida por pastas, zoom por gestos e EXIF num relance. As fotos são processadas no seu Mac: sem coleta de dados, sem contas. Só se conecta para verificar atualizações, baixar o modelo de reconhecimento ou enviar o feedback que você escrever.
+Um visualizador de imagens nativo para macOS: abertura instantânea, navegação fluida por pastas, zoom por gestos e EXIF num relance. As fotos são processadas no seu Mac: sem coleta de dados, sem contas. Só se conecta para verificar atualizações, baixar o modelo de reconhecimento, ativar o Pro ou enviar o feedback que você escrever.
 
 ■ COMO USAR
 Arraste uma pasta ou imagem para esta janela para navegar; ou clique direito numa imagem no Finder e abra com o Flipic.
@@ -411,6 +411,8 @@ Arraste uma pasta ou imagem para abrir";
 "pro.activated" = "O Flipic Pro está ativado";
 "pro.badKey" = "Essa chave não funciona";
 "pro.badKeyInfo" = "Copie novamente a chave completa da página de confirmação do pagamento ou da página de recuperação.";
+"pro.revoked.title" = "Esta chave de licença foi desativada";
+"pro.revoked.info" = "Se você comprou normalmente, avise-nos em Sobre o Flipic › Enviar feedback.";
 "pro.buy" = "Comprar Pro";
 "pro.choose" = "Escolher…";
 "pro.choosePrompt" = "Usar como pasta favorita";

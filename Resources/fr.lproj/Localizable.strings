@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Enregistrement de la rotation…";
 "msg.rotHint" = "Vue pivotée · ⌘⌥S pour enregistrer dans le fichier";
 "about.body" = "■ À PROPOS
-Une visionneuse d'images native pour macOS : ouverture instantanée, navigation fluide entre dossiers, zoom gestuel et EXIF en un coup d'œil. Les photos sont traitées sur votre Mac : aucune collecte de données, aucun compte. L’app ne se connecte que pour vérifier les mises à jour, télécharger le modèle de reconnaissance ou envoyer un avis que vous avez écrit.
+Une visionneuse d'images native pour macOS : ouverture instantanée, navigation fluide entre dossiers, zoom gestuel et EXIF en un coup d'œil. Les photos sont traitées sur votre Mac : aucune collecte de données, aucun compte. L’app ne se connecte que pour vérifier les mises à jour, télécharger le modèle de reconnaissance, activer Pro ou envoyer un avis que vous avez écrit.
 
 ■ UTILISATION
 Déposez un dossier ou une image dans la fenêtre pour parcourir ; ou clic droit sur une image dans le Finder → Ouvrir avec Flipic.
@@ -411,6 +411,8 @@ Déposez un dossier ou une image pour ouvrir";
 "pro.activated" = "Flipic Pro est activé";
 "pro.badKey" = "Cette clé ne fonctionne pas";
 "pro.badKeyInfo" = "Copiez à nouveau la clé complète depuis la page de confirmation de paiement ou la page de récupération.";
+"pro.revoked.title" = "Cette clé de licence a été désactivée";
+"pro.revoked.info" = "Si vous l’avez achetée normalement, dites-le-nous via À propos de Flipic › Envoyer un avis.";
 "pro.buy" = "Acheter Pro";
 "pro.choose" = "Choisir…";
 "pro.choosePrompt" = "Utiliser comme dossier favori";

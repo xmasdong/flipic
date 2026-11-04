@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Đang lưu kiểu xoay…";
 "msg.rotHint" = "Đã xoay khung xem · ⌘⌥S để lưu vào tệp";
 "about.body" = "■ GIỚI THIỆU
-Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Ảnh chỉ được xử lý trên máy Mac của bạn, không thu thập dữ liệu, không cần tài khoản. Ứng dụng chỉ kết nối mạng khi kiểm tra cập nhật, tải mô hình nhận dạng hoặc gửi góp ý bạn viết.
+Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Ảnh chỉ được xử lý trên máy Mac của bạn, không thu thập dữ liệu, không cần tài khoản. Ứng dụng chỉ kết nối mạng khi kiểm tra cập nhật, tải mô hình nhận dạng, kích hoạt Pro hoặc gửi góp ý bạn viết.
 
 ■ CÁCH DÙNG
 Kéo thư mục hoặc ảnh vào cửa sổ để duyệt; hoặc nhấp phải ảnh trong Finder và mở bằng Flipic.
@@ -411,6 +411,8 @@ Kéo thư mục hoặc ảnh vào để mở";
 "pro.activated" = "Đã kích hoạt Flipic Pro";
 "pro.badKey" = "Mã kích hoạt không đúng";
 "pro.badKeyInfo" = "Hãy sao chép lại toàn bộ mã từ trang xác nhận thanh toán hoặc trang lấy lại mã.";
+"pro.revoked.title" = "Mã kích hoạt này đã bị vô hiệu hóa";
+"pro.revoked.info" = "Nếu bạn đã mua bình thường, hãy cho chúng tôi biết qua Giới thiệu Flipic › Gửi góp ý.";
 "pro.buy" = "Mua Pro";
 "pro.choose" = "Chọn…";
 "pro.choosePrompt" = "Đặt làm thư mục hay dùng";

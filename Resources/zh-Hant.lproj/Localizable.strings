@@ -101,7 +101,7 @@
 "msg.rotSaving" = "儲存旋轉中…";
 "msg.rotHint" = "已旋轉檢視 · ⌘⌥S 可儲存到檔案";
 "about.body" = "■ 簡介
-macOS 原生看圖器：秒開大圖、順暢翻頁、手勢縮放、EXIF 隨手看。照片只在本機處理，不收集資料，不用註冊帳號。只在檢查更新、下載辨識模型或你送出回饋時連網。
+macOS 原生看圖器：秒開大圖、順暢翻頁、手勢縮放、EXIF 隨手看。照片只在本機處理，不收集資料，不用註冊帳號。只在檢查更新、下載辨識模型、啟用 Pro 或你送出回饋時連網。
 
 ■ 使用方式
 把資料夾或圖片拖進視窗即可瀏覽；也可以在 Finder 裡右鍵圖片選擇用 Flipic 開啟。
@@ -411,6 +411,8 @@ Return  重新命名目前圖片
 "pro.activated" = "Flipic Pro 已啟用";
 "pro.badKey" = "啟用碼不對";
 "pro.badKeyInfo" = "請從付款成功頁或找回頁面重新複製完整的啟用碼。";
+"pro.revoked.title" = "這個啟用碼已停用";
+"pro.revoked.info" = "如果你是正常購買的，請在「關於 Flipic › 意見回饋」裡告訴我們。";
 "pro.buy" = "購買 Pro";
 "pro.choose" = "選擇…";
 "pro.choosePrompt" = "設為常用資料夾";
