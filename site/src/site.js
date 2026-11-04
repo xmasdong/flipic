@@ -52,3 +52,27 @@
   document.querySelectorAll('.keys button').forEach(b => b.addEventListener('click', () => go(Number(b.dataset.step))));
   window.addEventListener('load', () => { get(1); get(total - 1); });
 })();
+
+// GA4 埋点：下载、购买、GitHub、找回激活码、切换语言、手机复制网址、首页翻页演示。gtag 没加载（被拦截、国内网络）时什么都不做
+(() => {
+  const send = (name, params = {}) => { if (typeof window.gtag === 'function') window.gtag('event', name, params); };
+  const where = el => (el.closest('[id]') || {}).id || (el.closest('header, footer, section, main') || {}).tagName?.toLowerCase() || 'page';
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a');
+    if (a) {
+      const href = a.getAttribute('href') || '';
+      if (/\/download\/Flipic\.dmg$|\/releases\/(latest\/)?download\//.test(href)) send('download_click', { link_location: where(a), link_url: href });
+      else if (href.startsWith('https://buy.stripe.com')) send('begin_checkout', { currency: a.dataset.currency, value: Number(a.dataset.value), link_location: where(a), items: [{ item_id: 'flipic_pro', item_name: 'Flipic Pro' }] });
+      else if (href.startsWith('https://github.com/xmasdong/flipic')) send('github_click', { link_location: where(a), link_url: href });
+      else if (href.includes('pay.flipic.app/recover')) send('recover_key_click', { link_location: where(a) });
+      else if (a.classList.contains('lang')) send('language_switch', { to: a.getAttribute('hreflang') });
+    }
+    if (e.target.closest('.copy')) send('phone_copy_url');
+  });
+  let demo = false;
+  const played = how => { if (!demo) { demo = true; send('demo_flip', { method: how }); } };
+  if (document.getElementById('frame')) {
+    document.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') played('keyboard'); });
+    document.querySelectorAll('.keys button').forEach(b => b.addEventListener('click', () => played('button')));
+  }
+})();

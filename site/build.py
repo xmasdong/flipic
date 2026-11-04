@@ -56,6 +56,11 @@ PAIRS = {
 # Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
 PRO_BUY_URL = "https://buy.stripe.com/9B66oI6Rg3uocmU2BAcbC02"
 PRO_PRICE = {"zh": "¥68", "en": "$12.99"}
+PRO_VALUE = {"zh": (68, "CNY"), "en": (12.99, "USD")}   # GA4 begin_checkout 的金额
+# GA4（媒体资源 flipic.app）。欧洲经济区、英国、瑞士默认不写统计 cookie（Consent Mode 无 cookie 请求），其他地区照常统计；
+# 广告相关一律关闭。埋点在 src/site.js，付款成功页的 purchase 在 pay.flipic.app 的 worker 里
+GA_ID = "G-YBHEXX64G3"
+GA_EEA = ["AT","BE","BG","HR","CY","CZ","DK","EE","FI","FR","DE","GR","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","RO","SK","SI","ES","SE","IS","LI","NO","GB","CH"]
 # 隐私政策和用户协议里要写明的三项，由用户填写；有一项没填，这两页就不生成，页脚也不放链接
 LEGAL = {
     "operator": {"zh": "Flipic 团队", "en": "Flipic Team"},   # 运营主体
@@ -142,6 +147,11 @@ def head(lang, path, title, desc, schema, og_type="website"):
 <meta property="og:locale" content="{'zh_CN' if lang == 'zh' else 'en_US'}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/site.css?v={ASSET_V}">
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA_ID}"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}
+gtag('consent','default',{{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',region:{json.dumps(GA_EEA)}}});
+gtag('consent','default',{{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'granted'}});
+gtag('js',new Date());gtag('config','{GA_ID}',{{site_lang:'{lang}'}});</script>
 {ld}
 </head>
 <body>
@@ -853,7 +863,8 @@ def render_pro(lang):
     schema = [faq_schema(p["faq"])]
     out = head(lang, path, p["title"], p["desc"], schema) + header(lang, path)
     price = PRO_PRICE[lang]
-    buy_btn = f'<a class="btn" href="{PRO_BUY_URL}">{p["buy"]}{" · " + esc(price) if price else ""}</a>'
+    value, currency = PRO_VALUE[lang]
+    buy_btn = f'<a class="btn" href="{PRO_BUY_URL}" data-value="{value}" data-currency="{currency}">{p["buy"]}{" · " + esc(price) if price else ""}</a>'
     try_btn = f'<a class="btn line" href="/download/Flipic.dmg" download>{DOWNLOAD_ICON}{p["try"]}</a>'
     paras = lambda xs: "".join(f"<p>{x}</p>" for x in xs)
     wb, ey, se, tx, ba = p["workbench"], p["eyes"], p["search"], p["text"], p["ba"]
@@ -950,11 +961,12 @@ def legal_pages(lang):
 <p>另外几种情况会联网，都由你主动触发：在设置里下载「更准的中文识别」模型时，从 GitHub 下载；在「关于 Flipic」里发送反馈时，发送你写的内容、你留的邮箱（可以不填）和 App、系统版本，存在 pay.flipic.app 的反馈记录里，用来回复你和改进软件，不含照片和文件；为了防止刷屏，同时保存一个加盐处理过的 IP 哈希，不保存 IP 本身。</p>
 <p>{store_short}付费下载即是完整版，没有 App 内购买；它不检查更新，更新和付款都由 App Store 负责，App 本身不联网。</p>
 <h2>购买 Pro</h2>
-<p>在官网购买时，付款由 Stripe 处理，银行卡等支付信息由 Stripe 收集，我们看不到完整卡号。付款完成后，pay.flipic.app 从 Stripe 读取这笔订单的邮箱和订单号，生成激活码。激活码里包含邮箱和订单号，在你的 Mac 上离线验证。订单记录保存在我们的 Stripe 账户里，用来帮你找回激活码、处理退款和记账。激活时，Flipic 向 pay.flipic.app 登记一次：只发送订单号的哈希和这台 Mac 设备号的哈希，不含邮箱和电脑名，用来发现被公开转卖的激活码；IP 地址只用来限制请求频率，不保存。Stripe 如何处理信息见 <a href="{STRIPE_PRIVACY}">Stripe 隐私政策</a>。</p>
+<p>在官网购买时，付款由 Stripe 处理，银行卡等支付信息由 Stripe 收集，我们看不到完整卡号。付款完成后，pay.flipic.app 从 Stripe 读取这笔订单的邮箱和订单号，生成激活码。激活码里包含邮箱和订单号，在你的 Mac 上离线验证。订单记录保存在我们的 Stripe 账户里，用来帮你找回激活码、处理退款和记账。激活时，Flipic 向 pay.flipic.app 登记一次：只发送订单号的哈希和这台 Mac 设备号的哈希，不含邮箱和电脑名，用来发现被公开转卖的激活码；IP 地址只用来限制请求频率，不保存。付款成功页会把这笔订单的金额和 Stripe 订单编号报给 Google Analytics，用来统计购买次数，不含邮箱。Stripe 如何处理信息见 <a href="{STRIPE_PRIVACY}">Stripe 隐私政策</a>。</p>
 <p>找回激活码时，你填写的邮箱和卡号后四位（或收据号）只用来在 Stripe 里查找订单，不会保存。为了防止有人反复试探，找回页面按 IP 地址限制每分钟的请求次数，IP 地址不保存。</p>
 <p>在 App Store 购买时，付款和账户都由 Apple 处理，我们收不到你的姓名、邮箱或支付信息。见 <a href="{APPLE_PRIVACY}">Apple 隐私政策</a>。</p>
 <h2>网站</h2>
-<p>flipic.app 托管在 Cloudflare 上。网站不使用 cookie，没有统计脚本、广告和第三方字体。Cloudflare 为了安全和正常运行会记录访问日志（比如 IP 地址和浏览器类型），我们只查看汇总的访问量和下载量。</p>
+<p>flipic.app 托管在 Cloudflare 上。Cloudflare 为了安全和正常运行会记录访问日志（比如 IP 地址和浏览器类型）。</p>
+<p>网站用 Google Analytics 4 统计访问量，以及点了下载、购买、GitHub 这些按钮的次数，用来了解大家从哪里来、哪些内容有用。Google Analytics 会在浏览器里存 cookie，记录页面、来源、大致地区和设备类型，不记录完整 IP，也不知道你是谁；我们关闭了广告和个性化相关的功能。来自欧洲经济区、英国和瑞士的访问不写统计 cookie。网站没有广告和第三方字体。Google 如何处理这些数据见 <a href="https://policies.google.com/privacy">Google 隐私政策</a>。软件本身不包含任何统计。</p>
 <h2>查询和删除</h2>
 <p>如果你想知道我们保存了哪些和你的订单有关的信息，或者希望删除，请发邮件到 {m}。按照财务和税务法规必须保留的付款记录除外。</p>
 <h2>政策变化</h2>
@@ -991,11 +1003,12 @@ def legal_pages(lang):
 <p>A few other things connect, and only when you trigger them: downloading the more accurate recognition model in Settings fetches it from GitHub; sending feedback from About Flipic sends what you wrote, the email you leave (optional) and the app and macOS versions, stored in pay.flipic.app’s feedback records so we can reply and improve the app. No photos or files are sent. To stop spam we also keep a salted hash of the IP address, not the address itself.</p>
 <p>{store_short} is a paid download that includes everything, with no in-app purchases. It doesn’t check for updates; the App Store handles updates and payment, and the app itself doesn’t go online.</p>
 <h2>Buying Pro</h2>
-<p>On flipic.app, payment is handled by Stripe. Stripe collects your card details; we never see the full card number. After you pay, pay.flipic.app reads the order’s email address and order ID from Stripe and generates your license key. The key contains the email and order ID and is checked offline on your Mac. Order records stay in our Stripe account and are used to recover keys, handle refunds and keep accounts. On activation, Flipic registers once with pay.flipic.app, sending only a hash of the order ID and a hash of this Mac’s device ID (no email or computer name), so we can spot keys that are being resold publicly; the IP address is used only for rate limiting and is not stored. See the <a href="{STRIPE_PRIVACY}">Stripe Privacy Policy</a>.</p>
+<p>On flipic.app, payment is handled by Stripe. Stripe collects your card details; we never see the full card number. After you pay, pay.flipic.app reads the order’s email address and order ID from Stripe and generates your license key. The key contains the email and order ID and is checked offline on your Mac. Order records stay in our Stripe account and are used to recover keys, handle refunds and keep accounts. On activation, Flipic registers once with pay.flipic.app, sending only a hash of the order ID and a hash of this Mac’s device ID (no email or computer name), so we can spot keys that are being resold publicly; the IP address is used only for rate limiting and is not stored. The payment confirmation page reports the order amount and Stripe order ID to Google Analytics to count purchases, without your email. See the <a href="{STRIPE_PRIVACY}">Stripe Privacy Policy</a>.</p>
 <p>When you recover a key, the email and last four card digits (or receipt number) you enter are used only to look up the order in Stripe and are not stored. To stop repeated guessing, the recovery page limits requests per minute by IP address; the address is not stored.</p>
 <p>On the App Store, Apple handles the payment and your account. We don’t receive your name, email or payment details. See the <a href="{APPLE_PRIVACY}">Apple Privacy Policy</a>.</p>
 <h2>The website</h2>
-<p>flipic.app is hosted on Cloudflare. It uses no cookies, no analytics scripts, no ads and no third-party fonts. Cloudflare keeps access logs (such as IP address and browser type) for security and operation; we only look at total visits and downloads.</p>
+<p>flipic.app is hosted on Cloudflare. Cloudflare keeps access logs (such as IP address and browser type) for security and operation.</p>
+<p>The website uses Google Analytics 4 to count visits and clicks on buttons such as download, buy and GitHub, so we can see where visitors come from and which pages help. Google Analytics stores cookies in your browser and records pages, referrers, approximate region and device type; it doesn’t record your full IP address or who you are, and we keep its advertising and personalization features off. Visits from the European Economic Area, the UK and Switzerland don’t get analytics cookies. The site has no ads and no third-party fonts. See the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>. The app itself contains no analytics.</p>
 <h2>Questions and deletion</h2>
 <p>To find out what we hold about your order, or to ask us to delete it, email {m}. Payment records we must keep for tax and accounting law are excepted.</p>
 <h2>Changes</h2>
