@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Đang lưu kiểu xoay…";
 "msg.rotHint" = "Đã xoay khung xem · ⌘⌥S để lưu vào tệp";
 "about.body" = "■ GIỚI THIỆU
-Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Hoạt động hoàn toàn ngoại tuyến — không gọi mạng, không thu thập dữ liệu, không tài khoản.
+Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Ảnh chỉ được xử lý trên máy Mac của bạn, không thu thập dữ liệu, không cần tài khoản. Ứng dụng chỉ kết nối mạng khi kiểm tra cập nhật, tải mô hình nhận dạng hoặc gửi góp ý bạn viết.
 
 ■ CÁCH DÙNG
 Kéo thư mục hoặc ảnh vào cửa sổ để duyệt; hoặc nhấp phải ảnh trong Finder và mở bằng Flipic.
@@ -112,7 +112,7 @@ S trình chiếu; I thông tin ảnh; T thanh hình thu nhỏ; F toàn màn hìn
 Giao diện và mọi thông báo tự theo ngôn ngữ hệ thống (hỗ trợ 14 ngôn ngữ).";
 "about.shortcutsTitle" = "Phím tắt";
 "sc.title" = "Phím tắt";
-"sc.body" = "← / →  Trước / Sau (vòng lặp)
+"sc.body" = "← / →  Trước / Sau
 ↑ / ↓  Phóng to / Thu nhỏ (giữ để lặp)
 R / L  Xoay 90° theo / ngược chiều kim đồng hồ
 S  Trình chiếu (đặt khoảng thời gian ở Hiển thị › Khoảng thời gian trình chiếu; S để dừng)
@@ -366,10 +366,10 @@ Kéo thư mục hoặc ảnh vào để mở";
 "exp.f.summaryRating" = "Xuất %1$d ảnh đang hiện (%2$@ trở lên)";
 "exp.f.summaryAll" = "Xuất %d ảnh đang hiện (cả thư mục)";
 "msg.exportSameFolder" = "Đây là thư mục hiện tại. Hãy chọn thư mục khác";
-"msg.exporting" = "Đang xử lý %1$d / %2$d";
+"msg.batchProgress" = "Đang xử lý %1$d / %2$d";
 "msg.exportedMove" = "Đã di chuyển %1$d ảnh vào “%2$@”";
 "msg.exportedCopy" = "Đã sao chép %1$d ảnh vào “%2$@”";
-"msg.exportFailed" = "Không xử lý được %d tệp";
+"msg.batchFailed" = "Không xử lý được %d tệp";
 "menu.ratingFilter" = "Xem theo số sao";
 "menu.ratingFilterAll" = "Tất cả ảnh";
 "menu.ratingAtLeast" = "%@ trở lên";
@@ -622,3 +622,61 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.text" = "Văn bản:";
 "set.liveText" = "Tự động nhận dạng văn bản trong ảnh";
 "set.liveTextNote" = "Khi dừng lại ở một ảnh trong giây lát, văn bản trong ảnh sẽ được nhận dạng để có thể chọn, sao chép và tra cứu ngay. Khi tắt, “Sao chép toàn bộ văn bản trong ảnh” vẫn dùng được.";
+
+/* 按内容查找（Pro） */
+"menu.searchContent" = "Tìm theo nội dung…";
+"cs.placeholder" = "Tìm theo nội dung (từ tiếng Anh), ví dụ cat, beach, food";
+"cs.found" = "Tìm thấy %d ảnh";
+"cs.none" = "Không tìm thấy";
+"cs.analyzing" = "Đang phân tích %1$@ / %2$@ ảnh";
+"cs.close" = "Xóa và đóng";
+"pro.list.searchContent" = "Tìm ảnh theo những gì có trong ảnh (từ tiếng Anh, ví dụ cat, beach, food), hoàn toàn ngoại tuyến";
+"pro.list.searchText" = "Tìm ảnh theo chữ có trong ảnh (tiếng Anh và tiếng Trung), ví dụ hóa đơn, biển hiệu, ảnh chụp màn hình";
+"exp.f.summaryContent" = "Xuất %1$d ảnh đang hiện (tìm theo nội dung “%2$@”)";
+
+/* 按内容查找：中文 CLIP 识别（Pro 设置） */
+"pro.clip.label" = "Tìm theo nội dung:";
+"pro.clip.toggle" = "Nhận diện tiếng Trung chính xác hơn (tải về khoảng %d MB)";
+"pro.clip.note" = "Nhận ra cả giống chi tiết như mèo ragdoll, và cả câu như “chó chạy trên bãi biển”. Tìm bằng tiếng Trung cho kết quả chính xác nhất. Chỉ tải một lần, sau đó hoàn toàn ngoại tuyến. Mô hình nhận diện là Chinese-CLIP (OFA-Sys, giấy phép Apache 2.0).";
+"pro.text.toggle" = "Tìm cả chữ trong ảnh (tiếng Anh và tiếng Trung), ví dụ hóa đơn, biển hiệu, ảnh chụp màn hình";
+"pro.prepare.toggle" = "Phân tích trước lúc rảnh, tìm kiếm không phải chờ";
+"pro.prepare.note" = "Sau khi đã dùng Tìm theo nội dung một lần, thư mục mở vài giây mà không thao tác sẽ được phân tích ở chế độ nền. Khi bạn lật ảnh thì tạm dừng; không chạy khi dùng pin dưới 20%, ở Chế độ nguồn điện thấp hoặc khi máy quá nóng.";
+"pro.clip.notInstalled" = "Chưa tải";
+"pro.clip.downloading" = "Đang tải %1$d / %2$d MB";
+"pro.clip.installing" = "Đang kiểm tra và giải nén…";
+"pro.clip.installed" = "Đã tải, chiếm %d MB";
+"pro.clip.failed" = "Tải thất bại: %@";
+"pro.clip.delete" = "Xóa";
+"pro.clip.retry" = "Thử lại";
+"pro.clip.license" = "Giấy phép mã nguồn mở…";
+"pro.clip.deleteConfirm" = "Xóa mô hình nhận diện đã tải?";
+"pro.clip.deleteInfo" = "Tìm theo nội dung sẽ quay về chỉ dùng nhận diện có sẵn. Bật lại tùy chọn sẽ tải lại mô hình.";
+"pro.clip.licenseInfo" = "Mô hình nhận diện tiếng Trung là Chinese-CLIP của OFA-Sys, được dùng theo giấy phép Apache License 2.0. Flipic đã chuyển sang định dạng Core ML và nén trọng số, không thay đổi gì khác.";
+"pro.clip.ok" = "OK";
+"clip.err.network" = "Chưa tải xong. Hãy kiểm tra kết nối mạng rồi thử lại.";
+"clip.err.checksum" = "Tệp đã tải không đầy đủ hoặc bị hỏng. Vui lòng thử lại.";
+"clip.err.unpack" = "Giải nén thất bại. Hãy kiểm tra dung lượng ổ đĩa rồi thử lại.";
+
+/* 反馈建议 */
+"menu.feedback" = "Gửi góp ý…";
+"feedback.title" = "Góp ý";
+"feedback.lead" = "Có gì chưa tiện hay muốn thêm tính năng nào? Hãy viết cho chúng tôi. Nếu góp ý được áp dụng, bạn sẽ nhận mã kích hoạt Flipic Pro vĩnh viễn.";
+"feedback.leadShort" = "Có gì chưa tiện hay muốn thêm tính năng nào? Hãy viết cho chúng tôi.";
+"feedback.placeholder" = "Ví dụ: chỗ nào chưa tiện, muốn thêm gì, gặp vấn đề gì";
+"feedback.contactPlaceholder" = "Email (không bắt buộc)";
+"feedback.contactNote" = "Để lại email nếu bạn muốn nhận mã Pro hoặc được phản hồi";
+"feedback.contactNoteShort" = "Để lại email nếu bạn muốn được phản hồi";
+"feedback.privacy" = "Chỉ gửi nội dung bạn viết, email, phiên bản ứng dụng và macOS. Không kèm ảnh hay tệp.";
+"feedback.send" = "Gửi";
+"feedback.sending" = "Đang gửi…";
+"feedback.sent" = "Đã nhận, cảm ơn bạn.";
+"feedback.copy" = "Sao chép nội dung";
+"feedback.copied" = "Đã sao chép";
+"feedback.tooLong" = "Nội dung quá dài. Vui lòng dưới 5000 ký tự.";
+"feedback.errShort" = "Nội dung quá ngắn. Vui lòng viết ít nhất 5 ký tự.";
+"feedback.badEmail" = "Email có vẻ không đúng. Hãy kiểm tra lại hoặc để trống.";
+"feedback.errOffline" = "Không kết nối được máy chủ. Hãy kiểm tra mạng rồi thử lại.";
+"feedback.errRate" = "Bạn gửi quá nhiều trong thời gian ngắn. Hãy thử lại sau mười phút.";
+"feedback.errServer" = "Máy chủ đang gặp sự cố (%@). Hãy thử lại sau.";
+"feedback.errOther" = "Không gửi được (%@).";
+"feedback.keep" = "Nội dung vẫn còn. Bạn có thể gửi sau hoặc sao chép lại.";

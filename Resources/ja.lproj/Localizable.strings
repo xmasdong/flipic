@@ -101,7 +101,7 @@
 "msg.rotSaving" = "回転を保存中…";
 "msg.rotHint" = "表示を回転しました · ⌘⌥S でファイルに保存";
 "about.body" = "■ 概要
-ネイティブ macOS 画像ビューア：即時表示、軽快なフォルダナビゲーション、ジェスチャーズーム、EXIF をひと目で確認。完全オフライン動作——ネットワーク通信なし、データ収集なし、アカウント不要。
+ネイティブ macOS 画像ビューア：即時表示、軽快なフォルダナビゲーション、ジェスチャーズーム、EXIF をひと目で確認。写真はすべて Mac 上で処理し、データ収集もアカウントもありません。ネットワークを使うのは、アップデートの確認、認識モデルのダウンロード、フィードバックの送信時だけです。
 
 ■ 使い方
 フォルダか画像をこのウインドウにドラッグして閲覧。Finder で画像を右クリックして Flipic で開くこともできます。
@@ -112,7 +112,7 @@ S でスライドショー、I で写真の情報、T でサムネイルバー�
 インターフェースと表示はすべてシステム言語に自動追従（14 言語対応）。";
 "about.shortcutsTitle" = "キーボードショートカット";
 "sc.title" = "キーボードショートカット";
-"sc.body" = "← / →  前へ / 次へ（ループ）
+"sc.body" = "← / →  前へ / 次へ
 ↑ / ↓  拡大 / 縮小（押し続けで連続）
 R / L  90° 時計回り / 反時計回りに回転
 S  スライドショー（間隔は 表示 › スライドショーの間隔、S で停止）
@@ -366,10 +366,10 @@ Return  表示中の画像を名称変更
 "exp.f.summaryRating" = "表示中の %1$d 枚を書き出す（%2$@以上）";
 "exp.f.summaryAll" = "表示中の %d 枚を書き出す（フォルダ全体）";
 "msg.exportSameFolder" = "今のフォルダと同じです。別のフォルダを選んでください";
-"msg.exporting" = "処理中 %1$d / %2$d";
+"msg.batchProgress" = "処理中 %1$d / %2$d";
 "msg.exportedMove" = "%1$d 枚を「%2$@」に移動しました";
 "msg.exportedCopy" = "%1$d 枚を「%2$@」にコピーしました";
-"msg.exportFailed" = "%d 個のファイルを処理できませんでした";
+"msg.batchFailed" = "%d 個のファイルを処理できませんでした";
 "menu.ratingFilter" = "星の数で表示";
 "menu.ratingFilterAll" = "すべての写真";
 "menu.ratingAtLeast" = "%@以上";
@@ -622,3 +622,61 @@ Return  表示中の画像を名称変更
 "set.text" = "テキスト：";
 "set.liveText" = "画像内のテキストを自動で認識";
 "set.liveTextNote" = "写真をしばらく表示すると画像内のテキストを認識し、そのまま選択・コピー・調べることができます。オフにしても「画像内のテキストをすべてコピー」は使えます。";
+
+/* 按内容查找（Pro） */
+"menu.searchContent" = "内容で検索…";
+"cs.placeholder" = "内容で検索（例：猫、犬、beach）";
+"cs.found" = "%d 枚見つかりました";
+"cs.none" = "見つかりません";
+"cs.analyzing" = "分析中 %1$@ / %2$@ 枚";
+"cs.close" = "クリアして閉じる";
+"pro.list.searchContent" = "写っているもので写真を検索（例：猫、犬、beach）、完全オフライン";
+"pro.list.searchText" = "写真に写っている文字で検索（中国語と英語）、例：領収書、看板、スクリーンショット";
+"exp.f.summaryContent" = "表示中の %1$d 枚を書き出す（内容検索「%2$@」）";
+
+/* 按内容查找：中文 CLIP 识别（Pro 设置） */
+"pro.clip.label" = "内容で検索：";
+"pro.clip.toggle" = "より正確な中国語認識（約 %d MB のダウンロード）";
+"pro.clip.note" = "ラグドールのような細かい品種や、「海辺を走る犬」のような文でも探せます。検索語は中国語が最も正確です。一度ダウンロードすれば、あとは完全にオフラインで使えます。認識モデルは Chinese-CLIP（OFA-Sys、Apache 2.0 ライセンス）です。";
+"pro.text.toggle" = "写真に写っている文字でも検索（中国語と英語）、例：領収書、看板、スクリーンショット";
+"pro.prepare.toggle" = "操作していないときに先に分析して、検索で待たない";
+"pro.prepare.note" = "内容で検索を一度使うと、フォルダを開いて数秒操作しないときにバックグラウンドで分析します。写真をめくっている間は止まります。バッテリー残量 20% 未満、低電力モード、本体が熱いときは分析しません。";
+"pro.clip.notInstalled" = "未ダウンロード";
+"pro.clip.downloading" = "ダウンロード中 %1$d / %2$d MB";
+"pro.clip.installing" = "検証して展開しています…";
+"pro.clip.installed" = "ダウンロード済み、%d MB 使用";
+"pro.clip.failed" = "ダウンロードに失敗しました：%@";
+"pro.clip.delete" = "削除";
+"pro.clip.retry" = "再試行";
+"pro.clip.license" = "オープンソースライセンス…";
+"pro.clip.deleteConfirm" = "ダウンロードした認識モデルを削除しますか？";
+"pro.clip.deleteInfo" = "内容で検索は内蔵の認識だけに戻ります。もう一度オンにすると再ダウンロードします。";
+"pro.clip.licenseInfo" = "中国語認識モデルは OFA-Sys の Chinese-CLIP で、Apache License 2.0 のもとで使用しています。Flipic は Core ML 形式に変換し重みを圧縮しました。それ以外の変更はありません。";
+"pro.clip.ok" = "OK";
+"clip.err.network" = "ダウンロードが完了しませんでした。ネットワークを確認してもう一度お試しください。";
+"clip.err.checksum" = "ダウンロードしたファイルが不完全か破損しています。もう一度お試しください。";
+"clip.err.unpack" = "展開に失敗しました。ディスクの空き容量を確認してもう一度お試しください。";
+
+/* 反馈建议 */
+"menu.feedback" = "フィードバックを送信…";
+"feedback.title" = "フィードバック";
+"feedback.lead" = "使いにくいところや欲しい機能があれば、直接お知らせください。提案が採用されたら、無期限の Flipic Pro ライセンスキーを差し上げます。";
+"feedback.leadShort" = "使いにくいところや欲しい機能があれば、直接お知らせください。";
+"feedback.placeholder" = "例：使いにくい点、追加してほしい機能、困ったこと";
+"feedback.contactPlaceholder" = "メールアドレス（任意）";
+"feedback.contactNote" = "Pro キーの受け取りや返信が必要な場合は、メールアドレスを入力してください";
+"feedback.contactNoteShort" = "返信が必要な場合は、メールアドレスを入力してください";
+"feedback.privacy" = "送信されるのは入力した内容、メールアドレス、アプリと macOS のバージョンだけです。写真やファイルは含まれません。";
+"feedback.send" = "送信";
+"feedback.sending" = "送信中…";
+"feedback.sent" = "受け取りました。ありがとうございます。";
+"feedback.copy" = "内容をコピー";
+"feedback.copied" = "コピーしました";
+"feedback.tooLong" = "長すぎます。5000 文字以内にしてください。";
+"feedback.errShort" = "短すぎます。5 文字以上入力してください。";
+"feedback.badEmail" = "メールアドレスの形式が正しくありません。確認するか、空欄にしてください。";
+"feedback.errOffline" = "サーバーに接続できません。ネットワークを確認してもう一度お試しください。";
+"feedback.errRate" = "短時間に送信しすぎています。10 分ほどしてからもう一度お試しください。";
+"feedback.errServer" = "サーバーで問題が発生しています（%@）。しばらくしてからもう一度お試しください。";
+"feedback.errOther" = "送信できませんでした（%@）。";
+"feedback.keep" = "入力した内容は残っています。あとで送信するか、コピーしておいてください。";

@@ -37,6 +37,8 @@ final class ViewerViewController: NSViewController {
     #if FLIPIC_PRO
     /// 翻页时要照搬到下一张的放大倍数和位置（Pro）
     var pendingPageZoom: ZoomableImageView.ViewState?
+    /// 按内容查找的搜索框和这个文件夹的索引（Pro）
+    var contentSearch: ContentSearchUI?
     #endif
     private var fileNameLeading: NSLayoutConstraint!
     private var slideshowButton: NSButton?
@@ -238,7 +240,13 @@ final class ViewerViewController: NSViewController {
                     return
                 }
                 self.imageView.endPeek()
-            } else if !self.exifPanel.isHidden {
+                return
+            }
+            #if FLIPIC_PRO
+            // 按内容查找的搜索框开着时，Esc 先清除并关掉它（照片信息面板开着时先关面板）
+            if self.exifPanel.isHidden, self.closeContentSearchOnEscape() { return }
+            #endif
+            if !self.exifPanel.isHidden {
                 self.exifPanel.isHidden = true   // 右上角的照片信息面板开着时，Esc 先关它
             } else if Self.escCloses {
                 // 像快速查看一样用：放大时先回到适应窗口，已经适应窗口再按就关掉回访达
@@ -852,6 +860,9 @@ final class ViewerViewController: NSViewController {
 
     func open(url: URL) {
         exitCompare()
+        #if FLIPIC_PRO
+        contentSearchFolderWillChange()
+        #endif
         prefetchedURLs.removeAll()
         decodeQueue.cancelAllOperations()
         prefetchQueue.cancelAllOperations()
@@ -881,6 +892,10 @@ final class ViewerViewController: NSViewController {
             startFolderWarmup()
             loadCaptureDatesIfNeeded()
             showCleanupHintIfNeeded()
+            #if FLIPIC_PRO
+            // 用过按内容查找的：闲下来后在后台先把这个文件夹分析好
+            contentSearchFolderDidOpen()
+            #endif
         } else {
             updateHUD()
         }
@@ -985,6 +1000,10 @@ final class ViewerViewController: NSViewController {
         recentIntervals = Array((recentIntervals + [stepInterval]).suffix(4))
         // 比清晰预览解得还快（最多 150ms 一张）才算；默认按键重复（约 80~120ms）在快机上照常逐张出清晰图
         fastStep = stepInterval < min(0.15, max(sharpCost * 1.25, 0.06))
+        #if FLIPIC_PRO
+        // 按内容查找的后台分析给翻页让路
+        ContentIndex.notePaging()
+        #endif
     }
 
     private func endRapidPaging() {
@@ -1395,7 +1414,7 @@ final class ViewerViewController: NSViewController {
     // MARK: - HUD / EXIF / 胶片条
 
     /// 左上角只用来显示几秒就消失的临时提示；照片信息统一在右上角面板（I）里看
-    private func updateHUD() {
+    func updateHUD() {
         guard !isFlashing else { return }
         hudView.isHidden = true
     }
@@ -1648,6 +1667,7 @@ final class ViewerViewController: NSViewController {
         case .beforeAfter: toggleBeforeAfter(nil)
         case .splitByRating: splitByRating(nil)
         case .switchPair: switchPairMember(nil)
+        case .searchContent: searchContent(nil)
         #endif
         default: break
         }
@@ -1730,6 +1750,9 @@ final class ViewerViewController: NSViewController {
         stopSlideshow()
         imageView.endPeek()
         if folder.markedOnly { toggleMarkedOnly(nil) }
+        #if FLIPIC_PRO
+        closeContentSearch()
+        #endif
         let folderURL = current.url.deletingLastPathComponent()
         let c = CleanupController(folderURL: folderURL, items: folder.items) { [weak self] changed in
             self?.exitCleanup(changed: changed, folderURL: folderURL)
@@ -2022,6 +2045,9 @@ final class ViewerViewController: NSViewController {
     @objc private func windowWillClose(_ note: Notification) {
         guard (note.object as? NSWindow) === view.window else { return }
         stopSlideshow()
+        #if FLIPIC_PRO
+        contentSearchWindowWillClose()
+        #endif
         // 贴合照片比例时关窗：先回到普通大小，记住的是普通窗口的位置和大小，不是那个照片形状的小窗
         if let saved = peekSaved { view.window?.setFrame(saved.frame, display: false) }
     }
@@ -2517,6 +2543,11 @@ final class ViewerViewController: NSViewController {
 
     func updateMarkedOnlyPill() {
         markedOnlyPill.isHidden = folder.filter == nil || cleanup != nil
+        #if FLIPIC_PRO
+        // 按内容查找时顶部是搜索框，不显示这一条
+        contentSearchFilterDidChange()
+        if case .content = folder.filter { markedOnlyPill.isHidden = true }
+        #endif
         switch folder.filter {
         case .minRating(let n):
             markedOnlyPillIcon.isHidden = true
@@ -2583,6 +2614,9 @@ final class ViewerViewController: NSViewController {
         case .marked: return L10n.f("exp.f.summaryMarked", "导出当前显示的 %d 张照片（已标记的）", count)
         case .minRating(let n): return L10n.f("exp.f.summaryRating", "导出当前显示的 %1$d 张照片（%2$@及以上）", count, String(repeating: "★", count: n))
         case nil: return L10n.f("exp.f.summaryAll", "导出当前显示的 %d 张照片（整个文件夹）", count)
+        #if FLIPIC_PRO
+        case .content(let m): return L10n.f("exp.f.summaryContent", "导出当前显示的 %1$d 张照片（按内容查找「%2$@」）", count, m.query)
+        #endif
         }
     }
 
@@ -2690,7 +2724,7 @@ final class ViewerViewController: NSViewController {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let (done, failed) = Self.transfer(urls, to: target, move: move) { processed in
                 guard total > 30, processed % 20 == 0 else { return }
-                DispatchQueue.main.async { self?.flash(L10n.f("msg.exporting", "正在处理 %1$d / %2$d", processed, total), seconds: 5) }
+                DispatchQueue.main.async { self?.flash(L10n.f("msg.batchProgress", "正在处理 %1$d / %2$d", processed, total), seconds: 5) }
             }
             DispatchQueue.main.async {
                 guard let self else { return }
@@ -2698,7 +2732,7 @@ final class ViewerViewController: NSViewController {
                 let folderName = target.lastPathComponent
                 var msg = move ? L10n.f("msg.exportedMove", "已移动 %1$d 张到「%2$@」", done.count, folderName)
                                : L10n.f("msg.exportedCopy", "已复制 %1$d 张到「%2$@」", done.count, folderName)
-                if failed > 0 { msg += " · " + L10n.f("msg.exportFailed", "%d 个文件没能处理", failed) }
+                if failed > 0 { msg += " · " + L10n.f("msg.batchFailed", "%d 个文件没能处理", failed) }
                 if move { self.removeTransferred(done) }
                 self.flash(msg, seconds: 3.5)
             }
@@ -3601,6 +3635,14 @@ final class ViewerViewController: NSViewController {
         textView.autoresizingMask = [.width]
         textView.textStorage?.setAttributedString(aboutContent())
         scroll.documentView = textView
+        // 右上角「反馈建议…」，和标题同一行，跟着内容一起滚动
+        let feedback = NSButton(title: L10n.t("menu.feedback", "反馈建议…"), target: NSApp.delegate,
+                                action: #selector(AppDelegate.showFeedback(_:)))
+        feedback.bezelStyle = .rounded
+        feedback.sizeToFit()
+        feedback.frame.origin = NSPoint(x: textView.frame.width - feedback.frame.width - 22, y: 24)
+        feedback.autoresizingMask = [.minXMargin, .maxYMargin]
+        textView.addSubview(feedback)
         window.contentView = scroll
         window.center()
 
@@ -5646,6 +5688,9 @@ extension ViewerViewController: NSMenuItemValidation {
             return folder.totalCount > 0 && !isProcessing
         } else if menuItem.action == #selector(openAllInEditor(_:)) {
             return folder.count > 0
+        } else if menuItem.action == #selector(searchContent(_:)) {
+            menuItem.state = contentSearch?.isOpen == true ? .on : .off
+            return folder.totalCount > 0
         }
         #endif
         return true

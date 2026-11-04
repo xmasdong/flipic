@@ -19,11 +19,18 @@ struct ImageItem {
 enum PhotoFilter: Equatable {
     case marked
     case minRating(Int)
+    #if FLIPIC_PRO
+    /// Pro：按内容查找的结果，列表按分数从高到低排
+    case content(ContentMatch)
+    #endif
 
     func matches(_ item: ImageItem) -> Bool {
         switch self {
         case .marked: return item.marked
         case .minRating(let n): return (item.rating ?? 0) >= n
+        #if FLIPIC_PRO
+        case .content(let m): return m.scores[item.url] != nil
+        #endif
         }
     }
 }
@@ -155,6 +162,9 @@ final class FolderModel {
         } else {
             unfiltered = all
             items = all.filter { isVisible($0, filter) }
+            #if FLIPIC_PRO
+            if case .content(let m) = filter { items = m.ranked(items) }
+            #endif
         }
         guard let cur, let start = all.firstIndex(where: { $0.url == cur }) else {
             index = 0
@@ -235,6 +245,9 @@ final class FolderModel {
         }
         items.sort { desc ? less($1, $0) : less($0, $1) }
         unfiltered?.sort { desc ? less($1, $0) : less($0, $1) }
+        #if FLIPIC_PRO
+        if case .content(let m) = filter { items = m.ranked(items) }
+        #endif
         index = url.flatMap { u in items.firstIndex { $0.url == u } } ?? 0
     }
 

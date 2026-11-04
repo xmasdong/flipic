@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Döndürme kaydediliyor…";
 "msg.rotHint" = "Görünüm döndürüldü · ⌘⌥S ile dosyaya kaydedin";
 "about.body" = "■ HAKKINDA
-macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Tamamen çevrimdışı — ağ isteği yok, veri toplama yok, hesap yok.
+macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Fotoğraflar yalnızca Mac'inizde işlenir; veri toplama yok, hesap yok. Yalnızca güncellemeleri denetlemek, tanıma modelini indirmek veya yazdığınız geri bildirimi göndermek için internete bağlanır.
 
 ■ KULLANIM
 Gezinmek için bir klasörü veya resmi bu pencereye sürükleyin; ya da Finder'da bir resme sağ tıklayıp Flipic ile açın.
@@ -112,7 +112,7 @@ S slayt gösterisi; I fotoğraf bilgisi; T küçük resim şeridi; F tam ekran. 
 Arayüz ve tüm mesajlar otomatik olarak sistem dilini izler (14 dil).";
 "about.shortcutsTitle" = "Klavye Kısayolları";
 "sc.title" = "Klavye Kısayolları";
-"sc.body" = "← / →  Önceki / Sonraki (döngüsel)
+"sc.body" = "← / →  Önceki / Sonraki
 ↑ / ↓  Büyüt / Küçült (basılı tutun)
 R / L  90° saat yönü / tersi döndür
 S  Slayt gösterisi (aralık: Görüntü › Slayt gösterisi aralığı; S durdurur)
@@ -366,10 +366,10 @@ Açmak için klasör veya resim sürükleyin";
 "exp.f.summaryRating" = "Gösterilen %1$d fotoğrafı aktar (%2$@ ve üstü)";
 "exp.f.summaryAll" = "Gösterilen %d fotoğrafı aktar (tüm klasör)";
 "msg.exportSameFolder" = "Bu zaten geçerli klasör. Başka bir klasör seçin";
-"msg.exporting" = "İşleniyor… %1$d / %2$d";
+"msg.batchProgress" = "İşleniyor… %1$d / %2$d";
 "msg.exportedMove" = "%1$d fotoğraf “%2$@” klasörüne taşındı";
 "msg.exportedCopy" = "%1$d fotoğraf “%2$@” klasörüne kopyalandı";
-"msg.exportFailed" = "%d dosya işlenemedi";
+"msg.batchFailed" = "%d dosya işlenemedi";
 "menu.ratingFilter" = "Puana Göre Göster";
 "menu.ratingFilterAll" = "Tüm Fotoğraflar";
 "menu.ratingAtLeast" = "%@ ve Üstü";
@@ -622,3 +622,61 @@ Açmak için klasör veya resim sürükleyin";
 "set.text" = "Metin:";
 "set.liveText" = "Fotoğraflardaki metni otomatik tanı";
 "set.liveTextNote" = "Bir fotoğrafta kısa bir süre durulunca metni tanınır; doğrudan seçilebilir, kopyalanabilir ve aranabilir. Kapalıyken de “Görseldeki Tüm Metni Kopyala” kullanılabilir.";
+
+/* 按内容查找（Pro） */
+"menu.searchContent" = "İçeriğe Göre Bul…";
+"cs.placeholder" = "İçeriğe göre bul (İngilizce kelimeler), ör. cat, beach, food";
+"cs.found" = "%d bulundu";
+"cs.none" = "Bir şey bulunamadı";
+"cs.analyzing" = "Analiz ediliyor %1$@ / %2$@ fotoğraf";
+"cs.close" = "Temizle ve kapat";
+"pro.list.searchContent" = "Fotoğrafları içindekilere göre bul (İngilizce kelimeler, ör. cat, beach, food), tamamen çevrimdışı";
+"pro.list.searchText" = "Fotoğrafları içlerindeki yazıya göre bul (İngilizce ve Çince), ör. fişler, tabelalar, ekran görüntüleri";
+"exp.f.summaryContent" = "Gösterilen %1$d fotoğrafı aktar (içerik araması “%2$@”)";
+
+/* 按内容查找：中文 CLIP 识别（Pro 设置） */
+"pro.clip.label" = "İçeriğe göre bul:";
+"pro.clip.toggle" = "Daha doğru Çince tanıma (yaklaşık %d MB indirme)";
+"pro.clip.note" = "Ragdoll kedisi gibi ayrıntılı ırkları ve “sahilde koşan köpek” gibi tam cümleleri tanır. En doğru sonuç Çince aramalarla alınır. Bir kez indirilir, sonra tamamen çevrimdışı çalışır. Tanıma modeli Chinese-CLIP’tir (OFA-Sys, Apache 2.0 lisansı).";
+"pro.text.toggle" = "Fotoğraflardaki yazıda da ara (İngilizce ve Çince), ör. fişler, tabelalar, ekran görüntüleri";
+"pro.prepare.toggle" = "Boştayken önceden analiz et, arama beklemesin";
+"pro.prepare.note" = "İçeriğe göre bul bir kez kullanıldıktan sonra, birkaç saniye işlem yapılmadan açık kalan klasör arka planda analiz edilir. Fotoğraflar arasında gezinirken durur; pil %20’nin altındayken, Düşük Güç Modu’nda veya Mac çok ısındığında çalışmaz.";
+"pro.clip.notInstalled" = "İndirilmedi";
+"pro.clip.downloading" = "İndiriliyor %1$d / %2$d MB";
+"pro.clip.installing" = "Doğrulanıyor ve açılıyor…";
+"pro.clip.installed" = "İndirildi, %d MB kullanıyor";
+"pro.clip.failed" = "İndirme başarısız: %@";
+"pro.clip.delete" = "Sil";
+"pro.clip.retry" = "Yeniden dene";
+"pro.clip.license" = "Açık kaynak lisansı…";
+"pro.clip.deleteConfirm" = "İndirilen tanıma modeli silinsin mi?";
+"pro.clip.deleteInfo" = "İçeriğe göre bul yalnızca yerleşik tanımayı kullanmaya döner. Seçeneği yeniden açarsanız model yeniden indirilir.";
+"pro.clip.licenseInfo" = "Çince tanıma modeli OFA-Sys’in Chinese-CLIP modelidir ve Apache License 2.0 kapsamında kullanılır. Flipic onu Core ML biçimine dönüştürdü ve ağırlıklarını sıkıştırdı; başka bir değişiklik yapılmadı.";
+"pro.clip.ok" = "Tamam";
+"clip.err.network" = "İndirme tamamlanmadı. Bağlantınızı kontrol edip yeniden deneyin.";
+"clip.err.checksum" = "İndirilen dosya eksik veya bozuk. Lütfen yeniden deneyin.";
+"clip.err.unpack" = "Açma başarısız oldu. Yeterli disk alanı olduğundan emin olup yeniden deneyin.";
+
+/* 反馈建议 */
+"menu.feedback" = "Geri Bildirim Gönder…";
+"feedback.title" = "Geri Bildirim";
+"feedback.lead" = "Kullanışsız bir şey mi var ya da istediğiniz bir özellik mi? Bize doğrudan yazın. Öneriniz kabul edilirse süresiz bir Flipic Pro anahtarı hediye ediyoruz.";
+"feedback.leadShort" = "Kullanışsız bir şey mi var ya da istediğiniz bir özellik mi? Bize doğrudan yazın.";
+"feedback.placeholder" = "Örneğin: neyin zor olduğu, neyin eklenmesini istediğiniz, karşılaştığınız bir sorun";
+"feedback.contactPlaceholder" = "E-posta (isteğe bağlı)";
+"feedback.contactNote" = "Pro anahtarı ya da yanıt isterseniz e-posta bırakın";
+"feedback.contactNoteShort" = "Yanıt isterseniz e-posta bırakın";
+"feedback.privacy" = "Yalnızca yazdıklarınız, e-postanız ve uygulama ile macOS sürümü gönderilir. Fotoğraf ve dosya gönderilmez.";
+"feedback.send" = "Gönder";
+"feedback.sending" = "Gönderiliyor…";
+"feedback.sent" = "Alındı, teşekkürler.";
+"feedback.copy" = "Metni Kopyala";
+"feedback.copied" = "Kopyalandı";
+"feedback.tooLong" = "Çok uzun. Lütfen 5000 karakteri geçmeyin.";
+"feedback.errShort" = "Çok kısa. Lütfen en az 5 karakter yazın.";
+"feedback.badEmail" = "Bu e-posta adresi doğru görünmüyor. Kontrol edin ya da boş bırakın.";
+"feedback.errOffline" = "Sunucuya ulaşılamıyor. Bağlantınızı kontrol edip tekrar deneyin.";
+"feedback.errRate" = "Kısa sürede çok fazla gönderim yapıldı. On dakika sonra tekrar deneyin.";
+"feedback.errServer" = "Sunucuda bir sorun oluştu (%@). Lütfen daha sonra tekrar deneyin.";
+"feedback.errOther" = "Gönderilemedi (%@).";
+"feedback.keep" = "Metniniz duruyor. Daha sonra gönderin ya da şimdilik kopyalayın.";

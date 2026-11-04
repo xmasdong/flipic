@@ -101,7 +101,7 @@
 "msg.rotSaving" = "儲存旋轉中…";
 "msg.rotHint" = "已旋轉檢視 · ⌘⌥S 可儲存到檔案";
 "about.body" = "■ 簡介
-macOS 原生看圖器：秒開大圖、順暢翻頁、手勢縮放、EXIF 隨手看。完全本機執行——無網路請求、無資料收集、無帳號。
+macOS 原生看圖器：秒開大圖、順暢翻頁、手勢縮放、EXIF 隨手看。照片只在本機處理，不收集資料，不用註冊帳號。只在檢查更新、下載辨識模型或你送出回饋時連網。
 
 ■ 使用方式
 把資料夾或圖片拖進視窗即可瀏覽；也可以在 Finder 裡右鍵圖片選擇用 Flipic 開啟。
@@ -112,7 +112,7 @@ S 幻燈片播放；I 照片資訊；T 縮圖列；F 全螢幕。控制項幾秒
 介面與全部提示自動跟隨系統語言（支援 14 種）。";
 "about.shortcutsTitle" = "鍵盤快速鍵";
 "sc.title" = "鍵盤快速鍵";
-"sc.body" = "← / →  上一張 / 下一張（循環）
+"sc.body" = "← / →  上一張 / 下一張
 ↑ / ↓  放大 / 縮小（按住連續）
 R / L  向右 / 向左旋轉 90°
 S  幻燈片播放（間隔在 顯示 › 幻燈片間隔 設定，S 停止）
@@ -366,10 +366,10 @@ Return  重新命名目前圖片
 "exp.f.summaryRating" = "匯出目前顯示的 %1$d 張照片（%2$@及以上）";
 "exp.f.summaryAll" = "匯出目前顯示的 %d 張照片（整個資料夾）";
 "msg.exportSameFolder" = "目標就是目前的資料夾，換一個資料夾";
-"msg.exporting" = "正在處理 %1$d / %2$d";
+"msg.batchProgress" = "正在處理 %1$d / %2$d";
 "msg.exportedMove" = "已搬移 %1$d 張到「%2$@」";
 "msg.exportedCopy" = "已拷貝 %1$d 張到「%2$@」";
-"msg.exportFailed" = "%d 個檔案沒能處理";
+"msg.batchFailed" = "%d 個檔案沒能處理";
 "menu.ratingFilter" = "只看星級";
 "menu.ratingFilterAll" = "全部照片";
 "menu.ratingAtLeast" = "%@及以上";
@@ -622,3 +622,61 @@ Return  重新命名目前圖片
 "set.text" = "文字：";
 "set.liveText" = "自動辨識圖中文字";
 "set.liveTextNote" = "在一張照片上停留片刻後辨識圖中文字，可以直接選取、拷貝、查詢。關掉後，「拷貝圖中全部文字」仍可使用。";
+
+/* 按内容查找（Pro） */
+"menu.searchContent" = "按內容尋找…";
+"cs.placeholder" = "按內容尋找，例如 貓、海邊、美食";
+"cs.found" = "找到 %d 張";
+"cs.none" = "沒有找到";
+"cs.analyzing" = "正在分析 %1$@ / %2$@ 張";
+"cs.close" = "清除並關閉";
+"pro.list.searchContent" = "按內容尋找照片，例如 貓、海邊、美食，完全離線";
+"pro.list.searchText" = "按照片裡的文字尋找，例如發票、路牌、截圖上的字";
+"exp.f.summaryContent" = "匯出目前顯示的 %1$d 張照片（按內容尋找「%2$@」）";
+
+/* 按内容查找：中文 CLIP 识别（Pro 设置） */
+"pro.clip.label" = "按內容尋找：";
+"pro.clip.toggle" = "更準的中文辨識（需下載約 %d MB）";
+"pro.clip.note" = "能認出布偶貓這類細的品種，也能用一句話找，例如「海邊奔跑的狗」。只下載一次，之後完全離線。辨識模型來自 Chinese-CLIP（OFA-Sys，Apache 2.0 授權）。";
+"pro.text.toggle" = "也按照片裡的文字尋找，例如發票、路牌、截圖上的字";
+"pro.prepare.toggle" = "閒置時預先分析，搜尋不用等";
+"pro.prepare.note" = "用過一次按內容尋找後，打開資料夾、幾秒沒有操作就在背景分析，翻頁時自動讓路。使用電池且電量低於 20%、低耗電模式或機器過熱時不分析。";
+"pro.clip.notInstalled" = "未下載";
+"pro.clip.downloading" = "正在下載 %1$d / %2$d MB";
+"pro.clip.installing" = "正在驗證和解壓縮…";
+"pro.clip.installed" = "已下載，佔用 %d MB";
+"pro.clip.failed" = "下載失敗：%@";
+"pro.clip.delete" = "刪除";
+"pro.clip.retry" = "重試";
+"pro.clip.license" = "開源授權…";
+"pro.clip.deleteConfirm" = "刪除下載的辨識模型？";
+"pro.clip.deleteInfo" = "按內容尋找會回到只用系統內建的辨識。之後打開開關會重新下載。";
+"pro.clip.licenseInfo" = "中文辨識模型來自 OFA-Sys 的 Chinese-CLIP，依 Apache License 2.0 使用。Flipic 將它轉換成 Core ML 格式並壓縮了權重，沒有做其他改動。";
+"pro.clip.ok" = "好";
+"clip.err.network" = "下載沒有完成，請檢查網路後重試";
+"clip.err.checksum" = "下載的檔案不完整或已損壞，請重試";
+"clip.err.unpack" = "解壓縮失敗，請確認磁碟空間足夠後重試";
+
+/* 反馈建议 */
+"menu.feedback" = "意見回饋…";
+"feedback.title" = "意見回饋";
+"feedback.lead" = "有什麼不好用、想要的功能，直接寫給我們。建議一旦被採納，送 Flipic Pro 啟用碼，永久有效。";
+"feedback.leadShort" = "有什麼不好用、想要的功能，直接寫給我們。";
+"feedback.placeholder" = "例如：哪裡不好用、希望加什麼功能、遇到了什麼問題";
+"feedback.contactPlaceholder" = "電子郵件（選填）";
+"feedback.contactNote" = "想領 Pro 或需要回覆，留個電子郵件";
+"feedback.contactNoteShort" = "需要回覆的話，留個電子郵件";
+"feedback.privacy" = "只傳送你寫的內容、電子郵件和 App 版本、系統版本，不含照片和檔案";
+"feedback.send" = "傳送";
+"feedback.sending" = "正在傳送…";
+"feedback.sent" = "已收到，謝謝";
+"feedback.copy" = "拷貝內容";
+"feedback.copied" = "已拷貝";
+"feedback.tooLong" = "內容太長了，請控制在 5000 字以內";
+"feedback.errShort" = "內容太短了，至少寫 5 個字";
+"feedback.badEmail" = "電子郵件格式不對，檢查一下，或者留空";
+"feedback.errOffline" = "連不上伺服器，檢查一下網路後再試";
+"feedback.errRate" = "傳送得太頻繁了，過十分鐘再試";
+"feedback.errServer" = "伺服器暫時出了問題（%@），稍後再試";
+"feedback.errOther" = "沒有傳送出去（%@）";
+"feedback.keep" = "寫的內容還在，可以稍後再傳，或者先拷貝下來。";

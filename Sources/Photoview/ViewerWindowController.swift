@@ -54,7 +54,13 @@ final class ViewerWindowController: NSWindowController {
 
     func runBench(folder: String) {
         guard let vc = viewerVC else { return }
-        BenchProbe.run(folder: folder, open: { vc.open(url: $0) },
+        BenchProbe.run(folder: folder, open: { url in
+                           vc.open(url: url)
+                           #if FLIPIC_PRO
+                           // BENCH_INDEX=1：打开的同时开始按内容查找的后台分析（不读缓存），看翻页受不受影响
+                           if ProcessInfo.processInfo.environment["BENCH_INDEX"] != nil { vc.startContentIndexIfNeeded(readCache: false) }
+                           #endif
+                       },
                        forward: { vc.navigateForward(nil) }, zoomActual: { vc.zoomActual(nil) },
                        state: { vc.debugZoomState }, hasImage: { vc.debugHasImage },
                        capture: { vc.debugCapture(to: $0) }, shownLevel: { vc.debugShownLevel })

@@ -213,6 +213,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             SettingsWindowController.shared.debugShotAllPanes(outDir: CommandLine.arguments[i + 1])
             return
         }
+        #if FLIPIC_PRO
+        if let i = CommandLine.arguments.firstIndex(of: "--clipsettingstest"), i + 1 < CommandLine.arguments.count {
+            // --clipsettingstest <截图文件夹>：设置里中文识别的开关、下载、删除，各状态截图
+            buildMenu()
+            License.install()
+            ClipSettingsTest.run(outDir: CommandLine.arguments[i + 1])
+            return
+        }
+        #endif
         if let i = CommandLine.arguments.firstIndex(of: "--cleanup-report"), i + 1 < CommandLine.arguments.count {
             // 默认按 Pro 的连拍比对出结果；加 --free 看免费版（固定阈值）的结果
             #if FLIPIC_PRO
@@ -277,6 +286,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     (self?.windowController?.contentViewController as? ViewerViewController)?.runEyeZoomTest(outDir: outDir)
                 }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--contentsearchtest"), i + 1 < CommandLine.arguments.count {
+            // --contentsearchtest <文件夹> [截图文件夹]：按内容查找（分析计时、各个查询的结果、结果里翻页、Esc、缓存）
+            let folder = CommandLine.arguments[i + 1]
+            let outDir = i + 2 < CommandLine.arguments.count && !CommandLine.arguments[i + 2].hasPrefix("-") ? CommandLine.arguments[i + 2] : nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runContentSearchTest(outDir: outDir)
+                }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--contentpreparetest"), i + 3 < CommandLine.arguments.count {
+            // --contentpreparetest <大文件夹> <小文件夹> <截图文件夹>：用过按内容查找的人，闲下来后在后台提前分析
+            let big = CommandLine.arguments[i + 1], small = CommandLine.arguments[i + 2], outDir = CommandLine.arguments[i + 3]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runContentPrepareTest(big: big, small: small, outDir: outDir)
             }
             return
         }
@@ -369,6 +398,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     seen[k] = a
                 }
                 NSLog("MENU shortcuts checked=%d", seen.count)
+                // 菜单上实际挂着的组合键也不能重复（新加的菜单项要过这一关）
+                var menuKeys: [String: String] = [:]
+                func walkKeys(_ menu: NSMenu) {
+                    for it in menu.items {
+                        if let sub = it.submenu { walkKeys(sub) }
+                        guard !it.keyEquivalent.isEmpty else { continue }
+                        let mods = it.keyEquivalentModifierMask.intersection([.command, .option, .control, .shift]).rawValue
+                        let k = "\(it.keyEquivalent.lowercased())-\(mods)-\(it.keyEquivalent != it.keyEquivalent.lowercased() ? 1 : 0)"
+                        if let other = menuKeys[k] { NSLog("MENU DUPLICATE menu key %@ / %@", it.title, other) }
+                        menuKeys[k] = it.title
+                    }
+                }
+                if let main = NSApp.mainMenu { walkKeys(main) }
+                NSLog("MENU menu keys checked=%d", menuKeys.count)
                 if let live = NSApp.mainMenu?.items.compactMap({ $0.submenu?.items.first { $0.action == #selector(ViewerViewController.playLivePhoto(_:)) } }).first {
                     NSLog("MENU playLive key=%@ mods=%lu", live.keyEquivalent, live.keyEquivalentModifierMask.rawValue)
                 }
@@ -390,6 +433,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 cmd("a", 0)
                 NSLog("MENU selected length after ⌘A: %d", (field.currentEditor()?.selectedRange.length ?? -1))
                 NSApp.terminate(nil)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--feedbacktest"), i + 1 < CommandLine.arguments.count {
+            // --feedbacktest <截图文件夹>：关于窗口里的入口，反馈窗口空 / 填好 / 发送成功 / 连不上 四种状态；
+            // 用 FLIPIC_FEEDBACK_URL 指向本地服务器
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.activeViewer?.showAbout(nil)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    let about = NSApp.windows.first { $0.title == L10n.t("menu.about", "关于 Flipic") && $0.isVisible }
+                    try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+                    if let w = about, let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber),
+                                                                         [.bestResolution, .boundsIgnoreFraming]),
+                       let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/0-about.png") as CFURL,
+                                                                  "public.png" as CFString, 1, nil) {
+                        CGImageDestinationAddImage(dest, img, nil)
+                        CGImageDestinationFinalize(dest)
+                    }
+                    let entry = about?.contentView.flatMap { v -> NSButton? in
+                        func find(_ v: NSView) -> NSButton? {
+                            if let b = v as? NSButton, b.action == #selector(AppDelegate.showFeedback(_:)) { return b }
+                            return v.subviews.lazy.compactMap(find).first
+                        }
+                        return find(v)
+                    }
+                    let menuItem = NSApp.mainMenu?.items.first?.submenu?.items.first { $0.action == #selector(AppDelegate.showFeedback(_:)) }
+                    NSLog("FEEDBACK about entry=%@ menu=%@", entry?.title ?? "missing", menuItem?.title ?? "missing")
+                    // 用关于窗口里的按钮打开，走真实入口
+                    entry?.performClick(nil)
+                    FeedbackWindowController.shared.runTest(outDir: outDir) { NSApp.terminate(nil) }
+                }
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--livetest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
@@ -860,6 +933,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.switchPairMember(_:)): .switchPair,
         #selector(ViewerViewController.zoomToEye(_:)): .zoomEye,
         #selector(AppDelegate.showWorkbench(_:)): .workbench,
+        #selector(ViewerViewController.searchContent(_:)): .searchContent,
     ]
     #endif
 
@@ -893,6 +967,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 alert.runModal()
             }
         }
+    }
+
+    // MARK: - 反馈建议
+
+    /// 「关于」菜单和关于窗口里的「反馈建议…」，没有看图窗口时也能打开
+    @objc func showFeedback(_ sender: Any?) {
+        FeedbackWindowController.shared.show()
     }
 
     /// 全局快捷键：Flipic 在最前面就收起来（回到刚才的软件），否则叫到最前面
@@ -942,6 +1023,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             #selector(ViewerViewController.switchPairMember(_:)), #selector(ViewerViewController.zoomToEye(_:)),
             #selector(ViewerViewController.splitByRating(_:)), #selector(ViewerViewController.openAllInEditor(_:)),
             #selector(ViewerViewController.trashUnpicked(_:)), #selector(AppDelegate.showWorkbench(_:)),
+            #selector(ViewerViewController.searchContent(_:)),
         ]
         func walk(_ m: NSMenu) {
             for it in m.items {
@@ -994,6 +1076,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         addMenu(L10n.t("menu.about", "关于 Flipic")) { m in
             item(m, L10n.t("menu.about", "关于 Flipic"), #selector(ViewerViewController.showAbout(_:)))
             item(m, L10n.t("menu.checkUpdates", "检查更新…"), #selector(AppDelegate.checkForUpdates(_:))).target = self
+            item(m, L10n.t("menu.feedback", "反馈建议…"), #selector(AppDelegate.showFeedback(_:))).target = self
             m.addItem(.separator())
             item(m, L10n.t("menu.settings", "设置…"), #selector(ViewerViewController.showSettings(_:)), ",")
             m.addItem(.separator())
@@ -1103,6 +1186,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             filterItem.submenu = filterMenu
             m.addItem(filterItem)
             item(m, L10n.t("menu.markedOnly", "只看已标记"), #selector(ViewerViewController.toggleMarkedOnly(_:)))
+            #if FLIPIC_PRO
+            item(m, L10n.t("menu.searchContent", "按内容查找…"), #selector(ViewerViewController.searchContent(_:)))
+            #endif
             m.addItem(.separator())
             item(m, L10n.t("menu.compare2", "并排对比 2 张"), #selector(ViewerViewController.toggleCompare(_:)))
             item(m, L10n.t("menu.compare4", "并排对比 4 张"), #selector(ViewerViewController.toggleCompare4(_:)))

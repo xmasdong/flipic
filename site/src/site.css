@@ -204,15 +204,70 @@ footer nav { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; margin-bottom: 1
   .guides li a { grid-template-columns: 2rem 1fr; }
   .guides li a span { grid-column: 2; }
 }
-.pro-h { margin-top: 3rem; }
-.pro-buy { margin: 3rem 0 1rem; }
-
 /* 首页「免费版已经够用」：就是一段话，不做卡片 */
 .pro-note { padding-block: clamp(3rem, 7vw, 5rem); border-top: 1px solid var(--rule); }
 .pro-note p { max-width: var(--measure); color: var(--ink-2); margin: 0 0 .9rem; }
 .pro-note a { font-weight: 600; }
 .article .lede { color: var(--ink); font-family: var(--display); font-size: clamp(1.3rem, 2.4vw, 1.6rem); line-height: 1.45; }
 .prose h3 { color: var(--ink); margin-top: 1.8rem; }
-/* Pro 页的购买按钮不抢眼：描边，不填色 */
-.pro-buy .btn { background: transparent; color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
-.pro-buy .btn:hover { background: var(--bg-2); }
+
+/* Pro 页：首屏大截图，下面每个功能换一种排法（左右交替、两张并排、通栏、小格子），都用真截图 */
+.pro-hero { padding-block: clamp(2rem, 6vw, 4.5rem) clamp(2.5rem, 6vw, 4.5rem); }
+.pro-hero h1 { font-size: clamp(2.2rem, 6vw, 4rem); }
+.pro-hero .get { margin-top: 1.8rem; }
+.pro-note-line { margin: 1rem 0 0; max-width: var(--measure); font-size: .875rem; }
+.btn.line { background: transparent; color: var(--accent); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.btn.line:hover { background: var(--bg-2); }
+.pro figure { margin: 0; }
+.pro .pro-hero-shot { margin: clamp(2rem, 5vw, 3.25rem) 0 0; }
+.pro figcaption { font-size: .875rem; color: var(--ink-3); margin-top: .7rem; }
+.pro .copytext kbd, .pro-split kbd { font-size: .8rem; }
+
+.pro-honest {
+  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(2rem, 6vw, 5rem); align-items: start;
+  padding-block: clamp(3rem, 7vw, 5rem); border-top: 1px solid var(--rule);
+}
+.pro-honest h2 { font-size: clamp(1.5rem, 2.8vw, 2.1rem); }
+.pro-honest p { margin: 0 0 .95rem; color: var(--ink-2); max-width: var(--measure); }
+.pro-honest aside { background: var(--bg-2); border: 1px solid var(--rule); border-radius: 14px; padding: 1.4rem 1.5rem 1.1rem; }
+.pro-honest aside h3 { font-size: 1.05rem; margin-bottom: .7rem; }
+.pro-honest ul { margin: 0; padding: 0; list-style: none; color: var(--ink-2); font-size: .975rem; }
+.pro-honest li { padding: .55rem 0; border-top: 1px solid var(--rule); }
+
+/* 标题在左、说明在右的一行，下面接并排的两张或一张通栏 */
+.pro-pair, .pro-wide { padding-block: clamp(3.5rem, 8vw, 6.5rem); border-top: 1px solid var(--rule); }
+.pro-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(1rem, 4vw, 4rem); align-items: baseline; margin-bottom: clamp(1.75rem, 4vw, 2.75rem); }
+.pro-split h2 { margin: 0; }
+.pro-split p { margin: 0; color: var(--ink-2); max-width: var(--measure); }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1rem, 2.5vw, 2rem); }
+.pro-text { grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); }
+
+.pro-small { padding-block: clamp(3.5rem, 8vw, 6rem); border-top: 1px solid var(--rule); }
+.pro-small ul { list-style: none; margin: 1.75rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem clamp(1.5rem, 4vw, 3rem); }
+.pro-small li { border-top: 2px solid var(--ink); padding-top: 1rem; }
+.pro-small h3 { font-size: 1.1rem; }
+.pro-small p { margin: 0; color: var(--ink-2); font-size: .975rem; }
+
+.pro-buy-row {
+  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: clamp(2rem, 6vw, 5rem); align-items: start;
+  padding-block: clamp(3.5rem, 8vw, 6rem); border-top: 1px solid var(--rule);
+}
+.pro-card { position: sticky; top: 1.5rem; background: var(--bg-2); border: 1px solid var(--rule); border-radius: 14px; padding: 1.6rem 1.6rem 1.3rem; }
+.pro-card p { margin: 0 0 .8rem; color: var(--ink-2); font-size: .975rem; }
+.pro-card .pro-price { font-family: var(--display); font-size: 2.6rem; line-height: 1.1; color: var(--ink); margin-bottom: .6rem; }
+.pro-card .get { margin: 1.2rem 0 1rem; }
+.pro-card .alt { font-size: .875rem; }
+.pro .faq { padding-top: clamp(2.5rem, 6vw, 4rem); }
+
+@media (max-width: 760px) {
+  .pro-honest, .pro-split, .pro-buy-row, .pro-text { grid-template-columns: 1fr; }
+  .pro-small ul { grid-template-columns: 1fr; gap: 1.5rem; }
+  .pair { gap: .75rem; }
+  .pro-card { position: static; }
+  .pro-hero .get .btn { width: 100%; justify-content: center; }
+  .pro .feature .shot { order: -1; }
+}
+@media (min-width: 761px) and (max-width: 1000px) {
+  .pro-small ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+

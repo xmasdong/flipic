@@ -672,22 +672,56 @@ PRO = {
     "zh": {
         "path": "/pro/",
         "title": "Flipic Mac 看图 Pro：给大量挑片、修图的摄影师准备的批量功能",
-        "desc": "Flipic 免费版已经够大多数人用。Pro 只加了批量处理和几个专业功能，一次买断，下载就有 7 天试用。",
+        "desc": "Flipic 免费版已经够大多数人用。Pro 加了管拍摄的工作台、放大到眼睛、按内容和照片里的字找照片、修图前后对比这些功能，一次买断，下载就有 7 天试用。",
+        "eyebrow": "给经常挑片的摄影师",
         "h1": "Flipic Pro",
-        "lede": "先说一句：大多数人用免费版就够了。",
+        "lede": "给一次要挑几百上千张照片的人多准备的几样东西。一次买断，下载 Flipic 就能先试用 7 天。",
+        "try": "下载，先试用 7 天",
+        "hero_alt": "Flipic 工作台：左边是拍摄项目列表，中间是一场婚礼的宫格，右边是大图和直方图",
+        "honest_title": "先说一句：大多数人用免费版就够了",
         "honest": [
-            "看图、RAW 照片秒开、打星、标记、按星级筛选、导出到文件夹、并排对比、清理相似和模糊的照片，这些都是免费的，代码也开源，以后不会改成要付费。",
-            "Pro 是给经常一次处理几百上千张照片的人准备的，加了几个批量处理和修图相关的功能，能省掉一些重复操作。如果你平时只是看看照片、偶尔挑几张，用不到它，不用买。",
-            "如果你确实经常整理大量照片，可以先免费试用 7 天，觉得有用再买。卖 Pro 的收入用来继续维护 Flipic，免费版也会一直更新。",
+            "看图、RAW 秒开、打星、标记、按星级筛选、导出到文件夹、并排对比、清理相似和模糊的照片，这些都是免费的，代码也开源，以后不会改成要付费。",
+            "Pro 是给经常一次处理几百上千张照片的人准备的。平时只是看看照片、偶尔挑几张的话，用不到它，不用买。卖 Pro 的收入用来继续维护 Flipic，免费版也会一直更新。",
         ],
-        "buy": "购买 Pro",
-        "price_note": "一次买断，之后的更新都能用。付款后马上拿到激活码，离线激活，不用注册账号。",
-        "trial": "下载 Flipic 就带 7 天试用，到期后免费功能照常可用。",
         "skip_title": "这些情况用不到 Pro",
         "skip": ["只是想双击图片，用方向键看完一个文件夹", "偶尔给照片打星、标记几张，再导出到一个文件夹", "清理手机里导出来的重复、模糊照片"],
-        "features_title": "Pro 多了哪些功能",
-        "features": [
-            ("修图前后对比", "原片和修过的那张叠在一起，按住 \\ 看修图前，松开看修图后。也可以拖一条分割线左右对照，或者调修图后那张的透明度。Flipic 会按文件名找到对应的两张，比如 IMG_1234.RAF 和 IMG_1234-编辑.jpg，或者导出文件夹里同名的那张。"),
+        "workbench": {
+            "h": "工作台",
+            "body": [
+                "另开一个窗口管一场一场的拍摄。左边每个拍摄文件夹是一个项目，可以置顶、分组、标颜色，状态分待挑、挑片中、已交付；中间宫格打星、标记、删除；右边是大图、拍摄参数和直方图。",
+                "上面一排按星级、标记、闭眼、模糊、连拍筛选。点「闭眼」，闭着眼的照片就单独列出来，框出是哪张脸。还有单张和两张对比视图。菜单「窗口 › 工作台」，快捷键 <kbd>⌥⌘B</kbd>。",
+            ],
+            "img": "pro-closed-eyes.webp",
+            "alt": "工作台按「闭眼」筛选，只剩 4 张，每张闭眼的脸上有橙色框",
+        },
+        "eyes": {
+            "h": "放大到眼睛",
+            "body": "按 <kbd>E</kbd> 一下放大到人物的两眼中间，往下翻页停在同一个位置，盯着眼睛看哪张对上了焦。",
+            "shots": [("pro-eyes-fit.webp", "适应窗口的新娘照片", "整张看"), ("pro-eyes-zoom.webp", "按 E 以后放大到新娘的眼睛", "按 E 以后")],
+        },
+        "search": {
+            "h": "按内容找照片",
+            "body": [
+                "按 <kbd>⌘F</kbd> 输入「猫」「海边」「夜景」，当前文件夹里拍到这些的照片就挑出来，底下的缩略图栏只剩找到的那几张。",
+                "在设置里下载一次约 141 MB 的中文识别模型后，还能搜「布偶猫」这样的细分品种，或者一句话「海边奔跑的狗」。都在本机识别，照片不上传。",
+            ],
+            "img": "pro-search.webp",
+            "alt": "搜「布偶猫」，在一个混着猫、狗、美食的文件夹里找到 10 张布偶猫",
+        },
+        "text": {
+            "h": "按照片里的字找",
+            "body": ["搜「发票」「会议纪要」「WiFi 密码」，图上有这几个字的照片排在最前面，简体繁体互通。拍过的菜单、通知、票据，不用一张张翻。"],
+            "img": "pro-text.webp",
+            "alt": "搜「发票」，找到一张拍下来的增值税发票",
+        },
+        "ba": {
+            "h": "修图前后对比",
+            "body": "原片和修过的那张叠在一起，按住 <kbd>\\</kbd> 看修图前，松开看修图后。也可以拖一条分割线左右对照，或者调修图后那张的透明度。Flipic 会按文件名找到对应的两张，比如 IMG_1234.RAF 和 IMG_1234-编辑.jpg，或者导出文件夹里同名的那张。",
+            "img": "pro-before-after.webp",
+            "alt": "修图前后对比的分割视图：左边是原片，右边是调亮、调冷以后的版本",
+        },
+        "small_title": "还有这些",
+        "small": [
             ("JPG 和 RAW 合并显示", "相机同时存 JPG 和 RAW 的话，同名的两个文件只显示成一张，张数不会翻倍，按 V 切换看哪一张。打星、标记、导出、删除都当成一张处理。"),
             ("按星级分到子文件夹", "打完星以后，可以把整个文件夹的照片按星级复制或移动到「5 星」「4 星」这样的子文件夹里。"),
             ("常用文件夹", "最多设 9 个常用文件夹，看图时按 ⌥1 到 ⌥9 就把当前照片复制或移动过去。"),
@@ -695,11 +729,14 @@ PRO = {
             ("一次在后期软件里打开多张", "把筛出来的照片一次在 Lightroom、Photoshop 或 Capture One 里打开，有 RAW 的打开 RAW。"),
             ("自定义同名文件", "复制、移动、删除照片时，同名的 xmp、dop、pp3 这类附属文件，或者 JPG 和 RAW，可以设置成跟着一起处理。"),
         ],
+        "buy": "购买 Pro",
+        "price_note": "一次买断，之后的更新都能用。付款后马上拿到激活码，离线激活，不用注册账号。",
+        "trial": "下载 Flipic 就带 7 天试用，到期后免费功能照常可用。",
         "free_title": "免费和 Pro",
         "free_head": ("功能", "免费", "Pro"),
         "free_rows": [("看图、RAW 秒开、HDR、幻灯片", "有", "有"), ("评星、标记、按星级筛选", "有", "有"),
                       ("导出到文件夹、并排对比、清理模式", "有", "有"), ("批量转格式、批量重命名", "有", "有"),
-                      ("修图前后对比", "", "有"), ("JPG 和 RAW 合并显示", "", "有"), ("按星级分到子文件夹", "", "有"),
+                      ("工作台", "", "有"), ("放大到眼睛", "", "有"), ("按内容、按照片里的字找照片", "", "有"), ("修图前后对比", "", "有"), ("JPG 和 RAW 合并显示", "", "有"), ("按星级分到子文件夹", "", "有"),
                       ("常用文件夹 ⌥1–⌥9", "", "有"), ("删除没挑中的照片", "", "有"), ("批量送进后期软件", "", "有"),
                       ("自定义同名关联", "", "有")],
         "faq": [
@@ -713,22 +750,56 @@ PRO = {
     "en": {
         "path": "/en/pro/",
         "title": "Flipic for Mac Pro: batch tools for photographers who cull and edit a lot",
-        "desc": "The free Flipic is enough for most people. Pro adds batch and pro tools only. One-time purchase, 7-day trial in every download.",
+        "desc": "The free Flipic is enough for most people. Pro adds a Workbench for your shoots, zoom to the eyes, search by what’s in a photo or the text on it, and before & after. One-time purchase, 7-day trial in every download.",
+        "eyebrow": "For photographers who cull a lot",
         "h1": "Flipic Pro",
-        "lede": "First, most people will be fine with the free version.",
+        "lede": "A few extra tools for people who go through hundreds or thousands of photos at a time. One-time purchase, and every download includes a 7-day trial.",
+        "try": "Download and try it for 7 days",
+        "hero_alt": "Flipic Workbench: shoot projects on the left, a wedding shoot in the grid, a large preview with a histogram on the right",
+        "honest_title": "First, most people will be fine with the free version",
         "honest": [
             "Viewing, quick RAW previews, ratings, marks, filtering by rating, export to a folder, side-by-side comparison and cleaning up similar or blurry photos are all free, the code is open source, and none of it will become paid.",
-            "Pro is for people who often go through hundreds or thousands of photos at a time. It adds a few batch and editing-related tools that save some repetitive work. If you mostly look at photos and pick a few now and then, you won’t use it, so there’s no need to buy it.",
-            "If you do sort through a lot of photos, try it free for 7 days and buy it only if it helps. Pro sales pay for keeping Flipic going, and the free version keeps getting updates too.",
+            "Pro is for people who often go through hundreds or thousands of photos at a time. If you mostly look at photos and pick a few now and then, you won’t use it, so there’s no need to buy it. Pro sales pay for keeping Flipic going, and the free version keeps getting updates too.",
         ],
-        "buy": "Buy Pro",
-        "price_note": "One-time purchase with future updates included. You get your key right after paying. Offline activation, no account.",
-        "trial": "Every download includes a 7-day trial; after it ends, the free features keep working.",
         "skip_title": "You won’t need Pro if you",
         "skip": ["just want to double-click a photo and page through the folder", "rate or mark a few photos now and then and export them to a folder", "clean up duplicate or blurry photos from your phone"],
-        "features_title": "What Pro adds",
-        "features": [
-            ("Before & after", "The original and the edited version sit on top of each other. Hold \\ to see the original and let go to see the edit. You can also drag a split line to compare side by side, or change the edit’s opacity. Flipic finds the pair by file name, such as IMG_1234.RAF and IMG_1234-Edit.jpg, or a file with the same name in an export folder."),
+        "workbench": {
+            "h": "Workbench",
+            "body": [
+                "A separate window for managing your shoots. On the left, each shoot folder is a project you can pin, group and color-label, with a status: To cull, Culling, Delivered. In the middle, a grid for rating, marking and deleting. On the right, a large preview with shooting details and a histogram.",
+                "The row on top filters by rating, marks, closed eyes, blur or bursts. Click Blinks and only the photos with closed eyes are left, with the face outlined. Single and two-up compare views too. Window › Workbench, or <kbd>⌥⌘B</kbd>.",
+            ],
+            "img": "pro-closed-eyes-en.webp",
+            "alt": "Workbench filtered to Blinks: four photos left, each closed-eye face outlined in orange",
+        },
+        "eyes": {
+            "h": "Zoom to the eyes",
+            "body": "Press <kbd>E</kbd> to zoom straight to the space between a subject’s eyes. Paging keeps the same spot, so you can check focus across a burst.",
+            "shots": [("pro-eyes-fit.webp", "A bride, fitted to the window", "Whole photo"), ("pro-eyes-zoom.webp", "After pressing E, zoomed to the bride’s eyes", "After pressing E")],
+        },
+        "search": {
+            "h": "Find photos by what’s in them",
+            "body": [
+                "Press <kbd>⌘F</kbd> and type “cat”, “beach” or “night” to pick out matching photos in the folder. The thumbnail strip shows only what was found.",
+                "After a one-time 141 MB download in Settings you can also search for specific breeds or whole phrases (best in Chinese). Recognition runs on your Mac; nothing is uploaded.",
+            ],
+            "img": "pro-search-en.webp",
+            "alt": "Searching for cat in a folder of cats, dogs and food; only the cats are left in the strip",
+        },
+        "text": {
+            "h": "Find photos by the text in them",
+            "body": ["Search for “invoice”, “meeting notes” or “WiFi password” and photos with those words on them come first. Menus, notices and receipts you took a picture of, without paging through them all."],
+            "img": "pro-text-en.webp",
+            "alt": "Searching for invoice finds a photo of a printed invoice",
+        },
+        "ba": {
+            "h": "Before & after",
+            "body": "The original and the edited version sit on top of each other. Hold <kbd>\\</kbd> to see the original and let go to see the edit. You can also drag a split line to compare side by side, or change the edit’s opacity. Flipic finds the pair by file name, such as IMG_1234.RAF and IMG_1234-Edit.jpg, or a file with the same name in an export folder.",
+            "img": "pro-before-after-en.webp",
+            "alt": "Before and after split view: the original on the left, a brighter, cooler edit on the right",
+        },
+        "small_title": "And also",
+        "small": [
             ("Show JPG and RAW as one photo", "If your camera saves both JPG and RAW, each pair shows up as one photo, so the count doesn’t double. Press V to switch between them. Rating, marking, exporting and deleting treat the pair as one."),
             ("Sort into folders by rating", "After rating, copy or move the photos in a folder into subfolders like “5 stars” and “4 stars”."),
             ("Favorite folders", "Set up to nine folders, then press ⌥1 to ⌥9 while viewing to copy or move the current photo there."),
@@ -736,11 +807,14 @@ PRO = {
             ("Open several photos in your editor", "Open the photos you filtered in Lightroom, Photoshop or Capture One at once, using the RAW file when there is one."),
             ("Same-name files", "Choose which files with the same name go along when you copy, move or delete a photo, such as xmp, dop and pp3 sidecars, or JPG and RAW."),
         ],
+        "buy": "Buy Pro",
+        "price_note": "One-time purchase with future updates included. You get your key right after paying. Offline activation, no account.",
+        "trial": "Every download includes a 7-day trial; after it ends, the free features keep working.",
         "free_title": "Free and Pro",
         "free_head": ("Feature", "Free", "Pro"),
         "free_rows": [("Viewing, instant RAW, HDR, slideshow", "Yes", "Yes"), ("Ratings, marks, filter by rating", "Yes", "Yes"),
                       ("Export to folder, side-by-side, Cleanup Mode", "Yes", "Yes"), ("Batch convert, batch rename", "Yes", "Yes"),
-                      ("Before & after", "", "Yes"), ("Merge JPG and RAW", "", "Yes"), ("Sort into folders by rating", "", "Yes"),
+                      ("Workbench", "", "Yes"), ("Zoom to the eyes", "", "Yes"), ("Find photos by content or text", "", "Yes"), ("Before & after", "", "Yes"), ("Merge JPG and RAW", "", "Yes"), ("Sort into folders by rating", "", "Yes"),
                       ("Favorite folders ⌥1–⌥9", "", "Yes"), ("Delete what you didn’t pick", "", "Yes"), ("Send a batch to your editor", "", "Yes"),
                       ("Custom linked files", "", "Yes")],
         "faq": [
@@ -754,6 +828,24 @@ PRO = {
 }
 
 
+def shot_size(name):
+    """读 webp 文件头里的宽高，Pro 页的截图不用手写尺寸"""
+    b = (DOCS / "shots" / name).read_bytes()[:30]
+    kind = b[12:16]
+    if kind == b"VP8X":
+        return 1 + int.from_bytes(b[24:27], "little"), 1 + int.from_bytes(b[27:30], "little")
+    if kind == b"VP8 ":
+        return int.from_bytes(b[26:28], "little") & 0x3FFF, int.from_bytes(b[28:30], "little") & 0x3FFF
+    if kind == b"VP8L":
+        v = int.from_bytes(b[21:25], "little")
+        return (v & 0x3FFF) + 1, ((v >> 14) & 0x3FFF) + 1
+    raise ValueError(name)
+
+
+def pro_shot(name, alt, eager=False):
+    return shot(name, alt, *shot_size(name), eager=eager)
+
+
 def render_pro(lang):
     t = T[lang]
     p = PRO[lang]
@@ -761,30 +853,68 @@ def render_pro(lang):
     schema = [faq_schema(p["faq"])]
     out = head(lang, path, p["title"], p["desc"], schema) + header(lang, path)
     price = PRO_PRICE[lang]
-    buy = (f'<div class="get"><a class="btn" href="{PRO_BUY_URL}">{p["buy"]}{" · " + esc(price) if price else ""}</a></div>'
-           f'<p class="alt">{p["price_note"]}</p>')
-    honest = "".join(f"<p>{esc(x)}</p>" for x in p["honest"])
+    buy_btn = f'<a class="btn" href="{PRO_BUY_URL}">{p["buy"]}{" · " + esc(price) if price else ""}</a>'
+    try_btn = f'<a class="btn line" href="/download/Flipic.dmg" download>{DOWNLOAD_ICON}{p["try"]}</a>'
+    paras = lambda xs: "".join(f"<p>{x}</p>" for x in xs)
+    wb, ey, se, tx, ba = p["workbench"], p["eyes"], p["search"], p["text"], p["ba"]
+    hero_img = "pro-workbench.webp" if lang == "zh" else "pro-workbench-en.webp"
     skip = "".join(f"<li>{esc(x)}</li>" for x in p["skip"])
-    feats = "".join(f"<section><h3>{esc(h)}</h3><p>{esc(b)}</p></section>" for h, b in p["features"])
+    pair = "".join(f"<figure>{pro_shot(img, alt)}<figcaption>{esc(cap)}</figcaption></figure>" for img, alt, cap in ey["shots"])
+    small = "".join(f"<li><h3>{esc(h)}</h3><p>{esc(b)}</p></li>" for h, b in p["small"])
     hd = p["free_head"]
     rows = "".join(f'<tr><td>{esc(a)}</td><td>{esc(b)}</td><td class="yes">{esc(c)}</td></tr>' for a, b, c in p["free_rows"])
     faqs = "".join(f"<details><summary>{esc(q)}</summary><p>{a}</p></details>" for q, a in p["faq"])
-    out += f"""<main id="main" class="narrow article">
-<h1>{p['h1']}</h1>
-<p class="lede">{p['lede']}</p>
-<div class="prose">{honest}</div>
-<h2 class="pro-h">{p['skip_title']}</h2>
-<ul class="prose">{skip}</ul>
-{download_block(lang)}
-<h2 class="pro-h">{p['features_title']}</h2>
-<div class="prose">{feats}</div>
-<h2 class="pro-h">{p['free_title']}</h2>
-<table><thead><tr><th>{hd[0]}</th><th>{hd[1]}</th><th>{hd[2]}</th></tr></thead><tbody>{rows}</tbody></table>
-<div class="pro-buy">{buy}<p>{p['trial']}</p></div>
-<section class="faq"><h2>{t['faq']}</h2>{faqs}</section>
+    price_tag = f'<p class="pro-price">{esc(price)}</p>' if price else ""
+    out += f"""<main id="main" class="pro">
+<section class="wrap pro-hero">
+  <p class="eyebrow rise">{p['eyebrow']}</p>
+  <h1 class="rise">{p['h1']}</h1>
+  <p class="lede rise">{p['lede']}</p>
+  <div class="get rise">{buy_btn}{try_btn}</div>
+  <p class="alt pro-note-line">{p['price_note']}</p>
+  <figure class="pro-hero-shot">{pro_shot(hero_img, p['hero_alt'], eager=True)}</figure>
+</section>
+<section class="wrap pro-honest">
+  <div><h2>{p['honest_title']}</h2>{paras(map(esc, p['honest']))}</div>
+  <aside><h3>{p['skip_title']}</h3><ul>{skip}</ul></aside>
+</section>
+<div class="wrap">
+<section class="feature">
+  <div class="copytext"><h2>{wb['h']}</h2>{paras(wb['body'])}</div>
+  {pro_shot(wb['img'], wb['alt'])}
+</section>
+<section class="pro-pair">
+  <div class="pro-split"><h2>{ey['h']}</h2><p>{ey['body']}</p></div>
+  <div class="pair">{pair}</div>
+</section>
+<section class="feature flip">
+  <div class="copytext"><h2>{se['h']}</h2>{paras(se['body'])}</div>
+  {pro_shot(se['img'], se['alt'])}
+</section>
+<section class="feature pro-text">
+  <div class="copytext"><h2>{tx['h']}</h2>{paras(tx['body'])}</div>
+  {pro_shot(tx['img'], tx['alt'])}
+</section>
+<section class="pro-wide">
+  <div class="pro-split"><h2>{ba['h']}</h2><p>{ba['body']}</p></div>
+  {pro_shot(ba['img'], ba['alt'])}
+</section>
+</div>
+<section class="wrap pro-small"><h2>{p['small_title']}</h2><ul>{small}</ul></section>
+<section class="wrap pro-buy-row">
+  <div><h2>{p['free_title']}</h2><table><thead><tr><th>{hd[0]}</th><th>{hd[1]}</th><th>{hd[2]}</th></tr></thead><tbody>{rows}</tbody></table></div>
+  <aside class="pro-card">
+    <p class="pro-price">{esc(price)}</p>
+    <p>{p['price_note']}</p>
+    <div class="get">{buy_btn}</div>
+    <p class="alt">{p['trial']}</p>
+  </aside>
+</section>
+<section class="wrap faq"><h2>{t['faq']}</h2>{faqs}</section>
 </main>
 """
     return out + footer(lang)
+
 
 STRIPE_PRIVACY = "https://stripe.com/privacy"
 APPLE_PRIVACY = "https://www.apple.com/legal/privacy/"

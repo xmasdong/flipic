@@ -112,7 +112,7 @@
 "msg.rotSaving" = "保存旋转中…";
 "msg.rotHint" = "已旋转视图 · ⌘⌥S 可保存到文件";
 "about.body" = "■ 简介
-macOS 原生看图器：秒开大图、顺滑翻页、手势缩放、EXIF 随手看。完全本机运行——无网络请求、无数据收集、无账号。
+macOS 原生看图器：秒开大图、顺滑翻页、手势缩放、EXIF 随手看。照片只在本机处理，不收集数据，不用注册账号。只在检查更新、下载识别模型或你发送反馈时联网。
 
 ■ 使用方式
 把文件夹或图片拖进窗口即可浏览；也可以在 Finder 里右键图片选择用 Flipic 打开。
@@ -123,7 +123,7 @@ S 幻灯片放映；I 照片信息；T 缩略图栏；F 全屏。控件几秒不
 界面与全部提示自动跟随系统语言（支持 14 种）。";
 "about.shortcutsTitle" = "快捷键说明";
 "sc.title" = "快捷键";
-"sc.body" = "← / →  上一张 / 下一张（循环）
+"sc.body" = "← / →  上一张 / 下一张
 ↑ / ↓  放大 / 缩小（按住连续）
 R / L  向右 / 向左旋转 90°
 S  幻灯片放映（间隔在 显示 › 幻灯片间隔 设置，S 停止）
@@ -140,8 +140,8 @@ Esc  先关掉右上角的照片信息
 ⌘E  在后期软件中编辑（有同名 RAW 时打开 RAW）
 ⌘⇧K  清理模式：重复、闭眼、模糊
 ⌘S  快速导出压缩副本    ⌘⇧E  导出为…
-回车 
-⌘⌥S  保存旋转到文件 重命名当前图片
+回车  重命名当前图片
+⌘⌥S  保存旋转到文件
 ⌘⌫  移到废纸篓    ⌘R  在 Finder 中显示
 拖入文件夹或图片即可打开";
 
@@ -378,10 +378,10 @@ Esc  先关掉右上角的照片信息
 "exp.f.summaryRating" = "导出当前显示的 %1$d 张照片（%2$@及以上）";
 "exp.f.summaryAll" = "导出当前显示的 %d 张照片（整个文件夹）";
 "msg.exportSameFolder" = "目标就是当前文件夹，换一个文件夹";
-"msg.exporting" = "正在处理 %1$d / %2$d";
+"msg.batchProgress" = "正在处理 %1$d / %2$d";
 "msg.exportedMove" = "已移动 %1$d 张到「%2$@」";
 "msg.exportedCopy" = "已复制 %1$d 张到「%2$@」";
-"msg.exportFailed" = "%d 个文件没能处理";
+"msg.batchFailed" = "%d 个文件没能处理";
 "menu.ratingFilter" = "只看星级";
 "menu.ratingFilterAll" = "全部照片";
 "menu.ratingAtLeast" = "%@及以上";
@@ -634,3 +634,61 @@ Esc  先关掉右上角的照片信息
 "set.text" = "文字：";
 "set.liveText" = "自动识别图中文字";
 "set.liveTextNote" = "在一张照片上停留片刻后识别图中文字，可以直接选中、复制、查询。关掉后，「复制图中全部文字」仍可使用。";
+
+/* 按内容查找（Pro） */
+"menu.searchContent" = "按内容查找…";
+"cs.placeholder" = "按内容查找，比如 猫、海边、美食";
+"cs.found" = "找到 %d 张";
+"cs.none" = "没有找到";
+"cs.analyzing" = "正在分析 %1$@ / %2$@ 张";
+"cs.close" = "清除并关闭";
+"pro.list.searchContent" = "按内容查找照片，比如 猫、海边、美食，完全离线";
+"pro.list.searchText" = "按照片里的文字查找，比如发票、路牌、截图上的字";
+"exp.f.summaryContent" = "导出当前显示的 %1$d 张照片（按内容查找「%2$@」）";
+
+/* 按内容查找：中文 CLIP 识别（Pro 设置） */
+"pro.clip.label" = "按内容查找：";
+"pro.clip.toggle" = "更准的中文识别（需下载约 %d MB）";
+"pro.clip.note" = "能认出布偶猫这类细的品种，也能按一句话找，比如「海边奔跑的狗」。只下载一次，之后完全离线。识别模型来自 Chinese-CLIP（OFA-Sys，Apache 2.0 许可）。";
+"pro.text.toggle" = "也按照片里的文字查找，比如发票、路牌、截图上的字";
+"pro.prepare.toggle" = "空闲时提前分析，搜索不用等";
+"pro.prepare.note" = "用过一次按内容查找后，打开文件夹、几秒没有操作就在后台分析，翻页时自动让路。用电池且电量低于 20%、低电量模式或机器过热时不分析。";
+"pro.clip.notInstalled" = "未下载";
+"pro.clip.downloading" = "正在下载 %1$d / %2$d MB";
+"pro.clip.installing" = "正在校验和解压…";
+"pro.clip.installed" = "已下载，占用 %d MB";
+"pro.clip.failed" = "下载失败：%@";
+"pro.clip.delete" = "删除";
+"pro.clip.retry" = "重试";
+"pro.clip.license" = "开源许可…";
+"pro.clip.deleteConfirm" = "删除下载的识别模型？";
+"pro.clip.deleteInfo" = "按内容查找会回到只用系统自带的识别。之后打开开关会重新下载。";
+"pro.clip.licenseInfo" = "中文识别模型来自 OFA-Sys 的 Chinese-CLIP，按 Apache License 2.0 使用。Flipic 把它转换成了 Core ML 格式并压缩了权重，没有做其他改动。";
+"pro.clip.ok" = "好";
+"clip.err.network" = "下载没有完成，请检查网络后重试";
+"clip.err.checksum" = "下载的文件不完整或已损坏，请重试";
+"clip.err.unpack" = "解压失败，请确认磁盘空间足够后重试";
+
+/* 反馈建议 */
+"menu.feedback" = "反馈建议…";
+"feedback.title" = "反馈建议";
+"feedback.lead" = "有什么不好用、想要的功能，直接写给我们。建议一旦被采纳，送 Flipic Pro 激活码，永久有效。";
+"feedback.leadShort" = "有什么不好用、想要的功能，直接写给我们。";
+"feedback.placeholder" = "比如：哪里不好用、希望加什么功能、遇到了什么问题";
+"feedback.contactPlaceholder" = "邮箱（选填）";
+"feedback.contactNote" = "想领 Pro 或需要回复，留个邮箱";
+"feedback.contactNoteShort" = "需要回复的话，留个邮箱";
+"feedback.privacy" = "只发送你写的内容、邮箱和 App 版本、系统版本，不含照片和文件";
+"feedback.send" = "发送";
+"feedback.sending" = "正在发送…";
+"feedback.sent" = "已收到，谢谢";
+"feedback.copy" = "复制内容";
+"feedback.copied" = "已复制";
+"feedback.tooLong" = "内容太长了，请控制在 5000 字以内";
+"feedback.errShort" = "内容太短了，至少写 5 个字";
+"feedback.badEmail" = "邮箱格式不对，检查一下，或者留空";
+"feedback.errOffline" = "连不上服务器，检查一下网络后再试";
+"feedback.errRate" = "发得太频繁了，过十分钟再试";
+"feedback.errServer" = "服务器暂时出了问题（%@），稍后再试";
+"feedback.errOther" = "没有发出去（%@）";
+"feedback.keep" = "写的内容还在，可以稍后再发，或者先复制下来。";

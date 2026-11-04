@@ -187,15 +187,50 @@ private final class SettingsRoot: NSViewController {
         current?.removeFromSuperview()
         let pv = pane.view
         pv.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(pv)
-        NSLayoutConstraint.activate([
-            pv.topAnchor.constraint(equalTo: container.topAnchor),
-            pv.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            pv.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            pv.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-        ])
-        current = pv
         (pane as? SettingsPane)?.reload()
+        // 页面比屏幕高（13 寸屏上的 Pro 页）就放进滚动视图，窗口最高到屏幕可用高度
+        let maxHeight = ((view.window?.screen ?? NSScreen.main)?.visibleFrame.height ?? 800) - 150
+        // 按窗口宽度量高度，不限宽时文字排成一长行，量出来偏矮
+        let widthPin = pv.widthAnchor.constraint(equalToConstant: 600)
+        widthPin.isActive = true
+        let fit = pv.fittingSize.height
+        widthPin.isActive = false
+        if fit > maxHeight {
+            let doc = FlippedDocView()
+            doc.translatesAutoresizingMaskIntoConstraints = false
+            doc.addSubview(pv)
+            let scroll = NSScrollView()
+            scroll.translatesAutoresizingMaskIntoConstraints = false
+            scroll.hasVerticalScroller = true
+            scroll.drawsBackground = false
+            scroll.borderType = .noBorder
+            scroll.documentView = doc
+            container.addSubview(scroll)
+            NSLayoutConstraint.activate([
+                pv.topAnchor.constraint(equalTo: doc.topAnchor),
+                pv.bottomAnchor.constraint(equalTo: doc.bottomAnchor),
+                pv.leadingAnchor.constraint(equalTo: doc.leadingAnchor),
+                pv.trailingAnchor.constraint(equalTo: doc.trailingAnchor),
+                doc.topAnchor.constraint(equalTo: scroll.contentView.topAnchor),
+                doc.leadingAnchor.constraint(equalTo: scroll.contentView.leadingAnchor),
+                doc.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor),
+                scroll.topAnchor.constraint(equalTo: container.topAnchor),
+                scroll.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+                scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+                scroll.heightAnchor.constraint(equalToConstant: maxHeight),
+            ])
+            current = scroll
+        } else {
+            container.addSubview(pv)
+            NSLayoutConstraint.activate([
+                pv.topAnchor.constraint(equalTo: container.topAnchor),
+                pv.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+                pv.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                pv.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            ])
+            current = pv
+        }
         guard let window = view.window else { return }
         view.layoutSubtreeIfNeeded()
         let content = window.frameRect(forContentRect: NSRect(origin: .zero, size: view.fittingSize))
@@ -204,6 +239,11 @@ private final class SettingsRoot: NSViewController {
         frame.size = content.size
         window.setFrame(frame, display: true, animate: false)
     }
+}
+
+/// 滚动视图的内容从顶上排起
+private final class FlippedDocView: NSView {
+    override var isFlipped: Bool { true }
 }
 
 /// 分页按钮：图标在上、文字在下，选中时垫一块浅色圆角底，悬停略亮（同看图工具条）

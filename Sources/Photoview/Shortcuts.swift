@@ -84,6 +84,7 @@ enum ShortcutAction: String, CaseIterable {
     case beforeAfter, splitByRating, switchPair
     case pinWindow, share, playLive, zoomEye, workbench
     case copyText
+    case searchContent
 
     /// Pro 功能；开源版里没有，不在快捷键设置里列出
     /// 快捷键页里 Pro 功能名后面的标；App Store 版全都包含，不加
@@ -91,7 +92,7 @@ enum ShortcutAction: String, CaseIterable {
         return " (Pro)"
     }
 
-    var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair, .zoomEye, .workbench].contains(self) }
+    var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair, .zoomEye, .workbench, .searchContent].contains(self) }
 
     var isAvailable: Bool {
         if self == .copyText { return TextRecognition.isAvailable }
@@ -141,7 +142,7 @@ enum ShortcutAction: String, CaseIterable {
         case .pinWindow, .playLive: return .view
         case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench, .copyText: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
-        case .mark, .markedOnly, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating, .switchPair: return .pick
+        case .mark, .markedOnly, .searchContent, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating, .switchPair: return .pick
         }
     }
 
@@ -194,6 +195,7 @@ enum ShortcutAction: String, CaseIterable {
         case .zoomEye: return L10n.t("menu.zoomEye", "放大到眼睛") + ShortcutAction.proSuffix
         case .workbench: return L10n.t("menu.workbench", "工作台") + ShortcutAction.proSuffix
         case .copyText: return L10n.t("menu.copyText", "复制图中全部文字")
+        case .searchContent: return plain(L10n.t("menu.searchContent", "按内容查找…")) + ShortcutAction.proSuffix
         }
     }
 
@@ -248,6 +250,7 @@ enum ShortcutAction: String, CaseIterable {
         case .zoomEye: return KeyCombo(keyCode: 14, chars: "e")
         case .workbench: return KeyCombo(keyCode: 11, mods: [.command, .option], chars: "b")   // ⇧⌘B 已是批量重命名
         case .copyText: return KeyCombo(keyCode: 8, mods: [.command, .option], chars: "c")   // ⇧⌘C 已是批量转换
+        case .searchContent: return KeyCombo(keyCode: 3, mods: .command, chars: "f")
         }
     }
 }

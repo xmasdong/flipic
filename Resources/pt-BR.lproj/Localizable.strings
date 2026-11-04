@@ -101,7 +101,7 @@
 "msg.rotSaving" = "Salvando rotação…";
 "msg.rotHint" = "Visualização girada · ⌘⌥S para salvar no arquivo";
 "about.body" = "■ SOBRE
-Um visualizador de imagens nativo para macOS: abertura instantânea, navegação fluida por pastas, zoom por gestos e EXIF num relance. Totalmente offline — sem requisições de rede, sem coleta de dados, sem contas.
+Um visualizador de imagens nativo para macOS: abertura instantânea, navegação fluida por pastas, zoom por gestos e EXIF num relance. As fotos são processadas no seu Mac: sem coleta de dados, sem contas. Só se conecta para verificar atualizações, baixar o modelo de reconhecimento ou enviar o feedback que você escrever.
 
 ■ COMO USAR
 Arraste uma pasta ou imagem para esta janela para navegar; ou clique direito numa imagem no Finder e abra com o Flipic.
@@ -112,7 +112,7 @@ S inicia a apresentação; I mostra as informações; T a tira de miniaturas; F 
 A interface e todas as mensagens seguem automaticamente o idioma do sistema (14 idiomas).";
 "about.shortcutsTitle" = "Atalhos de teclado";
 "sc.title" = "Atalhos de teclado";
-"sc.body" = "← / →  Anterior / Próxima (em loop)
+"sc.body" = "← / →  Anterior / Próxima
 ↑ / ↓  Ampliar / Reduzir (segure para repetir)
 R / L  Girar 90° horário / anti-horário
 S  Apresentação (intervalo em Visualizar › Intervalo da apresentação; S para parar)
@@ -366,10 +366,10 @@ Arraste uma pasta ou imagem para abrir";
 "exp.f.summaryRating" = "Exportar as %1$d fotos mostradas (%2$@ ou mais)";
 "exp.f.summaryAll" = "Exportar as %d fotos mostradas (pasta inteira)";
 "msg.exportSameFolder" = "Essa é a pasta atual. Escolha outra";
-"msg.exporting" = "Processando… %1$d / %2$d";
+"msg.batchProgress" = "Processando… %1$d / %2$d";
 "msg.exportedMove" = "%1$d movidas para “%2$@”";
 "msg.exportedCopy" = "%1$d copiadas para “%2$@”";
-"msg.exportFailed" = "Não foi possível processar %d arquivos";
+"msg.batchFailed" = "Não foi possível processar %d arquivos";
 "menu.ratingFilter" = "Mostrar por classificação";
 "menu.ratingFilterAll" = "Todas as fotos";
 "menu.ratingAtLeast" = "%@ ou mais";
@@ -622,3 +622,61 @@ Arraste uma pasta ou imagem para abrir";
 "set.text" = "Texto:";
 "set.liveText" = "Reconhecer automaticamente o texto nas fotos";
 "set.liveTextNote" = "Após uma breve pausa em uma foto, o texto é reconhecido e pode ser selecionado, copiado e pesquisado diretamente. Desativado, “Copiar todo o texto da imagem” continua disponível.";
+
+/* 按内容查找（Pro） */
+"menu.searchContent" = "Buscar por conteúdo…";
+"cs.placeholder" = "Buscar por conteúdo (palavras em inglês), ex.: cat, beach, food";
+"cs.found" = "%d encontradas";
+"cs.none" = "Nada encontrado";
+"cs.analyzing" = "Analisando %1$@ / %2$@ fotos";
+"cs.close" = "Limpar e fechar";
+"pro.list.searchContent" = "Buscar fotos pelo que aparece nelas (palavras em inglês, ex.: cat, beach, food), totalmente offline";
+"pro.list.searchText" = "Buscar fotos pelo texto que aparece nelas (inglês e chinês), ex.: recibos, placas, capturas de tela";
+"exp.f.summaryContent" = "Exportar as %1$d fotos mostradas (busca “%2$@”)";
+
+/* 按内容查找：中文 CLIP 识别（Pro 设置） */
+"pro.clip.label" = "Buscar por conteúdo:";
+"pro.clip.toggle" = "Reconhecimento de chinês mais preciso (cerca de %d MB para baixar)";
+"pro.clip.note" = "Reconhece raças específicas como o gato ragdoll e frases inteiras como “cachorro correndo na praia”. Buscas em chinês são as mais precisas. Baixa uma vez e depois funciona totalmente offline. O modelo de reconhecimento é o Chinese-CLIP (OFA-Sys, licença Apache 2.0).";
+"pro.text.toggle" = "Buscar também o texto nas fotos (inglês e chinês), ex.: recibos, placas, capturas de tela";
+"pro.prepare.toggle" = "Analisar com antecedência quando ocioso, para a busca não esperar";
+"pro.prepare.note" = "Depois de usar a busca por conteúdo uma vez, uma pasta aberta por alguns segundos sem atividade é analisada em segundo plano. A análise pausa enquanto você passa as fotos e não roda na bateria abaixo de 20%, no modo de pouca energia ou com o Mac muito quente.";
+"pro.clip.notInstalled" = "Não baixado";
+"pro.clip.downloading" = "Baixando %1$d / %2$d MB";
+"pro.clip.installing" = "Verificando e descompactando…";
+"pro.clip.installed" = "Baixado, ocupa %d MB";
+"pro.clip.failed" = "Falha no download: %@";
+"pro.clip.delete" = "Apagar";
+"pro.clip.retry" = "Tentar de novo";
+"pro.clip.license" = "Licença de código aberto…";
+"pro.clip.deleteConfirm" = "Apagar o modelo de reconhecimento baixado?";
+"pro.clip.deleteInfo" = "A busca por conteúdo volta a usar só o reconhecimento integrado. Ao ativar a opção de novo, ele será baixado outra vez.";
+"pro.clip.licenseInfo" = "O modelo de reconhecimento de chinês é o Chinese-CLIP da OFA-Sys, usado sob a Apache License 2.0. O Flipic o converteu para Core ML e comprimiu os pesos, sem outras alterações.";
+"pro.clip.ok" = "OK";
+"clip.err.network" = "O download não terminou. Verifique a conexão e tente de novo.";
+"clip.err.checksum" = "O arquivo baixado está incompleto ou danificado. Tente de novo.";
+"clip.err.unpack" = "Falha ao descompactar. Verifique se há espaço em disco suficiente e tente de novo.";
+
+/* 反馈建议 */
+"menu.feedback" = "Enviar feedback…";
+"feedback.title" = "Feedback";
+"feedback.lead" = "Algo não funciona bem ou falta um recurso? Escreva para nós. Se adotarmos sua sugestão, você ganha uma chave do Flipic Pro sem prazo de validade.";
+"feedback.leadShort" = "Algo não funciona bem ou falta um recurso? Escreva para nós.";
+"feedback.placeholder" = "Por exemplo: o que é incômodo, o que você gostaria de ver, um problema que encontrou";
+"feedback.contactPlaceholder" = "E-mail (opcional)";
+"feedback.contactNote" = "Deixe um e-mail se quiser a chave Pro ou uma resposta";
+"feedback.contactNoteShort" = "Deixe um e-mail se quiser uma resposta";
+"feedback.privacy" = "São enviados apenas o que você escreveu, seu e-mail e as versões do app e do macOS. Nenhuma foto ou arquivo.";
+"feedback.send" = "Enviar";
+"feedback.sending" = "Enviando…";
+"feedback.sent" = "Recebido, obrigado.";
+"feedback.copy" = "Copiar texto";
+"feedback.copied" = "Copiado";
+"feedback.tooLong" = "Está longo demais. Use no máximo 5000 caracteres.";
+"feedback.errShort" = "Está curto demais. Escreva pelo menos 5 caracteres.";
+"feedback.badEmail" = "Esse e-mail não parece válido. Verifique ou deixe em branco.";
+"feedback.errOffline" = "Não foi possível conectar ao servidor. Verifique sua conexão e tente de novo.";
+"feedback.errRate" = "Muitos envios em pouco tempo. Tente de novo em dez minutos.";
+"feedback.errServer" = "O servidor teve um problema (%@). Tente de novo mais tarde.";
+"feedback.errOther" = "Não foi possível enviar (%@).";
+"feedback.keep" = "Seu texto continua aqui. Envie mais tarde ou copie-o.";

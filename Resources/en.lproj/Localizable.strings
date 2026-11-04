@@ -112,7 +112,7 @@
 "msg.rotSaving" = "Saving rotation…";
 "msg.rotHint" = "View rotated · press ⌘⌥S to save to file";
 "about.body" = "■ ABOUT
-A native macOS image viewer: instant opening, buttery folder navigation, gesture zoom and EXIF at a glance. Fully on-device — no network requests, no data collection, no accounts.
+A native macOS image viewer: instant opening, buttery folder navigation, gesture zoom and EXIF at a glance. Photos are processed on your Mac; no data collection, no accounts. It only goes online to check for updates, download the recognition model, or send feedback you write.
 
 ■ HOW TO USE
 Drop a folder or image into the window to browse; or right-click an image in Finder and open it with Flipic.
@@ -123,7 +123,7 @@ S starts a slideshow; I shows photo info; T toggles the thumbnail strip; F for f
 The interface and every message follow your system language automatically (14 supported).";
 "about.shortcutsTitle" = "Keyboard Shortcuts";
 "sc.title" = "Keyboard Shortcuts";
-"sc.body" = "← / →  Previous / Next (wraps around)
+"sc.body" = "← / →  Previous / Next
 ↑ / ↓  Zoom in / out (hold to repeat)
 R / L  Rotate 90° CW / CCW
 S  Slideshow (set the interval in View › Slideshow Interval; S to stop)
@@ -378,10 +378,10 @@ Drop a folder or image to open";
 "exp.f.summaryRating" = "Export the %1$d photos shown (%2$@ and up)";
 "exp.f.summaryAll" = "Export the %d photos shown (whole folder)";
 "msg.exportSameFolder" = "That’s the current folder. Choose another one";
-"msg.exporting" = "Working… %1$d / %2$d";
+"msg.batchProgress" = "Working… %1$d / %2$d";
 "msg.exportedMove" = "Moved %1$d to “%2$@”";
 "msg.exportedCopy" = "Copied %1$d to “%2$@”";
-"msg.exportFailed" = "%d files couldn’t be processed";
+"msg.batchFailed" = "%d files couldn’t be processed";
 "menu.ratingFilter" = "Show by Rating";
 "menu.ratingFilterAll" = "All Photos";
 "menu.ratingAtLeast" = "%@ and Up";
@@ -634,3 +634,61 @@ Drop a folder or image to open";
 "set.text" = "Text:";
 "set.liveText" = "Recognize text in photos automatically";
 "set.liveTextNote" = "After a short pause on a photo, its text is recognized and can be selected, copied and looked up directly. When off, “Copy All Text in Image” still works.";
+
+/* 按内容查找（Pro） */
+"menu.searchContent" = "Find by Content…";
+"cs.placeholder" = "Find by content, e.g. cat, beach, food";
+"cs.found" = "%d found";
+"cs.none" = "Nothing found";
+"cs.analyzing" = "Analysing %1$@ / %2$@ photos";
+"cs.close" = "Clear and close";
+"pro.list.searchContent" = "Find photos by what’s in them, e.g. cat, beach, food, fully offline";
+"pro.list.searchText" = "Find photos by the text in them (English and Chinese), e.g. receipts, signs, screenshots";
+"exp.f.summaryContent" = "Export the %1$d photos shown (content search “%2$@”)";
+
+/* 按内容查找：中文 CLIP 识别（Pro 设置） */
+"pro.clip.label" = "Find by content:";
+"pro.clip.toggle" = "More accurate Chinese recognition (about %d MB download)";
+"pro.clip.note" = "Recognises finer breeds such as ragdoll cats, and whole phrases like “dog running on the beach”. Queries work best in Chinese. Downloaded once, then fully offline. The recognition model is Chinese-CLIP (OFA-Sys, Apache 2.0 licence).";
+"pro.text.toggle" = "Also search the text in photos (English and Chinese), e.g. receipts, signs, screenshots";
+"pro.prepare.toggle" = "Analyse in the background when idle, so searches don’t wait";
+"pro.prepare.note" = "After you’ve used Find by Content once, a folder left open for a few seconds is analysed in the background. It steps aside while you flip through photos, and doesn’t run on battery below 20%, in Low Power Mode, or when the Mac is running hot.";
+"pro.clip.notInstalled" = "Not downloaded";
+"pro.clip.downloading" = "Downloading %1$d / %2$d MB";
+"pro.clip.installing" = "Verifying and unpacking…";
+"pro.clip.installed" = "Downloaded, uses %d MB";
+"pro.clip.failed" = "Download failed: %@";
+"pro.clip.delete" = "Delete";
+"pro.clip.retry" = "Retry";
+"pro.clip.license" = "Open-source licence…";
+"pro.clip.deleteConfirm" = "Delete the downloaded recognition model?";
+"pro.clip.deleteInfo" = "Find by content goes back to using only the built-in recognition. Turning the option on again downloads it again.";
+"pro.clip.licenseInfo" = "The Chinese recognition model is Chinese-CLIP by OFA-Sys, used under the Apache License 2.0. Flipic converted it to Core ML and compressed the weights; nothing else was changed.";
+"pro.clip.ok" = "OK";
+"clip.err.network" = "The download didn’t finish. Check your connection and try again.";
+"clip.err.checksum" = "The downloaded file is incomplete or damaged. Please try again.";
+"clip.err.unpack" = "Unpacking failed. Make sure there is enough disk space and try again.";
+
+/* 反馈建议 */
+"menu.feedback" = "Send Feedback…";
+"feedback.title" = "Feedback";
+"feedback.lead" = "Something not working well, or a feature you want? Tell us directly. If we adopt your suggestion, you get a Flipic Pro key that never expires.";
+"feedback.leadShort" = "Something not working well, or a feature you want? Tell us directly.";
+"feedback.placeholder" = "For example: what feels awkward, what you’d like added, or a problem you ran into";
+"feedback.contactPlaceholder" = "Email (optional)";
+"feedback.contactNote" = "Leave an email if you’d like the Pro key or a reply";
+"feedback.contactNoteShort" = "Leave an email if you’d like a reply";
+"feedback.privacy" = "Only what you write, your email, and the app and macOS versions are sent. No photos or files.";
+"feedback.send" = "Send";
+"feedback.sending" = "Sending…";
+"feedback.sent" = "Received. Thank you.";
+"feedback.copy" = "Copy Text";
+"feedback.copied" = "Copied";
+"feedback.tooLong" = "That’s too long. Please keep it under 5000 characters.";
+"feedback.errShort" = "That’s too short. Please write at least 5 characters.";
+"feedback.badEmail" = "That email doesn’t look right. Check it, or leave it empty.";
+"feedback.errOffline" = "Can’t reach the server. Check your connection and try again.";
+"feedback.errRate" = "Too many messages in a short time. Please try again in ten minutes.";
+"feedback.errServer" = "The server ran into a problem (%@). Please try again later.";
+"feedback.errOther" = "Couldn’t send (%@).";
+"feedback.keep" = "Your text is still here. Send it later, or copy it for now.";
