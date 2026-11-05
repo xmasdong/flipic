@@ -215,6 +215,16 @@ final class LiveTextController: NSObject, ImageAnalysisOverlayViewDelegate {
     func overlayView(_ overlayView: ImageAnalysisOverlayView, shouldHandleKeyDownEvent event: NSEvent) -> Bool {
         overlayView.hasActiveTextSelection && event.modifierFlags.contains(.command)
     }
+
+    // 下面六个是 macOS 14 才加的要求。不自己写的话，用的是系统扩展里的默认实现，
+    // 那几个符号 macOS 13 的 VisionKit 里没有，App 一启动就被 dyld 杀掉（1.0.8 在 13.7 上的崩溃）。
+    // 行为和系统默认一样：不改菜单、不处理事件
+    func textSelectionDidChange(_ overlayView: ImageAnalysisOverlayView) {}
+    func overlayView(_ overlayView: ImageAnalysisOverlayView, updatedMenuFor menu: NSMenu, for event: NSEvent, at point: CGPoint) -> NSMenu { menu }
+    func overlayView(_ overlayView: ImageAnalysisOverlayView, needsUpdate menu: NSMenu) {}
+    func overlayView(_ overlayView: ImageAnalysisOverlayView, willOpen menu: NSMenu) {}
+    func overlayView(_ overlayView: ImageAnalysisOverlayView, didClose menu: NSMenu) {}
+    func overlayView(_ overlayView: ImageAnalysisOverlayView, menu: NSMenu, willHighlight menuItem: NSMenuItem?) {}
 }
 
 /// 叠加层的外壳：只在文字、数据检测项上接鼠标，其他地方让给下面的照片视图（系统的叠加层不能继承，只能包一层）
