@@ -4558,6 +4558,59 @@ final class ViewerViewController: NSViewController {
         at(0.5) { NSLog("WBVIEW 7-stopped on=%d mode=%@", wb?.slideshowActive == true ? 1 : 0, "\(wb?.mode as Any)") }
         at(0.5) { NSApp.terminate(nil) }
     }
+
+    /// --wbfocustest <截图目录> <文件夹>：宫格 + 大图里，先点大图、再点宫格另一格，之后 → 和 = 还管不管用（事件走窗口，和真鼠标键盘一样）
+    func runWorkbenchFocusTest(outDir: String) {
+        func shot(_ name: String) {
+            guard let w = WorkbenchWindowController.shared?.window,
+                  let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber), [.bestResolution, .boundsIgnoreFraming]),
+                  let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/\(name).png") as CFURL, "public.png" as CFString, 1, nil) else { return }
+            CGImageDestinationAddImage(dest, img, nil)
+            CGImageDestinationFinalize(dest)
+        }
+        var wb: WorkbenchViewController? { WorkbenchWindowController.shared?.workbench }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        func click(_ v: NSView, _ p: NSPoint? = nil, count: Int = 1) {
+            guard let w = v.window else { return }
+            let wp = v.convert(p ?? NSPoint(x: v.bounds.midX, y: v.bounds.midY), to: nil)
+            for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+                if let e = NSEvent.mouseEvent(with: type, location: wp, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                              windowNumber: w.windowNumber, context: nil, eventNumber: 0, clickCount: count, pressure: 1) { w.sendEvent(e) }
+            }
+        }
+        func key(_ chars: String, _ code: UInt16) {
+            guard let w = wb?.view.window,
+                  let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: code >= 123 ? [.numericPad, .function] : [], timestamp: 0,
+                                           windowNumber: w.windowNumber, context: nil, characters: chars, charactersIgnoringModifiers: chars,
+                                           isARepeat: false, keyCode: code) else { return }
+            w.sendEvent(e)
+        }
+        func report(_ tag: String) {
+            guard let wb else { return }
+            let fr = wb.view.window?.firstResponder.map { "\(type(of: $0))" } ?? "-"
+            let s = wb.inspector.preview.viewState
+            NSLog("WBFOCUS %@ responder=%@ selected=%@ preview=%@", tag, fr, wb.selectedPhotoURL?.lastPathComponent ?? "-",
+                  s.fit ? "fit" : String(format: "x%.2f", s.zoom))
+        }
+        func cell(_ c: Int) -> NSView? { wb?.center.grid.item(at: IndexPath(item: c, section: 0))?.view }
+        at(0.0) { (NSApp.delegate as? AppDelegate)?.showWorkbench(opening: self.folder.current?.url, in: self.view.window) }
+        at(2.5) { wb?.setMode(.gridPreview); wb?.select(cell: 0) }
+        at(1.0) { report("0-start"); shot("f0") }
+        at(0.1) { if let p = wb?.inspector.preview { click(p) }; report("1-clickPreview") }
+        at(0.3) { key("=", 24); report("2-zoomKey") }
+        at(0.5) { if let c = cell(2) { click(c) }; report("3-clickCell2") }
+        at(0.5) { key("=", 24); report("4-zoomKey") }
+        at(0.5) { key(String(UnicodeScalar(NSRightArrowFunctionKey)!), 124); report("5-right") }
+        at(0.5) { if let c = cell(1) { click(c) }; report("6-clickCell1(rightCol)") }
+        at(0.5) { key(String(UnicodeScalar(NSRightArrowFunctionKey)!), 124); report("7-right") }
+        at(0.5) { key(String(UnicodeScalar(NSUpArrowFunctionKey)!), 126); report("8-up") }
+        at(0.5) { key("=", 24); report("9-zoomKey") }
+        at(0.5) { if let c = cell(3) { click(c) }; report("10-clickCell3(rightCol)") }
+        at(0.5) { key(String(UnicodeScalar(NSLeftArrowFunctionKey)!), 123); report("11-left") }
+        at(0.5) { key(String(UnicodeScalar(NSLeftArrowFunctionKey)!), 123); report("12-left") }
+        at(0.5) { NSApp.terminate(nil) }
+    }
     #endif
 
     /// --comparetest <截图目录> <文件夹>：C 进入两格对比、在当前格放大（另一格同步）、→ 换候选、Tab 换格并按 P、⇧C 四格、Esc 退出

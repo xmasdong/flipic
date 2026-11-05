@@ -51,6 +51,7 @@ final class ViewerWindowController: NSWindowController {
     #if FLIPIC_PRO
     func runWorkbenchEntryTest(outDir: String) { viewerVC?.runWorkbenchEntryTest(outDir: outDir) }
     func runWorkbenchViewerTest(outDir: String) { viewerVC?.runWorkbenchViewerTest(outDir: outDir) }
+    func runWorkbenchFocusTest(outDir: String) { viewerVC?.runWorkbenchFocusTest(outDir: outDir) }
     #endif
     func runCompareTest(outDir: String) { viewerVC?.runCompareTest(outDir: outDir) }
     func runExportTest(outDir: String) { viewerVC?.runExportTest(outDir: outDir) }
