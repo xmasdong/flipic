@@ -705,3 +705,6 @@ Return  表示中の画像を名称変更
 "wb.copyN" = "%d 枚の写真をコピー";
 "wb.copyPhoto" = "写真をコピー";
 "wb.rotateNeedsPreview" = "回転はプレビューか1枚表示で";
+"wb.nameEmpty" = "名前を入力してください";
+"wb.recognizing" = "写真内のテキストを認識中…";
+"wb.slideshowOn" = "スライドショー · 1 枚 %d 秒 · S または Esc で停止";

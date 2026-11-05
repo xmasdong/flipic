@@ -710,3 +710,6 @@ Return  重新命名目前圖片
 "wb.copyN" = "拷貝 %d 張照片";
 "wb.copyPhoto" = "拷貝照片";
 "wb.rotateNeedsPreview" = "在大圖或單張裡才能旋轉";
+"wb.nameEmpty" = "名稱不能為空";
+"wb.recognizing" = "正在辨識圖中文字…";
+"wb.slideshowOn" = "幻燈片播放中 · 每張 %d 秒 · S 或 Esc 停止";

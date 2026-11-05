@@ -705,3 +705,6 @@ Kéo thư mục hoặc ảnh vào để mở";
 "wb.copyN" = "Sao chép %d ảnh";
 "wb.copyPhoto" = "Sao chép ảnh";
 "wb.rotateNeedsPreview" = "Xoay trong ảnh lớn hoặc chế độ một ảnh";
+"wb.nameEmpty" = "Tên không được để trống";
+"wb.recognizing" = "Đang nhận dạng chữ trong ảnh…";
+"wb.slideshowOn" = "Đang trình chiếu · %d giây mỗi ảnh · S hoặc Esc để dừng";

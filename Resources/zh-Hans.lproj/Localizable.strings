@@ -722,3 +722,6 @@ Esc  先关掉右上角的照片信息
 "wb.copyN" = "拷贝 %d 张照片";
 "wb.copyPhoto" = "拷贝照片";
 "wb.rotateNeedsPreview" = "在大图或单张里才能旋转";
+"wb.nameEmpty" = "名称不能为空";
+"wb.recognizing" = "正在识别图中文字…";
+"wb.slideshowOn" = "幻灯片放映中 · 每张 %d 秒 · S 或 Esc 停止";

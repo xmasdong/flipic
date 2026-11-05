@@ -705,3 +705,6 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "wb.copyN" = "%d Fotos kopieren";
 "wb.copyPhoto" = "Foto kopieren";
 "wb.rotateNeedsPreview" = "Drehen in der Vorschau oder Einzelansicht";
+"wb.nameEmpty" = "Der Name darf nicht leer sein";
+"wb.recognizing" = "Text im Foto wird erkannt …";
+"wb.slideshowOn" = "Diashow · %d s pro Foto · S oder Esc zum Stoppen";

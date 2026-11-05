@@ -50,6 +50,7 @@ final class ViewerWindowController: NSWindowController {
     func runMultiSelectTest(outDir: String) { viewerVC?.runMultiSelectTest(outDir: outDir) }
     #if FLIPIC_PRO
     func runWorkbenchEntryTest(outDir: String) { viewerVC?.runWorkbenchEntryTest(outDir: outDir) }
+    func runWorkbenchViewerTest(outDir: String) { viewerVC?.runWorkbenchViewerTest(outDir: outDir) }
     #endif
     func runCompareTest(outDir: String) { viewerVC?.runCompareTest(outDir: outDir) }
     func runExportTest(outDir: String) { viewerVC?.runExportTest(outDir: outDir) }

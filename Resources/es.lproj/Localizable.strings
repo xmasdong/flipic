@@ -705,3 +705,6 @@ Arrastra una carpeta o imagen para abrir";
 "wb.copyN" = "Copiar %d fotos";
 "wb.copyPhoto" = "Copiar foto";
 "wb.rotateNeedsPreview" = "Gira en la vista previa o en la vista individual";
+"wb.nameEmpty" = "El nombre no puede estar vacío";
+"wb.recognizing" = "Reconociendo el texto de la foto…";
+"wb.slideshowOn" = "Presentación · %d s por foto · S o Esc para detener";

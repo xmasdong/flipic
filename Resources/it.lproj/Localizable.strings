@@ -705,3 +705,6 @@ Trascina una cartella o un'immagine per aprire";
 "wb.copyN" = "Copia %d foto";
 "wb.copyPhoto" = "Copia foto";
 "wb.rotateNeedsPreview" = "Ruota nell'anteprima o nella vista singola";
+"wb.nameEmpty" = "Il nome non può essere vuoto";
+"wb.recognizing" = "Riconoscimento del testo nella foto…";
+"wb.slideshowOn" = "Presentazione · %d s per foto · S o Esc per fermare";

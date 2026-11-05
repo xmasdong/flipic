@@ -705,3 +705,6 @@ Déposez un dossier ou une image pour ouvrir";
 "wb.copyN" = "Copier %d photos";
 "wb.copyPhoto" = "Copier la photo";
 "wb.rotateNeedsPreview" = "Faites pivoter dans l'aperçu ou la vue unique";
+"wb.nameEmpty" = "Le nom ne peut pas être vide";
+"wb.recognizing" = "Reconnaissance du texte de la photo…";
+"wb.slideshowOn" = "Diaporama · %d s par photo · S ou Échap pour arrêter";

@@ -705,3 +705,6 @@ Açmak için klasör veya resim sürükleyin";
 "wb.copyN" = "%d fotoğrafı kopyala";
 "wb.copyPhoto" = "Fotoğrafı kopyala";
 "wb.rotateNeedsPreview" = "Döndürme önizlemede veya tekli görünümde yapılır";
+"wb.nameEmpty" = "Ad boş olamaz";
+"wb.recognizing" = "Fotoğraftaki metin tanınıyor…";
+"wb.slideshowOn" = "Slayt gösterisi · fotoğraf başına %d sn · durdurmak için S veya Esc";

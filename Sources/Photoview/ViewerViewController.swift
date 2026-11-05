@@ -4507,6 +4507,57 @@ final class ViewerViewController: NSViewController {
         at(0.8) { report("4-back to viewer (shows workbench pick, no reload)"); self.captureWindow(to: "\(outDir)/viewer-back.png", raw: true) }
         at(0.5) { NSApp.terminate(nil) }
     }
+
+    /// --wbviewertest <截图目录> <文件夹>：工作台里的实况照片、复制图中文字、重命名（连同 MOV）、壁纸（不真换）、幻灯片、右键菜单
+    func runWorkbenchViewerTest(outDir: String) {
+        func shot(_ name: String) {
+            guard let w = WorkbenchWindowController.shared?.window,
+                  let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber), [.bestResolution, .boundsIgnoreFraming]),
+                  let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/\(name).png") as CFURL, "public.png" as CFString, 1, nil) else { return }
+            CGImageDestinationAddImage(dest, img, nil)
+            CGImageDestinationFinalize(dest)
+        }
+        var wb: WorkbenchViewController? { WorkbenchWindowController.shared?.workbench }
+        func pick(_ name: String) {
+            guard let wb, let p = wb.photos.firstIndex(where: { $0.url.lastPathComponent == name }), let c = wb.cellIndex(of: p) else { NSLog("WBVIEW pick %@ missing", name); return }
+            wb.select(cell: c)
+        }
+        let dir = folder.current?.url.deletingLastPathComponent()
+        func files() -> String { ((try? FileManager.default.contentsOfDirectory(atPath: dir?.path ?? "")) ?? []).sorted().joined(separator: ",") }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        WorkbenchViewController.debugSkipWallpaper = true
+        WorkbenchViewController.debugNoFullScreen = true
+        at(0.0) { (NSApp.delegate as? AppDelegate)?.showWorkbench(opening: self.folder.current?.url, in: self.view.window) }
+        at(2.5) { NSLog("WBVIEW 0 photos=%d mode=%@ files=%@", wb?.photos.count ?? 0, "\(wb?.mode as Any)", files()); pick("LIVE_0001.JPG") }
+        at(1.0) { wb?.playLivePhoto(nil) }
+        at(0.8) {
+            NSLog("WBVIEW 1-live played=%@ viewShown=%d host=%@", WorkbenchViewController.debugLivePlayed?.lastPathComponent ?? "-",
+                  wb?.liveView?.isHidden == false ? 1 : 0, wb?.liveView?.superview.map { "\(type(of: $0))" } ?? "-")
+            shot("p2-live")
+        }
+        at(0.3) { pick("PLAIN_0003.jpg"); wb?.playLivePhoto(nil) }
+        at(0.6) { NSLog("WBVIEW 1b-plain liveHidden=%d (expect 1, flash 不是实况)", wb?.liveView?.isHidden != false ? 1 : 0); shot("p2-notlive") }
+        at(0.3) { pick("text.png"); wb?.copyAllText(nil) }
+        at(4.0) { NSLog("WBVIEW 2-text=[%@]", (WorkbenchViewController.debugCopiedText ?? "-").replacingOccurrences(of: "\n", with: " | ")) }
+        at(0.3) { pick("LIVE_0002.JPG"); wb?.renameSelected(to: "Trip 01") }
+        at(1.5) { NSLog("WBVIEW 3-rename selected=%@ files=%@", wb?.selectedPhotoURL?.lastPathComponent ?? "-", files()); shot("p2-renamed") }
+        at(0.3) { wb?.renameSelected(to: "LIVE_0001") }
+        at(1.5) { NSLog("WBVIEW 3b-clash selected=%@", wb?.selectedPhotoURL?.lastPathComponent ?? "-") }
+        at(0.3) { wb?.setWallpaper(nil) }
+        at(0.3) { NSLog("WBVIEW 4-wallpaper=%@", WorkbenchViewController.debugWallpaper?.lastPathComponent ?? "-") }
+        at(0.3) {
+            guard let wb else { return }
+            NSLog("WBVIEW 5-menu=[%@]", wb.contextMenu().items.map { $0.isSeparatorItem ? "|" : $0.title }.joined(separator: ","))
+            pick("PLAIN_0003.jpg")
+            _ = wb.perform(.slideshow)
+            NSLog("WBVIEW 6-slideshow on=%d mode=%@ at=%@", wb.slideshowActive ? 1 : 0, "\(wb.mode)", wb.selectedPhotoURL?.lastPathComponent ?? "-")
+        }
+        at(3.4) { NSLog("WBVIEW 6b +3s at=%@", wb?.selectedPhotoURL?.lastPathComponent ?? "-"); shot("p2-slide") }
+        at(3.1) { NSLog("WBVIEW 6c +6s at=%@", wb?.selectedPhotoURL?.lastPathComponent ?? "-"); wb?.leaveSingle() }
+        at(0.5) { NSLog("WBVIEW 7-stopped on=%d mode=%@", wb?.slideshowActive == true ? 1 : 0, "\(wb?.mode as Any)") }
+        at(0.5) { NSApp.terminate(nil) }
+    }
     #endif
 
     /// --comparetest <截图目录> <文件夹>：C 进入两格对比、在当前格放大（另一格同步）、→ 换候选、Tab 换格并按 P、⇧C 四格、Esc 退出
