@@ -682,3 +682,10 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "feedback.errServer" = "Auf dem Server ist ein Problem aufgetreten (%@). Bitte später erneut versuchen.";
 "feedback.errOther" = "Senden nicht möglich (%@).";
 "feedback.keep" = "Ihr Text bleibt erhalten. Senden Sie ihn später oder kopieren Sie ihn.";
+
+/* 缩略图栏多选 */
+"msg.picked" = "%d ausgewählt";
+"msg.copiedPhotos" = "%d Fotos kopiert. Im Finder einsetzen";
+"menu.markPicked" = "%d ausgewählte markieren";
+"menu.unmarkPicked" = "Markierung der %d ausgewählten entfernen";
+"exp.f.summaryPicked" = "Die %d ausgewählten Fotos exportieren";

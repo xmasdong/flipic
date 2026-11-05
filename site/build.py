@@ -91,7 +91,7 @@ T = {
         "related": "相关指南",
         "footer_credit": "截图中的照片来自 Wikimedia Commons，均为 CC0：圣托里尼 Aidan Meyer、Anthony Delanoix，布莱德湖 Aleš Krivec，哈尔施塔特 Fineas Anton、Martin Horák，冰岛 Alexandre Godreau，优胜美地 John Salzarulo，阳朔 Manon Boyer。",
         "footer_line": "Flipic {v} · MIT 开源 · 原名 PixDeck",
-        "src": "源代码", "feedback": "反馈问题", "releases": "历史版本",
+        "src": "源代码", "feedback": "反馈问题", "releases": "更新记录",
         "privacy": "隐私政策", "terms": "用户协议",
     },
     "en": {
@@ -105,7 +105,7 @@ T = {
         "related": "More guides",
         "footer_credit": "Photos in the screenshots are from Wikimedia Commons, all CC0: Santorini by Aidan Meyer and Anthony Delanoix, Lake Bled by Aleš Krivec, Hallstatt by Fineas Anton and Martin Horák, Iceland by Alexandre Godreau, Yosemite by John Salzarulo, Yangshuo by Manon Boyer.",
         "footer_line": "Flipic {v} · MIT licensed · formerly PixDeck",
-        "src": "Source code", "feedback": "Feedback", "releases": "All releases",
+        "src": "Source code", "feedback": "Feedback", "releases": "Release notes",
         "privacy": "Privacy", "terms": "Terms",
     },
 }

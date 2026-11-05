@@ -682,3 +682,10 @@ Return  重新命名目前圖片
 "feedback.errServer" = "伺服器暫時出了問題（%@），稍後再試";
 "feedback.errOther" = "沒有傳送出去（%@）";
 "feedback.keep" = "寫的內容還在，可以稍後再傳，或者先拷貝下來。";
+
+/* 缩略图栏多选 */
+"msg.picked" = "已選 %d 張";
+"msg.copiedPhotos" = "已拷貝 %d 張照片，可以到 Finder 裡貼上";
+"menu.markPicked" = "標記選取的 %d 張";
+"menu.unmarkPicked" = "取消標記選取的 %d 張";
+"exp.f.summaryPicked" = "匯出選取的 %d 張照片";

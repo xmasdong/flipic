@@ -682,3 +682,10 @@ Return  表示中の画像を名称変更
 "feedback.errServer" = "サーバーで問題が発生しています（%@）。しばらくしてからもう一度お試しください。";
 "feedback.errOther" = "送信できませんでした（%@）。";
 "feedback.keep" = "入力した内容は残っています。あとで送信するか、コピーしておいてください。";
+
+/* 缩略图栏多选 */
+"msg.picked" = "%d 枚を選択";
+"msg.copiedPhotos" = "%d 枚の写真をコピーしました。Finder にペーストできます";
+"menu.markPicked" = "選択した %d 枚にマーク";
+"menu.unmarkPicked" = "選択した %d 枚のマークを解除";
+"exp.f.summaryPicked" = "選択した %d 枚の写真を書き出す";

@@ -682,3 +682,10 @@ Kéo thư mục hoặc ảnh vào để mở";
 "feedback.errServer" = "Máy chủ đang gặp sự cố (%@). Hãy thử lại sau.";
 "feedback.errOther" = "Không gửi được (%@).";
 "feedback.keep" = "Nội dung vẫn còn. Bạn có thể gửi sau hoặc sao chép lại.";
+
+/* 缩略图栏多选 */
+"msg.picked" = "Đã chọn %d";
+"msg.copiedPhotos" = "Đã sao chép %d ảnh. Dán vào Finder";
+"menu.markPicked" = "Đánh dấu %d ảnh đã chọn";
+"menu.unmarkPicked" = "Bỏ đánh dấu %d ảnh đã chọn";
+"exp.f.summaryPicked" = "Xuất %d ảnh đã chọn";

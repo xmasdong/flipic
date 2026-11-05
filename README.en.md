@@ -15,7 +15,7 @@
   ·
   <a href="https://flipic.app/en/">Website</a>
   ·
-  <a href="https://github.com/xmasdong/flipic/releases">All releases</a>
+  <a href="https://github.com/xmasdong/flipic/releases">Release notes</a>
 </p>
 
 <p align="center">
@@ -34,7 +34,7 @@ After a shoot I wanted to go through the photos first, but Preview opens them on
 2. Page with ← →. To check focus, point at the eyes and press 0 to zoom to 100%. Not sure which frame of a burst to keep? Press C to put two side by side.
 3. Rate with 1–5, mark keepers with P.
 4. For an event with hundreds of shots, press ⇧⌘K and let Cleanup Mode group similar bursts, closed eyes and blurry frames first; you decide what to delete.
-5. When you're done, ⇧P shows only marked photos (or show only a minimum rating) and ⇧⌘E copies them out. ⌘E opens a photo in Lightroom or Capture One, where your ratings are already waiting.
+5. When you're done, ⇧P shows only marked photos (or show only a minimum rating) and ⇧⌘E copies them out. To edit a few, click the first one in the thumbnail strip and Shift-click the last (Command-click adds or removes one), then ⌘E opens them all in Lightroom or Capture One, where your ratings are already waiting; ⌘C copies the files.
 
 ## Why it works this way
 
@@ -56,7 +56,7 @@ After a shoot I wanted to go through the photos first, but Preview opens them on
 2. Open the disk image and drag Flipic into Applications
 3. The first time you launch it, macOS reminds you the app came from the internet; click Open
 
-Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Older versions are on the [Releases](https://github.com/xmasdong/flipic/releases) page.
+Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Release notes are on the [Releases](https://github.com/xmasdong/flipic/releases) page.
 
 To make Flipic your default viewer, open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go. You can also Control-click an image in Finder, hold ⌥ and choose Always Open With › Flipic.
 

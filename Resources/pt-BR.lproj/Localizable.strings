@@ -682,3 +682,10 @@ Arraste uma pasta ou imagem para abrir";
 "feedback.errServer" = "O servidor teve um problema (%@). Tente de novo mais tarde.";
 "feedback.errOther" = "Não foi possível enviar (%@).";
 "feedback.keep" = "Seu texto continua aqui. Envie mais tarde ou copie-o.";
+
+/* 缩略图栏多选 */
+"msg.picked" = "%d selecionadas";
+"msg.copiedPhotos" = "%d fotos copiadas. Cole no Finder";
+"menu.markPicked" = "Marcar as %d selecionadas";
+"menu.unmarkPicked" = "Desmarcar as %d selecionadas";
+"exp.f.summaryPicked" = "Exportar as %d fotos selecionadas";

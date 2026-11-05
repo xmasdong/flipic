@@ -285,6 +285,8 @@ final class ViewerViewController: NSViewController {
         filmstrip.collectionView.dataSource = self
         filmstrip.collectionView.delegate = self
         filmstrip.collectionView.register(FilmstripItem.self, forItemWithIdentifier: Self.filmstripID)
+        filmstrip.collectionView.onClick = { [weak self] i, mods in self?.filmstripClicked(i, mods) }
+        filmstrip.collectionView.dragURLs = { [weak self] i in self?.filmstripDragURLs(from: i) ?? [] }
         view.addSubview(filmstrip)
 
         buildHUD()
@@ -1491,15 +1493,84 @@ final class ViewerViewController: NSViewController {
         if let s = sender.identifier?.rawValue, let url = URL(string: s) { NSWorkspace.shared.open(url) }
     }
 
-    /// 只改选中态，不 reloadData（整条重建会让所有可见格子重新取缩略图）
+    /// 只改选中态，不 reloadData（整条重建会让所有可见格子重新取缩略图）。
+    /// 翻页、换筛选等都会回到只选当前这张；在多选里点来点去时保留多选
     func syncFilmstripSelection() {
         let cv = filmstrip.collectionView
         guard !folder.items.isEmpty else { return }
         let target = IndexPath(item: folder.index, section: 0)
+        if keepStripSelection, cv.selectionIndexPaths.contains(target) { return }
+        stripAnchor = nil
         if cv.selectionIndexPaths == [target] { return }
         cv.deselectAll(nil)
         cv.selectItems(at: Set([IndexPath(item: folder.index, section: 0)]),
                        scrollPosition: [.centeredHorizontally])
+    }
+
+    // MARK: - 缩略图栏多选
+
+    /// ⇧ 点击从这张开始选一段；没有就从当前照片开始
+    private var stripAnchor: Int?
+    /// 多选里换着看某一张时，showImage 不把多选收成一张
+    private var keepStripSelection = false
+
+    /// 缩略图栏里 ⇧ / ⌘ 多选的照片，按列表顺序；平时只选当前这张时是空的
+    var stripPicked: [URL] {
+        guard cleanup == nil, compareView == nil else { return [] }
+        let sel = filmstrip.collectionView.selectionIndexPaths.map(\.item).filter { folder.items.indices.contains($0) }
+        return sel.count > 1 ? sel.sorted().map { folder.items[$0].url } : []
+    }
+
+    /// 多选时是选中的那些，否则是当前这张
+    private var actionURLs: [URL] {
+        let picked = stripPicked
+        if !picked.isEmpty { return picked }
+        return folder.current.map { [$0.url] } ?? []
+    }
+
+    /// 和访达一样：⇧ 点击选中一段，⌘ 点击加上或去掉一张（⌃ 也算，照顾用惯 Windows 的人），⇧⌘ 再加一段
+    func filmstripClicked(_ i: Int, _ mods: NSEvent.ModifierFlags) {
+        guard folder.items.indices.contains(i) else { return }
+        if compareView != nil {
+            compareShow(i)
+            return
+        }
+        let cv = filmstrip.collectionView
+        var sel = Set(cv.selectionIndexPaths.map(\.item).filter { folder.items.indices.contains($0) })
+        let toggle = mods.contains(.command) || mods.contains(.control)
+        if cleanup == nil, mods.contains(.shift) {
+            let a = stripAnchor ?? folder.index
+            stripAnchor = a
+            let range = Set(min(a, i)...max(a, i))
+            sel = toggle ? sel.union(range) : range
+        } else if cleanup == nil, toggle {
+            if sel.contains(i) { if sel.count > 1 { sel.remove(i) } } else { sel.insert(i) }
+            stripAnchor = i
+        } else {
+            sel = [i]
+        }
+        // 显示点的那张；⌘ 点掉一张时停在正在看的这张，点掉的就是它时换成离它最近的一张选中的
+        let show = sel.contains(i) ? i : sel.contains(folder.index) ? folder.index
+            : sel.min { (abs($0 - i), $0) < (abs($1 - i), $1) } ?? i
+        keepStripSelection = sel.count > 1
+        cv.selectionIndexPaths = Set(sel.map { IndexPath(item: $0, section: 0) })
+        if show != folder.index {
+            folder.jump(to: show)
+            showImage(resetToFit: false)
+        } else if sel.count == 1 {
+            stripAnchor = nil
+        }
+        keepStripSelection = false
+        view.window?.makeFirstResponder(imageView)
+        if sel.count > 1 { flash(L10n.f("msg.picked", "已选 %d 张", sel.count), seconds: 1.2) }
+    }
+
+    /// 从缩略图栏拖出去的文件：按在多选里就是整组，连同藏起来的同名 RAW / JPG
+    private func filmstripDragURLs(from i: Int) -> [URL] {
+        guard cleanup == nil, folder.items.indices.contains(i) else { return [] }
+        let picked = stripPicked
+        let urls = picked.contains(folder.items[i].url) ? picked : [folder.items[i].url]
+        return folder.withHiddenPartners(urls)
     }
 
     // MARK: - 菜单动作
@@ -1523,11 +1594,14 @@ final class ViewerViewController: NSViewController {
     }
 
     @objc func revealInFinder(_ sender: Any?) {
-        guard let item = folder.current else { return }
-        NSWorkspace.shared.activateFileViewerSelecting([item.url])
+        let urls = actionURLs
+        guard !urls.isEmpty else { return }
+        NSWorkspace.shared.activateFileViewerSelecting(urls)
     }
 
     @objc func trashCurrent(_ sender: Any?) {
+        let picked = stripPicked
+        if !picked.isEmpty { trashPicked(picked); return }
         exitCompare()
         guard let item = folder.current else { return }
         let gen = generation
@@ -1554,6 +1628,33 @@ final class ViewerViewController: NSViewController {
                     self.filmstrip.collectionView.reloadData()
                     self.updateHUD()
                 }
+            }
+        }
+    }
+
+    /// 多选的几张一起移到废纸篓，同名搭档和附属文件跟着走；⌘Z 能一起放回
+    private func trashPicked(_ picked: [URL]) {
+        let gen = generation
+        var urls = folder.withHiddenPartners(picked)
+        for u in urls { for f in Self.companions(of: u) where !urls.contains(f) { urls.append(f) } }
+        NSWorkspace.shared.recycle(urls) { [weak self] moved, _ in
+            DispatchQueue.main.async {
+                if !moved.isEmpty { Self.lastTrash = TrashRecord(moved: moved, photo: nil) }
+                guard let self, self.generation == gen else { return }
+                let gone = Set(moved.keys)
+                for u in gone { self.loader.evict(url: u) }
+                self.folder.remove(urls: gone)
+                self.filmstrip.collectionView.reloadData()
+                if self.folder.count > 0 {
+                    self.showImage(resetToFit: false)
+                } else {
+                    self.imageView.set(image: nil, resetToFit: true, isNew: true)
+                    self.emptyState.isHidden = false
+                    self.updateControlsPresence()
+                    self.emptyHint.stringValue = L10n.t("ui.noMore", "文件夹里没有更多图片了")
+                    self.updateHUD()
+                }
+                self.flash(L10n.f("pro.trashed", "已移到废纸篓 %d 个文件", moved.count), seconds: 3)
             }
         }
     }
@@ -1876,9 +1977,20 @@ final class ViewerViewController: NSViewController {
         TextRecognition.recognizeLines(in: image) { [weak self] lines in self?.finishCopyText(lines) }
     }
 
-    /// 「编辑 › 拷贝」（⌘C）：照片上选中了文字时拷贝选中的部分
+    /// 「编辑 › 拷贝」（⌘C）：照片上选中了文字时拷贝选中的部分；否则拷贝照片文件（多选时是选中的那些），
+    /// 到访达里粘贴就是复制过去，也能粘贴到聊天窗口
     @objc func copy(_ sender: Any?) {
-        liveText?.copySelection()
+        if liveText?.hasTextSelection == true {
+            liveText?.copySelection()
+            return
+        }
+        let picked = actionURLs
+        guard cleanup == nil, !picked.isEmpty else { return }
+        let files = folder.withHiddenPartners(picked)
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        pb.writeObjects(files.map { $0 as NSURL })
+        flash(L10n.f("msg.copiedPhotos", "已拷贝 %d 张照片，可以到访达里粘贴", picked.count), seconds: 2)
     }
 
     private func finishCopyText(_ lines: [String]) {
@@ -2080,7 +2192,17 @@ final class ViewerViewController: NSViewController {
 
     /// 交给后期软件的文件：当前是 JPG 等、同名 RAW 也在时用 RAW，后期一般修 RAW
     private func editTargetURL() -> URL? {
-        guard let url = folder.current?.url else { return nil }
+        folder.current.map { editTargetURL(for: $0.url) }
+    }
+
+    /// 多选时交给后期软件的那些文件
+    private func editTargetURLs() -> [URL] {
+        var out: [URL] = []
+        for u in actionURLs.map(editTargetURL(for:)) where !out.contains(u) { out.append(u) }
+        return out
+    }
+
+    private func editTargetURL(for url: URL) -> URL {
         if CleanupUnit.isRaw(url) { return url }
         let base = url.deletingPathExtension()
         for ext in CleanupUnit.rawExtensions.sorted() {
@@ -2092,29 +2214,37 @@ final class ViewerViewController: NSViewController {
         return url
     }
 
-    private func open(_ file: URL, with app: URL) {
+    /// 测试用：不真的打开后期软件，只记下要送过去的文件
+    var debugOpenedFiles: [URL]?
+
+    private func open(_ files: [URL], with app: URL) {
+        guard let first = files.first else { return }
+        if debugOpenedFiles != nil { debugOpenedFiles = files; return }
         let config = NSWorkspace.OpenConfiguration()
         config.activates = true
-        NSWorkspace.shared.open([file], withApplicationAt: app, configuration: config) { [weak self] _, error in
+        NSWorkspace.shared.open(files, withApplicationAt: app, configuration: config) { [weak self] _, error in
             DispatchQueue.main.async {
                 if let error {
                     self?.flash(L10n.f("msg.openFailed", "无法用 %1$@ 打开：%2$@", Self.appName(app), error.localizedDescription), seconds: 4)
+                } else if files.count > 1 {
+                    self?.flash(L10n.f("pro.openedAll", "已把 %1$d 张照片送进 %2$@", files.count, Self.appName(app)), seconds: 3)
                 } else {
-                    self?.flash(L10n.f("msg.openedIn", "已用 %1$@ 打开 %2$@", Self.appName(app), file.lastPathComponent))
+                    self?.flash(L10n.f("msg.openedIn", "已用 %1$@ 打开 %2$@", Self.appName(app), first.lastPathComponent))
                 }
             }
         }
     }
 
-    /// ⌘E：用设好的后期软件打开当前照片；还没设就先选一个
+    /// ⌘E：用设好的后期软件打开当前照片（多选时是选中的那些）；还没设就先选一个
     @objc func openInEditor(_ sender: Any?) {
-        guard let file = editTargetURL() else { return }
+        let files = editTargetURLs()
+        guard !files.isEmpty else { return }
         if let app = editorAppURL {
-            open(file, with: app)
+            open(files, with: app)
         } else {
             pickApplication { [weak self] app in
                 self?.editorAppURL = app
-                self?.open(file, with: app)
+                self?.open(files, with: app)
             }
         }
     }
@@ -2172,13 +2302,14 @@ final class ViewerViewController: NSViewController {
     }
 
     @objc private func openWithMenuItem(_ sender: NSMenuItem) {
-        guard let app = sender.representedObject as? URL, let file = editTargetURL() else { return }
-        open(file, with: app)
+        guard let app = sender.representedObject as? URL else { return }
+        open(editTargetURLs(), with: app)
     }
 
     @objc private func openWithOther(_ sender: Any?) {
-        guard let file = editTargetURL() else { return }
-        pickApplication { [weak self] app in self?.open(file, with: app) }
+        let files = editTargetURLs()
+        guard !files.isEmpty else { return }
+        pickApplication { [weak self] app in self?.open(files, with: app) }
     }
 
     /// 图片上的右键菜单：交给后期软件、打开方式，以及常用的几项
@@ -2201,7 +2332,7 @@ final class ViewerViewController: NSViewController {
         for it in ratingMenu.items { it.target = self }
         rating.submenu = ratingMenu
         menu.addItem(rating)
-        add(Self.markMenuTitle(folder.current?.marked ?? false), #selector(toggleMark(_:)))
+        add(markMenuTitle, #selector(toggleMark(_:)))
         add(L10n.t("menu.markedOnly", "只看已标记"), #selector(toggleMarkedOnly(_:)))
         add(L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(exportToFolder(_:)))
         add(L10n.t("menu.share", "分享…"), #selector(shareCurrent(_:)))
@@ -2245,8 +2376,9 @@ final class ViewerViewController: NSViewController {
     }
 
     func setRating(_ stars: Int) {
-        guard cleanup == nil, let url = folder.current?.url else { return }
-        let targets = ratingTargets(for: url)
+        guard cleanup == nil, folder.current != nil else { return }
+        var targets: [URL] = []
+        for u in actionURLs { for t in ratingTargets(for: u) where !targets.contains(t) { targets.append(t) } }
         for t in targets {
             ratingCache[t] = stars
             folder.setRating(stars, url: t)
@@ -2394,11 +2526,26 @@ final class ViewerViewController: NSViewController {
         marked ? L10n.t("menu.unmark", "取消标记") : L10n.t("menu.mark", "标记这张")
     }
 
-    /// 标记 / 取消标记当前照片；同名的 RAW 和 JPG 一起标
+    /// 多选时菜单写明是几张
+    private var markMenuTitle: String {
+        let picked = stripPicked
+        guard !picked.isEmpty else { return Self.markMenuTitle(folder.current?.marked ?? false) }
+        return pickedAllMarked(picked) ? L10n.f("menu.unmarkPicked", "取消标记选中的 %d 张", picked.count)
+            : L10n.f("menu.markPicked", "标记选中的 %d 张", picked.count)
+    }
+
+    private func pickedAllMarked(_ picked: [URL]) -> Bool {
+        let set = Set(picked)
+        return folder.items.filter { set.contains($0.url) }.allSatisfy(\.marked)
+    }
+
+    /// 标记 / 取消标记当前照片；多选时选中的几张有没标的就全标上，都标过就全取消；同名的 RAW 和 JPG 一起标
     @objc func toggleMark(_ sender: Any?) {
         guard cleanup == nil, let item = folder.current else { return }
-        let on = !item.marked
-        let targets = ratingTargets(for: item.url)
+        let picked = stripPicked
+        let on = picked.isEmpty ? !item.marked : !pickedAllMarked(picked)
+        var targets: [URL] = []
+        for u in actionURLs { for t in ratingTargets(for: u) where !targets.contains(t) { targets.append(t) } }
         for t in targets { folder.setMarked(on, url: t) }
         refreshMarks()
         let count = folder.markedCount
@@ -2574,8 +2721,10 @@ final class ViewerViewController: NSViewController {
     /// 把当前显示的照片（筛选中就是筛出来的那些）复制或移动到一个文件夹
     @objc func exportToFolder(_ sender: Any?) {
         guard folder.count > 0, !isProcessing, let source = folder.current?.url.deletingLastPathComponent() else { return }
+        let picked = stripPicked
         exitCompare()
-        let urls = folder.withHiddenPartners(folder.items.map(\.url))
+        let shown = picked.isEmpty ? folder.items.map(\.url) : picked
+        let urls = folder.withHiddenPartners(shown)
         if let target = debugExportTarget {
             runFolderExport(urls, to: target, from: source, move: Self.exportFolderMoves)
             return
@@ -2586,7 +2735,8 @@ final class ViewerViewController: NSViewController {
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
         panel.prompt = L10n.t("exp.f.prompt", "导出到这里")
-        panel.message = exportSummary(count: folder.items.count)
+        panel.message = picked.isEmpty ? exportSummary(count: folder.items.count)
+            : L10n.f("exp.f.summaryPicked", "导出选中的 %d 张照片", picked.count)
         let copy = NSButton(radioButtonWithTitle: L10n.t("exp.f.copy", "复制（原文件留在这里）"), target: nil, action: nil)
         let move = NSButton(radioButtonWithTitle: L10n.t("exp.f.move", "移动（从这里移走）"), target: nil, action: nil)
         copy.state = Self.exportFolderMoves ? .off : .on
@@ -3255,8 +3405,9 @@ final class ViewerViewController: NSViewController {
 
     /// 系统的分享菜单：隔空投送、信息、邮件，以及装了分享扩展的微信等
     @objc func shareCurrent(_ sender: Any?) {
-        guard cleanup == nil, let url = folder.current?.url else { return }
-        let picker = NSSharingServicePicker(items: [url])
+        let urls = actionURLs
+        guard cleanup == nil, !urls.isEmpty else { return }
+        let picker = NSSharingServicePicker(items: urls)
         if let b = shareButton, !toolbarView.isHidden, toolbarView.alphaValue > 0, b.window != nil {
             controlsHideTimer?.invalidate()
             picker.show(relativeTo: b.bounds, of: b, preferredEdge: .maxY)
@@ -4104,6 +4255,98 @@ final class ViewerViewController: NSViewController {
         at(0.8) { report("6-marked only again (unmarked one gone)") }
         at(0.2) { key("P", 35, .shift) }
         at(0.6) { NSApp.terminate(nil) }
+    }
+
+    /// --multiselecttest <截图目录> <文件夹>：用真的鼠标事件在缩略图栏里 ⇧ 点、⌘ 点、⌃ 点、拖出，
+    /// 再对选中的几张拷贝、标记、评分、送进后期软件、导出、删除再放回；每步记录选中了哪几张和结果
+    func runMultiSelectTest(outDir: String) {
+        let cv = filmstrip.collectionView
+        let out = URL(fileURLWithPath: outDir)
+        let exportDir = out.appendingPathComponent("export")
+        try? FileManager.default.removeItem(at: exportDir)
+        func name(_ i: Int) -> String { folder.items.indices.contains(i) ? folder.items[i].url.lastPathComponent : "-" }
+        func sel() -> String { cv.selectionIndexPaths.map(\.item).sorted().map { "\($0)" }.joined(separator: ",") }
+        func click(_ i: Int, _ mods: NSEvent.ModifierFlags = []) {
+            cv.scrollToItems(at: [IndexPath(item: i, section: 0)], scrollPosition: .centeredHorizontally)
+            let r = cv.frameForItem(at: i)
+            let p = cv.convert(NSPoint(x: r.midX, y: r.midY), to: nil)
+            func ev(_ type: NSEvent.EventType, _ at: NSPoint) -> NSEvent? {
+                NSEvent.mouseEvent(with: type, location: at, modifierFlags: mods, timestamp: ProcessInfo.processInfo.systemUptime,
+                                   windowNumber: view.window?.windowNumber ?? 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
+            }
+            if let e = ev(.leftMouseDown, p) { cv.mouseDown(with: e) }
+            if let e = ev(.leftMouseUp, p) { cv.mouseUp(with: e) }
+        }
+        func report(_ tag: String) {
+            NSLog("MSEL %@ | sel=[%@] picked=%d current=%d:%@ shown=%d", tag, sel(), stripPicked.count, folder.index, name(folder.index), folder.count)
+        }
+        let pb = NSPasteboard.general
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.0) { self.goTo(0); self.pokeControls() }
+        at(0.6) { click(2); report("1-plain click #2") }
+        at(0.4) { click(5, .shift); report("2-shift click #5 -> 2..5") }
+        at(0.4) { self.pokeControls() }
+        at(0.5) { self.captureWindow(to: "\(outDir)/1-range.png", raw: true) }
+        at(0.3) { click(3, .command); report("3-cmd click #3 -> drop it") }
+        at(0.4) { click(7, .control); report("4-ctrl click #7 -> add it") }
+        at(0.4) { click(9, [.shift, .command]); report("5-shift+cmd click #9 -> add 7..9") }
+        at(0.4) { click(8); report("6-plain click inside selection keeps it until mouse up -> only #8") }
+        at(0.4) { click(1); click(4, .shift); report("7-reselect 1..4") }
+        at(0.4) {
+            pb.clearContents()
+            self.copy(nil)
+            let urls = (pb.readObjects(forClasses: [NSURL.self]) as? [URL]) ?? []
+            NSLog("MSEL 8-copy files=[%@]", urls.map(\.lastPathComponent).joined(separator: ","))
+        }
+        at(0.3) {
+            self.toggleMark(nil)
+            NSLog("MSEL 9-mark model=%d menu=%@", self.folder.markedCount, self.markMenuTitle)
+            self.setRating(3)
+        }
+        at(0.8) {
+            let marked = self.folder.allItems.filter { Marks.isMarked(URL(fileURLWithPath: $0.url.path)) }.map(\.url.lastPathComponent)
+            NSLog("MSEL 9b-mark disk=[%@]", marked.joined(separator: ","))
+            let rated = self.folder.allItems.filter { Rating.read($0.url) == 3 }.map(\.url.lastPathComponent)
+            NSLog("MSEL 10-rating3 disk=[%@]", rated.joined(separator: ","))
+            self.debugOpenedFiles = []
+            let it = NSMenuItem()
+            it.representedObject = URL(fileURLWithPath: "/System/Applications/Preview.app")
+            self.openWithMenuItem(it)
+            NSLog("MSEL 11-open with files=[%@]", (self.debugOpenedFiles ?? []).map(\.lastPathComponent).joined(separator: ","))
+            self.debugOpenedFiles = nil
+            report("11b-still selected")
+        }
+        at(0.3) { self.captureWindow(to: "\(outDir)/2-marked.png", raw: true) }
+        at(0.3) { self.debugExportTarget = exportDir; Self.exportFolderMoves = false; self.exportToFolder(nil) }
+        at(1.5) {
+            let files = ((try? FileManager.default.contentsOfDirectory(atPath: exportDir.path)) ?? []).filter { !$0.hasPrefix(".") }.sorted()
+            NSLog("MSEL 12-export copied=[%@]", files.joined(separator: ","))
+            self.debugExportTarget = nil
+        }
+        at(0.3) { click(2); click(3, .shift); report("13-pick 2..3 to trash") }
+        at(0.3) { self.trashCurrent(nil) }
+        at(1.2) { report("14-after trash") }
+        at(0.3) { self.restoreLastTrash(nil) }
+        at(1.5) { report("15-restored") }
+        at(0.3) { click(0); click(2, .shift) }
+        at(0.3) {
+            if let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [.numericPad, .function], timestamp: 0,
+                                        windowNumber: self.view.window?.windowNumber ?? 0, context: nil,
+                                        characters: String(Character(UnicodeScalar(NSRightArrowFunctionKey)!)),
+                                        charactersIgnoringModifiers: String(Character(UnicodeScalar(NSRightArrowFunctionKey)!)),
+                                        isARepeat: false, keyCode: 124) {
+                self.imageView.keyDown(with: e)
+            }
+        }
+        at(0.4) { report("16-arrow key collapses selection") }
+        at(0.3) {
+            click(4); click(6, .shift)
+            NSLog("MSEL 17-drag from #5 (in selection)=[%@] from #0 (outside)=[%@]",
+                  self.filmstripDragURLs(from: 5).map(\.lastPathComponent).joined(separator: ","),
+                  self.filmstripDragURLs(from: 0).map(\.lastPathComponent).joined(separator: ","))
+        }
+        at(0.5) { NSApp.terminate(nil) }
     }
 
     /// --comparetest <截图目录> <文件夹>：C 进入两格对比、在当前格放大（另一格同步）、→ 换候选、Tab 换格并按 P、⇧C 四格、Esc 退出
@@ -5668,13 +5911,13 @@ extension ViewerViewController: NSMenuItemValidation {
         } else if menuItem.action == #selector(toggleToolbar(_:)) {
             menuItem.state = Self.showToolbar ? .on : .off
         } else if menuItem.action == #selector(toggleMark(_:)) {
-            menuItem.title = Self.markMenuTitle(folder.current?.marked ?? false)
+            menuItem.title = markMenuTitle
             return folder.current != nil
         } else if menuItem.action == #selector(toggleMarkedOnly(_:)) {
             menuItem.state = folder.markedOnly ? .on : .off
             return folder.current != nil
         } else if menuItem.action == #selector(copy(_:)) {
-            return liveText?.hasTextSelection ?? false
+            return liveText?.hasTextSelection == true || (cleanup == nil && folder.current != nil)
         } else if menuItem.action == #selector(copyAllText(_:)) {
             return folder.current != nil && imageView.debugHasImage && mainViewerActive
         }

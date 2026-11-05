@@ -694,3 +694,10 @@ Drop a folder or image to open";
 "feedback.errServer" = "The server ran into a problem (%@). Please try again later.";
 "feedback.errOther" = "Couldn’t send (%@).";
 "feedback.keep" = "Your text is still here. Send it later, or copy it for now.";
+
+/* 缩略图栏多选 */
+"msg.picked" = "%d selected";
+"msg.copiedPhotos" = "Copied %d photos. Paste them in Finder";
+"menu.markPicked" = "Mark %d Selected";
+"menu.unmarkPicked" = "Unmark %d Selected";
+"exp.f.summaryPicked" = "Export the %d selected photos";

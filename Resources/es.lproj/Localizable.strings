@@ -682,3 +682,10 @@ Arrastra una carpeta o imagen para abrir";
 "feedback.errServer" = "El servidor tiene un problema (%@). Inténtalo más tarde.";
 "feedback.errOther" = "No se pudo enviar (%@).";
 "feedback.keep" = "Tu texto sigue aquí. Envíalo más tarde o cópialo.";
+
+/* 缩略图栏多选 */
+"msg.picked" = "%d seleccionadas";
+"msg.copiedPhotos" = "%d fotos copiadas. Pégalas en el Finder";
+"menu.markPicked" = "Marcar las %d seleccionadas";
+"menu.unmarkPicked" = "Desmarcar las %d seleccionadas";
+"exp.f.summaryPicked" = "Exportar las %d fotos seleccionadas";

@@ -682,3 +682,10 @@ Açmak için klasör veya resim sürükleyin";
 "feedback.errServer" = "Sunucuda bir sorun oluştu (%@). Lütfen daha sonra tekrar deneyin.";
 "feedback.errOther" = "Gönderilemedi (%@).";
 "feedback.keep" = "Metniniz duruyor. Daha sonra gönderin ya da şimdilik kopyalayın.";
+
+/* 缩略图栏多选 */
+"msg.picked" = "%d seçildi";
+"msg.copiedPhotos" = "%d fotoğraf kopyalandı. Finder'a yapıştırabilirsiniz";
+"menu.markPicked" = "Seçili %d fotoğrafı işaretle";
+"menu.unmarkPicked" = "Seçili %d fotoğrafın işaretini kaldır";
+"exp.f.summaryPicked" = "Seçili %d fotoğrafı dışa aktar";

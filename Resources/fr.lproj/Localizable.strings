@@ -682,3 +682,10 @@ Déposez un dossier ou une image pour ouvrir";
 "feedback.errServer" = "Le serveur rencontre un problème (%@). Réessayez plus tard.";
 "feedback.errOther" = "Envoi impossible (%@).";
 "feedback.keep" = "Votre texte est conservé. Envoyez-le plus tard ou copiez-le.";
+
+/* 缩略图栏多选 */
+"msg.picked" = "%d sélectionnées";
+"msg.copiedPhotos" = "%d photos copiées. Collez-les dans le Finder";
+"menu.markPicked" = "Marquer les %d sélectionnées";
+"menu.unmarkPicked" = "Retirer la marque des %d sélectionnées";
+"exp.f.summaryPicked" = "Exporter les %d photos sélectionnées";

@@ -45,6 +45,7 @@ final class ViewerWindowController: NSWindowController {
     func runSlideFadeTest() { viewerVC?.runSlideFadeTest() }
     func runRatingTest() { viewerVC?.runRatingTest() }
     func runMarkTest(outDir: String) { viewerVC?.runMarkTest(outDir: outDir) }
+    func runMultiSelectTest(outDir: String) { viewerVC?.runMultiSelectTest(outDir: outDir) }
     func runCompareTest(outDir: String) { viewerVC?.runCompareTest(outDir: outDir) }
     func runExportTest(outDir: String) { viewerVC?.runExportTest(outDir: outDir) }
     func runRatingShot(outDir: String) { viewerVC?.runRatingShot(outDir: outDir) }

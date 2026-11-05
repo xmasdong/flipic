@@ -694,3 +694,10 @@ Esc  先关掉右上角的照片信息
 "feedback.errServer" = "服务器暂时出了问题（%@），稍后再试";
 "feedback.errOther" = "没有发出去（%@）";
 "feedback.keep" = "写的内容还在，可以稍后再发，或者先复制下来。";
+
+/* 缩略图栏多选 */
+"msg.picked" = "已选 %d 张";
+"msg.copiedPhotos" = "已拷贝 %d 张照片，可以到访达里粘贴";
+"menu.markPicked" = "标记选中的 %d 张";
+"menu.unmarkPicked" = "取消标记选中的 %d 张";
+"exp.f.summaryPicked" = "导出选中的 %d 张照片";

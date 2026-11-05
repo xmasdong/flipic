@@ -682,3 +682,10 @@ Return  إعادة تسمية الصورة الحالية
 "feedback.errServer" = "واجه الخادم مشكلة (%@). حاول مرة أخرى لاحقًا.";
 "feedback.errOther" = "تعذّر الإرسال (%@).";
 "feedback.keep" = "نصّك ما زال هنا. أرسله لاحقًا أو انسخه الآن.";
+
+/* 缩略图栏多选 */
+"msg.picked" = "تم تحديد %d";
+"msg.copiedPhotos" = "تم نسخ %d صور. الصقها في Finder";
+"menu.markPicked" = "تمييز المحددة (%d)";
+"menu.unmarkPicked" = "إلغاء تمييز المحددة (%d)";
+"exp.f.summaryPicked" = "تصدير الصور المحددة (%d)";

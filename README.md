@@ -15,7 +15,7 @@
   ·
   <a href="https://flipic.app/">官网</a>
   ·
-  <a href="https://github.com/xmasdong/flipic/releases">历史版本</a>
+  <a href="https://github.com/xmasdong/flipic/releases">更新记录</a>
 </p>
 
 <p align="center">
@@ -34,7 +34,7 @@
 2. 用 ← → 翻。看到要确认焦点的，鼠标移到眼睛上按 0，放大到 100%；连拍拿不准留哪张，按 C 两张并排比。
 3. 喜欢的按 1–5 打星，要留的按 P 标记。
 4. 一场活动几百张的话，按 ⇧⌘K 让清理模式先把相似连拍、闭眼、糊掉的分出来，你再决定删哪些。
-5. 挑完按 ⇧P 只看标记过的，或者只看几星以上的，⇧⌘E 一起拷走；要修的按 ⌘E 在 Lightroom、Capture One 里打开，打过的星在那边还在。
+5. 挑完按 ⇧P 只看标记过的，或者只看几星以上的，⇧⌘E 一起拷走；要修的几张在底部缩略图栏点第一张、按住 ⇧ 点最后一张选中（⌘ 点加减单张），按 ⌘E 一起在 Lightroom、Capture One 里打开，⌘C 能直接拷贝文件，打过的星在那边还在。
 
 ## 为什么这样做
 
@@ -56,7 +56,7 @@
 2. 打开 dmg，把 Flipic 拖进「应用程序」
 3. 第一次打开时系统会提示这是从互联网下载的 App，点「打开」
 
-需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片都能用。安装包用 Developer ID 签名并通过了 Apple 公证。历史版本在 [Releases](https://github.com/xmasdong/flipic/releases)。
+需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片都能用。安装包用 Developer ID 签名并通过了 Apple 公证。更新记录在 [Releases](https://github.com/xmasdong/flipic/releases)。
 
 想设成默认看图软件：打开设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 会一次设好。也可以在访达里右键一张图，按住 ⌥ 键，选「始终以此方式打开」› Flipic。
 

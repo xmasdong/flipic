@@ -694,6 +694,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runMarkTest(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--multiselecttest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runMultiSelectTest(outDir: outDir) }
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--ratingtest"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
