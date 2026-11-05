@@ -709,3 +709,11 @@ Drop a folder or image to open";
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "Move Preview to Center";
 "wb.previewToRight" = "Move Preview to Right";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d done, %2$d failed";
+"wb.copiedTo" = "Copied %1$d to %2$@";
+"wb.movedTo" = "Moved %1$d to %2$@";
+"wb.copyN" = "Copy %d Photos";
+"wb.copyPhoto" = "Copy Photo";
+"wb.rotateNeedsPreview" = "Rotate in the preview or single view";

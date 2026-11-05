@@ -702,3 +702,11 @@ Return  重新命名目前圖片
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "大圖放到中間";
 "wb.previewToRight" = "大圖放到右邊";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d 張已處理，%2$d 張沒成功";
+"wb.copiedTo" = "已複製 %1$d 張到 %2$@";
+"wb.movedTo" = "已移動 %1$d 張到 %2$@";
+"wb.copyN" = "拷貝 %d 張照片";
+"wb.copyPhoto" = "拷貝照片";
+"wb.rotateNeedsPreview" = "在大圖或單張裡才能旋轉";

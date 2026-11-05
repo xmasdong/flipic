@@ -697,3 +697,11 @@ Return  إعادة تسمية الصورة الحالية
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "المعاينة في الوسط";
 "wb.previewToRight" = "المعاينة على اليمين";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "تم %1$d، وفشل %2$d";
+"wb.copiedTo" = "تم نسخ %1$d إلى %2$@";
+"wb.movedTo" = "تم نقل %1$d إلى %2$@";
+"wb.copyN" = "نسخ %d صور";
+"wb.copyPhoto" = "نسخ الصورة";
+"wb.rotateNeedsPreview" = "التدوير متاح في المعاينة أو العرض الفردي";

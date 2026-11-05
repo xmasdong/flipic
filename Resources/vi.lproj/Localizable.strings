@@ -697,3 +697,11 @@ Kéo thư mục hoặc ảnh vào để mở";
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "Đưa ảnh lớn vào giữa";
 "wb.previewToRight" = "Đưa ảnh lớn sang phải";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "Xong %1$d, lỗi %2$d";
+"wb.copiedTo" = "Đã sao chép %1$d ảnh vào %2$@";
+"wb.movedTo" = "Đã chuyển %1$d ảnh vào %2$@";
+"wb.copyN" = "Sao chép %d ảnh";
+"wb.copyPhoto" = "Sao chép ảnh";
+"wb.rotateNeedsPreview" = "Xoay trong ảnh lớn hoặc chế độ một ảnh";

@@ -697,3 +697,11 @@ Ordner oder Bild hineinziehen zum Öffnen";
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "Vorschau in die Mitte";
 "wb.previewToRight" = "Vorschau nach rechts";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d erledigt, %2$d fehlgeschlagen";
+"wb.copiedTo" = "%1$d nach %2$@ kopiert";
+"wb.movedTo" = "%1$d nach %2$@ bewegt";
+"wb.copyN" = "%d Fotos kopieren";
+"wb.copyPhoto" = "Foto kopieren";
+"wb.rotateNeedsPreview" = "Drehen in der Vorschau oder Einzelansicht";

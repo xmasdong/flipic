@@ -697,3 +697,11 @@ Déposez un dossier ou une image pour ouvrir";
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "Aperçu au centre";
 "wb.previewToRight" = "Aperçu à droite";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d traitées, %2$d en échec";
+"wb.copiedTo" = "%1$d copiées dans %2$@";
+"wb.movedTo" = "%1$d déplacées dans %2$@";
+"wb.copyN" = "Copier %d photos";
+"wb.copyPhoto" = "Copier la photo";
+"wb.rotateNeedsPreview" = "Faites pivoter dans l'aperçu ou la vue unique";

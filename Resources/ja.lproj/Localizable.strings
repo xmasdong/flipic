@@ -697,3 +697,11 @@ Return  表示中の画像を名称変更
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "プレビューを中央へ";
 "wb.previewToRight" = "プレビューを右へ";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d 枚完了、%2$d 枚失敗";
+"wb.copiedTo" = "%1$d 枚を %2$@ にコピーしました";
+"wb.movedTo" = "%1$d 枚を %2$@ に移動しました";
+"wb.copyN" = "%d 枚の写真をコピー";
+"wb.copyPhoto" = "写真をコピー";
+"wb.rotateNeedsPreview" = "回転はプレビューか1枚表示で";

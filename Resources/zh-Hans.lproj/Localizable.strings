@@ -714,3 +714,11 @@ Esc  先关掉右上角的照片信息
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "大图放到中间";
 "wb.previewToRight" = "大图放到右边";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d 张已处理，%2$d 张没成功";
+"wb.copiedTo" = "已复制 %1$d 张到 %2$@";
+"wb.movedTo" = "已移动 %1$d 张到 %2$@";
+"wb.copyN" = "拷贝 %d 张照片";
+"wb.copyPhoto" = "拷贝照片";
+"wb.rotateNeedsPreview" = "在大图或单张里才能旋转";

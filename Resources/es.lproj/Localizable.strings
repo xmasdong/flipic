@@ -697,3 +697,11 @@ Arrastra una carpeta o imagen para abrir";
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "Vista previa al centro";
 "wb.previewToRight" = "Vista previa a la derecha";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d hechas, %2$d con error";
+"wb.copiedTo" = "%1$d copiadas a %2$@";
+"wb.movedTo" = "%1$d movidas a %2$@";
+"wb.copyN" = "Copiar %d fotos";
+"wb.copyPhoto" = "Copiar foto";
+"wb.rotateNeedsPreview" = "Gira en la vista previa o en la vista individual";

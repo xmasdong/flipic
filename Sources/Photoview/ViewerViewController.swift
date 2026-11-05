@@ -2214,7 +2214,7 @@ final class ViewerViewController: NSViewController {
         return " \(name) "
     }
 
-    private static func appName(_ url: URL) -> String {
+    static func appName(_ url: URL) -> String {
         FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
     }
 
@@ -2230,7 +2230,10 @@ final class ViewerViewController: NSViewController {
         return out
     }
 
-    private func editTargetURL(for url: URL) -> URL {
+    private func editTargetURL(for url: URL) -> URL { Self.editTarget(for: url) }
+
+    /// 工作台也用：同名 RAW 在就交 RAW
+    static func editTarget(for url: URL) -> URL {
         if CleanupUnit.isRaw(url) { return url }
         let base = url.deletingPathExtension()
         for ext in CleanupUnit.rawExtensions.sorted() {
@@ -2285,6 +2288,11 @@ final class ViewerViewController: NSViewController {
     }
 
     func pickApplication(_ done: @escaping (URL) -> Void) {
+        guard let window = view.window else { return }
+        Self.pickApplication(in: window, done)
+    }
+
+    static func pickApplication(in window: NSWindow, _ done: @escaping (URL) -> Void) {
         let panel = NSOpenPanel()
         panel.title = L10n.t("panel.chooseEditor", "选择后期软件")
         panel.prompt = L10n.t("panel.choose", "选择")
@@ -2292,7 +2300,6 @@ final class ViewerViewController: NSViewController {
         panel.allowedContentTypes = [.application]
         panel.canChooseDirectories = false
         panel.allowsMultipleSelection = false
-        guard let window = view.window else { return }
         panel.beginSheetModal(for: window) { response in
             if response == .OK, let url = panel.url { done(url) }
         }
@@ -4428,6 +4435,65 @@ final class ViewerViewController: NSViewController {
             let wb = WorkbenchWindowController.shared?.workbench
             NSLog("WBENTRY 1d-back middle=%d preview=%.0f grid=%.0f", wb?.previewInMiddle == true ? 1 : 0, wb?.previewWidth ?? 0, wb?.gridWidth ?? 0)
         }
+        // 工作台里的看图功能：宫格里按 R、=，大图跟着转、放大；⌘C、打开方式、导出、右键菜单、拖出、保存旋转
+        func wbKey(_ chars: String, _ code: UInt16) {
+            guard let wbc = WorkbenchWindowController.shared, let wb = wbc.workbench,
+                  let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: wbc.window?.windowNumber ?? 0,
+                                           context: nil, characters: chars, charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) else { return }
+            wb.center.grid.keyDown(with: e)
+        }
+        at(0.3) {
+            guard let wb = WorkbenchWindowController.shared?.workbench else { return }
+            wbKey("r", 15)
+            wbKey("=", 24); wbKey("=", 24)
+            let v = wb.inspector.preview
+            NSLog("WBENTRY 5-grid R and == : turns=%d fit=%d zoom=%.2f", v.rotationTurns, v.isFit ? 1 : 0, v.viewState.zoom)
+        }
+        at(0.6) { shot("wb-rotated-zoomed") }
+        at(0.3) {
+            guard let wb = WorkbenchWindowController.shared?.workbench else { return }
+            NSPasteboard.general.clearContents()
+            wb.copy(nil)
+            let urls = (NSPasteboard.general.readObjects(forClasses: [NSURL.self]) as? [URL]) ?? []
+            WorkbenchViewController.debugOpened = []
+            let it = NSMenuItem(); it.representedObject = URL(fileURLWithPath: "/System/Applications/Preview.app")
+            wb.openWithApp(it)
+            let menu = wb.contextMenu().items.map { $0.isSeparatorItem ? "|" : $0.title }.joined(separator: ",")
+            let drag = (wb.center.collectionView(wb.center.grid, pasteboardWriterForItemAt: IndexPath(item: 2, section: 0)) as? NSURL)?.lastPathComponent ?? "-"
+            NSLog("WBENTRY 6-copy=[%@] openWith=[%@] drag#3=%@ menu=[%@]", urls.map(\.lastPathComponent).joined(separator: ","),
+                  (WorkbenchViewController.debugOpened ?? []).map(\.lastPathComponent).joined(separator: ","), drag, menu)
+            WorkbenchViewController.debugOpened = nil
+            let exp = URL(fileURLWithPath: outDir).appendingPathComponent("wb-export")
+            try? FileManager.default.removeItem(at: exp)
+            WorkbenchViewController.debugExportTarget = exp
+            wb.exportToFolder(nil)
+        }
+        at(1.2) {
+            let exp = URL(fileURLWithPath: outDir).appendingPathComponent("wb-export")
+            NSLog("WBENTRY 7-export=[%@]", ((try? FileManager.default.contentsOfDirectory(atPath: exp.path)) ?? []).sorted().joined(separator: ","))
+            WorkbenchViewController.debugExportTarget = nil
+            guard let wb = WorkbenchWindowController.shared?.workbench, let u = wb.selectedPhotoURL else { return }
+            let before = ImageLoader.shared.info(for: u)?.pixelSize ?? .zero
+            NSLog("WBENTRY 8-before save %@ %.0fx%.0f", u.lastPathComponent, before.width, before.height)
+            wb.saveRotation(nil)
+        }
+        at(0.1) {
+            // 工具条：鼠标在大图上动就出现，按钮点了作用在大图上
+            guard let wb = WorkbenchWindowController.shared?.workbench else { return }
+            wb.inspector.toolbar.reveal()
+        }
+        at(0.5) {
+            guard let wb = WorkbenchWindowController.shared?.workbench else { return }
+            NSLog("WBENTRY 8b-toolbar visible=%d alpha=%.1f", wb.inspector.toolbar.isHidden ? 0 : 1, wb.inspector.toolbar.alphaValue)
+            shot("wb-toolbar")
+        }
+        at(1.4) {
+            guard let wb = WorkbenchWindowController.shared?.workbench, let u = wb.selectedPhotoURL else { return }
+            ImageLoader.shared.evict(url: u)
+            let after = ImageLoader.shared.info(for: u)?.pixelSize ?? .zero
+            NSLog("WBENTRY 9-after save %@ %.0fx%.0f turns now=%d", u.lastPathComponent, after.width, after.height, wb.inspector.preview.rotationTurns)
+            shot("wb-saved")
+        }
         at(0.3) { self.view.window?.makeKeyAndOrderFront(nil); self.goTo(7) }
         at(0.6) { self.view.window?.makeKeyAndOrderFront(nil); button()?.performClick(nil) }
         at(1.5) { report("2-clicked at #8 (same project)"); shot("wb-2") }
@@ -5847,7 +5913,7 @@ extension ViewerViewController: NSCollectionViewDataSource, NSCollectionViewDele
 
 // MARK: - 工具条按钮（不抢第一响应者；悬停/按压有圆角高亮，仿系统 HUD 控件）
 
-private final class ToolbarButton: NSButton {
+final class ToolbarButton: NSButton {
     private static let hoverColor = NSColor.labelColor.withAlphaComponent(0.09).cgColor
     private static let pressedColor = NSColor.labelColor.withAlphaComponent(0.18).cgColor
     private var trackingArea: NSTrackingArea?

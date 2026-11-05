@@ -697,3 +697,11 @@ Arraste uma pasta ou imagem para abrir";
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "Pré-visualização no centro";
 "wb.previewToRight" = "Pré-visualização à direita";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d feitas, %2$d com falha";
+"wb.copiedTo" = "%1$d copiadas para %2$@";
+"wb.movedTo" = "%1$d movidas para %2$@";
+"wb.copyN" = "Copiar %d fotos";
+"wb.copyPhoto" = "Copiar foto";
+"wb.rotateNeedsPreview" = "Gire na pré-visualização ou na visualização única";

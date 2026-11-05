@@ -697,3 +697,11 @@ Açmak için klasör veya resim sürükleyin";
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "Önizlemeyi ortaya al";
 "wb.previewToRight" = "Önizlemeyi sağa al";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d tamam, %2$d başarısız";
+"wb.copiedTo" = "%1$d fotoğraf %2$@ klasörüne kopyalandı";
+"wb.movedTo" = "%1$d fotoğraf %2$@ klasörüne taşındı";
+"wb.copyN" = "%d fotoğrafı kopyala";
+"wb.copyPhoto" = "Fotoğrafı kopyala";
+"wb.rotateNeedsPreview" = "Döndürme önizlemede veya tekli görünümde yapılır";

@@ -697,3 +697,11 @@ Trascina una cartella o un'immagine per aprire";
 /* 工作台大图位置 */
 "wb.previewToMiddle" = "Anteprima al centro";
 "wb.previewToRight" = "Anteprima a destra";
+
+/* 工作台文件操作 */
+"pro.exportPartial" = "%1$d fatte, %2$d non riuscite";
+"wb.copiedTo" = "%1$d copiate in %2$@";
+"wb.movedTo" = "%1$d spostate in %2$@";
+"wb.copyN" = "Copia %d foto";
+"wb.copyPhoto" = "Copia foto";
+"wb.rotateNeedsPreview" = "Ruota nell'anteprima o nella vista singola";
