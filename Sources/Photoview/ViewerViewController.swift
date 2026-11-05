@@ -5318,6 +5318,7 @@ final class ViewerViewController: NSViewController {
     /// --windragtest <文件夹>：适应窗口时拖照片移动窗口、照片不动；放大后拖动平移照片、窗口不动；单击、双击照旧
     func runWindowDragTest() {
         guard let w = view.window else { return }
+        ZoomableImageView.debugManualWindowDrag = true
         let center = imageView.convert(NSPoint(x: imageView.bounds.midX, y: imageView.bounds.midY), to: nil)
         func mouse(_ type: NSEvent.EventType, _ p: NSPoint) {
             guard let e = NSEvent.mouseEvent(with: type, location: p, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,

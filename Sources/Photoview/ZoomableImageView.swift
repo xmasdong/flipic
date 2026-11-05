@@ -522,6 +522,8 @@ final class ZoomableImageView: NSView {
     private var dragStartPoint: CGPoint?
     /// 照片适应窗口时按住拖动是移动窗口（不用非得拖顶栏）；放大后才是平移照片。全屏时窗口不能动，照旧平移
     private var windowDragStart: (frame: CGPoint, mouse: CGPoint)?
+    /// 测试用：合成的鼠标事件没法让系统拖窗口，测试时还是自己挪
+    static var debugManualWindowDrag = false
     /// 适应窗口时拖动照片是否移动窗口；嵌在别的窗口里（工作台）时关掉，适应窗口时拖动什么都不动，放大后照旧平移
     var dragsWindowWhenFit = true
 
@@ -701,11 +703,18 @@ final class ZoomableImageView: NSView {
 
     override func mouseDragged(with event: NSEvent) {
         if let start = windowDragStart, let w = window {
-            // 用屏幕坐标算位移：窗口跟着动，窗口内坐标会变，只能换算到屏幕上比
             let m = w.convertPoint(toScreen: event.locationInWindow)
             if hypot(m.x - start.mouse.x, m.y - start.mouse.y) > 3 { mouseMovedSinceDown = true }
             guard mouseMovedSinceDown else { return }
-            w.setFrameOrigin(CGPoint(x: start.frame.x + m.x - start.mouse.x, y: start.frame.y + m.y - start.mouse.y))
+            // 动过 3 点以后交给系统拖窗口，和拖标题栏一样顺，也能拖到屏幕边上分屏。
+            // 原来每次自己 setFrameOrigin：事件里的窗口内坐标按事件发生时的窗口位置算，窗口已经挪过了再换算到屏幕会来回偏，窗口跟着抖
+            if Self.debugManualWindowDrag {
+                w.setFrameOrigin(CGPoint(x: start.frame.x + m.x - start.mouse.x, y: start.frame.y + m.y - start.mouse.y))
+                return
+            }
+            windowDragStart = nil
+            dragStartOrigin = nil
+            w.performDrag(with: event)
             return
         }
         guard let o = dragStartOrigin, let s = dragStartPoint else { return }
