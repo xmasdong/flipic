@@ -23,6 +23,8 @@ final class ViewerWindowController: NSWindowController {
     }
 
     private var viewerVC: ViewerViewController? { contentViewController as? ViewerViewController }
+    /// 正在看的照片，工作台从它所在的文件夹打开
+    var currentPhotoURL: URL? { viewerVC?.folder.current?.url }
 
     func runSelfTest() { viewerVC?.runSelfTest() }
     func runShotSequence(outDir: String) { viewerVC?.runShotSequence(outDir: outDir) }
@@ -46,6 +48,9 @@ final class ViewerWindowController: NSWindowController {
     func runRatingTest() { viewerVC?.runRatingTest() }
     func runMarkTest(outDir: String) { viewerVC?.runMarkTest(outDir: outDir) }
     func runMultiSelectTest(outDir: String) { viewerVC?.runMultiSelectTest(outDir: outDir) }
+    #if FLIPIC_PRO
+    func runWorkbenchEntryTest(outDir: String) { viewerVC?.runWorkbenchEntryTest(outDir: outDir) }
+    #endif
     func runCompareTest(outDir: String) { viewerVC?.runCompareTest(outDir: outDir) }
     func runExportTest(outDir: String) { viewerVC?.runExportTest(outDir: outDir) }
     func runRatingShot(outDir: String) { viewerVC?.runRatingShot(outDir: outDir) }
@@ -68,5 +73,7 @@ final class ViewerWindowController: NSWindowController {
     }
 
     func open(_ url: URL) { viewerVC?.open(url: url) }
+    /// 显示这张：已经在看它所在的文件夹就直接翻过去，否则打开它
+    func show(photo url: URL) { viewerVC?.show(photo: url) }
     func openFolderPanel() { viewerVC?.openFolderPanel(nil) }
 }

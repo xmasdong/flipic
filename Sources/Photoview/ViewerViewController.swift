@@ -499,6 +499,17 @@ final class ViewerViewController: NSViewController {
         stack.spacing = 2
         stack.edgeInsets = NSEdgeInsets(top: 3, left: 4, bottom: 3, right: 4)
         stack.translatesAutoresizingMaskIntoConstraints = false
+        #if FLIPIC_PRO
+        // 工作台原来只在「窗口」菜单和 ⌥⌘B 里，放到信息按钮左边
+        if WorkbenchFeature.isEnabled {
+            let tip = L10n.t("menu.workbench", "工作台")
+            let (container, button) = iconButton(symbol: "square.grid.2x2", tip: Shortcuts.tooltip(tip, .workbench),
+                                                 action: #selector(openWorkbench(_:)),
+                                                 size: NSSize(width: 32, height: 28), cornerRadius: 7, tint: .labelColor)
+            shortcutTips.append((button, tip, .workbench))
+            stack.addArrangedSubview(container)
+        }
+        #endif
         for (symbol, tip, action) in [("info.circle", L10n.t("tip.info", "照片信息（I）"), #selector(toggleInfoPanel(_:))),
                                       ("pin", L10n.t("tip.pin", "窗口置顶：浮在其他软件上面"), #selector(togglePinned(_:))),
                                       ("square.and.arrow.up", L10n.t("tip.share", "分享"), #selector(shareCurrent(_:)))] {
@@ -859,6 +870,17 @@ final class ViewerViewController: NSViewController {
 
     var isEmpty: Bool { folder.count == 0 }
     var debugFilmstripHeight: CGFloat { filmstrip.frame.height }
+
+    /// 从工作台回来：这张就在当前列表里时直接翻过去，不重新读文件夹
+    func show(photo url: URL) {
+        let path = url.standardizedFileURL.path
+        if let i = folder.items.firstIndex(where: { $0.url.standardizedFileURL.path == path }) {
+            exitCompare()
+            if i != folder.index { goTo(i) }
+        } else {
+            open(url: url)
+        }
+    }
 
     func open(url: URL) {
         exitCompare()
@@ -1814,6 +1836,12 @@ final class ViewerViewController: NSViewController {
 
     /// 工具条按钮的提示跟着自定义快捷键走
     private var shortcutTips: [(button: NSButton, base: String, action: ShortcutAction)] = []
+
+    #if FLIPIC_PRO
+    @objc func openWorkbench(_ sender: Any?) {
+        (NSApp.delegate as? AppDelegate)?.showWorkbench(opening: folder.current?.url, in: view.window)
+    }
+    #endif
 
     @objc private func refreshShortcutTips() {
         for t in shortcutTips { t.button.toolTip = Shortcuts.tooltip(t.base, t.action) }
@@ -4348,6 +4376,52 @@ final class ViewerViewController: NSViewController {
         }
         at(0.5) { NSApp.terminate(nil) }
     }
+
+    #if FLIPIC_PRO
+    /// --wbentrytest <截图目录> <文件夹>：看到第 5 张时点右上角的工作台按钮，工作台应打开这个文件夹并选中第 5 张；
+    /// 回看图窗口翻到第 8 张再点，同一个项目里改选第 8 张。设 FLIPIC_WORKBENCH_FILE 用临时项目列表
+    func runWorkbenchEntryTest(outDir: String) {
+        func button() -> NSButton? {
+            func find(_ v: NSView) -> NSButton? {
+                if let b = v as? NSButton, b.action == #selector(openWorkbench(_:)) { return b }
+                for sv in v.subviews { if let b = find(sv) { return b } }
+                return nil
+            }
+            return find(cornerBar)
+        }
+        func report(_ tag: String) {
+            let wb = WorkbenchWindowController.shared?.workbench
+            let sel = wb.flatMap { $0.photos.indices.contains($0.selected) ? $0.photos[$0.selected].url.lastPathComponent : nil } ?? "-"
+            NSLog("WBENTRY %@ | viewer=%@ button=%d unlocked=%d | project=%@ photos=%d selected=%@ projects=%d", tag,
+                  folder.current?.url.lastPathComponent ?? "-", button() != nil ? 1 : 0, License.isUnlocked ? 1 : 0,
+                  wb?.currentProject?.path ?? "-", wb?.photos.count ?? 0, sel, WorkbenchStore.shared.projects.count)
+        }
+        func shot(_ name: String) {
+            guard let w = WorkbenchWindowController.shared?.window,
+                  let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber), [.bestResolution, .boundsIgnoreFraming]),
+                  let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/\(name).png") as CFURL, "public.png" as CFString, 1, nil) else { return }
+            CGImageDestinationAddImage(dest, img, nil)
+            CGImageDestinationFinalize(dest)
+        }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.0) { self.goTo(4); self.pokeControls() }
+        at(0.6) { report("0-before"); self.view.window?.makeKeyAndOrderFront(nil); button()?.performClick(nil) }
+        at(2.5) { report("1-clicked at #5"); shot("wb-1") }
+        at(0.3) { self.view.window?.makeKeyAndOrderFront(nil); self.goTo(7) }
+        at(0.6) { self.view.window?.makeKeyAndOrderFront(nil); button()?.performClick(nil) }
+        at(1.5) { report("2-clicked at #8 (same project)"); shot("wb-2") }
+        at(0.3) {
+            guard let wbc = WorkbenchWindowController.shared, let wb = wbc.workbench else { return }
+            if let c = wb.cellIndex(of: 10) { wb.select(cell: c) }
+            wbc.window?.makeKeyAndOrderFront(nil)
+            NSLog("WBENTRY 3-workbench picked %@, key=%d", wb.selectedPhotoURL?.lastPathComponent ?? "-", NSApp.keyWindow === wbc.window ? 1 : 0)
+            (NSApp.delegate as? AppDelegate)?.backToViewer(from: wbc)
+        }
+        at(0.8) { report("4-back to viewer (shows workbench pick, no reload)"); self.captureWindow(to: "\(outDir)/viewer-back.png", raw: true) }
+        at(0.5) { NSApp.terminate(nil) }
+    }
+    #endif
 
     /// --comparetest <截图目录> <文件夹>：C 进入两格对比、在当前格放大（另一格同步）、→ 换候选、Tab 换格并按 P、⇧C 四格、Esc 退出
     func runCompareTest(outDir: String) {
