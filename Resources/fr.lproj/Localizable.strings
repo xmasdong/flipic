@@ -551,6 +551,7 @@ Déposez un dossier ou une image pour ouvrir";
 "wb.deleteGroup" = "Supprimer le groupe";
 "wb.emptyFolder" = "Ce dossier ne contient aucune photo";
 "wb.hint" = "%1$@–%2$@ noter · 0 effacer · %3$@ marquer · Espace photo seule · Flèches déplacer";
+"wb.hintPreview" = "%1$@–%2$@ noter · %3$@ marquer · Espace photo seule · %4$@ %5$@ précédente/suivante · %6$@ %7$@ zoom";
 "wb.info.camera" = "Appareil";
 "wb.info.date" = "Prise le";
 "wb.info.lens" = "Objectif";

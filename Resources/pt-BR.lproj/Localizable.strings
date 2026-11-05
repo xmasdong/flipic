@@ -551,6 +551,7 @@ Arraste uma pasta ou imagem para abrir";
 "wb.deleteGroup" = "Apagar grupo";
 "wb.emptyFolder" = "Esta pasta não tem fotos";
 "wb.hint" = "%1$@–%2$@ avaliar · 0 limpar · %3$@ marcar · Espaço foto única · Setas mover";
+"wb.hintPreview" = "%1$@–%2$@ avaliar · %3$@ marcar · Espaço foto única · %4$@ %5$@ anterior/próxima · %6$@ %7$@ zoom";
 "wb.info.camera" = "Câmera";
 "wb.info.date" = "Tirada em";
 "wb.info.lens" = "Lente";

@@ -563,6 +563,7 @@ Drop a folder or image to open";
 "wb.deleteGroup" = "Delete Group";
 "wb.emptyFolder" = "There are no photos in this folder";
 "wb.hint" = "%1$@–%2$@ rate · 0 clear · %3$@ mark · Space single photo · Arrow keys move";
+"wb.hintPreview" = "%1$@–%2$@ rate · %3$@ mark · Space single photo · %4$@ %5$@ previous/next · %6$@ %7$@ zoom";
 "wb.info.camera" = "Camera";
 "wb.info.date" = "Taken";
 "wb.info.lens" = "Lens";

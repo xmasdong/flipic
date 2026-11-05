@@ -551,6 +551,7 @@ Return  重新命名目前圖片
 "wb.deleteGroup" = "刪除群組";
 "wb.emptyFolder" = "這個資料夾裡沒有照片";
 "wb.hint" = "%1$@–%2$@ 評星 · 0 清除 · %3$@ 標記 · 空白鍵 單張 · 方向鍵移動";
+"wb.hintPreview" = "%1$@–%2$@ 評星 · %3$@ 標記 · 空白鍵 單張 · %4$@ %5$@ 翻頁 · %6$@ %7$@ 縮放";
 "wb.info.camera" = "相機";
 "wb.info.date" = "拍攝時間";
 "wb.info.lens" = "鏡頭";

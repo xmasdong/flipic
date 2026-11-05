@@ -551,6 +551,7 @@ Trascina una cartella o un'immagine per aprire";
 "wb.deleteGroup" = "Elimina gruppo";
 "wb.emptyFolder" = "In questa cartella non ci sono foto";
 "wb.hint" = "%1$@–%2$@ voto · 0 azzera · %3$@ contrassegna · Spazio foto singola · Frecce sposta";
+"wb.hintPreview" = "%1$@–%2$@ voto · %3$@ contrassegna · Spazio foto singola · %4$@ %5$@ precedente/successiva · %6$@ %7$@ zoom";
 "wb.info.camera" = "Fotocamera";
 "wb.info.date" = "Scattata";
 "wb.info.lens" = "Obiettivo";

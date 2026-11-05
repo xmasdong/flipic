@@ -551,6 +551,7 @@ Arrastra una carpeta o imagen para abrir";
 "wb.deleteGroup" = "Eliminar grupo";
 "wb.emptyFolder" = "Esta carpeta no tiene fotos";
 "wb.hint" = "%1$@–%2$@ valorar · 0 borrar · %3$@ marcar · Espacio foto sola · Flechas mover";
+"wb.hintPreview" = "%1$@–%2$@ valorar · %3$@ marcar · Espacio foto sola · %4$@ %5$@ anterior/siguiente · %6$@ %7$@ zoom";
 "wb.info.camera" = "Cámara";
 "wb.info.date" = "Tomada";
 "wb.info.lens" = "Objetivo";

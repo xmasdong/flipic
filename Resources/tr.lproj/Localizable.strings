@@ -551,6 +551,7 @@ Açmak için klasör veya resim sürükleyin";
 "wb.deleteGroup" = "Grubu Sil";
 "wb.emptyFolder" = "Bu klasörde fotoğraf yok";
 "wb.hint" = "%1$@–%2$@ puan · 0 temizle · %3$@ işaretle · Boşluk tek fotoğraf · Ok tuşları gezin";
+"wb.hintPreview" = "%1$@–%2$@ puan · %3$@ işaretle · Boşluk tek fotoğraf · %4$@ %5$@ önceki/sonraki · %6$@ %7$@ yakınlaştır";
 "wb.info.camera" = "Fotoğraf makinesi";
 "wb.info.date" = "Çekim";
 "wb.info.lens" = "Objektif";

@@ -551,6 +551,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "wb.deleteGroup" = "Gruppe löschen";
 "wb.emptyFolder" = "In diesem Ordner sind keine Fotos";
 "wb.hint" = "%1$@–%2$@ bewerten · 0 löschen · %3$@ markieren · Leertaste Einzelbild · Pfeiltasten bewegen";
+"wb.hintPreview" = "%1$@–%2$@ bewerten · %3$@ markieren · Leertaste Einzelbild · %4$@ %5$@ vorheriges/nächstes · %6$@ %7$@ zoomen";
 "wb.info.camera" = "Kamera";
 "wb.info.date" = "Aufgenommen";
 "wb.info.lens" = "Objektiv";

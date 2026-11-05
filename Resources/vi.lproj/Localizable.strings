@@ -551,6 +551,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "wb.deleteGroup" = "Xoá nhóm";
 "wb.emptyFolder" = "Thư mục này không có ảnh";
 "wb.hint" = "%1$@–%2$@ chấm sao · 0 xoá · %3$@ đánh dấu · Phím cách xem một ảnh · Phím mũi tên di chuyển";
+"wb.hintPreview" = "%1$@–%2$@ chấm sao · %3$@ đánh dấu · Phím cách xem một ảnh · %4$@ %5$@ ảnh trước/sau · %6$@ %7$@ phóng to/thu nhỏ";
 "wb.info.camera" = "Máy ảnh";
 "wb.info.date" = "Thời gian chụp";
 "wb.info.lens" = "Ống kính";

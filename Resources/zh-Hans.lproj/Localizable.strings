@@ -563,6 +563,7 @@ Esc  先关掉右上角的照片信息
 "wb.deleteGroup" = "删除分组";
 "wb.emptyFolder" = "这个文件夹里没有照片";
 "wb.hint" = "%1$@–%2$@ 打星 · 0 清除 · %3$@ 标记 · 空格 单张 · 方向键移动";
+"wb.hintPreview" = "%1$@–%2$@ 打星 · %3$@ 标记 · 空格 单张 · %4$@ %5$@ 翻页 · %6$@ %7$@ 缩放";
 "wb.info.camera" = "相机";
 "wb.info.date" = "拍摄时间";
 "wb.info.lens" = "镜头";

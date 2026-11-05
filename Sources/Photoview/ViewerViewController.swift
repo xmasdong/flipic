@@ -4609,15 +4609,87 @@ final class ViewerViewController: NSViewController {
         at(0.5) { if let c = cell(2) { click(c) }; report("3-clickCell2") }
         at(0.5) { key("=", 24); report("4-zoomKey") }
         at(0.5) { key(String(UnicodeScalar(NSRightArrowFunctionKey)!), 124); report("5-right") }
-        at(0.5) { if let c = cell(1) { click(c) }; report("6-clickCell1(rightCol)") }
-        at(0.5) { cmd("=", 24); report("7-cmdEquals(menu)") }
-        at(0.5) { cmd("=", 24); report("8-cmdEquals(menu)") }
-        at(0.5) { cmd("-", 27); report("9-cmdMinus(menu)") }
-        at(0.5) { cmd("0", 29); report("10-cmd0(menu)") }
-        at(0.5) { if let p = wb?.inspector.preview { click(p) } }
-        at(0.5) { cmd("=", 24); report("11-previewFocused cmdEquals") }
+        let up = String(UnicodeScalar(NSUpArrowFunctionKey)!), down = String(UnicodeScalar(NSDownArrowFunctionKey)!)
+        let right = String(UnicodeScalar(NSRightArrowFunctionKey)!), left = String(UnicodeScalar(NSLeftArrowFunctionKey)!)
+        func rating() -> Int { wb?.selectedPhoto?.rating ?? 0 }
+        // 宫格 + 大图，宫格有焦点：方向键和 0 按看图窗口的设置
+        at(0.5) { if let c = cell(1) { click(c) }; NSLog("WBFOCUS hint=%@", wb?.center.debugHint ?? "-"); report("A0-gridPreview clickCell1") }
+        at(0.5) { key(up, 126); report("A1-up (expect zoom, same photo)") }
+        at(0.5) { key(up, 126); report("A2-up (expect more zoom)") }
+        at(0.5) { key(down, 125); report("A3-down (expect zoom out)") }
+        at(0.5) { key(right, 124); report("A4-right (expect next)") }
+        at(0.5) { key(left, 124 - 1); report("A5-left (expect prev)") }
+        at(0.3) { wb?.rate(3) }
+        at(0.3) { key("0", 29); report("A6-0 rating=\(rating()) (expect zoom at pointer, rating stays 3)") }
+        at(0.3) { wb?.rate(0) }
+        at(0.3) { cmd("=", 24); report("A7-cmdEquals") }
+        // 只有宫格：方向键在宫格里移动，0 清除星级
         at(0.5) { wb?.setMode(.grid) }
-        at(0.5) { cmd("=", 24); report("12-gridOnly cmdEquals (expect no crash, disabled)") }
+        at(0.5) { if let c = cell(3) { click(c) }; NSLog("WBFOCUS hint=%@", wb?.center.debugHint ?? "-"); report("B0-grid clickCell3") }
+        at(0.5) { key(up, 126); report("B1-up (expect cell1, row up)") }
+        at(0.3) { wb?.rate(4) }
+        at(0.3) { key("0", 29); report("B2-0 rating=\(rating()) (expect 0)") }
+        at(0.5) { key(right, 124); report("B3-right (expect next)") }
+        // 自定义：放大改成 Z，宫格 + 大图里 Z 放大，↑ 没分配给别的就回到换行
+        let saved = [ShortcutAction.zoomIn].map { ($0, Shortcuts.isCustomized($0), Shortcuts.combo(for: $0)) }
+        at(0.5) { wb?.setMode(.gridPreview); Shortcuts.set(KeyCombo(keyCode: 6, chars: "z"), for: .zoomIn) }
+        at(0.5) { if let c = cell(3) { click(c) }; NSLog("WBFOCUS hint=%@", wb?.center.debugHint ?? "-"); report("C0-custom clickCell3") }
+        at(0.5) { key("z", 6); report("C1-Z (expect zoom)") }
+        at(0.5) { key(up, 126); report("C2-up unassigned (expect row up -> cell1)") }
+        at(0.5) {
+            for (a, was, c) in saved { Shortcuts.set(was ? c : a.defaultCombo, for: a) }
+            NSLog("WBFOCUS restored zoomIn customized=%d", Shortcuts.isCustomized(.zoomIn) ? 1 : 0)
+        }
+        // 滚轮跟着鼠标：先在宫格上滚，紧接着在大图上滚，再回宫格；系统分发和按鼠标分发各跑一遍
+        func wheel(over v: NSView, _ dy: Int32, phase: Int64) {
+            guard let w = v.window else { return }
+            let wp = v.convert(NSPoint(x: v.bounds.midX, y: v.bounds.midY), to: nil)
+            let sp = w.convertPoint(toScreen: wp)
+            let flipped = CGPoint(x: sp.x, y: (NSScreen.screens.first?.frame.maxY ?? 0) - sp.y)
+            guard let cg = CGEvent(scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 1, wheel1: dy, wheel2: 0, wheel3: 0) else { return }
+            cg.location = flipped
+            cg.setIntegerValueField(.scrollWheelEventScrollPhase, value: phase)
+            cg.setIntegerValueField(.scrollWheelEventIsContinuous, value: 1)
+            cg.setIntegerValueField(.scrollWheelEventPointDeltaAxis1, value: Int64(dy))
+            cg.setDoubleValueField(.scrollWheelEventFixedPtDeltaAxis1, value: Double(dy))
+            cg.setIntegerValueField(.mouseEventWindowUnderMousePointer, value: Int64(w.windowNumber))
+            cg.setIntegerValueField(.mouseEventWindowUnderMousePointerThatCanHandleThisEvent, value: Int64(w.windowNumber))
+            guard let e = NSEvent(cgEvent: cg) else { return }
+            w.sendEvent(e)
+        }
+        func gridY() -> Int { Int(wb?.center.gridScrollView.contentView.bounds.origin.y ?? -1) }
+        func wheelReport(_ tag: String) {
+            let s = wb?.inspector.preview.viewState
+            NSLog("WBFOCUS %@ gridY=%d preview=%@", tag, gridY(), s.map { $0.fit ? "fit" : String(format: "x%.2f", $0.zoom) } ?? "-")
+        }
+        for system in [true, false] {
+            let tag = system ? "W-system" : "W-routed"
+            at(0.5) { WorkbenchWindow.debugSystemRouting = system; wb?.setMode(.gridPreview); wb?.select(cell: 0)
+                      wb?.center.gridScrollView.contentView.scroll(to: .zero); wb?.inspector.preview.fit(animate: false) }
+            at(0.5) {
+                wheelReport("\(tag) 0-start")
+                if let g = wb?.center.gridScrollView {
+                    NSLog("WBFOCUS grid photos=%d docH=%d clipH=%d target(grid)=%@ target(preview)=%@", wb?.photos.count ?? 0,
+                          Int(g.documentView?.frame.height ?? 0), Int(g.contentView.bounds.height),
+                          wb?.scrollTarget(at: g.convert(NSPoint(x: g.bounds.midX, y: g.bounds.midY), to: nil)).map { "\(type(of: $0))" } ?? "nil",
+                          wb.flatMap { w in w.scrollTarget(at: w.inspector.preview.convert(NSPoint(x: w.inspector.preview.bounds.midX, y: w.inspector.preview.bounds.midY), to: nil)) }.map { "\(type(of: $0))" } ?? "nil")
+                }
+            }
+            at(0.1) { if let g = wb?.center.gridScrollView { wheel(over: g, -20, phase: 1); wheel(over: g, -20, phase: 2); wheel(over: g, -20, phase: 2) } }
+            at(0.1) { wheelReport("\(tag) 1-gridScrolled (expect gridY>0)") }
+            at(0.05) { if let p = wb?.inspector.preview { wheel(over: p, -20, phase: 2); wheel(over: p, -20, phase: 2) } }
+            at(0.1) { wheelReport("\(tag) 2-overPreview same gesture (want: preview zooms, gridY same)") }
+            at(0.05) { if let g = wb?.center.gridScrollView { wheel(over: g, -20, phase: 4) } }
+            at(0.6) { if let p = wb?.inspector.preview { wheel(over: p, -20, phase: 1); wheel(over: p, -20, phase: 2) } }
+            at(0.1) { wheelReport("\(tag) 3-newGestureOverPreview") }
+            at(0.05) { if let g = wb?.center.gridScrollView { wheel(over: g, -20, phase: 2); wheel(over: g, -20, phase: 2) } }
+            at(0.1) { wheelReport("\(tag) 4-overGrid same gesture (want: preview same; routed drops rest of photo gesture)") }
+            at(0.05) { if let p = wb?.inspector.preview { wheel(over: p, 0, phase: 4) } }
+        }
+        at(0.3) { WorkbenchWindow.debugSystemRouting = false }
+        // 单张不变：↑ 放大
+        at(0.5) { wb?.setMode(.single) }
+        at(0.8) { key(up, 126); NSLog("WBFOCUS D1-single up: %@ selected=%@", wb?.center.debugSingleState ?? "-", wb?.selectedPhotoURL?.lastPathComponent ?? "-") }
         at(0.5) { NSApp.terminate(nil) }
     }
     #endif
