@@ -4586,6 +4586,13 @@ final class ViewerViewController: NSViewController {
                                            isARepeat: false, keyCode: code) else { return }
             w.sendEvent(e)
         }
+        // ⌘ 快捷键走主菜单，和真按键一样：菜单项灰掉时什么都不做
+        func cmd(_ chars: String, _ code: UInt16) {
+            guard let w = wb?.view.window,
+                  let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command, timestamp: 0, windowNumber: w.windowNumber,
+                                           context: nil, characters: chars, charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code) else { return }
+            if NSApp.mainMenu?.performKeyEquivalent(with: e) != true { w.sendEvent(e) }
+        }
         func report(_ tag: String) {
             guard let wb else { return }
             let fr = wb.view.window?.firstResponder.map { "\(type(of: $0))" } ?? "-"
@@ -4603,12 +4610,14 @@ final class ViewerViewController: NSViewController {
         at(0.5) { key("=", 24); report("4-zoomKey") }
         at(0.5) { key(String(UnicodeScalar(NSRightArrowFunctionKey)!), 124); report("5-right") }
         at(0.5) { if let c = cell(1) { click(c) }; report("6-clickCell1(rightCol)") }
-        at(0.5) { key(String(UnicodeScalar(NSRightArrowFunctionKey)!), 124); report("7-right") }
-        at(0.5) { key(String(UnicodeScalar(NSUpArrowFunctionKey)!), 126); report("8-up") }
-        at(0.5) { key("=", 24); report("9-zoomKey") }
-        at(0.5) { if let c = cell(3) { click(c) }; report("10-clickCell3(rightCol)") }
-        at(0.5) { key(String(UnicodeScalar(NSLeftArrowFunctionKey)!), 123); report("11-left") }
-        at(0.5) { key(String(UnicodeScalar(NSLeftArrowFunctionKey)!), 123); report("12-left") }
+        at(0.5) { cmd("=", 24); report("7-cmdEquals(menu)") }
+        at(0.5) { cmd("=", 24); report("8-cmdEquals(menu)") }
+        at(0.5) { cmd("-", 27); report("9-cmdMinus(menu)") }
+        at(0.5) { cmd("0", 29); report("10-cmd0(menu)") }
+        at(0.5) { if let p = wb?.inspector.preview { click(p) } }
+        at(0.5) { cmd("=", 24); report("11-previewFocused cmdEquals") }
+        at(0.5) { wb?.setMode(.grid) }
+        at(0.5) { cmd("=", 24); report("12-gridOnly cmdEquals (expect no crash, disabled)") }
         at(0.5) { NSApp.terminate(nil) }
     }
     #endif
