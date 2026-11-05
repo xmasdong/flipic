@@ -689,3 +689,12 @@ Return  重新命名目前圖片
 "menu.markPicked" = "標記選取的 %d 張";
 "menu.unmarkPicked" = "取消標記選取的 %d 張";
 "exp.f.summaryPicked" = "匯出選取的 %d 張照片";
+
+/* 微信号，只有中文界面显示 */
+"feedback.wechat" = "也可以加微信 xmasdong 直接聊";
+"feedback.wechatCopy" = "複製微信號";
+"about.wechat" = "微信：xmasdong";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "也可以寄信到";
+"about.email" = "電子郵件：%@";

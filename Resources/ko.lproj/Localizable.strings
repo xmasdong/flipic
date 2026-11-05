@@ -689,3 +689,7 @@ Return  현재 이미지 이름 변경
 "menu.markPicked" = "선택한 %d장 표시";
 "menu.unmarkPicked" = "선택한 %d장 표시 해제";
 "exp.f.summaryPicked" = "선택한 사진 %d장 내보내기";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "이메일:";
+"about.email" = "이메일: %@";

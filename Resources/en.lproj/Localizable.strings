@@ -701,3 +701,7 @@ Drop a folder or image to open";
 "menu.markPicked" = "Mark %d Selected";
 "menu.unmarkPicked" = "Unmark %d Selected";
 "exp.f.summaryPicked" = "Export the %d selected photos";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "Or email";
+"about.email" = "Email: %@";

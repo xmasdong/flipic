@@ -689,3 +689,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "menu.markPicked" = "Đánh dấu %d ảnh đã chọn";
 "menu.unmarkPicked" = "Bỏ đánh dấu %d ảnh đã chọn";
 "exp.f.summaryPicked" = "Xuất %d ảnh đã chọn";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "Hoặc gửi email tới";
+"about.email" = "Email: %@";

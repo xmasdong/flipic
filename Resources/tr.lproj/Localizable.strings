@@ -689,3 +689,7 @@ Açmak için klasör veya resim sürükleyin";
 "menu.markPicked" = "Seçili %d fotoğrafı işaretle";
 "menu.unmarkPicked" = "Seçili %d fotoğrafın işaretini kaldır";
 "exp.f.summaryPicked" = "Seçili %d fotoğrafı dışa aktar";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "Ya da e-posta gönderin:";
+"about.email" = "E-posta: %@";

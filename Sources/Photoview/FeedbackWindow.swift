@@ -104,6 +104,36 @@ final class FeedbackWindowController: NSWindowController, NSTextViewDelegate, NS
         privacy.font = .systemFont(ofSize: 11.5)
         privacy.textColor = .tertiaryLabelColor
 
+        // 中文界面另给微信号，想直接聊的可以加；其他语言没有这一行
+        let wechatText = L10n.optional("feedback.wechat") ?? ""
+        let wechatRow = NSStackView()
+        wechatRow.spacing = 6
+        wechatRow.alignment = .centerY
+        if !wechatText.isEmpty {
+            let label = NSTextField(labelWithString: wechatText)
+            label.font = .systemFont(ofSize: 12.5)
+            label.textColor = .secondaryLabelColor
+            label.isSelectable = true
+            let copy = NSButton(title: L10n.t("feedback.wechatCopy", "复制微信号"), target: self, action: #selector(copyWeChat(_:)))
+            copy.bezelStyle = .inline
+            copy.controlSize = .small
+            wechatRow.addArrangedSubview(label)
+            wechatRow.addArrangedSubview(copy)
+        }
+        wechatRow.isHidden = wechatText.isEmpty
+
+        // 邮箱所有语言都给，点了用邮件 App 写信
+        let emailLabel = NSTextField(labelWithString: L10n.t("feedback.emailUs", "也可以发邮件到"))
+        emailLabel.font = .systemFont(ofSize: 12.5)
+        emailLabel.textColor = .secondaryLabelColor
+        let emailLink = NSButton(title: Self.supportEmail, target: self, action: #selector(writeEmail(_:)))
+        emailLink.isBordered = false
+        emailLink.contentTintColor = .linkColor
+        emailLink.font = .systemFont(ofSize: 12.5)
+        let emailRow = NSStackView(views: [emailLabel, emailLink])
+        emailRow.spacing = 4
+        emailRow.alignment = .firstBaseline
+
         spinner.style = .spinning
         spinner.controlSize = .small
         spinner.isDisplayedWhenStopped = false
@@ -136,7 +166,7 @@ final class FeedbackWindowController: NSWindowController, NSTextViewDelegate, NS
         let buttons = NSStackView(views: [copyButton, spacer, cancelButton, sendButton])
         buttons.spacing = 8
 
-        let stack = NSStackView(views: [title, lead, scroll, contactField, contactNote, privacy, statusRow, buttons])
+        let stack = NSStackView(views: [title, lead, scroll, contactField, contactNote, privacy, wechatRow, emailRow, statusRow, buttons])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 10
@@ -158,6 +188,20 @@ final class FeedbackWindowController: NSWindowController, NSTextViewDelegate, NS
             v.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -48).isActive = true
         }
         updateState()
+    }
+
+    static let weChatID = "xmasdong"
+    static let supportEmail = "support@flipic.app"
+
+    @objc private func writeEmail(_ sender: Any?) {
+        if let url = URL(string: "mailto:\(Self.supportEmail)") { NSWorkspace.shared.open(url) }
+    }
+
+    @objc private func copyWeChat(_ sender: NSButton) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(Self.weChatID, forType: .string)
+        sender.title = L10n.t("feedback.copied", "已复制")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { sender.title = L10n.t("feedback.wechatCopy", "复制微信号") }
     }
 
     // MARK: - 草稿与校验

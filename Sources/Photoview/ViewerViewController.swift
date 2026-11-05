@@ -3833,7 +3833,10 @@ final class ViewerViewController: NSViewController {
 
     private func aboutContent() -> NSAttributedString {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        let body = L10n.t("about.body", "")
+        var body = L10n.t("about.body", "")
+        // 中文界面在说明后面写上微信号
+        body += "\n\n" + L10n.f("about.email", "邮件：%@", FeedbackWindowController.supportEmail)
+        if let wechat = L10n.optional("about.wechat") { body += "\n" + wechat }
         let shortcuts = L10n.t("sc.body", "")
         let full = body + "\n\n■ " + L10n.t("about.shortcutsTitle", "快捷键") + "\n" + shortcuts
 

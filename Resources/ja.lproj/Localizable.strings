@@ -689,3 +689,7 @@ Return  表示中の画像を名称変更
 "menu.markPicked" = "選択した %d 枚にマーク";
 "menu.unmarkPicked" = "選択した %d 枚のマークを解除";
 "exp.f.summaryPicked" = "選択した %d 枚の写真を書き出す";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "メールはこちら：";
+"about.email" = "メール：%@";

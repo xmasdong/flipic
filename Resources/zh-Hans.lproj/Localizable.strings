@@ -701,3 +701,12 @@ Esc  先关掉右上角的照片信息
 "menu.markPicked" = "标记选中的 %d 张";
 "menu.unmarkPicked" = "取消标记选中的 %d 张";
 "exp.f.summaryPicked" = "导出选中的 %d 张照片";
+
+/* 微信号，只有中文界面显示 */
+"feedback.wechat" = "也可以加微信 xmasdong 直接聊";
+"feedback.wechatCopy" = "复制微信号";
+"about.wechat" = "微信：xmasdong";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "也可以发邮件到";
+"about.email" = "邮件：%@";

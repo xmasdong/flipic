@@ -689,3 +689,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "menu.markPicked" = "%d ausgewählte markieren";
 "menu.unmarkPicked" = "Markierung der %d ausgewählten entfernen";
 "exp.f.summaryPicked" = "Die %d ausgewählten Fotos exportieren";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "Oder per E-Mail an";
+"about.email" = "E-Mail: %@";

@@ -689,3 +689,7 @@ Trascina una cartella o un'immagine per aprire";
 "menu.markPicked" = "Contrassegna le %d selezionate";
 "menu.unmarkPicked" = "Rimuovi contrassegno dalle %d selezionate";
 "exp.f.summaryPicked" = "Esporta le %d foto selezionate";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "Oppure scrivi a";
+"about.email" = "E-mail: %@";

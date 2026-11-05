@@ -689,3 +689,7 @@ Arrastra una carpeta o imagen para abrir";
 "menu.markPicked" = "Marcar las %d seleccionadas";
 "menu.unmarkPicked" = "Desmarcar las %d seleccionadas";
 "exp.f.summaryPicked" = "Exportar las %d fotos seleccionadas";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "O escribe a";
+"about.email" = "Correo: %@";

@@ -689,3 +689,7 @@ Return  إعادة تسمية الصورة الحالية
 "menu.markPicked" = "تمييز المحددة (%d)";
 "menu.unmarkPicked" = "إلغاء تمييز المحددة (%d)";
 "exp.f.summaryPicked" = "تصدير الصور المحددة (%d)";
+
+/* 联系邮箱 */
+"feedback.emailUs" = "أو راسلنا على";
+"about.email" = "البريد: %@";
