@@ -698,3 +698,7 @@ Return  重新命名目前圖片
 /* 联系邮箱 */
 "feedback.emailUs" = "也可以寄信到";
 "about.email" = "電子郵件：%@";
+
+/* 工作台大图位置 */
+"wb.previewToMiddle" = "大圖放到中間";
+"wb.previewToRight" = "大圖放到右邊";

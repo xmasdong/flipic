@@ -693,3 +693,7 @@ Trascina una cartella o un'immagine per aprire";
 /* 联系邮箱 */
 "feedback.emailUs" = "Oppure scrivi a";
 "about.email" = "E-mail: %@";
+
+/* 工作台大图位置 */
+"wb.previewToMiddle" = "Anteprima al centro";
+"wb.previewToRight" = "Anteprima a destra";

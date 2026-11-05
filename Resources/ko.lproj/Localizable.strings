@@ -693,3 +693,7 @@ Return  현재 이미지 이름 변경
 /* 联系邮箱 */
 "feedback.emailUs" = "이메일:";
 "about.email" = "이메일: %@";
+
+/* 工作台大图位置 */
+"wb.previewToMiddle" = "미리보기를 가운데로";
+"wb.previewToRight" = "미리보기를 오른쪽으로";

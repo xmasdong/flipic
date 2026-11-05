@@ -4411,6 +4411,23 @@ final class ViewerViewController: NSViewController {
         at(0.0) { self.goTo(4); self.pokeControls() }
         at(0.6) { report("0-before"); self.view.window?.makeKeyAndOrderFront(nil); button()?.performClick(nil) }
         at(2.5) { report("1-clicked at #5"); shot("wb-1") }
+        at(0.3) {
+            let wb = WorkbenchWindowController.shared?.workbench
+            NSLog("WBENTRY 1b-layout middle=%d preview=%.0f grid=%.0f frames=%@", wb?.previewInMiddle == true ? 1 : 0,
+                  wb?.previewWidth ?? 0, wb?.gridWidth ?? 0, wb?.debugSplitFrames ?? "-")
+            wb?.togglePreviewSide()
+        }
+        at(0.8) {
+            let wb = WorkbenchWindowController.shared?.workbench
+            NSLog("WBENTRY 1c-swapped middle=%d preview=%.0f grid=%.0f frames=%@", wb?.previewInMiddle == true ? 1 : 0,
+                  wb?.previewWidth ?? 0, wb?.gridWidth ?? 0, wb?.debugSplitFrames ?? "-")
+            shot("wb-right")
+            wb?.togglePreviewSide()
+        }
+        at(0.8) {
+            let wb = WorkbenchWindowController.shared?.workbench
+            NSLog("WBENTRY 1d-back middle=%d preview=%.0f grid=%.0f", wb?.previewInMiddle == true ? 1 : 0, wb?.previewWidth ?? 0, wb?.gridWidth ?? 0)
+        }
         at(0.3) { self.view.window?.makeKeyAndOrderFront(nil); self.goTo(7) }
         at(0.6) { self.view.window?.makeKeyAndOrderFront(nil); button()?.performClick(nil) }
         at(1.5) { report("2-clicked at #8 (same project)"); shot("wb-2") }

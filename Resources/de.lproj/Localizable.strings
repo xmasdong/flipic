@@ -693,3 +693,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 /* 联系邮箱 */
 "feedback.emailUs" = "Oder per E-Mail an";
 "about.email" = "E-Mail: %@";
+
+/* 工作台大图位置 */
+"wb.previewToMiddle" = "Vorschau in die Mitte";
+"wb.previewToRight" = "Vorschau nach rechts";

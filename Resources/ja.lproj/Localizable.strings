@@ -693,3 +693,7 @@ Return  表示中の画像を名称変更
 /* 联系邮箱 */
 "feedback.emailUs" = "メールはこちら：";
 "about.email" = "メール：%@";
+
+/* 工作台大图位置 */
+"wb.previewToMiddle" = "プレビューを中央へ";
+"wb.previewToRight" = "プレビューを右へ";

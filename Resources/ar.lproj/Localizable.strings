@@ -693,3 +693,7 @@ Return  إعادة تسمية الصورة الحالية
 /* 联系邮箱 */
 "feedback.emailUs" = "أو راسلنا على";
 "about.email" = "البريد: %@";
+
+/* 工作台大图位置 */
+"wb.previewToMiddle" = "المعاينة في الوسط";
+"wb.previewToRight" = "المعاينة على اليمين";

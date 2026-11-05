@@ -693,3 +693,7 @@ Déposez un dossier ou une image pour ouvrir";
 /* 联系邮箱 */
 "feedback.emailUs" = "Ou écrivez à";
 "about.email" = "E-mail : %@";
+
+/* 工作台大图位置 */
+"wb.previewToMiddle" = "Aperçu au centre";
+"wb.previewToRight" = "Aperçu à droite";

@@ -693,3 +693,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 /* 联系邮箱 */
 "feedback.emailUs" = "Hoặc gửi email tới";
 "about.email" = "Email: %@";
+
+/* 工作台大图位置 */
+"wb.previewToMiddle" = "Đưa ảnh lớn vào giữa";
+"wb.previewToRight" = "Đưa ảnh lớn sang phải";

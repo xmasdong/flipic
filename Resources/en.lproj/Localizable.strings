@@ -705,3 +705,7 @@ Drop a folder or image to open";
 /* 联系邮箱 */
 "feedback.emailUs" = "Or email";
 "about.email" = "Email: %@";
+
+/* 工作台大图位置 */
+"wb.previewToMiddle" = "Move Preview to Center";
+"wb.previewToRight" = "Move Preview to Right";
