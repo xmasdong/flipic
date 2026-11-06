@@ -12,13 +12,12 @@ final class SettingsWindowController: NSWindowController {
     private let root = SettingsRoot()
 
     private init() {
-        // 和看图窗口一个样子：深色、标题栏透明、内容铺满
+        // 和看图窗口一个样子：标题栏透明、内容铺满；深浅色跟设置里的外观
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 600, height: 420),
                               styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: true)
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.appearance = NSAppearance(named: .darkAqua)
-        window.backgroundColor = NSColor(calibratedWhite: 0.055, alpha: 1)
+        window.backgroundColor = Theme.gray(dark: 0.055, light: 0.95)
         window.isMovableByWindowBackground = true
         window.title = L10n.t("menu.settings", "设置…").replacingOccurrences(of: "…", with: "")
         super.init(window: window)
@@ -282,8 +281,14 @@ private final class SettingsTabButton: NSButton {
         contentTintColor = color
         attributedTitle = NSAttributedString(string: title, attributes: [
             .foregroundColor: color, .font: font ?? .systemFont(ofSize: 11.5)])
-        layer?.backgroundColor = isSelected ? NSColor(white: 1, alpha: 0.12).cgColor
-            : hovering ? NSColor(white: 1, alpha: 0.06).cgColor : nil
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.backgroundColor = isSelected ? Theme.overlay(0.12).cgColor : hovering ? Theme.overlay(0.06).cgColor : nil
+        }
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        restyle()
     }
 
     override func updateTrackingAreas() {
@@ -308,8 +313,8 @@ final class PillButton: NSButton {
         addTrackingArea(area)
         trackingArea = area
     }
-    override func mouseEntered(with event: NSEvent) { layer?.backgroundColor = NSColor(white: 1, alpha: 0.16).cgColor }
-    override func mouseExited(with event: NSEvent) { layer?.backgroundColor = NSColor(white: 1, alpha: 0.1).cgColor }
+    override func mouseEntered(with event: NSEvent) { Theme.paint(self, background: Theme.overlay(0.16)) }
+    override func mouseExited(with event: NSEvent) { Theme.paint(self, background: Theme.overlay(0.1)) }
     override var intrinsicContentSize: NSSize {
         var s = super.intrinsicContentSize
         s.width += 22
@@ -323,7 +328,7 @@ func pillButton(_ title: String, _ target: AnyObject, _ action: Selector) -> NSB
     b.isBordered = false
     b.wantsLayer = true
     b.layer?.cornerRadius = 7
-    b.layer?.backgroundColor = NSColor(white: 1, alpha: 0.1).cgColor
+    Theme.paint(b, background: Theme.overlay(0.1))
     b.attributedTitle = NSAttributedString(string: title, attributes: [
         .foregroundColor: NSColor.labelColor, .font: NSFont.systemFont(ofSize: 12.5, weight: .medium)])
     return b
@@ -339,7 +344,7 @@ func settingsPanel() -> NSVisualEffectView {
     p.layer?.cornerRadius = 12
     p.layer?.masksToBounds = true
     p.layer?.borderWidth = 1
-    p.layer?.borderColor = NSColor(white: 1, alpha: 0.08).cgColor
+    Theme.paint(p, border: Theme.overlay(0.08))
     p.translatesAutoresizingMaskIntoConstraints = false
     return p
 }
@@ -401,6 +406,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let peekKeep = NSButton(checkboxWithTitle: L10n.t("set.peekKeep", "贴合预览翻上一张、下一张时，窗口留在原地"), target: nil, action: nil)
     private let autoUpdate = NSButton(checkboxWithTitle: L10n.t("set.autoUpdate", "自动检查更新（每天一次）"), target: nil, action: nil)
     private let keepRunning = NSButton(checkboxWithTitle: L10n.t("set.keepRunning", "关掉窗口后留在后台，再打开图片更快"), target: nil, action: nil)
+    private let themePopup = NSPopUpButton()
     private let editorName = NSTextField(labelWithString: "")
     private let editorIcon = NSImageView()
     private lazy var clearEditor = pillButton(L10n.t("set.clear", "清除"), self, #selector(clearEditorApp))
@@ -412,6 +418,12 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         sortPopup.target = self; sortPopup.action = #selector(sortChanged)
         descending.target = self; descending.action = #selector(sortChanged)
         keepRunning.target = self; keepRunning.action = #selector(keepRunningChanged)
+        for (m, title) in [(Theme.Mode.dark, L10n.t("set.theme.dark", "深色")), (.light, L10n.t("set.theme.light", "浅色")),
+                           (.system, L10n.t("set.theme.system", "跟随系统"))] {
+            themePopup.addItem(withTitle: title)
+            themePopup.lastItem?.tag = m.rawValue
+        }
+        themePopup.target = self; themePopup.action = #selector(themeChanged)
         openPeek.target = self; openPeek.action = #selector(openPeekChanged)
         peekKeep.target = self; peekKeep.action = #selector(peekKeepChanged)
         let peekRow = NSStackView(views: [openPeek, peekKeep])
@@ -444,20 +456,27 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.sort", "排序方式：")), sortRow],
             [label(L10n.t("set.editor", "后期软件：")), editorRow],
             spacerRow(note(L10n.t("set.editorNote", "「在后期软件中编辑」用它打开当前照片，同名 RAW 也在时打开 RAW。"))),
+            [label(L10n.t("set.appearance", "外观：")), themePopup],
+            spacerRow(note(L10n.t("set.appearanceNote", "工作台、设置等窗口跟着变；看图窗口一直是深色，方便看曝光和颜色。"))),
             [label(L10n.t("set.background", "后台：")), keepRunning],
             [label(L10n.t("set.update", "更新：")), updateRow],
             spacerRow(note(L10n.t("set.updateNote", "Flipic 默认不联网。打开后每天最多查一次，只向官网请求最新版本号，不发送任何数据。"))),
         ])
-        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 后期软件 7 说明 8 后台 9 更新 10 说明
-        for r in [1, 4, 7, 10] { g.row(at: r).topPadding = -4 }
+        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 后期软件 7 说明 8 外观 9 说明 10 后台 11 更新 12 说明
+        for r in [1, 4, 7, 9, 12] { g.row(at: r).topPadding = -4 }
         view = host(g)
         reload()
+    }
+
+    @objc private func themeChanged() {
+        Theme.mode = Theme.Mode(rawValue: themePopup.selectedTag()) ?? .dark
     }
 
     func reload() {
         sortPopup.selectItem(withTag: UserDefaults.standard.integer(forKey: "sortKey"))
         descending.state = UserDefaults.standard.bool(forKey: "sortReversed") ? .on : .off
         keepRunning.state = AppDelegate.keepRunning ? .on : .off
+        themePopup.selectItem(withTag: Theme.mode.rawValue)
         openPeek.state = ViewerViewController.openInPeek ? .on : .off
         peekKeep.state = ViewerViewController.peekKeepsPosition ? .on : .off
         newWindow.state = AppDelegate.openInNewWindow ? .on : .off
@@ -778,8 +797,15 @@ final class ShortcutRecorder: NSButton {
         refresh()
     }
 
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        refresh()
+    }
+
     /// 键帽样式：平时是浅色描边的小方块，录制时换成强调色
-    func refresh() {
+    func refresh() { effectiveAppearance.performAsCurrentDrawingAppearance { restyleKey() } }
+
+    private func restyleKey() {
         let text: String
         let color: NSColor
         if isRecording {
@@ -790,13 +816,13 @@ final class ShortcutRecorder: NSButton {
         } else if let c = Shortcuts.combo(for: shortcut) {
             text = c.display
             color = .labelColor
-            layer?.backgroundColor = NSColor(white: 1, alpha: 0.09).cgColor
+            layer?.backgroundColor = Theme.overlay(0.09).cgColor
             layer?.borderColor = NSColor.labelColor.withAlphaComponent(Shortcuts.isCustomized(shortcut) ? 0.45 : 0.12).cgColor
         } else {
             text = L10n.t("sc.none", "无")
             color = .tertiaryLabelColor
-            layer?.backgroundColor = NSColor(white: 1, alpha: 0.04).cgColor
-            layer?.borderColor = NSColor(white: 1, alpha: 0.08).cgColor
+            layer?.backgroundColor = Theme.overlay(0.04).cgColor
+            layer?.borderColor = Theme.overlay(0.08).cgColor
         }
         let weight: NSFont.Weight = Shortcuts.isCustomized(shortcut) ? .semibold : .medium
         attributedTitle = NSAttributedString(string: text, attributes: [

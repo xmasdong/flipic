@@ -261,10 +261,9 @@ final class UpdateProgressWindow: NSWindow {
         self.onCancel = onCancel
         super.init(contentRect: NSRect(x: 0, y: 0, width: 380, height: 132), styleMask: [.titled, .fullSizeContentView],
                    backing: .buffered, defer: false)
-        appearance = NSAppearance(named: .darkAqua)
         titlebarAppearsTransparent = true
         titleVisibility = .hidden
-        backgroundColor = NSColor(calibratedWhite: 0.11, alpha: 1)
+        backgroundColor = Theme.gray(dark: 0.11, light: 0.95)
         isReleasedWhenClosed = false
         let title = NSTextField(labelWithString: L10n.f("update.title", "正在更新到 Flipic %@", version))
         title.font = .systemFont(ofSize: 14, weight: .semibold)

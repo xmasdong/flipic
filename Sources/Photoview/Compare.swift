@@ -36,11 +36,16 @@ final class ComparePane: NSView {
         }
     }
 
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        Theme.refresh(self)
+    }
+
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true
-        layer?.borderColor = NSColor(calibratedWhite: 0.92, alpha: 1).cgColor
-        layer?.backgroundColor = NSColor(calibratedWhite: 0.055, alpha: 1).cgColor
+        // 看图窗口一直是深色，这里取到的就是深色；工作台跟着外观
+        Theme.paint(self, background: Theme.gray(dark: 0.055, light: 0.93), border: Theme.gray(dark: 0.92, light: 0.2))
         layer?.masksToBounds = true
 
         imageView.translatesAutoresizingMaskIntoConstraints = false

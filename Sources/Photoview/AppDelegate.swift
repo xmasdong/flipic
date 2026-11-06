@@ -74,6 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var launched = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        Theme.apply()
         if let i = CommandLine.arguments.firstIndex(of: "--peekopentest"), i + 1 < CommandLine.arguments.count {
             // --peekopentest <照片>：按设置打开单张照片，记录是否直接进入贴合预览；再按空格回到普通窗口
             let file = CommandLine.arguments[i + 1]
@@ -300,6 +301,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runWorkbenchEntryTest(outDir: outDir) }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--themeshot"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runThemeShots(outDir: outDir) }
             }
             return
         }

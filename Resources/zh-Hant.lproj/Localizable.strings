@@ -473,6 +473,11 @@ Return  重新命名目前圖片
 "pro.openAllInfo" = "照片多時後製軟體可能要花一會兒。想少開幾張，可以先用「只看已標記」或「只看星級」篩一下。";
 "pro.pairs" = "同名檔案：";
 "pro.trashGo" = "移到垃圾桶";
+"set.appearance" = "外觀：";
+"set.theme.dark" = "深色";
+"set.theme.light" = "淺色";
+"set.theme.system" = "跟隨系統";
+"set.appearanceNote" = "工作台、設定等視窗跟著變；看圖視窗一直是深色，方便看曝光和顏色。";
 "set.backdrop" = "背景：";
 "tip.pin" = "視窗置頂：浮在其他軟體上面";
 "tip.unpin" = "取消置頂";

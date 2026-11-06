@@ -3809,7 +3809,6 @@ final class ViewerViewController: NSViewController {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 580, height: 680),
                               styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
         window.title = L10n.t("menu.about", "关于 Flipic")
-        window.appearance = NSAppearance(named: .darkAqua)
 
         let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 580, height: 680))
         scroll.hasVerticalScroller = true
@@ -4557,6 +4556,43 @@ final class ViewerViewController: NSViewController {
         at(3.1) { NSLog("WBVIEW 6c +6s at=%@", wb?.selectedPhotoURL?.lastPathComponent ?? "-"); wb?.leaveSingle() }
         at(0.5) { NSLog("WBVIEW 7-stopped on=%d mode=%@", wb?.slideshowActive == true ? 1 : 0, "\(wb?.mode as Any)") }
         at(0.5) { NSApp.terminate(nil) }
+    }
+
+    /// --themeshot <截图目录> <文件夹>：浅色、深色外观下工作台（宫格 + 大图、单张）、设置、关于各截一张；用户原来的外观设置最后写回
+    func runThemeShots(outDir: String) {
+        var wb: WorkbenchViewController? { WorkbenchWindowController.shared?.workbench }
+        let saved = UserDefaults.standard.object(forKey: "appearanceMode")
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        func shot(_ w: NSWindow?, _ name: String) {
+            guard let w, let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber), [.bestResolution, .boundsIgnoreFraming]),
+                  let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/\(name).png") as CFURL, "public.png" as CFString, 1, nil) else {
+                NSLog("THEMESHOT %@ failed", name); return
+            }
+            CGImageDestinationAddImage(dest, img, nil)
+            CGImageDestinationFinalize(dest)
+            NSLog("THEMESHOT %@ saved", name)
+        }
+        func about() -> NSWindow? { NSApp.windows.first { $0.isVisible && $0.title == L10n.t("menu.about", "关于 Flipic") } }
+        at(0.0) { (NSApp.delegate as? AppDelegate)?.showWorkbench(opening: self.folder.current?.url, in: self.view.window) }
+        for mode in [Theme.Mode.light, .dark] {
+            let tag = mode == .light ? "light" : "dark"
+            at(3.0) { Theme.mode = mode; wb?.setMode(.gridPreview); wb?.select(cell: 1); WorkbenchWindowController.shared?.window?.orderFrontRegardless() }
+            at(1.5) { shot(WorkbenchWindowController.shared?.window, "\(tag)-workbench") }
+            at(0.2) { wb?.setMode(.single) }
+            at(1.2) { shot(WorkbenchWindowController.shared?.window, "\(tag)-single"); wb?.setMode(.compare) }
+            at(1.2) { shot(WorkbenchWindowController.shared?.window, "\(tag)-compare"); wb?.setMode(.gridPreview) }
+            at(0.3) { SettingsWindowController.shared.show(.general); SettingsWindowController.shared.window?.orderFrontRegardless() }
+            at(1.0) { shot(SettingsWindowController.shared.window, "\(tag)-settings"); SettingsWindowController.shared.show(.shortcuts) }
+            at(0.8) { shot(SettingsWindowController.shared.window, "\(tag)-shortcuts"); SettingsWindowController.shared.window?.orderOut(nil); self.showAbout(nil) }
+            at(1.0) { shot(about(), "\(tag)-about"); about()?.orderOut(nil); shot(self.view.window, "\(tag)-viewer"); self.view.window?.orderFrontRegardless(); self.toggleCompare(nil) }
+            at(1.2) { shot(self.view.window, "\(tag)-viewer-compare"); self.toggleCompare(nil) }
+        }
+        at(0.5) {
+            if let saved { UserDefaults.standard.set(saved, forKey: "appearanceMode") } else { UserDefaults.standard.removeObject(forKey: "appearanceMode") }
+            NSApp.terminate(nil)
+        }
     }
 
     /// --wbnoviewertest <输出目录> <文件夹>：开着工作台把看图窗口关掉，之后菜单里哪些项没人接（灰掉），

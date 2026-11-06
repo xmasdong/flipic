@@ -485,6 +485,11 @@ Esc  先关掉右上角的照片信息
 "pro.openAllInfo" = "照片多时后期软件可能要花一会儿。想少开几张，可以先用「只看已标记」或「只看星级」筛一下。";
 "pro.pairs" = "同名文件：";
 "pro.trashGo" = "移到废纸篓";
+"set.appearance" = "外观：";
+"set.theme.dark" = "深色";
+"set.theme.light" = "浅色";
+"set.theme.system" = "跟随系统";
+"set.appearanceNote" = "工作台、设置等窗口跟着变；看图窗口一直是深色，方便看曝光和颜色。";
 "set.backdrop" = "背景：";
 "tip.pin" = "窗口置顶：浮在其他软件上面";
 "tip.unpin" = "取消置顶";

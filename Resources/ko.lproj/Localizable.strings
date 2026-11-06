@@ -473,6 +473,11 @@ Return  현재 이미지 이름 변경
 "pro.openAllInfo" = "사진이 많으면 편집 앱이 시간이 걸릴 수 있습니다. 줄이려면 먼저 표시한 사진만 보기나 별점 필터로 거르세요.";
 "pro.pairs" = "같은 이름 파일:";
 "pro.trashGo" = "휴지통으로 이동";
+"set.appearance" = "화면 모드:";
+"set.theme.dark" = "다크";
+"set.theme.light" = "라이트";
+"set.theme.system" = "시스템 설정 따르기";
+"set.appearanceNote" = "작업대, 설정 등의 창에 적용됩니다. 뷰어는 노출과 색을 판단하기 쉽도록 항상 어둡게 유지됩니다.";
 "set.backdrop" = "배경:";
 "tip.pin" = "다른 앱 위에 항상 표시";
 "tip.unpin" = "항상 위에 표시 끄기";

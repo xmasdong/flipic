@@ -54,6 +54,7 @@ final class ViewerWindowController: NSWindowController {
     func runWorkbenchFocusTest(outDir: String) { viewerVC?.runWorkbenchFocusTest(outDir: outDir) }
     func runWorkbenchTrashRaceTest(outDir: String) { viewerVC?.runWorkbenchTrashRaceTest(outDir: outDir) }
     func runWorkbenchNoViewerTest(outDir: String) { viewerVC?.runWorkbenchNoViewerTest(outDir: outDir) }
+    func runThemeShots(outDir: String) { viewerVC?.runThemeShots(outDir: outDir) }
     #endif
     func runCompareTest(outDir: String) { viewerVC?.runCompareTest(outDir: outDir) }
     func runExportTest(outDir: String) { viewerVC?.runExportTest(outDir: outDir) }
