@@ -53,6 +53,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func newWindowAction(_ sender: Any?) {
         newViewerWindow().openFolderPanel()
     }
+
+    /// 这个看图窗口还开着（关掉的会从列表里移除）
+    func isOpen(_ wc: ViewerWindowController) -> Bool { controllers.contains { $0 === wc } }
+
+    // 下面几项平时由看图窗口接；只有工作台在前面、或看图窗口都关了时，菜单顺着响应链落到这里
+
+    @objc func showSettings(_ sender: Any?) { SettingsWindowController.shared.show() }
+    @objc func showShortcuts(_ sender: Any?) { SettingsWindowController.shared.show(.shortcuts) }
+    #if FLIPIC_PRO
+    @objc func showProSettings(_ sender: Any?) { SettingsWindowController.shared.show(.pro) }
+    #endif
+    @objc func openFolderPanel(_ sender: Any?) { newViewerWindow().openFolderPanel() }
+
+    /// 「关于」窗口挂在看图界面上；一个看图窗口都没有时借一个不显示的
+    private lazy var aboutHost = ViewerViewController()
+    @objc func showAbout(_ sender: Any?) { (activeViewer ?? aboutHost).showAbout(sender) }
     /// 启动完成前从访达打开的文件（选中几张一起打开时有好几个），启动完一起打开
     private var pendingURLs: [URL] = []
     private var launched = false
@@ -284,6 +300,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runWorkbenchEntryTest(outDir: outDir) }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--wbnoviewertest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runWorkbenchNoViewerTest(outDir: outDir) }
             }
             return
         }

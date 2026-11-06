@@ -4559,6 +4559,74 @@ final class ViewerViewController: NSViewController {
         at(0.5) { NSApp.terminate(nil) }
     }
 
+    /// --wbnoviewertest <输出目录> <文件夹>：开着工作台把看图窗口关掉，之后菜单里哪些项没人接（灰掉），
+    /// 双击宫格进单张、⌥⌘B 回看图还管不管用
+    func runWorkbenchNoViewerTest(outDir: String) {
+        var wb: WorkbenchViewController? { WorkbenchWindowController.shared?.workbench }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        func dead(_ tag: String) {
+            var out: [String] = []
+            func walk(_ m: NSMenu, _ path: String) {
+                m.update()
+                for it in m.items {
+                    if let sub = it.submenu { walk(sub, path + it.title + ">"); continue }
+                    guard let a = it.action, !it.isSeparatorItem else { continue }
+                    // 工作台窗口是 key 时 nil target 的菜单项交给谁：第一响应者一路往上、窗口代理、NSApp、AppDelegate
+                    var target: AnyObject? = it.target
+                    if target == nil, let w = WorkbenchWindowController.shared?.window {
+                        var r: NSResponder? = w.firstResponder
+                        while let x = r, target == nil { if x.responds(to: a) { target = x }; r = x.nextResponder }
+                        if target == nil, let d = w.delegate as AnyObject?, d.responds(to: a) { target = d }
+                        if target == nil, NSApp.responds(to: a) { target = NSApp }
+                        if target == nil, let d = NSApp.delegate as AnyObject?, d.responds(to: a) { target = d }
+                    }
+                    if target == nil { out.append("\(path)\(it.title)[\(NSStringFromSelector(a))]\(target == nil ? " no-target" : " disabled")") }
+                }
+            }
+            if let m = NSApp.mainMenu { walk(m, "") }
+            NSLog("WBNOVIEW %@ key=%@ dead=%d", tag, NSApp.keyWindow.map { "\(type(of: $0.windowController as Any))" } ?? "-", out.count)
+            for l in out { NSLog("WBNOVIEW   %@", l) }
+        }
+        at(0.0) { (NSApp.delegate as? AppDelegate)?.showWorkbench(opening: self.folder.current?.url, in: self.view.window) }
+        at(3.0) { wb?.setMode(.grid); wb?.select(cell: 0); WorkbenchWindowController.shared?.window?.makeKeyAndOrderFront(nil); dead("1-viewer open") }
+        at(0.5) { self.view.window?.performClose(nil) }
+        at(0.8) {
+            WorkbenchWindowController.shared?.window?.makeKeyAndOrderFront(nil)
+            NSLog("WBNOVIEW viewer windows visible=%d", NSApp.windows.filter { $0.windowController is ViewerWindowController && $0.isVisible }.count)
+            dead("2-viewer closed")
+        }
+        at(0.3) {
+            if let g = wb?.center.grid, let v = g.item(at: IndexPath(item: 2, section: 0))?.view, let w = g.window {
+                let wp = v.convert(NSPoint(x: v.bounds.midX, y: v.bounds.midY), to: nil)
+                for n in [1, 2] { for type in [NSEvent.EventType.leftMouseDown, .leftMouseUp] {
+                    if let e = NSEvent.mouseEvent(with: type, location: wp, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                  windowNumber: w.windowNumber, context: nil, eventNumber: 0, clickCount: n, pressure: 1) { w.sendEvent(e) }
+                } }
+            }
+        }
+        at(0.8) { NSLog("WBNOVIEW 3-double-click mode=%@ selected=%@", "\(wb?.mode as Any)", wb?.selectedPhotoURL?.lastPathComponent ?? "-") }
+        at(0.3) {
+            let ok = NSApp.sendAction(#selector(ViewerViewController.showShortcuts(_:)), to: nil, from: nil)
+            NSLog("WBNOVIEW 3b-快捷键说明 handled=%d settingsVisible=%d", ok ? 1 : 0, SettingsWindowController.shared.window?.isVisible == true ? 1 : 0)
+            SettingsWindowController.shared.window?.orderOut(nil)
+        }
+        at(0.3) {
+            let ok = NSApp.sendAction(#selector(ViewerViewController.showAbout(_:)), to: nil, from: nil)
+            let about = NSApp.windows.filter { $0.isVisible && $0.title == L10n.t("menu.about", "关于 Flipic") }
+            NSLog("WBNOVIEW 3c-关于 handled=%d aboutVisible=%d", ok ? 1 : 0, about.count)
+            about.forEach { $0.orderOut(nil) }
+        }
+        at(0.3) { if let wb = WorkbenchWindowController.shared { (NSApp.delegate as? AppDelegate)?.backToViewer(from: wb) } }
+        at(1.0) {
+            let viewers = NSApp.windows.filter { $0.windowController is ViewerWindowController && $0.isVisible }
+            NSLog("WBNOVIEW 4-⌥⌘B viewer windows visible=%d key=%@ shown=%@", viewers.count,
+                  NSApp.keyWindow.map { "\(type(of: $0.windowController as Any))" } ?? "-",
+                  (viewers.first?.windowController as? ViewerWindowController)?.currentPhotoURL?.lastPathComponent ?? "-")
+        }
+        at(0.5) { NSApp.terminate(nil) }
+    }
+
     /// --wbtrashracetest <输出目录> <文件夹>：回到工作台窗口时会在后台对一遍磁盘，这时连着删照片，
     /// 对完的旧结果不能把刚删掉的照片放回列表；之后接着删下一张要能删掉
     func runWorkbenchTrashRaceTest(outDir: String) {
