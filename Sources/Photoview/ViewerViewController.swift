@@ -4559,6 +4559,37 @@ final class ViewerViewController: NSViewController {
         at(0.5) { NSApp.terminate(nil) }
     }
 
+    /// --wbtrashracetest <输出目录> <文件夹>：回到工作台窗口时会在后台对一遍磁盘，这时连着删照片，
+    /// 对完的旧结果不能把刚删掉的照片放回列表；之后接着删下一张要能删掉
+    func runWorkbenchTrashRaceTest(outDir: String) {
+        var wb: WorkbenchViewController? { WorkbenchWindowController.shared?.workbench }
+        let fm = FileManager.default
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        var deleted: [URL] = []
+        func report(_ tag: String) {
+            guard let wb else { return }
+            let ghosts = deleted.filter { u in wb.photos.contains { $0.url == u } }
+            NSLog("WBRACE %@ photos=%d selected=%@ selectedExists=%d ghosts=%d undo=%d last=[%@]", tag, wb.photos.count,
+                  wb.selectedPhotoURL?.lastPathComponent ?? "-", wb.selectedPhotoURL.map { fm.fileExists(atPath: $0.path) ? 1 : 0 } ?? -1,
+                  ghosts.count, wb.trashStack.count, wb.lastTrashLog.joined(separator: ","))
+        }
+        at(0.0) { (NSApp.delegate as? AppDelegate)?.showWorkbench(opening: self.folder.current?.url, in: self.view.window) }
+        at(4.0) { wb?.setMode(.grid); wb?.select(cell: 0); report("0-start") }
+        for i in 1...3 {
+            // 和切回 App 时一样：窗口变成 key，后台开始对磁盘；紧接着按删除
+            at(1.5) {
+                if let u = wb?.selectedPhotoURL { deleted.append(u) }
+                if let w = WorkbenchWindowController.shared?.window { WorkbenchWindowController.shared?.windowDidBecomeKey(Notification(name: NSWindow.didBecomeKeyNotification, object: w)) }
+                wb?.trashSelection()
+            }
+            at(3.0) { report("\(i)-after reload+trash") }
+        }
+        at(0.5) { if let u = wb?.selectedPhotoURL { deleted.append(u) }; wb?.trashSelection() }
+        at(2.0) { report("4-plain trash after") }
+        at(0.5) { NSApp.terminate(nil) }
+    }
+
     /// --wbfocustest <截图目录> <文件夹>：宫格 + 大图里，先点大图、再点宫格另一格，之后 → 和 = 还管不管用（事件走窗口，和真鼠标键盘一样）
     func runWorkbenchFocusTest(outDir: String) {
         func shot(_ name: String) {
