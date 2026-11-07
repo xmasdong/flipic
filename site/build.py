@@ -705,13 +705,12 @@ guide("zh", "/guides/burst-closed-eyes-cleanup/", "连拍、闭眼、拍糊的�
 <h2>它会把照片分成四类</h2>
 <p>清理模式分成相似连拍、内容完全相同的文件、闭眼、模糊或虚焦四类。连拍组里会推荐保留最清楚、没人闭眼的那张，其余默认勾上；闭眼的照片会框出是哪张脸，方便你放大确认。</p>
 <p>检测用的是 macOS 自带的 Vision 框架，清晰度、人脸和闭眼都在你自己的 Mac 上算，照片不会上传。它只负责分组和推荐，不替你删。</p>
-<p>它适合一次几百张的活动、会议、婚礼，也适合清理手机导出来的重复照片。只拍了几十张的话，直接按方向键翻就够，不必为了用功能而用功能。</p>
 <figure>{shot('cleanup.webp', 'Flipic 清理模式按相似连拍分组并推荐保留', 1440, 967)}<figcaption>每组标出推荐保留的那张，删之前可以逐个取消。</figcaption></figure>
 <h2>删之前过一眼</h2>
 <p>自动判断会有误判，尤其是连拍里表情差别很小的时候。点缩略图上的勾可以取消或重新选中，按 <kbd>空格</kbd> 能放大检查。确认以后按「移到废纸篓」，照片会先进废纸篓，不会立刻消失。</p>
 <p>删错了按 <kbd>⌘Z</kbd> 可以放回来。同名的 RAW 和 JPG 会当成一张照片处理，不会只删掉一半。</p>
 <p>清理模式只做第一轮分组，最后留哪张还是得自己看。把明显的废片去掉以后，剩下的照片再按方向键一张张过，按星级和标记挑，会轻松一些。</p>
-<p>检测结果放在 <code>~/Library/Caches/Flipic</code>，删掉也不影响照片；它不会往你的照片文件夹里写东西。重要拍摄还是先备份，再批量删。</p>
+<p>检测结果放在 <code>~/Library/Caches/Flipic</code>，删掉也不影响照片；清理模式的检测结果不会写进照片文件夹。重要拍摄还是先备份，再批量删。</p>
 <h2>删完再打星，交给后期</h2>
 <p>剩下的照片按 <kbd>→</kbd> 一张张翻，按 <kbd>1</kbd> 到 <kbd>5</kbd> 打星，按 <kbd>P</kbd> 标记要留的。挑完按 <kbd>⇧P</kbd> 只看标记过的，或者按星级筛选，再用 <kbd>⇧⌘E</kbd> 一起导出。打星和 Lightroom 的关系见 <a href="/guides/star-rating-lightroom/">Mac 照片打星，Lightroom 能认吗</a>。</p>
 <p>清理模式是免费的，不需要 Pro。整个挑片流程可以看 <a href="/guides/cull-event-photos/">活动照片几百张，怎么在 Mac 上快速挑片</a>；RAW 和 JPG 同名时怎么处理，见 <a href="/guides/mac-view-raw/">Mac 上怎么快速看 RAW 照片</a>。还在选软件的话，见 <a href="/guides/mac-image-viewer-recommend/">Mac 看图软件推荐</a>。</p>""",
@@ -740,7 +739,7 @@ guide("en", "/en/guides/photo-mechanic-alternative-mac/", "Photo Mechanic altern
 <p>Photo Mechanic is stronger when the job includes ingest automation, detailed metadata, keywording and delivery. Flipic is stronger when you want to open a folder quickly and judge one photo at a time without a catalog. Flipic is also Mac-only, MIT-licensed and a 4.4 MB download; it needs macOS 13 or later.</p>
 <p>Photo Mechanic is not the only heavier option, and Flipic is not trying to replace it. If you already use Photo Mechanic for the parts of the workflow that matter to you, keep it. Use Flipic when you just want to look at the pictures and pick.</p>
 <h2>Can you use both?</h2>
-<p>Yes. Many photographers keep a full workflow app for ingest and metadata, then open the folder in a lighter viewer for a quick pass. Flipic does not lock anything into a catalog, so trying it does not change your files. If you later decide you need the wider workflow, you can go back without a migration.</p>
+<p>Yes. You can keep a full workflow app for ingest and metadata, then open the folder in a lighter viewer for a quick pass. Flipic does not import, copy or catalog your files, and opening a folder does not move anything. The only photo data it writes is the rating you set, as standard XMP; marks are stored as Finder tags. Other apps can read the ratings. If you later decide you need the wider workflow, you can go back without a migration.</p>
 <p>For the broader field, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>. For a culling routine that starts with rejects, see <a href="/en/guides/cull-photos-on-mac/">how to cull hundreds of event photos on a Mac</a>.</p>""",
       faq=[
           ('Is Flipic a drop-in replacement for Photo Mechanic?',
