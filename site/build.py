@@ -317,6 +317,7 @@ HOME = {
             ("能代替 Lightroom 挑片吗？", "挑片可以用它。在 Flipic 里翻一遍、打星、删掉废片，打的星 Lightroom 和 Capture One 都读得到。调色修图还是回原来的软件，按 ⌘E 就能把当前这张在那边打开。"),
             ("Mac 上怎么看下一张图片？", "用 Flipic 双击任意一张图片，按右方向键就是下一张，左方向键是上一张，同一个文件夹里的图片都能翻到。"),
             ("怎么设为默认看图软件？", "打开 Flipic 的设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 一次设好。"),
+            ("能不能一次看很多张，像宫格那样？", "免费版翻片时，底部有缩略图栏，同一个文件夹的照片都列在那里；Pro 的工作台（⌥⌘B）把每场拍摄当一个项目，中间宫格里打星、标记、删除，右边是大图、拍摄参数和直方图。工作台是 Pro 功能，下载后可以先试用 7 天。"),
             ("支持哪些格式？", "JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（macOS 14 起），以及索尼、佳能、尼康、富士等相机 RAW。"),
             ("Intel 芯片的 Mac 能用吗？", "能。Flipic 同时支持 Apple 芯片和 Intel 芯片，需要 macOS 13 或更新版本。"),
             ("以前装过 PixDeck 怎么办？", "Flipic 就是改名后的 PixDeck。把「应用程序」里的 PixDeck 拖进废纸篓，再装 Flipic，原来的设置都会保留。"),
@@ -383,6 +384,7 @@ HOME = {
             ("Can it replace Lightroom for culling?", "For culling, yes; for editing, no. Page through, check focus, rate, mark and delete rejects in Flipic, and Lightroom or Capture One will read the ratings. Edit in the app you already use; ⌘E opens the current photo there."),
             ("How do I see the next image on a Mac?", "Double-click any image in Flipic and press the right arrow key for the next one, the left arrow for the previous one, across the whole folder."),
             ("How do I make it my default viewer?", "Open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go."),
+            ("Can I see many photos at once, in a grid?", "The free version has a thumbnail strip along the bottom while you page through a folder. Pro adds the Workbench (⌥⌘B): one project per shoot, a grid in the middle for rating, marking and deleting, with a large preview, shooting details and a histogram on the right. The Workbench is part of Pro, and every download includes a 7-day trial."),
             ("Which formats are supported?", "JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and camera RAW from Sony, Canon, Nikon, Fujifilm and others."),
             ("Does it run on Intel Macs?", "Yes. Flipic is universal for Apple silicon and Intel and needs macOS 13 or later."),
         ],
@@ -569,7 +571,7 @@ guide("zh", "/guides/mac-image-viewer-recommend/", "Mac 看图软件推荐（202
 <table><thead><tr><th>软件</th><th>协议</th><th>适合</th></tr></thead><tbody>
 <tr><td>Flipic</td><td>MIT</td><td>只用 Mac、想要 Windows 看图软件那种手感：双击后方向键翻整个文件夹，按 0 在鼠标处放大到 100%，打星、标记、挑片</td></tr>
 <tr><td>PicView</td><td>GPL-3.0</td><td>Mac 和 Windows 都用；支持的格式多，相机 RAW 也在列；可以 <code>brew install picview</code></td></tr>
-<tr><td>FlowVision</td><td>GPL-3.0</td><td>喜欢按瀑布流网格浏览整个文件夹，也看视频；Swift 写的原生 Mac 软件。和 Flipic 的区别：它偏网格浏览，Flipic 偏单张方向键翻页挑片</td></tr>
+<tr><td>FlowVision</td><td>GPL-3.0</td><td>喜欢按瀑布流网格浏览整个文件夹，也看视频；Swift 写的原生 Mac 软件。和 Flipic 的区别：它偏网格浏览，Flipic 偏单张方向键翻页挑片，免费版有底部缩略图栏，Pro 工作台也有宫格</td></tr>
 <tr><td>qView</td><td>GPL-3.0</td><td>只想看图、越简单越好；界面只有图片和标题栏，方向键翻页</td></tr>
 <tr><td>nomacs</td><td>GPL-3.0</td><td>Windows、Linux 上用惯了 nomacs；功能多，RAW 用 LibRaw 解</td></tr>
 <tr><td>Oculante</td><td>MIT</td><td>想要速度和一点简单编辑；Rust 写的，跨平台</td></tr>
@@ -614,22 +616,22 @@ guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image view
 
 guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic: which free Mac photo viewer fits you",
       "FlowVision vs Flipic",
-      "FlowVision and Flipic are both free, open-source Mac photo viewers. FlowVision browses folders as a grid; Flipic pages one photo at a time for culling.",
+      "Free, open-source Mac viewers: FlowVision browses folders as a grid, Flipic pages one photo at a time with a thumbnail strip and a Pro Workbench grid.",
       "Two free, open-source viewers with different ideas about browsing",
-      f"""<p>FlowVision and Flipic are both free, open-source image viewers for Mac, and they start from different ideas. FlowVision is built around seeing a whole folder at once in a waterfall or grid layout, with video alongside the photos. Flipic is built around one photo at a time: double-click any image, then use the arrow keys to work through the folder and rate what you want to keep. Neither is a replacement for the other; the right one depends on how you look at photos.</p>
+      f"""<p>FlowVision and Flipic are both free, open-source image viewers for Mac, and they start from different ideas. FlowVision is built around seeing a whole folder at once in a waterfall or grid layout, with video alongside the photos. Flipic is built around one photo at a time, with a thumbnail strip along the bottom; the Pro Workbench adds a grid for a whole shoot. Double-click any image, then use the arrow keys to work through the folder and rate what you want to keep. Neither is a replacement for the other; the right one depends on how you look at photos.</p>
 <h2>FlowVision vs Flipic at a glance</h2>
 <table><thead><tr><th></th><th>FlowVision</th><th>Flipic</th></tr></thead><tbody>
 <tr><td>Price</td><td>Free</td><td>Free; optional Pro for batch tools</td></tr>
 <tr><td>License</td><td>GPL-3.0</td><td>MIT</td></tr>
 <tr><td>Minimum macOS</td><td>macOS 11.0 or later</td><td>macOS 13 or later</td></tr>
-<tr><td>Main view</td><td>Waterfall and grid layouts</td><td>One photo at a time, with a thumbnail strip</td></tr>
+<tr><td>Main view</td><td>Waterfall and grid layouts</td><td>One photo at a time with a thumbnail strip; a grid in the Pro Workbench</td></tr>
 <tr><td>Camera RAW</td><td>Yes</td><td>Yes</td></tr>
 <tr><td>Built for</td><td>Browsing and organizing folders</td><td>Culling a shoot with ratings and marks</td></tr>
 </tbody></table>
 <h2>Where FlowVision fits</h2>
 <p>FlowVision is the one to try if you think in folders. Its waterfall and grid layouts show many images at different sizes at once, which suits going through a shoot, a download folder or a reference library before deciding what to open. It plays video in the same window, so mixed folders of clips and stills stay in one place. The app also handles file management while you browse: move, copy and rename files, add tags and ratings, and jump between folders with right-click gestures. It is GPL-3.0, needs macOS 11.0 or later, and handles camera RAW.</p>
 <h2>Where Flipic fits</h2>
-<p>Flipic is the one to try if you cull by stepping through photos. Open a folder, double-click any photo and press <kbd>←</kbd> or <kbd>→</kbd>; the window moves through the folder one image at a time, with a thumbnail strip along the bottom. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus, <kbd>1</kbd>–<kbd>5</kbd> to rate, and <kbd>P</kbd> to mark keepers. Ratings are written as standard XMP, so Lightroom, Bridge and Capture One can read them. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac, and nothing is deleted until you choose Move to Trash. Flipic is MIT-licensed, a 4.4 MB download, needs macOS 13 or later, and runs on Apple silicon and Intel.</p>
+<p>Flipic is the one to try if you cull by stepping through photos. Open a folder, double-click any photo and press <kbd>←</kbd> or <kbd>→</kbd>; the window moves through the folder one image at a time, with a thumbnail strip along the bottom; the Pro Workbench adds a grid for a whole shoot. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus, <kbd>1</kbd>–<kbd>5</kbd> to rate, and <kbd>P</kbd> to mark keepers. Ratings are written as standard XMP, so Lightroom, Bridge and Capture One can read them. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac, and nothing is deleted until you choose Move to Trash. Flipic is MIT-licensed, a 4.4 MB download, needs macOS 13 or later, and runs on Apple silicon and Intel.</p>
 <h2>Which should you pick?</h2>
 <p>If you want to see a whole folder at once and keep video in the same view, FlowVision fits better. If you want to open one photo and go forward and back with the arrow keys while rating and marking, Flipic fits better. Both are free and open source, so trying both costs nothing but a download.</p>
 <h2>FlowVision facts and links</h2>
