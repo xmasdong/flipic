@@ -51,6 +51,11 @@ PAIRS = {
     "/guides/cull-event-photos/": "/en/guides/cull-photos-on-mac/",
     "/pro/": "/en/pro/",
     "/guides/mac-image-viewer-recommend/": "/en/guides/open-source-image-viewers-mac/",
+    "/guides/adobe-bridge-mac/": "/en/guides/adobe-bridge-alternative-mac/",
+    "/guides/photo-mechanic-mac/": "/en/guides/photo-mechanic-alternative-mac/",
+    "/guides/xnview-mp-mac/": "/en/guides/xnview-mp-alternative-mac/",
+    "/guides/fastrawviewer-mac/": "/en/guides/fastrawviewer-alternative-mac/",
+    "/compare/": "/en/compare/",
 }
 
 # Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
@@ -315,6 +320,7 @@ HOME = {
             ("Flipic 收费吗？", "看图、评星、标记、筛选、导出、清理这些都免费，没有广告，也不用注册账号，代码以 MIT 协议开源在 GitHub。另有可选的 <a href=\"/pro/\">Pro</a>，一次买断，只加了批量处理和几个专业功能，大多数人用不上。"),
             ("从网上下载的安全吗？", "安装包用 Developer ID 签名，并通过了 Apple 公证，macOS 安装时会自动校验。Flipic 默认不联网，不收集任何数据。"),
             ("能代替 Lightroom 挑片吗？", "挑片可以用它。在 Flipic 里翻一遍、打星、删掉废片，打的星 Lightroom 和 Capture One 都读得到。调色修图还是回原来的软件，按 ⌘E 就能把当前这张在那边打开。"),
+            ("和 Bridge、Photo Mechanic、Lightroom 有什么不同？", "Bridge 更像素材和元数据工具，Photo Mechanic 强在拷卡、IPTC 和交付，Lightroom Classic 要先进目录再挑。Flipic 只做打开文件夹、翻页、看焦点、打星、标记和清理这一段，挑完再把留下的导入后期。完整对比见 <a href=\"/compare/\">Mac 看图与挑片软件对比</a>。"),
             ("Mac 上怎么看下一张图片？", "用 Flipic 双击任意一张图片，按右方向键就是下一张，左方向键是上一张，同一个文件夹里的图片都能翻到。"),
             ("怎么设为默认看图软件？", "打开 Flipic 的设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 一次设好。"),
             ("能不能一次看很多张，像宫格那样？", "免费版翻片时，底部有缩略图栏，同一个文件夹的照片都列在那里；Pro 的工作台（⌥⌘B）把每场拍摄当一个项目，中间宫格里打星、标记、删除，右边是大图、拍摄参数和直方图。工作台是 Pro 功能，下载后可以先试用 7 天。"),
@@ -382,6 +388,7 @@ HOME = {
             ("Is Flipic free?", "Viewing, ratings, marks, filtering, export and Cleanup Mode are free, with no ads and no account, and the code is MIT licensed on GitHub. There is an optional <a href=\"/en/pro/\">Pro</a> one-time purchase that only adds batch and pro tools; most people won’t need it."),
             ("Is the download safe?", "It is signed with a Developer ID and notarized by Apple; macOS checks it on install. Flipic is offline by default and collects no data."),
             ("Can it replace Lightroom for culling?", "For culling, yes; for editing, no. Page through, check focus, rate, mark and delete rejects in Flipic, and Lightroom or Capture One will read the ratings. Edit in the app you already use; ⌘E opens the current photo there."),
+            ("How is Flipic different from Bridge, Photo Mechanic or Lightroom?", "Bridge is an asset and metadata browser, Photo Mechanic is built for ingest, IPTC and delivery, and Lightroom Classic works from an imported catalog. Flipic covers the catalog-free first pass: open a folder, page, check focus, rate, mark and clean up, then send the keepers to your editor. See the <a href=\"/en/compare/\">full comparison</a>."),
             ("How do I see the next image on a Mac?", "Double-click any image in Flipic and press the right arrow key for the next one, the left arrow for the previous one, across the whole folder."),
             ("How do I make it my default viewer?", "Open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go."),
             ("Can I see many photos at once, in a grid?", "The free version has a thumbnail strip along the bottom while you page through a folder. Pro adds the Workbench (⌥⌘B): one project per shoot, a grid in the middle for rating, marking and deleting, with a large preview, shooting details and a histogram on the right. The Workbench is part of Pro, and every download includes a 7-day trial."),
@@ -587,7 +594,7 @@ guide("zh", "/guides/mac-image-viewer-recommend/", "Mac 看图软件推荐（202
 <ul><li>只是想双击一张后方向键往下翻：Flipic、qView、PicView 都可以，Flipic 最接近 Windows 看图软件的手感。</li><li>主要挑相机 RAW、要看焦点和直方图：FastRawViewer。</li><li>要一个能管理、能批量处理的「大」软件：XnView MP。</li><li>喜欢网格浏览：FlowVision。</li></ul>
 <p>说明一下：Flipic 是本站的软件。看图、打星、标记、筛选、导出都免费开源；另有一个可选的付费 Pro，只加了批量整理的功能，大多数人用不上。</p>
 <figure>{{shot('filmstrip.webp', 'Flipic 底部缩略图栏与左右翻页')}}<figcaption>Flipic：双击一张，方向键翻完整个文件夹。</figcaption></figure>
-<p>想先看 RAW 再决定用哪个软件，步骤见 <a href="/guides/mac-view-raw/">Mac 上怎么快速看 RAW 照片</a>。</p>""", updated="2026-11-07")
+<p>想先看 RAW 再决定用哪个软件，步骤见 <a href="/guides/mac-view-raw/">Mac 上怎么快速看 RAW 照片</a>。完整的软件对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""", updated="2026-11-08")
 
 guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image viewers for Mac (2026): which one to pick",
       "Open-source image viewers for Mac",
@@ -612,7 +619,7 @@ guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image view
 <ul><li>You just want to double-click a photo and arrow through the folder: Flipic, qView or PicView. Flipic is the closest to IrfanView or Honeyview in feel.</li><li>You mostly cull RAW and need focus and histograms: FastRawViewer.</li><li>You want one big tool that also organizes and converts: XnView MP.</li><li>You like grids: FlowVision.</li></ul>
 <p>Disclosure: Flipic is made by the people behind this site. Viewing, ratings, marks, filtering and export are free and MIT-licensed; an optional paid Pro adds batch tools that most people won't need.</p>
 <figure>{{shot('filmstrip.webp', 'Flipic thumbnail strip and arrow-key paging')}}<figcaption>Flipic: double-click a photo, then arrow through the folder.</figcaption></figure>
-<p>If you are deciding between Photo Mechanic and a lighter viewer, see <a href="/en/guides/photo-mechanic-alternative-mac/">Photo Mechanic alternative for Mac</a>; for the RAW workflow itself, see <a href="/en/guides/view-raw-files-mac/">how to quickly view RAW files on a Mac</a>.</p>""", updated="2026-11-07")
+<p>If you are deciding between Photo Mechanic and a lighter viewer, see <a href="/en/guides/photo-mechanic-alternative-mac/">Photo Mechanic alternative for Mac</a>; for the RAW workflow itself, see <a href="/en/guides/view-raw-files-mac/">how to quickly view RAW files on a Mac</a>. The full field is in <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""", updated="2026-11-08")
 
 guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic: which free Mac photo viewer fits you",
       "FlowVision vs Flipic",
@@ -635,8 +642,9 @@ guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic: which f
 <h2>Which should you pick?</h2>
 <p>If you want to see a whole folder at once and keep video in the same view, FlowVision fits better. If you want to open one photo and go forward and back with the arrow keys while rating and marking, Flipic fits better. Both are free and open source, so trying both costs nothing but a download.</p>
 <h2>FlowVision facts and links</h2>
-<p>FlowVision is at <a href="https://github.com/netdcy/FlowVision">github.com/netdcy/FlowVision</a> and <a href="https://flowvision.app/">flowvision.app</a>. The details above were checked on 7 November 2026 against those two pages: the repository is GPL-3.0, the README lists macOS 11.0 or later, the source handles camera RAW and video, and the latest release is 1.7.6 from 8 September 2026.</p>""",
-      title_suffix=False, updated="2026-11-07", published="2026-11-07")
+<p>FlowVision is at <a href="https://github.com/netdcy/FlowVision">github.com/netdcy/FlowVision</a> and <a href="https://flowvision.app/">flowvision.app</a>. The details above were checked on 7 November 2026 against those two pages: the repository is GPL-3.0, the README lists macOS 11.0 or later, the source handles camera RAW and video, and the latest release is 1.7.6 from 8 September 2026.</p>
+<p>For the full field, see <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
+      title_suffix=False, updated="2026-11-08", published="2026-11-07")
 
 
 guide("zh", "/guides/mac-view-raw/", "Mac 上怎么快速看 RAW 照片",
@@ -742,7 +750,7 @@ guide("en", "/en/guides/photo-mechanic-alternative-mac/", "Photo Mechanic altern
 <p>Photo Mechanic is not the only heavier option, and Flipic is not trying to replace it. If you already use Photo Mechanic for the parts of the workflow that matter to you, keep it. Use Flipic when you just want to look at the pictures and pick.</p>
 <h2>Can you use both?</h2>
 <p>Yes. You can keep a full workflow app for ingest and metadata, then open the folder in a lighter viewer for a quick pass. Flipic does not import, copy or catalog your files, and opening a folder does not move anything. The only photo data it writes is the rating you set, as standard XMP; marks are stored as Finder tags. Other apps can read the ratings. If you later decide you need the wider workflow, you can go back without a migration.</p>
-<p>For the broader field, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>. For a culling routine that starts with rejects, see <a href="/en/guides/cull-photos-on-mac/">how to cull hundreds of event photos on a Mac</a>.</p>""",
+<p>For the broader field, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>. For a culling routine that starts with rejects, see <a href="/en/guides/cull-photos-on-mac/">how to cull hundreds of event photos on a Mac</a>. The full comparison is at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
       faq=[
           ('Is Flipic a drop-in replacement for Photo Mechanic?',
            'No. Photo Mechanic covers ingest, metadata, keywording and delivery; Flipic is a smaller viewer for paging, focus, ratings, marks and culling. If you need the full workflow, keep Photo Mechanic.'),
@@ -750,7 +758,7 @@ guide("en", "/en/guides/photo-mechanic-alternative-mac/", "Photo Mechanic altern
            'Yes, free and open source (MIT). An optional paid Pro adds batch tools; viewing, ratings, marks, side-by-side comparison and Cleanup Mode are free.'),
           ('Does Flipic import or catalog photos?',
            'No. It reads the folder you open and does not build a library or copy the files.'),
-      ], title_suffix=False, updated="2026-11-07", published="2026-11-07")
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-07")
 
 guide("en", "/en/guides/view-raw-files-mac/", "How to quickly view RAW files on a Mac",
       "View RAW files on Mac",
@@ -807,6 +815,272 @@ guide("en", "/en/guides/compare-photos-side-by-side-mac/", "How to compare simil
           ('Why did only one pane move?',
            'Hold Option (⌥) to nudge one pane on its own; Shift-L turns syncing off and on.'),
       ], title_suffix=False, updated="2026-11-07", published="2026-11-07")
+
+
+
+guide("en", "/en/guides/adobe-bridge-alternative-mac/", "Adobe Bridge vs Flipic: which one for culling?",
+      "Bridge vs Flipic",
+      "Adobe Bridge is a free asset browser with deep metadata and batch tools. Flipic is a small Mac culler that opens a folder and pages with the arrow keys.",
+      "Bridge for metadata and batch work, Flipic for a quick folder cull",
+      f"""<p>Choose Adobe Bridge if you want a free asset browser with deep metadata editing, keywords, collections and batch tools inside the Adobe ecosystem. Choose Flipic if you want to open a folder, page through photos with the arrow keys, check focus and rate them without a catalog. You can use both: Bridge for metadata and batch work, Flipic for a quick culling pass.</p>
+<table><thead><tr><th></th><th>Adobe Bridge</th><th>Flipic</th></tr></thead><tbody><tr><td>Price model</td><td>Free</td><td>Free; optional one-time Pro</td></tr><tr><td>Import or library</td><td>Folder browser; optional Photo Downloader; no catalog required</td><td>No import, no catalog; reads the folder</td></tr><tr><td>RAW</td><td>Opens RAW in Adobe Camera Raw from Bridge</td><td>Opens camera RAW; 0 zooms to 100% at the pointer</td></tr><tr><td>Star ratings</td><td>Star ratings in XMP metadata</td><td>1 to 5 stars as standard XMP; RAW uses a same-name .xmp sidecar</td></tr><tr><td>Side-by-side compare</td><td>Grid and preview; no synced two-up documented</td><td>C for two, Shift-C for four, zoom synced</td></tr><tr><td>Closed eyes / blur / bursts</td><td>No automatic closed-eye or blur grouping documented</td><td>Yes: Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac</td></tr><tr><td>Platform</td><td>macOS and Windows</td><td>macOS 13 or later</td></tr><tr><td>Open source</td><td>No</td><td>Yes, MIT</td></tr></tbody></table>
+<h2>Where Adobe Bridge is stronger</h2>
+<ul><li><strong>Metadata and asset management.</strong> Bridge edits metadata, adds keywords, labels and ratings, and finds files with filters, collections and metadata search.</li><li><strong>Adobe Camera Raw.</strong> Bridge opens RAW files in Camera Raw and sits next to Photoshop and the rest of Creative Cloud.</li><li><strong>Batch work.</strong> Batch rename and batch export, plus PDF contact sheets and publishing to Adobe Stock or Portfolio.</li></ul>
+<h2>Where Flipic fits</h2>
+<ul><li><strong>No import step.</strong> Open the folder, double-click a photo and press the arrow keys. There is no catalog to create or maintain.</li><li><strong>Focus and comparison.</strong> Press 0 to zoom to 100% at the pointer; press C for two photos or Shift-C for four, with zoom and pan synced.</li><li><strong>Ratings and marks in the file.</strong> 1 to 5 stars are written as standard XMP, with a same-name .xmp sidecar for proprietary RAW. P marks are Finder tags.</li><li><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blurry shots. Nothing is deleted until you choose Move to Trash.</li><li><strong>Small and offline.</strong> A 4.4 MB MIT-licensed Mac app that is offline by default. Pro is a one-time purchase with a 7-day trial; the Workbench adds a project grid.</li></ul>
+<h2>Using them together</h2>
+<p>Use Bridge when the job is metadata, keywords, Adobe Camera Raw or batch delivery. Use Flipic when you want to open the same folder and cull without importing. Flipic writes standard XMP ratings, so the ratings can travel with the files; Bridge remains the place for the heavier metadata work.</p>
+<p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
+      faq=[
+          ('Is Adobe Bridge free?',
+           'Yes. Adobe offers Bridge as a free download, separate from the paid Creative Cloud apps.'),
+          ('Do I need Photoshop to use Bridge?',
+           'No. Bridge is a standalone file browser and asset manager; it integrates with Adobe apps when you use them.'),
+          ('Can both Bridge and Flipic rate photos?',
+           'Yes. Both can apply star ratings; Flipic writes them as standard XMP so other apps can read them.'),
+          ('Which should I use for culling?',
+           'Use Bridge if metadata, keywords and Adobe batch work are part of the same pass. Use Flipic if you want a simple folder view, arrow-key paging and a first cull without a catalog.'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("en", "/en/guides/fastrawviewer-alternative-mac/", "FastRawViewer vs Flipic: which RAW tool fits?",
+      "FastRawViewer vs Flipic",
+      "FastRawViewer reads RAW data for histograms, exposure and focus peaking. Flipic is a free folder viewer for paging, ratings and culling.",
+      "RAW-data checks in FastRawViewer, quick culling in Flipic",
+      f"""<p>Choose FastRawViewer if you need to judge the RAW data itself: a RAW histogram, highlight inspection, exposure checks and focus peaking. Choose Flipic if you want a simpler folder viewer for paging, focus checks, ratings and a first cull. They can sit in the same workflow: FastRawViewer for exposure-critical frames, Flipic for the rest of the selection.</p>
+<table><thead><tr><th></th><th>FastRawViewer</th><th>Flipic</th></tr></thead><tbody><tr><td>Price model</td><td>Paid license</td><td>Free; optional one-time Pro</td></tr><tr><td>Import or library</td><td>No catalog; browse folders directly</td><td>No import, no catalog; reads the folder</td></tr><tr><td>RAW</td><td>Decodes RAW data; RAW histogram, highlight inspection, focus peaking</td><td>Opens camera RAW; 0 zooms to 100% at the pointer</td></tr><tr><td>Star ratings</td><td>Ratings and labels in XMP sidecars</td><td>1 to 5 stars as standard XMP; RAW uses a same-name .xmp sidecar</td></tr><tr><td>Side-by-side compare</td><td>Grid and single-file view; no synced two-up documented</td><td>C for two, Shift-C for four, zoom synced</td></tr><tr><td>Closed eyes / blur / bursts</td><td>No automatic closed-eye or blur grouping documented</td><td>Yes: Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac</td></tr><tr><td>Platform</td><td>macOS and Windows</td><td>macOS 13 or later</td></tr><tr><td>Open source</td><td>No</td><td>Yes, MIT</td></tr></tbody></table>
+<h2>Where FastRawViewer is stronger</h2>
+<ul><li><strong>RAW data, not an embedded preview.</strong> It renders the RAW and shows a RAW histogram, RAW statistics and highlight inspection.</li><li><strong>Exposure and focus tools.</strong> Shadow Boost, per-channel view, focus peaking and exposure compensation help you see what a converter can recover.</li><li><strong>RAW+JPEG mode.</strong> It handles RAW and JPEG pairs and can work through folders without creating a catalog.</li></ul>
+<h2>Where Flipic fits</h2>
+<ul><li><strong>Simple paging.</strong> Double-click one photo and use the arrow keys through the folder, with no import and no catalog.</li><li><strong>Fast focus checks and comparison.</strong> Press 0 to zoom to 100% at the pointer; C and Shift-C compare two or four frames with synced zoom and pan.</li><li><strong>Ratings and marks.</strong> 1 to 5 stars go into standard XMP, with a same-name .xmp sidecar for proprietary RAW. P marks are Finder tags.</li><li><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.</li><li><strong>Small and offline.</strong> A 4.4 MB MIT-licensed Mac app, offline by default; Pro adds the Workbench grid and is a one-time purchase with a 7-day trial.</li></ul>
+<h2>Using them together</h2>
+<p>Open a shoot in FastRawViewer when you need the RAW histogram or a careful exposure check. Use Flipic for the broader pass: page, rate, mark and let Cleanup Mode group the obvious rejects. Both can write ratings to XMP, so pick one app for the rating pass to keep the sidecars predictable.</p>
+<p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
+      faq=[
+          ('Is FastRawViewer free?',
+           'No. It is a paid license with a fully functional 30-day trial; check LibRaw for current licensing.'),
+          ('Does FastRawViewer show the embedded JPEG?',
+           'No. Its main point is rendering the RAW data itself, with a RAW histogram and RAW-based exposure tools.'),
+          ('Can I use FastRawViewer and Flipic together?',
+           'Yes. Use FastRawViewer for RAW-data exposure checks and Flipic for paging, ratings, marks and Cleanup Mode.'),
+          ('Do both write XMP ratings?',
+           'Yes. FastRawViewer writes ratings and labels to XMP sidecars; Flipic writes standard XMP ratings, with a sidecar for proprietary RAW.'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("en", "/en/guides/xnview-mp-alternative-mac/", "XnView MP vs Flipic: which viewer fits?",
+      "XnView MP vs Flipic",
+      "XnView MP brings a long format list, batch tools and an optional catalog on Mac, Windows and Linux. Flipic is a Mac culler for folders and XMP ratings.",
+      "XnView MP for formats and batch, Flipic for a quick cull",
+      f"""<p>Choose XnView MP if you need a cross-platform viewer and organizer with a very long format list, batch conversion, rename tools and an optional catalog. Choose Flipic if you mainly want to open a folder, page with the arrow keys, check focus and rate a shoot without a catalog. You can keep XnView MP for conversion and organizing, and use Flipic for the first cull.</p>
+<table><thead><tr><th></th><th>XnView MP</th><th>Flipic</th></tr></thead><tbody><tr><td>Price model</td><td>Free for private, educational, public and non-profit use; paid license for commercial use</td><td>Free; optional one-time Pro</td></tr><tr><td>Import or library</td><td>Folder browser; optional catalog</td><td>No import, no catalog; reads the folder</td></tr><tr><td>RAW</td><td>Views camera RAW; not a RAW development module</td><td>Opens camera RAW; 0 zooms to 100% at the pointer</td></tr><tr><td>Star ratings</td><td>XMP sidecars, ratings exchanged with Lightroom and Bridge</td><td>1 to 5 stars as standard XMP; RAW uses a same-name .xmp sidecar</td></tr><tr><td>Side-by-side compare</td><td>Image Compare up to 4 images</td><td>C for two, Shift-C for four, zoom synced</td></tr><tr><td>Closed eyes / blur / bursts</td><td>No automatic closed-eye or blur grouping documented</td><td>Yes: Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac</td></tr><tr><td>Platform</td><td>macOS, Windows and Linux</td><td>macOS 13 or later</td></tr><tr><td>Open source</td><td>No</td><td>Yes, MIT</td></tr></tbody></table>
+<h2>Where XnView MP is stronger</h2>
+<ul><li><strong>Format breadth.</strong> It opens a long list of image and camera RAW formats, plus PDF, DICOM and more.</li><li><strong>Batch tools.</strong> Batch convert, batch rename and a batch processing module shared with XnConvert.</li><li><strong>Cross-platform and catalog.</strong> macOS, Windows and Linux, with an optional SQLite catalog for searching ratings, labels, keywords and metadata.</li><li><strong>Image Compare.</strong> Compare up to four images in one view.</li></ul>
+<h2>Where Flipic fits</h2>
+<ul><li><strong>No catalog to manage.</strong> Open the folder and start paging; no import and no library.</li><li><strong>Focus and comparison.</strong> 0 zooms to 100% at the pointer; C and Shift-C compare two or four photos with synced zoom and pan.</li><li><strong>Ratings in standard XMP.</strong> 1 to 5 stars, with a same-name .xmp sidecar for proprietary RAW; P marks are Finder tags.</li><li><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blur, with you deciding what goes.</li><li><strong>Small, free and offline.</strong> A 4.4 MB MIT-licensed Mac app. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid.</li></ul>
+<h2>Using them together</h2>
+<p>Use XnView MP for format conversion, batch rename, catalog searches and cross-platform work. Use Flipic when you want to sit in one folder and cull. Both can write XMP ratings, so choose one app for the rating pass if you want to keep the sidecars simple.</p>
+<p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
+      faq=[
+          ('Is XnView MP free?',
+           'It is free for private, educational, public and non-profit use. Commercial use in a company requires a paid license.'),
+          ('Does XnView MP open more formats than Flipic?',
+           'Yes. XnView MP has a very broad format list, including PDF, DICOM and many camera RAW formats.'),
+          ('Do I need the XnView catalog?',
+           'No. You can browse folders without it; the catalog is optional and adds search across a large collection.'),
+          ('Can I use XnView MP and Flipic together?',
+           'Yes. Use XnView MP for conversion and organizing, and Flipic for a quick folder cull.'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("en", "/en/guides/apolloone-alternative/", "ApolloOne vs Flipic: two Mac photo viewers",
+      "ApolloOne vs Flipic",
+      "ApolloOne offers metadata editing, stacks, split view, HDR and quick edits without importing. Flipic is a free, open-source Mac culler with Cleanup Mode.",
+      "ApolloOne for metadata and edits, Flipic for the first cull",
+      f"""<p>Choose ApolloOne if you want a Mac-native viewer with full metadata editing, IPTC keywords, split-view comparison, stacks, HDR and quick edits, all without importing. Choose Flipic if you want a smaller, free, open-source app focused on paging, focus checks, ratings and Cleanup Mode. You can use ApolloOne for metadata and edits, and Flipic for the first cull.</p>
+<table><thead><tr><th></th><th>ApolloOne</th><th>Flipic</th></tr></thead><tbody><tr><td>Price model</td><td>Free edition; paid Max Edition with subscription or perpetual license</td><td>Free; optional one-time Pro</td></tr><tr><td>Import or library</td><td>No import; reads folders</td><td>No import, no catalog; reads the folder</td></tr><tr><td>RAW</td><td>RawBridge engine; RAW, HEIF, TIFF and more</td><td>Opens camera RAW; 0 zooms to 100% at the pointer</td></tr><tr><td>Star ratings</td><td>Star ratings, color labels and Finder tags written as XMP</td><td>1 to 5 stars as standard XMP; RAW uses a same-name .xmp sidecar</td></tr><tr><td>Side-by-side compare</td><td>Split-view comparison</td><td>C for two, Shift-C for four, zoom synced</td></tr><tr><td>Closed eyes / blur / bursts</td><td>Auto-Stack and Focus Score; no closed-eye detection documented</td><td>Yes: Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac</td></tr><tr><td>Platform</td><td>macOS</td><td>macOS 13 or later</td></tr><tr><td>Open source</td><td>No</td><td>Yes, MIT</td></tr></tbody></table>
+<h2>Where ApolloOne is stronger</h2>
+<ul><li><strong>Metadata and keywords.</strong> Full EXIF and IPTC editing, hierarchical keywords and code replacements written as XMP.</li><li><strong>More viewing tools.</strong> Tabs and windows, split-view comparison, HDR display and export, video playback and non-destructive Quick Edit.</li><li><strong>Burst organization.</strong> Stacks and Auto-Stack collapse a burst into one thumbnail, while Focus Score helps compare sharpness.</li><li><strong>Batch work.</strong> Batch rename and conversion are built in.</li></ul>
+<h2>Where Flipic fits</h2>
+<ul><li><strong>Simple and open source.</strong> A 4.4 MB MIT-licensed Mac app with no import and no catalog.</li><li><strong>Culling without setup.</strong> Double-click a photo, arrow through the folder, press 0 to check focus, C or Shift-C to compare, 1 to 5 to rate and P to mark.</li><li><strong>Ratings and marks in standard places.</strong> Stars are standard XMP with a same-name .xmp sidecar for proprietary RAW; P marks are Finder tags.</li><li><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.</li><li><strong>Pro when needed.</strong> The Workbench adds a project grid, zoom to the eyes, content and text search, and more, as a one-time purchase with a 7-day trial.</li></ul>
+<h2>Using them together</h2>
+<p>Use ApolloOne when you need IPTC, keywords, HDR or a quick non-destructive edit. Use Flipic when the job is to open a folder and make a first selection. Both write ratings as XMP, so decide which app owns the rating pass if keeping sidecars tidy matters to you.</p>
+<p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
+      faq=[
+          ('Is ApolloOne free?',
+           'There is a free edition. The Max Edition is a paid upgrade with a 14-day trial; subscriptions and perpetual licenses are offered.'),
+          ('Does ApolloOne import photos?',
+           'No. Its own description says it works without importing a single file.'),
+          ('Which app finds closed eyes?',
+           "Flipic's Cleanup Mode groups closed eyes, blur, bursts and duplicates on your Mac. ApolloOne documents stacks and Focus Score, not closed-eye detection."),
+          ('Can I use both?',
+           'Yes. ApolloOne for metadata, HDR and quick edits; Flipic for a quick, catalog-free cull.'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("en", "/en/guides/cull-before-lightroom/", "Cull before Lightroom: why add another app?",
+      "Cull before Lightroom",
+      "Already use Lightroom Classic? A first cull in Flipic avoids importing rejects, keeps ratings in XMP and sends only the keepers into the catalog.",
+      "Skip the import of rejects; rate first, import keepers",
+      f"""<p>If you already use Lightroom Classic, you can import everything and cull there. But import builds a catalog record for every photo, including the ones you will reject. Culling first in Flipic lets you open the folder, rate and mark, then import only the keepers. Use Flipic for the first pass and Lightroom Classic for editing and the catalog.</p>
+<table><thead><tr><th></th><th>Lightroom Classic</th><th>Flipic</th></tr></thead><tbody><tr><td>Price model</td><td>Subscription</td><td>Free; optional one-time Pro</td></tr><tr><td>Import or library</td><td>Requires import into a catalog</td><td>No import, no catalog; reads the folder</td></tr><tr><td>RAW</td><td>RAW processing through Camera Raw</td><td>Opens camera RAW; 0 zooms to 100% at the pointer</td></tr><tr><td>Star ratings</td><td>Catalog metadata, written to XMP or sidecars</td><td>1 to 5 stars as standard XMP; RAW uses a same-name .xmp sidecar</td></tr><tr><td>Side-by-side compare</td><td>Compare view for two; Survey view for more</td><td>C for two, Shift-C for four, zoom synced</td></tr><tr><td>Closed eyes / blur / bursts</td><td>No automatic closed-eye or blur grouping documented</td><td>Yes: Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac</td></tr><tr><td>Platform</td><td>macOS and Windows</td><td>macOS 13 or later</td></tr><tr><td>Open source</td><td>No</td><td>Yes, MIT</td></tr></tbody></table>
+<h2>Where Lightroom Classic is stronger</h2>
+<ul><li><strong>Editing and RAW processing.</strong> Develop controls, local adjustments, presets, masks and the rest of the Lightroom toolset.</li><li><strong>The catalog.</strong> Collections, keywords, smart collections, history and search across a long-term library.</li><li><strong>Output.</strong> Prints, books, slideshows, web galleries and export presets.</li><li><strong>Compare and survey.</strong> Compare view for two photos and Survey view for a larger set.</li></ul>
+<h2>Where Flipic fits before Lightroom</h2>
+<ul><li><strong>No import for the rejects.</strong> Open the folder and page with the arrow keys; there is no catalog entry to remove later.</li><li><strong>Focus and compare.</strong> 0 zooms to 100% at the pointer; C and Shift-C compare two or four frames with synced zoom and pan.</li><li><strong>Ratings that Lightroom can read.</strong> 1 to 5 stars are standard XMP, with a same-name .xmp sidecar for proprietary RAW. Lightroom Classic reads XMP metadata and sidecars.</li><li><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur; nothing is deleted until you choose Move to Trash.</li><li><strong>Pro if you need a project grid.</strong> The Workbench adds a grid per shoot and other pro tools, as a one-time purchase with a 7-day trial.</li></ul>
+<h2>A simple cull-first flow</h2>
+<p>Copy the card to a folder. Open it in Flipic, page through, check focus, rate and mark. Use Cleanup Mode for the obvious rejects if the shoot is large. Then import only the marked or rated photos into Lightroom Classic. The XMP ratings and sidecars travel with the files, so Lightroom sees the stars when it imports.</p>
+<p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
+      faq=[
+          ('Do I have to import every photo into Lightroom before culling?',
+           'No. You can cull in Flipic first and import only the keepers into Lightroom Classic.'),
+          ('Will Lightroom Classic read Flipic ratings?',
+           'Yes. Flipic writes star ratings as standard XMP, and Lightroom Classic reads XMP metadata and same-name sidecar files.'),
+          ('Does this work for JPEG and HEIC too?',
+           'Yes. Flipic writes ratings into JPEG, HEIC and TIFF metadata, and uses a sidecar for proprietary RAW.'),
+          ('Can I still edit the keepers in Lightroom?',
+           'Yes. Import the keepers, or set Lightroom as the editor in Flipic and press Cmd-E on the current photo.'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("zh", "/guides/adobe-bridge-mac/", "Bridge 和 Flipic 怎么选",
+      "Bridge 和 Flipic 怎么选",
+      "Adobe Bridge 是免费的素材浏览器，元数据和批处理很完整；Flipic 是不用导入、打开文件夹就用方向键翻的 Mac 挑片工具。这篇写清各自适合谁。",
+      "Bridge 管元数据和批处理，Flipic 做第一轮挑片",
+      f"""<p>选 Bridge，如果你要的是免费的素材浏览器、完整的元数据和关键词、收藏夹和批处理，而且工作流在 Adobe 里。选 Flipic，如果你想打开文件夹就用方向键翻、看焦点、打星，不建图库。两个可以一起用：Bridge 管元数据和批量，Flipic 做第一轮挑片。</p>
+<table><thead><tr><th></th><th>Adobe Bridge</th><th>Flipic</th></tr></thead><tbody><tr><td>价格模式</td><td>免费</td><td>免费；可选一次买断的 Pro</td></tr><tr><td>要不要导入或建库</td><td>文件夹浏览；可选 Photo Downloader；不需要建库</td><td>不导入、不建库，直接读文件夹</td></tr><tr><td>看 RAW</td><td>从 Bridge 用 Adobe Camera Raw 打开</td><td>直接打开相机 RAW；按 0 看 100% 焦点</td></tr><tr><td>星级存在哪</td><td>星级写进 XMP 元数据</td><td>1 到 5 星写标准 XMP；RAW 写同名 .xmp</td></tr><tr><td>并排比较</td><td>网格和预览；没有同步双图对比的文档</td><td>C 两张、⇧C 四张，缩放同步</td></tr><tr><td>闭眼 / 模糊 / 连拍</td><td>官方没有自动闭眼/模糊分组</td><td>有：清理模式在本机分连拍、重复、闭眼、模糊</td></tr><tr><td>平台</td><td>macOS 和 Windows</td><td>macOS 13 或更新</td></tr><tr><td>开源</td><td>否</td><td>是，MIT</td></tr></tbody></table>
+<h2>Bridge 更强的地方</h2>
+<ul><li><strong>元数据和素材管理。</strong> 改元数据、加关键词、标签和星级，用筛选、收藏夹和元数据搜索找文件。</li><li><strong>Adobe Camera Raw。</strong> 从 Bridge 把 RAW 交给 Camera Raw，和 Photoshop、Creative Cloud 连在一起。</li><li><strong>批处理。</strong> 批量重命名、批量导出、PDF 联系表，也能发 Adobe Stock 或 Portfolio。</li></ul>
+<h2>Flipic 更适合的地方</h2>
+<ul><li><strong>不用导入。</strong> 打开文件夹，双击一张，方向键就翻；没有图库要建，也没有导入步骤。</li><li><strong>看焦点和并排比较。</strong> 按 0 在鼠标处放大到 100%；按 C 两张、⇧C 四张，缩放和拖动同步。</li><li><strong>星级和标记落在文件里。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记是访达标签。</li><li><strong>清理模式。</strong> 免费，在本机分相似连拍、重复、闭眼和模糊；你按「移到废纸篓」之前不会删。</li><li><strong>小、免费、默认不联网。</strong> 4.4 MB，MIT 开源。Pro 一次买断，下载后可以先试用 7 天，工作台多一个项目宫格。</li></ul>
+<h2>一起用</h2>
+<p>要写关键词、改元数据、跑 Camera Raw 或做批量交付，用 Bridge。要在同一个文件夹里先挑一遍，用 Flipic。Flipic 写的是标准 XMP 星级，文件带得走；更重的元数据工作还是回 Bridge 做。</p>
+<p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
+      faq=[
+          ('Adobe Bridge 免费吗？',
+           '免费。Adobe 提供 Bridge 的免费下载，和付费的 Creative Cloud 应用是分开的。'),
+          ('用 Bridge 一定要装 Photoshop 吗？',
+           '不用。Bridge 本身是独立的文件浏览器和素材管理工具，装了 Adobe 应用时会和它们配合。'),
+          ('Bridge 和 Flipic 都能打星吗？',
+           '都能。Flipic 把星级写成标准 XMP，其他软件可以读。'),
+          ('挑片用哪个？',
+           '要同时改元数据、关键词、跑 Adobe 批处理，用 Bridge；只想打开文件夹翻一遍、看焦点、打星，用 Flipic。'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("zh", "/guides/photo-mechanic-mac/", "Photo Mechanic 的 Mac 替代",
+      "Photo Mechanic 的 Mac 替代",
+      "Photo Mechanic 是成熟的付费专业工具，强在拷卡、IPTC、关键词和交付；Flipic 是不导入、用方向键翻页挑片的免费 Mac 软件。",
+      "Photo Mechanic 管拷卡和交付，Flipic 管快速挑片",
+      f"""<p>Photo Mechanic 适合要把拷卡、浏览、挑片、IPTC、关键词和交付放在一条流程里的人；它成熟，覆盖的流程更长。Flipic 适合只想打开一个文件夹，用方向键翻、看焦点、打星、标记的人。两个可以一起用，也可以只留一个。</p>
+<table><thead><tr><th></th><th>Photo Mechanic</th><th>Flipic</th></tr></thead><tbody><tr><td>价格模式</td><td>付费；订阅或永久授权</td><td>免费；可选一次买断的 Pro</td></tr><tr><td>要不要导入或建库</td><td>按文件夹浏览；可选拷卡；Plus 版带图库</td><td>不导入、不建库，直接读文件夹</td></tr><tr><td>看 RAW</td><td>可以预览 RAW，再交给后期软件</td><td>直接打开相机 RAW；按 0 看 100% 焦点</td></tr><tr><td>星级存在哪</td><td>写在 XMP / IPTC 元数据里</td><td>1 到 5 星写标准 XMP；RAW 写同名 .xmp</td></tr><tr><td>并排比较</td><td>支持并排比较</td><td>C 两张、⇧C 四张，缩放同步</td></tr><tr><td>闭眼 / 模糊 / 连拍</td><td>官方没有自动闭眼/模糊分组</td><td>有：清理模式在本机分连拍、重复、闭眼、模糊</td></tr><tr><td>平台</td><td>macOS 和 Windows</td><td>macOS 13 或更新</td></tr><tr><td>开源</td><td>否</td><td>是，MIT</td></tr></tbody></table>
+<h2>Photo Mechanic 更强的地方</h2>
+<ul><li><strong>拷卡和导入。</strong> 从多张卡拷照片，边拷边看缩略图，边挑边打标签。</li><li><strong>元数据和 IPTC。</strong> 标题、版权、关键词、Code Replacements，批量改元数据。</li><li><strong>完整的交付流程。</strong> 批量重命名、联系表、并排比较，直接发邮件或传到图库服务。</li><li><strong>Plus 版的图库。</strong> 需要跨硬盘管理大量照片时，Plus 版多了图像数据库。</li></ul>
+<h2>Flipic 更适合的地方</h2>
+<ul><li><strong>打开就能挑。</strong> 不导入，不建图库，双击一张就按方向键翻。</li><li><strong>看焦点和比较。</strong> 按 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放同步。</li><li><strong>星级和标记。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记存成访达标签。</li><li><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些还是你决定。</li><li><strong>小、免费、默认不联网。</strong> 4.4 MB，MIT 开源。Pro 一次买断，带 7 天试用，工作台有项目宫格。</li></ul>
+<h2>一起用</h2>
+<p>要拷卡、写 IPTC、批量改关键词、直接交付，用 Photo Mechanic。照片已经在硬盘上、只想先挑一遍，就用 Flipic。两边的星级都走 XMP，但建议固定一个软件负责打星，免得 sidecar 被两边反复改。</p>
+<p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
+      faq=[
+          ('Photo Mechanic 有免费版吗？',
+           '没有免费版，提供试用；授权可以订阅，也可以买永久授权，具体看 Camera Bits 官网。'),
+          ('Photo Mechanic 能做的，Flipic 都能做吗？',
+           '不能。拷卡、IPTC、关键词、Code Replacements 和交付是 Photo Mechanic 的强项；Flipic 只做打开文件夹、翻页、看焦点、打星、标记和清理这一小段。'),
+          ('两个都用会不会重复打星？',
+           '可以只用一边打星。两边的评分都写 XMP，但固定一个软件负责评分，sidecar 更可控。'),
+          ('只挑 RAW 用哪个？',
+           '要拷卡和 IPTC 用 Photo Mechanic；只想打开文件夹先看一遍，用 Flipic。'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("zh", "/guides/xnview-mp-mac/", "XnView MP 和 Flipic 怎么选",
+      "XnView MP 和 Flipic 怎么选",
+      "XnView MP 强在格式多、批处理、可选图库和跨平台；Flipic 强在不用导入、打开文件夹就用方向键挑片。如果你只需要挑片，Flipic 可以只做后半段。",
+      "XnView MP 管格式和批量，Flipic 管挑片",
+      f"""<p>XnView MP 适合需要超长格式列表、批量转换、批量重命名、可选图库和跨平台的人。Flipic 适合只想在 Mac 上打开一个文件夹，用方向键翻、看焦点、打星、做第一轮清理的人。两个不冲突：XnView MP 管格式和批量，Flipic 管挑片。</p>
+<table><thead><tr><th></th><th>XnView MP</th><th>Flipic</th></tr></thead><tbody><tr><td>价格模式</td><td>个人、教育、公共和非营利免费；公司商用要付费授权</td><td>免费；可选一次买断的 Pro</td></tr><tr><td>要不要导入或建库</td><td>文件夹浏览；可选图库</td><td>不导入、不建库，直接读文件夹</td></tr><tr><td>看 RAW</td><td>能看相机 RAW，但不是 RAW 开发软件</td><td>直接打开相机 RAW；按 0 看 100% 焦点</td></tr><tr><td>星级存在哪</td><td>XMP sidecar，和 Lightroom、Bridge 交换星级</td><td>1 到 5 星写标准 XMP；RAW 写同名 .xmp</td></tr><tr><td>并排比较</td><td>Image Compare 最多四张</td><td>C 两张、⇧C 四张，缩放同步</td></tr><tr><td>闭眼 / 模糊 / 连拍</td><td>官方没有自动闭眼/模糊分组</td><td>有：清理模式在本机分连拍、重复、闭眼、模糊</td></tr><tr><td>平台</td><td>macOS、Windows、Linux</td><td>macOS 13 或更新</td></tr><tr><td>开源</td><td>否</td><td>是，MIT</td></tr></tbody></table>
+<h2>XnView MP 更强的地方</h2>
+<ul><li><strong>格式多。</strong> 常见图片、相机 RAW、PDF、DICOM 等都在列表里。</li><li><strong>批量处理。</strong> 批量转换、批量重命名，和 XnConvert 共用一套批处理。</li><li><strong>跨平台和图库。</strong> macOS、Windows、Linux 都能用，可选 SQLite 图库，按星级、标签、关键词搜索。</li><li><strong>四张比较。</strong> Image Compare 最多同时看四张。</li></ul>
+<h2>Flipic 更适合的地方</h2>
+<ul><li><strong>不用图库。</strong> 打开文件夹就翻，不导入，不建库。</li><li><strong>看焦点和比较。</strong> 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放和拖动同步。</li><li><strong>星级写标准 XMP。</strong> 1 到 5 星，专有 RAW 写同名 .xmp；P 标记是访达标签。</li><li><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼、模糊，删哪些由你决定。</li><li><strong>小、免费、默认不联网。</strong> 4.4 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</li></ul>
+<h2>一起用</h2>
+<p>要转格式、批量改名、跨平台看图或在图库里搜，用 XnView MP。要在一个文件夹里先挑一遍，用 Flipic。两边都能写 XMP 星级，固定一个软件打星会更省心。</p>
+<p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
+      faq=[
+          ('XnView MP 免费吗？',
+           '个人、教育、公共和非营利用途免费；公司商用需要付费授权，具体看 XnView 官网。'),
+          ('XnView MP 支持多少种格式？',
+           '官方说支持大量常见图片和相机 RAW，还包括 PDF、DICOM 等；具体列表以官网为准。'),
+          ('XnView MP 需要建图库吗？',
+           '不需要。图库是可选的，不建也能按文件夹浏览。'),
+          ('挑片用哪个？',
+           '要格式转换、批量改名、跨平台和图库搜索，用 XnView MP；只想打开文件夹翻一遍、打星和清理，用 Flipic。'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("zh", "/guides/fastrawviewer-mac/", "FastRawViewer 和 Flipic 怎么选",
+      "FastRawViewer 和 Flipic 怎么选",
+      "FastRawViewer 看 RAW 本身的数据和曝光，Flipic 负责打开文件夹、用方向键翻页、打星和第一轮清理。这篇写清各自适合谁，以及怎么一起用。",
+      "FastRawViewer 看 RAW 数据，Flipic 做挑片",
+      f"""<p>FastRawViewer 适合要看 RAW 本身的数据：RAW 直方图、过曝和欠曝、峰值对焦、曝光补偿，再决定这张能不能救。Flipic 适合打开文件夹，用方向键翻、看焦点、打星、做第一轮挑片。两个可以一起用：FastRawViewer 看曝光，Flipic 做选择。</p>
+<table><thead><tr><th></th><th>FastRawViewer</th><th>Flipic</th></tr></thead><tbody><tr><td>价格模式</td><td>付费授权</td><td>免费；可选一次买断的 Pro</td></tr><tr><td>要不要导入或建库</td><td>不建图库；直接浏览文件夹</td><td>不导入、不建库，直接读文件夹</td></tr><tr><td>看 RAW</td><td>直接解 RAW，RAW 直方图、过曝检查、峰值对焦</td><td>直接打开相机 RAW；按 0 看 100% 焦点</td></tr><tr><td>星级存在哪</td><td>星级和标签写 XMP sidecar</td><td>1 到 5 星写标准 XMP；RAW 写同名 .xmp</td></tr><tr><td>并排比较</td><td>网格和单张；没有同步双图对比的文档</td><td>C 两张、⇧C 四张，缩放同步</td></tr><tr><td>闭眼 / 模糊 / 连拍</td><td>官方没有自动闭眼/模糊分组</td><td>有：清理模式在本机分连拍、重复、闭眼、模糊</td></tr><tr><td>平台</td><td>macOS 和 Windows</td><td>macOS 13 或更新</td></tr><tr><td>开源</td><td>否</td><td>是，MIT</td></tr></tbody></table>
+<h2>FastRawViewer 更强的地方</h2>
+<ul><li><strong>看的是 RAW 数据。</strong> 不是内嵌 JPEG，给的是 RAW 直方图、RAW 统计和过曝检查。</li><li><strong>曝光和焦点工具。</strong> Shadow Boost、分通道查看、峰值对焦、曝光补偿，帮你看后期还能拉回多少。</li><li><strong>RAW+JPEG 模式。</strong> 同时处理 RAW 和 JPEG，按文件夹浏览，不建图库。</li></ul>
+<h2>Flipic 更适合的地方</h2>
+<ul><li><strong>打开就翻。</strong> 双击一张，方向键翻整个文件夹，不导入，不建库。</li><li><strong>看焦点和比较。</strong> 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放同步。</li><li><strong>星级和标记。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记是访达标签。</li><li><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些由你决定。</li><li><strong>小、免费、默认不联网。</strong> 4.4 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</li></ul>
+<h2>一起用</h2>
+<p>要判断曝光、看 RAW 直方图、峰值对焦，用 FastRawViewer。要快速翻一遍、打星、标记、清理，用 Flipic。两边都能写 XMP 星级，但固定一个软件负责评分，sidecar 更可控。</p>
+<p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
+      faq=[
+          ('FastRawViewer 免费吗？',
+           '不是免费软件，是付费授权，提供完整功能的试用；具体授权方式看 LibRaw 官网。'),
+          ('FastRawViewer 看的是内嵌 JPEG 吗？',
+           '不是。它的重点是直接解 RAW，给 RAW 直方图和基于 RAW 数据的曝光工具。'),
+          ('FastRawViewer 和 Flipic 能一起用吗？',
+           '能。FastRawViewer 看曝光和 RAW 数据，Flipic 翻页、打星、标记和清理。'),
+          ('只挑片需要 FastRawViewer 吗？',
+           '不一定。要看 RAW 直方图和过曝，才需要它；只想翻一遍、看焦点、打星，Flipic 就够。'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("en", "/en/compare/", "Compare Mac photo viewers and culling tools",
+      "Compare Mac photo tools",
+      "Compare Flipic, Preview, Photos, Bridge, Photo Mechanic, FastRawViewer, XnView MP, ApolloOne, FlowVision and Lightroom Classic by price model and main use.",
+      "A map of Mac viewers, cullers and catalog tools",
+      f"""<p>There is no single app that is the right fit for every Mac photo workflow. This table is a map: use it to pick by the job you have, then follow the link to the full comparison. Flipic is the one for opening a folder and culling with the arrow keys; the other tools are stronger when the job includes a catalog, metadata, RAW data or a delivery workflow.</p>
+<table><thead><tr><th>Tool</th><th>Price model</th><th>Import or library</th><th>Best for</th></tr></thead><tbody><tr><td><a href="/en/">Flipic</a></td><td>Free; optional one-time Pro</td><td>No import; reads the folder</td><td>A quick, catalog-free cull with arrows, XMP stars, marks and Cleanup Mode.</td></tr><tr><td><a href="/en/guides/mac-preview-next-image/">Preview</a></td><td>Included with macOS</td><td>No library; opens files</td><td>Reading and annotating a few images or PDFs, not paging a folder.</td></tr><tr><td><a href="https://support.apple.com/guide/photos/welcome/mac">Photos</a></td><td>Included with macOS</td><td>Imports into a library</td><td>A personal photo library across Apple devices, not a culling tool.</td></tr><tr><td><a href="/en/guides/adobe-bridge-alternative-mac/">Adobe Bridge</a></td><td>Free</td><td>Folder browser; optional Photo Downloader</td><td>Metadata, keywords, Camera Raw and Adobe batch work.</td></tr><tr><td><a href="/en/guides/photo-mechanic-alternative-mac/">Photo Mechanic</a></td><td>Paid license; subscription or perpetual</td><td>Folder-based; optional ingest; Plus adds a catalog</td><td>High-volume ingest, IPTC, keywording and delivery.</td></tr><tr><td><a href="/en/guides/fastrawviewer-alternative-mac/">FastRawViewer</a></td><td>Paid license</td><td>No catalog; browse folders</td><td>RAW-data histogram, exposure checks and focus peaking.</td></tr><tr><td><a href="/en/guides/xnview-mp-alternative-mac/">XnView MP</a></td><td>Free for personal and non-commercial use; paid commercial license</td><td>Folder browser; optional catalog</td><td>A very long format list, batch tools and cross-platform work.</td></tr><tr><td><a href="/en/guides/apolloone-alternative/">ApolloOne</a></td><td>Free edition; paid Max Edition</td><td>No import; reads folders</td><td>Mac-native metadata, HDR, stacks, split view and quick edits.</td></tr><tr><td><a href="/en/guides/flowvision-alternative/">FlowVision</a></td><td>Free, open source (GPL-3.0)</td><td>Folder browser</td><td>Waterfall or grid browsing of photos and video.</td></tr><tr><td><a href="/en/guides/cull-before-lightroom/">Lightroom Classic</a></td><td>Subscription</td><td>Requires import into a catalog</td><td>Editing, RAW processing and long-term catalog management.</td></tr></tbody></table>
+<h2>A quick way to choose</h2>
+<ul><li><strong>Just open a folder and cull:</strong> Flipic, with no import and XMP ratings. Preview can open a file but does not browse a folder on its own.</li><li><strong>Metadata, keywords or Adobe batch work:</strong> Adobe Bridge.</li><li><strong>High-volume ingest, IPTC and delivery:</strong> Photo Mechanic.</li><li><strong>RAW histogram, exposure and focus peaking:</strong> FastRawViewer.</li><li><strong>Many formats, batch conversion or Linux:</strong> XnView MP.</li><li><strong>Mac-native metadata, HDR, stacks and quick edits:</strong> ApolloOne.</li><li><strong>Waterfall or grid browsing with video:</strong> FlowVision.</li><li><strong>Editing and a long-term catalog:</strong> Lightroom Classic.</li></ul>
+<h2>What Flipic covers</h2>
+<p>Flipic reads the folder you open, double-click any photo and page with the arrow keys. Press 0 to zoom to 100% at the pointer, C or Shift-C to compare two or four frames with synced zoom, 1 to 5 to rate and P to mark. Ratings are standard XMP, with a same-name .xmp sidecar for proprietary RAW; marks are Finder tags. Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac. The app is 4.4 MB, MIT-licensed and offline by default. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid, zoom to the eyes, and content and text search.</p>
+<h2>What this table does not cover</h2>
+<p>Price amounts, camera compatibility and plugin ecosystems change. The table only compares the pricing model and the main job each app is built for; check the vendor page before you buy. For the detailed rows, open the individual comparison pages linked above.</p>
+<p>For the full open-source list, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>.</p>""",
+      faq=[
+          ('Which app should I use to cull a folder on a Mac?',
+           'Start with Flipic if you want to open the folder, page with the arrow keys, check focus and rate without importing. Use Bridge, Photo Mechanic or Lightroom Classic when the same pass also needs metadata, ingest or a catalog.'),
+          ('Do I have to import into Lightroom before culling?',
+           'No. You can cull in Flipic first and import only the keepers into Lightroom Classic; the XMP ratings travel with the files.'),
+          ('Which of these apps has a grid?',
+           "Flipic's Pro Workbench has a project grid; Bridge, XnView MP, ApolloOne and FlowVision also offer grid or thumbnail views. The free Flipic still has a thumbnail strip."),
+          ('Are prices shown here?',
+           'No. The table shows only the pricing model. Check each vendor for current amounts and licensing.'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+guide("zh", "/compare/", "Mac 看图与挑片软件对比",
+      "Mac 看图与挑片软件对比",
+      "十款 Mac 看图、挑片和目录工具放在一张表里，按价格模式、导入方式、RAW 和用途对比，包括 Flipic、Bridge 和 Lightroom Classic。",
+      "一张表看清 Mac 看图、挑片和目录工具",
+      f"""<p>没有一个软件适合所有 Mac 照片流程。这张表按「你要做的事」来分：先看哪一列像你，再点进对应的对比页。Flipic 负责打开文件夹、用方向键挑片；需要目录、元数据、RAW 数据或交付流程时，别的工具更合适。</p>
+<table><thead><tr><th>软件</th><th>价格模式</th><th>要不要导入或建库</th><th>适合谁</th></tr></thead><tbody><tr><td><a href="/">Flipic</a></td><td>免费；可选一次买断的 Pro</td><td>不导入，直接读文件夹</td><td>打开文件夹，用方向键翻页、看焦点、打星、标记和清理。</td></tr><tr><td><a href="/guides/mac-next-image/">预览</a></td><td>macOS 自带</td><td>不建库，直接打开文件</td><td>看几张图片或 PDF、做标注，不是翻整个文件夹的挑片工具。</td></tr><tr><td><a href="https://support.apple.com/zh-cn/guide/photos/welcome/mac">照片</a></td><td>macOS 自带</td><td>导入照片图库</td><td>在 Apple 设备之间管理个人照片图库，不是挑片工具。</td></tr><tr><td><a href="/guides/adobe-bridge-mac/">Adobe Bridge</a></td><td>免费</td><td>文件夹浏览；可选 Photo Downloader</td><td>元数据、关键词、Camera Raw 和 Adobe 批处理。</td></tr><tr><td><a href="/guides/photo-mechanic-mac/">Photo Mechanic</a></td><td>付费；订阅或永久授权</td><td>按文件夹；可选拷卡；Plus 带图库</td><td>大量拷卡、IPTC、关键词和交付。</td></tr><tr><td><a href="/guides/fastrawviewer-mac/">FastRawViewer</a></td><td>付费授权</td><td>不建图库，直接浏览文件夹</td><td>RAW 直方图、曝光检查、峰值对焦。</td></tr><tr><td><a href="/guides/xnview-mp-mac/">XnView MP</a></td><td>个人和非商用免费；商用付费授权</td><td>文件夹浏览；可选图库</td><td>格式多、批处理、跨平台。</td></tr><tr><td><a href="/en/guides/apolloone-alternative/">ApolloOne</a></td><td>免费版；付费 Max 版</td><td>不导入，直接读文件夹</td><td>Mac 原生元数据、HDR、堆栈、分屏比较和快速编辑。</td></tr><tr><td><a href="/en/guides/flowvision-alternative/">FlowVision</a></td><td>免费，开源（GPL-3.0）</td><td>文件夹浏览</td><td>瀑布流或网格浏览照片和视频。</td></tr><tr><td><a href="/en/guides/cull-before-lightroom/">Lightroom Classic</a></td><td>订阅</td><td>需要导入目录</td><td>修图、RAW 处理和长期目录管理。</td></tr></tbody></table>
+<h2>怎么快速选</h2>
+<ul><li><strong>只想打开文件夹挑一遍：</strong> Flipic，不导入，星级写 XMP。预览能打开文件，但不适合翻整个文件夹。</li><li><strong>元数据、关键词或 Adobe 批处理：</strong> Adobe Bridge。</li><li><strong>大量拷卡、IPTC 和交付：</strong> Photo Mechanic。</li><li><strong>RAW 直方图、曝光和峰值对焦：</strong> FastRawViewer。</li><li><strong>格式多、批量转换或 Linux：</strong> XnView MP。</li><li><strong>Mac 原生元数据、HDR、堆栈和快速编辑：</strong> ApolloOne。</li><li><strong>瀑布流或网格浏览，还要看视频：</strong> FlowVision。</li><li><strong>修图和长期目录管理：</strong> Lightroom Classic。</li></ul>
+<h2>Flipic 覆盖什么</h2>
+<p>Flipic 直接读你打开的文件夹，双击一张就用方向键翻。按 0 在鼠标处放大到 100%，按 C 两张、⇧C 四张，缩放同步；1 到 5 打星，P 标记。星级写标准 XMP，专有 RAW 写同名 .xmp；标记是访达标签。清理模式在本机分连拍、重复、闭眼和模糊。安装包 4.4 MB，MIT 开源，默认不联网。Pro 一次买断，带 7 天试用，多出工作台宫格、放大到眼睛、按内容和文字搜索。</p>
+<h2>这张表不覆盖什么</h2>
+<p>具体价格、相机兼容性和插件生态会变。表里只写价格模式和主要用途，买之前看各家官网。每一行的详细对比，点上面对应链接。</p>
+<p>开源看图清单见 <a href="/guides/mac-image-viewer-recommend/">Mac 看图软件推荐</a>。</p>""",
+      faq=[
+          ('Mac 上只想挑一个文件夹，用哪个？',
+           '先用 Flipic：打开文件夹，方向键翻，0 看焦点，1 到 5 打星，不用导入。要同时写元数据、拷卡或进目录，再考虑 Bridge、Photo Mechanic 或 Lightroom Classic。'),
+          ('一定要先导入 Lightroom 才能挑片吗？',
+           '不用。可以先在 Flipic 里挑，再把留下的导入 Lightroom Classic；XMP 星级会跟着文件走。'),
+          ('这些软件里有宫格吗？',
+           'Flipic 的 Pro 工作台有项目宫格；Bridge、XnView MP、ApolloOne 和 FlowVision 也有网格或缩略图视图。免费版 Flipic 也有底部缩略图栏。'),
+          ('表里有价格吗？',
+           '没有。这里只写价格模式，具体金额和授权方式看各家官网。'),
+      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
 
 
 
@@ -1346,6 +1620,18 @@ Key facts:
 - Optional HDR display, customizable shortcuts, global show/hide shortcut, ⌘E hand-off to Photoshop/Lightroom/Capture One.
 - Formats: JPEG, PNG, HEIC, WebP, GIF, TIFF, AVIF, JPEG XL, camera RAW (Sony, Canon, Nikon, Fujifilm, more).
 - Download: {BASE}/download/Flipic.dmg · Source: {GITHUB} · Current version: {VERSION}
+
+## How Flipic compares
+- [Adobe Bridge]({BASE}/en/guides/adobe-bridge-alternative-mac/): choose Bridge for metadata, keywords, Camera Raw and Adobe batch work; choose Flipic for a catalog-free folder cull.
+- [Photo Mechanic]({BASE}/en/guides/photo-mechanic-alternative-mac/): choose Photo Mechanic for ingest, IPTC, keywording and delivery; choose Flipic for a simple paging and rating pass.
+- [FastRawViewer]({BASE}/en/guides/fastrawviewer-alternative-mac/): choose FastRawViewer for RAW histograms, exposure checks and focus peaking; choose Flipic for paging, ratings and Cleanup Mode.
+- [XnView MP]({BASE}/en/guides/xnview-mp-alternative-mac/): choose XnView MP for format breadth, batch tools and cross-platform work; choose Flipic for a quick Mac cull.
+- [ApolloOne]({BASE}/en/guides/apolloone-alternative/): choose ApolloOne for Mac-native metadata, HDR, stacks and quick edits; choose Flipic for a free, catalog-free first cull.
+- [FlowVision]({BASE}/en/guides/flowvision-alternative/): choose FlowVision for waterfall or grid browsing with video; choose Flipic for arrow-key culling with ratings and marks.
+- [Lightroom Classic]({BASE}/en/guides/cull-before-lightroom/): choose Lightroom Classic for editing and a catalog; choose Flipic to cull before import.
+- [Preview]({BASE}/en/guides/mac-preview-next-image/): choose Preview for a quick look at a file; choose Flipic to page and rate a whole folder.
+- [Photos](https://support.apple.com/guide/photos/welcome/mac): choose Photos for a personal Apple photo library; choose Flipic for a folder-based first cull.
+- [All comparisons]({BASE}/en/compare/): one table of Mac viewers, cullers and catalog tools.
 
 ## Pages
 - [Flipic (English)]({BASE}/en/)
