@@ -53,6 +53,17 @@
   window.addEventListener('load', () => { get(1); get(total - 1); });
 })();
 
+// 记住语言选择：点页头的语言切换链接时写一年 cookie，首页就不再按浏览器语言自动跳
+(() => {
+  document.addEventListener('click', e => {
+    const link = e.target.closest('a.lang');
+    if (!link) return;
+    const lang = link.getAttribute('hreflang');
+    if (lang !== 'en' && lang !== 'zh-CN') return;
+    document.cookie = `flipic_lang=${lang === 'en' ? 'en' : 'zh'}; path=/; max-age=31536000; SameSite=Lax; Secure`;
+  });
+})();
+
 // GA4 埋点：下载、购买、GitHub、找回激活码、切换语言、手机复制网址、首页翻页演示。gtag 没加载（被拦截、国内网络）时什么都不做
 (() => {
   const send = (name, params = {}) => { if (typeof window.gtag === 'function') window.gtag('event', name, params); };
