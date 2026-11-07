@@ -325,7 +325,7 @@ HOME = {
     },
     "en": {
         "title": "Flipic: free photo viewer for Mac, built for culling",
-        "desc": "A free, open-source Mac photo viewer for culling: double-click a photo, arrow through the folder, check focus, rate 1–5. Lightroom reads the ratings. RAW.",
+        "desc": "Free, open-source Mac photo viewer: double-click a photo, arrow through the folder, check focus, rate 1–5. Lightroom reads the stars. Supports camera RAW.",
         "eyebrow": "A Mac photo viewer for culling a shoot",
         "h1": "Offload the card,<br>cull with the arrow keys",
         "lede": "After a shoot, Preview makes you open photos one at a time, and Lightroom wants an import first. Flipic opens the folder as it is: double-click any photo, press → for the next one, 0 to zoom to 100% at the pointer and check focus, 1–5 to rate and P to mark keepers. Ratings are saved as standard XMP, so they are still there in Lightroom and Capture One.",
@@ -395,9 +395,10 @@ HOME = {
 GUIDES = {"zh": [], "en": []}
 
 
-def guide(lang, path, title, short, desc, summary, body, howto=None, faq=None, title_suffix=True):
+def guide(lang, path, title, short, desc, summary, body, howto=None, faq=None, title_suffix=True,
+          updated=UPDATED, published=UPDATED):
     GUIDES[lang].append(dict(path=path, title=title, short=short, desc=desc, summary=summary, body=body,
-                             howto=howto, faq=faq, title_suffix=title_suffix))
+                             howto=howto, faq=faq, title_suffix=title_suffix, updated=updated, published=published))
 
 
 guide("zh", "/guides/mac-next-image/", "Mac 预览怎么看下一张图片？三种办法",
@@ -426,7 +427,7 @@ guide("zh", "/guides/mac-next-image/", "Mac 预览怎么看下一张图片？三
            "双击单张照片时，预览只认识这一张，方向键不会翻到文件夹里的其他图。把照片全选后用预览打开，或者用 Flipic 打开文件夹，用 ← → 一张张翻。"),
           ("为什么「预览」里按方向键没反应？",
            "你只把一张图交给了预览，窗口里没有别的图可翻。一次多选几张一起打开，或者换一个读整个文件夹的看图软件。"),
-      ], title_suffix=False)
+      ], title_suffix=False, updated="2026-11-07")
 
 guide("zh", "/guides/heic-to-jpg-mac/", "Mac 怎么批量把 HEIC 转成 JPG（不用装 Photoshop）",
       "Mac 批量 HEIC 转 JPG",
@@ -479,7 +480,7 @@ guide("zh", "/guides/cull-event-photos/", "活动照片几百张，怎么在 Mac
 <p>在 Flipic 设置里选好 Lightroom、Photoshop 或 Capture One，看到要修的照片按 <kbd>⌘E</kbd> 打开，同名 RAW 在时打开 RAW。导入 Lightroom 时，刚才打的星级也会一起带过去，可以直接按星级筛选。</p>""",
       howto=["用 Flipic 打开整个文件夹，按 ⇧⌘K 进入清理模式", "确认要删的连拍、闭眼、模糊照片，移到废纸篓", "翻看剩下的照片，按 1–5 打星", "按 ⌘E 把选中的照片交给 Lightroom 或 Photoshop"])
 
-guide("en", "/en/guides/mac-preview-next-image/", "How to go to the next photo or picture in Mac Preview",
+guide("en", "/en/guides/mac-preview-next-image/", "How to go to the next photo in Mac Preview",
       "Next photo in Mac Preview",
       "Preview opens only the photo you double-clicked, so arrow keys do nothing. Three ways to see the next picture on a Mac: select all, Quick Look, or Flipic.",
       "Why the arrows stop, and three ways to page through the folder",
@@ -505,7 +506,7 @@ guide("en", "/en/guides/mac-preview-next-image/", "How to go to the next photo o
            "Open the folder in Flipic and double-click any photo; the arrow keys then move through every image in that folder. Quick Look only moves between the files you selected in Finder first."),
           ("Can I move to the next photo on a MacBook with the arrow keys?",
            "Not after double-clicking a single photo, because Preview only knows that one file. Open several photos together, use Quick Look, or use Flipic, and the arrow keys move between them."),
-      ], title_suffix=False)
+      ], title_suffix=False, updated="2026-11-07")
 
 guide("en", "/en/guides/batch-convert-heic-to-jpg-mac/", "How to batch convert HEIC to JPG on Mac",
       "Batch convert HEIC to JPG",
@@ -581,7 +582,7 @@ guide("zh", "/guides/mac-image-viewer-recommend/", "Mac 看图软件推荐（202
 <h2>怎么选</h2>
 <ul><li>只是想双击一张后方向键往下翻：Flipic、qView、PicView 都可以，Flipic 最接近 Windows 看图软件的手感。</li><li>主要挑相机 RAW、要看焦点和直方图：FastRawViewer。</li><li>要一个能管理、能批量处理的「大」软件：XnView MP。</li><li>喜欢网格浏览：FlowVision。</li></ul>
 <p>说明一下：Flipic 是本站的软件。看图、打星、标记、筛选、导出都免费开源；另有一个可选的付费 Pro，只加了批量整理的功能，大多数人用不上。</p>
-<figure>{{shot('filmstrip.webp', 'Flipic 底部缩略图栏与左右翻页')}}<figcaption>Flipic：双击一张，方向键翻完整个文件夹。</figcaption></figure>""")
+<figure>{{shot('filmstrip.webp', 'Flipic 底部缩略图栏与左右翻页')}}<figcaption>Flipic：双击一张，方向键翻完整个文件夹。</figcaption></figure>""", updated="2026-11-07")
 
 guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image viewers for Mac (2026): which one to pick",
       "Open-source image viewers for Mac",
@@ -605,7 +606,7 @@ guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image view
 <h2>How to choose</h2>
 <ul><li>You just want to double-click a photo and arrow through the folder: Flipic, qView or PicView. Flipic is the closest to IrfanView or Honeyview in feel.</li><li>You mostly cull RAW and need focus and histograms: FastRawViewer.</li><li>You want one big tool that also organizes and converts: XnView MP.</li><li>You like grids: FlowVision.</li></ul>
 <p>Disclosure: Flipic is made by the people behind this site. Viewing, ratings, marks, filtering and export are free and MIT-licensed; an optional paid Pro adds batch tools that most people won't need.</p>
-<figure>{{shot('filmstrip.webp', 'Flipic thumbnail strip and arrow-key paging')}}<figcaption>Flipic: double-click a photo, then arrow through the folder.</figcaption></figure>""")
+<figure>{{shot('filmstrip.webp', 'Flipic thumbnail strip and arrow-key paging')}}<figcaption>Flipic: double-click a photo, then arrow through the folder.</figcaption></figure>""", updated="2026-11-07")
 
 guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic: which free Mac photo viewer fits you",
       "FlowVision vs Flipic",
@@ -629,7 +630,7 @@ guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic: which f
 <p>If you want to see a whole folder at once and keep video in the same view, FlowVision fits better. If you want to open one photo and go forward and back with the arrow keys while rating and marking, Flipic fits better. Both are free and open source, so trying both costs nothing but a download.</p>
 <h2>FlowVision facts and links</h2>
 <p>FlowVision is at <a href="https://github.com/netdcy/FlowVision">github.com/netdcy/FlowVision</a> and <a href="https://flowvision.app/">flowvision.app</a>. The details above were checked on 7 November 2026 against those two pages: the repository is GPL-3.0, the README lists macOS 11.0 or later, the source handles camera RAW and video, and the latest release is 1.7.6 from 8 September 2026.</p>""",
-      title_suffix=False)
+      title_suffix=False, updated="2026-11-07", published="2026-11-07")
 
 
 # ---------------------------------------------------------------- 渲染
@@ -700,7 +701,7 @@ def render_guide(lang, g):
     t = T[lang]
     schema = [crumbs_schema(lang, g["title"], g["path"]),
               {"@context": "https://schema.org", "@type": "Article", "headline": g["title"], "description": g["desc"],
-               "inLanguage": t["lang"], "datePublished": UPDATED, "dateModified": UPDATED, "image": f"{BASE}/og.jpg",
+               "inLanguage": t["lang"], "datePublished": g["published"], "dateModified": g["updated"], "image": f"{BASE}/og.jpg",
                "mainEntityOfPage": f"{BASE}{g['path']}", "author": {"@type": "Organization", "name": "Flipic"},
                "publisher": {"@type": "Organization", "name": "Flipic", "logo": {"@type": "ImageObject", "url": f"{BASE}/icon-256.png"}}}]
     if g["howto"]:
@@ -719,10 +720,11 @@ def render_guide(lang, g):
     if g["faq"]:
         faq_items = "".join(f"<details><summary>{esc(q)}</summary><p>{a}</p></details>" for q, a in g["faq"])
         faq_html = f'<section class="faq"><h2>{t["faq"]}</h2>{faq_items}</section>\n'
+    updated_line = ("更新于 " if lang == "zh" else "Updated ") + g["updated"]
     out += f"""<main id="main" class="narrow article">
 <p class="crumbs"><a href="{t['home']}">{t['crumbs_home']}</a> › <a href="{t['home']}#guides">{t['crumbs_guides']}</a></p>
 <h1>{esc(g['title'])}</h1>
-<p class="updated">{t['updated']}</p>
+<p class="updated">{updated_line}</p>
 <div class="prose">{g['body']}</div>
 {faq_html}<div class="cta"><p>{t['cta']}</p>{download_block(lang)}</div>
 <nav class="related" aria-label="{t['related']}"><h2>{t['related']}</h2>{related}</nav>
@@ -1133,6 +1135,7 @@ def main():
         print("注意：LEGAL 没填完（运营主体、邮箱、退款天数），隐私政策和用户协议这次没有生成")
 
     # sitemap：每个地址带上中英对应版本
+    page_dates = {g["path"]: g["updated"] for lang in ("zh", "en") for g in GUIDES[lang]}
     items = []
     for u in urls:
         if u in PAIRS:
@@ -1147,7 +1150,7 @@ def main():
                     f'<xhtml:link rel="alternate" hreflang="en" href="{BASE}{en}"/>'
                     f'<xhtml:link rel="alternate" hreflang="x-default" href="{BASE}{en}"/>')
         pri = "1.0" if u in ("/", "/en/") else "0.7"
-        items.append(f"<url><loc>{BASE}{u}</loc><lastmod>{UPDATED}</lastmod><priority>{pri}</priority>{alts}</url>")
+        items.append(f"<url><loc>{BASE}{u}</loc><lastmod>{page_dates.get(u, UPDATED)}</lastmod><priority>{pri}</priority>{alts}</url>")
     (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '
                                      'xmlns:xhtml="http://www.w3.org/1999/xhtml">\n' + "\n".join(items) + "\n</urlset>\n")
     (OUT / f"{INDEXNOW_KEY}.txt").write_text(INDEXNOW_KEY)
