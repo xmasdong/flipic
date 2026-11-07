@@ -279,6 +279,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--eye-toggle-test"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runEyeToggleTest()
+                }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--vs-shots"), i + 3 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2], zp = CommandLine.arguments[i + 3]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runVsShots(outDir: outDir, zoomPoint: zp)
+                }
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--cull-shots"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
