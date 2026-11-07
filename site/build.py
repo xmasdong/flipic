@@ -12,7 +12,7 @@ OUT = ROOT / "public"
 BASE = "https://flipic.app"
 UPDATED = "2026-10-31"
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "4.1 MB"
+SIZE = "4.4 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -457,7 +457,7 @@ guide("zh", "/guides/windows-image-viewer-for-mac/", "从 Windows 换到 Mac，H
 <h2>Honeyview 和 IrfanView 有 Mac 版吗</h2>
 <p>没有。Honeyview 由 Bandisoft 开发，只出了 Windows 版；IrfanView 官方也只支持 Windows。网上的「Mac 版」要么是别的软件，要么是用 Wine 套壳运行，不建议装来路不明的安装包。</p>
 <h2>Mac 上可以用的替代</h2>
-<p><strong>Flipic</strong>：免费开源，安装包 4.1 MB。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
+<p><strong>Flipic</strong>：免费开源，安装包 4.4 MB。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
 <p><strong>XnView MP</strong>：功能很全的跨平台看图和管理软件，个人使用免费。适合需要大量格式转换、元数据编辑的人，界面比较复杂。</p>
 <p><strong>qView</strong>：开源的极简看图软件，界面几乎只有图片。功能少，适合只想打开看看的人。</p>
 <h2>换过来后常见的几处不同</h2>
@@ -477,8 +477,9 @@ guide("zh", "/guides/cull-event-photos/", "活动照片几百张，怎么在 Mac
 <p>剩下的照片按 <kbd>→</kbd> 一张张翻，喜欢的按 <kbd>1</kbd> 到 <kbd>5</kbd> 打星，想看细节就把鼠标停在脸上按 <kbd>0</kbd> 放大到 100%。也可以开幻灯片放映，看到好的单击暂停，打完星再单击继续。</p>
 <p>星级按 XMP 标准写入：JPEG、HEIC 写进文件本身，专有 RAW 写在同名 .xmp 文件里，原始文件不动。</p>
 <h2>第三步：把选好的交给后期</h2>
-<p>在 Flipic 设置里选好 Lightroom、Photoshop 或 Capture One，看到要修的照片按 <kbd>⌘E</kbd> 打开，同名 RAW 在时打开 RAW。导入 Lightroom 时，刚才打的星级也会一起带过去，可以直接按星级筛选。</p>""",
-      howto=["用 Flipic 打开整个文件夹，按 ⇧⌘K 进入清理模式", "确认要删的连拍、闭眼、模糊照片，移到废纸篓", "翻看剩下的照片，按 1–5 打星", "按 ⌘E 把选中的照片交给 Lightroom 或 Photoshop"])
+<p>在 Flipic 设置里选好 Lightroom、Photoshop 或 Capture One，看到要修的照片按 <kbd>⌘E</kbd> 打开，同名 RAW 在时打开 RAW。导入 Lightroom 时，刚才打的星级也会一起带过去，可以直接按星级筛选。</p>
+<p>打完星在 Lightroom 里怎么读，见 <a href="/guides/star-rating-lightroom/">Mac 照片打星，Lightroom 能认吗</a>；连拍、闭眼和拍糊的照片怎么先分组，见 <a href="/guides/burst-closed-eyes-cleanup/">连拍、闭眼、拍糊的照片，Mac 上先挑再删</a>。</p>""",
+      howto=["用 Flipic 打开整个文件夹，按 ⇧⌘K 进入清理模式", "确认要删的连拍、闭眼、模糊照片，移到废纸篓", "翻看剩下的照片，按 1–5 打星", "按 ⌘E 把选中的照片交给 Lightroom 或 Photoshop"], updated="2026-11-07")
 
 guide("en", "/en/guides/mac-preview-next-image/", "How to go to the next photo in Mac Preview",
       "Next photo in Mac Preview",
@@ -534,7 +535,7 @@ guide("en", "/en/guides/irfanview-for-mac/", "IrfanView for Mac? Free alternativ
 <h2>Is there an IrfanView for Mac?</h2>
 <p>No. IrfanView officially supports Windows only, and Honeyview from Bandisoft is Windows-only too. Anything labeled "for Mac" is either a different app or Windows software wrapped in Wine, so be careful with unofficial installers.</p>
 <h2>Alternatives that run natively on a Mac</h2>
-<p><strong>Flipic</strong>: free and open source, a 4.1 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
+<p><strong>Flipic</strong>: free and open source, a 4.4 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
 <p><strong>XnView MP</strong>: a full-featured cross-platform viewer and organizer, free for personal use; great for heavy conversion and metadata work, busier interface.</p>
 <p><strong>qView</strong>: a minimal open-source viewer that is little more than the image; few features by design.</p>
 <h2>Things that work differently on a Mac</h2>
@@ -554,8 +555,9 @@ guide("en", "/en/guides/cull-photos-on-mac/", "How to cull hundreds of event pho
 <p>Press <kbd>→</kbd> through what's left and <kbd>1</kbd>–<kbd>5</kbd> to rate. Rest the pointer on a face and press <kbd>0</kbd> to check focus at 100%. Or run a slideshow, click to pause on a good one, rate it, click to resume.</p>
 <p>Ratings are standard XMP: inside JPEG and HEIC files, in a same-name .xmp sidecar for proprietary RAW, leaving the RAW untouched.</p>
 <h2>3. Hand the keepers to your editor</h2>
-<p>Choose Lightroom, Photoshop or Capture One in Settings and press <kbd>⌘E</kbd> on a photo to open it there, the RAW if one sits next to the JPEG. Lightroom picks up the star ratings on import, so you can filter by them right away.</p>""",
-      howto=["Open the folder in Flipic and press ⇧⌘K for Cleanup Mode", "Review the suggested bursts, closed eyes and blurry shots and move them to the Trash", "Page through the rest and rate with 1–5", "Press ⌘E to open keepers in Lightroom or Photoshop"])
+<p>Choose Lightroom, Photoshop or Capture One in Settings and press <kbd>⌘E</kbd> on a photo to open it there, the RAW if one sits next to the JPEG. Lightroom picks up the star ratings on import, so you can filter by them right away.</p>
+<p>For the side-by-side view itself, see <a href="/en/guides/compare-photos-side-by-side-mac/">how to compare similar photos side by side on Mac</a>.</p>""",
+      howto=["Open the folder in Flipic and press ⇧⌘K for Cleanup Mode", "Review the suggested bursts, closed eyes and blurry shots and move them to the Trash", "Page through the rest and rate with 1–5", "Press ⌘E to open keepers in Lightroom or Photoshop"], updated="2026-11-07")
 
 
 guide("zh", "/guides/mac-image-viewer-recommend/", "Mac 看图软件推荐（2026）：预览不够用时可以换哪些",
@@ -582,7 +584,8 @@ guide("zh", "/guides/mac-image-viewer-recommend/", "Mac 看图软件推荐（202
 <h2>怎么选</h2>
 <ul><li>只是想双击一张后方向键往下翻：Flipic、qView、PicView 都可以，Flipic 最接近 Windows 看图软件的手感。</li><li>主要挑相机 RAW、要看焦点和直方图：FastRawViewer。</li><li>要一个能管理、能批量处理的「大」软件：XnView MP。</li><li>喜欢网格浏览：FlowVision。</li></ul>
 <p>说明一下：Flipic 是本站的软件。看图、打星、标记、筛选、导出都免费开源；另有一个可选的付费 Pro，只加了批量整理的功能，大多数人用不上。</p>
-<figure>{{shot('filmstrip.webp', 'Flipic 底部缩略图栏与左右翻页')}}<figcaption>Flipic：双击一张，方向键翻完整个文件夹。</figcaption></figure>""", updated="2026-11-07")
+<figure>{{shot('filmstrip.webp', 'Flipic 底部缩略图栏与左右翻页')}}<figcaption>Flipic：双击一张，方向键翻完整个文件夹。</figcaption></figure>
+<p>想先看 RAW 再决定用哪个软件，步骤见 <a href="/guides/mac-view-raw/">Mac 上怎么快速看 RAW 照片</a>。</p>""", updated="2026-11-07")
 
 guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image viewers for Mac (2026): which one to pick",
       "Open-source image viewers for Mac",
@@ -606,7 +609,8 @@ guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image view
 <h2>How to choose</h2>
 <ul><li>You just want to double-click a photo and arrow through the folder: Flipic, qView or PicView. Flipic is the closest to IrfanView or Honeyview in feel.</li><li>You mostly cull RAW and need focus and histograms: FastRawViewer.</li><li>You want one big tool that also organizes and converts: XnView MP.</li><li>You like grids: FlowVision.</li></ul>
 <p>Disclosure: Flipic is made by the people behind this site. Viewing, ratings, marks, filtering and export are free and MIT-licensed; an optional paid Pro adds batch tools that most people won't need.</p>
-<figure>{{shot('filmstrip.webp', 'Flipic thumbnail strip and arrow-key paging')}}<figcaption>Flipic: double-click a photo, then arrow through the folder.</figcaption></figure>""", updated="2026-11-07")
+<figure>{{shot('filmstrip.webp', 'Flipic thumbnail strip and arrow-key paging')}}<figcaption>Flipic: double-click a photo, then arrow through the folder.</figcaption></figure>
+<p>If you are deciding between Photo Mechanic and a lighter viewer, see <a href="/en/guides/photo-mechanic-alternative-mac/">Photo Mechanic alternative for Mac</a>; for the RAW workflow itself, see <a href="/en/guides/view-raw-files-mac/">how to quickly view RAW files on a Mac</a>.</p>""", updated="2026-11-07")
 
 guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic: which free Mac photo viewer fits you",
       "FlowVision vs Flipic",
@@ -625,12 +629,184 @@ guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic: which f
 <h2>Where FlowVision fits</h2>
 <p>FlowVision is the one to try if you think in folders. Its waterfall and grid layouts show many images at different sizes at once, which suits going through a shoot, a download folder or a reference library before deciding what to open. It plays video in the same window, so mixed folders of clips and stills stay in one place. The app also handles file management while you browse: move, copy and rename files, add tags and ratings, and jump between folders with right-click gestures. It is GPL-3.0, needs macOS 11.0 or later, and handles camera RAW.</p>
 <h2>Where Flipic fits</h2>
-<p>Flipic is the one to try if you cull by stepping through photos. Open a folder, double-click any photo and press <kbd>←</kbd> or <kbd>→</kbd>; the window moves through the folder one image at a time, with a thumbnail strip along the bottom. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus, <kbd>1</kbd>–<kbd>5</kbd> to rate, and <kbd>P</kbd> to mark keepers. Ratings are written as standard XMP, so Lightroom, Bridge and Capture One can read them. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac, and nothing is deleted until you choose Move to Trash. Flipic is MIT-licensed, a 4.1 MB download, needs macOS 13 or later, and runs on Apple silicon and Intel.</p>
+<p>Flipic is the one to try if you cull by stepping through photos. Open a folder, double-click any photo and press <kbd>←</kbd> or <kbd>→</kbd>; the window moves through the folder one image at a time, with a thumbnail strip along the bottom. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus, <kbd>1</kbd>–<kbd>5</kbd> to rate, and <kbd>P</kbd> to mark keepers. Ratings are written as standard XMP, so Lightroom, Bridge and Capture One can read them. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac, and nothing is deleted until you choose Move to Trash. Flipic is MIT-licensed, a 4.4 MB download, needs macOS 13 or later, and runs on Apple silicon and Intel.</p>
 <h2>Which should you pick?</h2>
 <p>If you want to see a whole folder at once and keep video in the same view, FlowVision fits better. If you want to open one photo and go forward and back with the arrow keys while rating and marking, Flipic fits better. Both are free and open source, so trying both costs nothing but a download.</p>
 <h2>FlowVision facts and links</h2>
 <p>FlowVision is at <a href="https://github.com/netdcy/FlowVision">github.com/netdcy/FlowVision</a> and <a href="https://flowvision.app/">flowvision.app</a>. The details above were checked on 7 November 2026 against those two pages: the repository is GPL-3.0, the README lists macOS 11.0 or later, the source handles camera RAW and video, and the latest release is 1.7.6 from 8 September 2026.</p>""",
       title_suffix=False, updated="2026-11-07", published="2026-11-07")
+
+
+guide("zh", "/guides/mac-view-raw/", "Mac 上怎么快速看 RAW 照片",
+      "Mac 快速看 RAW",
+      "在 Mac 上双击 RAW 就能用方向键一张张看，按 0 看焦点，按 1–5 打星。也写清 CR3、NEF、ARW 等格式和 RAW+JPG 同名文件的处理。",
+      "RAW 也能双击后一张张翻，看焦点、打星，同名 JPG 一起处理",
+      f"""<p>把 RAW 文件拷到 Mac 上，用 Flipic 打开所在文件夹，双击任意一张，按 <kbd>←</kbd> <kbd>→</kbd> 就能一张张翻。不用先导入，也不建图库，CR3、NEF、ARW、RAF、DNG 这些常见相机 RAW 都能直接打开。</p>
+<p>看到要确认焦点的，把鼠标移到眼睛上按 <kbd>0</kbd>，就在那里放大到 100%，再按一次回到整张。想看拍摄参数按 <kbd>I</kbd>，右上角会列出相机、镜头、快门、光圈、ISO 和拍摄时间。</p>
+<p>翻页时先出现一张略糊的预览，停下来马上变清晰；按住方向键一直翻也能跟上。不用先导入，所以也没有导入进度条。</p>
+<figure>{shot('zoom.webp', 'Flipic 在鼠标处放大到 100% 检查焦点')}<figcaption>按 0 在鼠标处放大到 100%，再按一次回到整张。</figcaption></figure>
+<h2>先把整个文件夹翻一遍</h2>
+<p>打开文件夹后，底部缩略图栏就是整个文件夹。按 <kbd>→</kbd> 看下一张，按 <kbd>←</kbd> 回上一张；排序可以按文件名、拍摄时间、修改时间或文件大小，连拍多的时候按拍摄时间会更顺。</p>
+<p>只想快速扫一遍时，按 <kbd>空格</kbd> 让窗口贴合照片比例，再按一次回到原窗口。竖拍的照片会得到一个竖长的窗口，扫起来更顺。</p>
+<p>拿不准两张哪张更清楚，按 <kbd>C</kbd> 并排看两张，放大和拖动会同步；四张一起看按 <kbd>⇧C</kbd>。这些都不需要先导入，也不建图库。</p>
+<h2>RAW 和 JPG 同名的一对怎么处理</h2>
+<p>相机同时存 RAW 和 JPG 时，免费版会把它们显示成两张，但打星、删除、移动、导出按一对处理：给其中一张打星，同名另一张一起有星；删掉一张，另一张跟着走，不会只留下半对。清理模式里也按一张算。</p>
+<p>如果不想在列表里看到两张，Pro 可以把同名的 JPG 和 RAW 合并成一张显示，按 <kbd>V</kbd> 切换看哪个版本。这是 Pro 功能；只是看 RAW、打星、挑片的话，免费版够用。</p>
+<h2>星级写在旁边，不改 RAW</h2>
+<p>RAW 的星级写在旁边同名的 <code>.xmp</code> 文件里，RAW 本身不改。JPEG、HEIC、TIFF 的评分写进文件元数据，不重新压缩。给 RAW 打星以后，Lightroom Classic 和 Capture One 读取 XMP 时能拿到这些星级，具体做法见 <a href="/guides/star-rating-lightroom/">Mac 照片打星，Lightroom 能认吗</a>。</p>
+<h2>常见格式和打开方式</h2>
+<p>Flipic 支持 ARW、CR2、CR3、NEF、RAF、DNG 等常见相机 RAW，也支持 JPEG、PNG、HEIC、WebP、TIFF、AVIF 等普通图片。系统能解码的其他格式一般也能打开。</p>
+<p>想以后双击 RAW 就用 Flipic：在设置（<kbd>⌘,</kbd>）里点「设为默认看图软件」，常见图片格式和相机 RAW 会一次设好；也可以在访达里右键一张 RAW，按住 <kbd>⌥</kbd> 选「始终以此方式打开」› Flipic。</p>
+<p>如果你还在挑 Mac 上的看图软件，可以先看 <a href="/guides/mac-image-viewer-recommend/">Mac 看图软件推荐</a>；要一次处理几百张活动照片，流程见 <a href="/guides/cull-event-photos/">活动照片几百张，怎么在 Mac 上快速挑片</a>。</p>""",
+      faq=[
+          ('Mac 上双击 RAW 用什么打开？',
+           '把 Flipic 设为默认看图软件后，双击 RAW 就会用它打开；也可以在访达里右键 RAW，按住 ⌥ 选「始终以此方式打开」› Flipic。'),
+          ('RAW 和 JPG 同名会显示两张吗？',
+           '免费版会显示两张，但打星、删除、移动、导出按一对处理，清理模式也算一张。Pro 可以把它们合并成一张显示，按 V 切换。'),
+          ('看 RAW 会改原文件吗？',
+           '只看不会改。打星时 RAW 的评分写在旁边同名的 .xmp 文件里，RAW 本身不动；JPEG、HEIC、TIFF 只改元数据，不重新压缩。'),
+      ], title_suffix=False, updated="2026-11-07", published="2026-11-07")
+
+guide("zh", "/guides/star-rating-lightroom/", "Mac 照片打星，Lightroom 能认吗",
+      "打星，Lightroom 能认吗",
+      "用 Flipic 按 1–5 打星，评分写成 XMP；Lightroom Classic、Capture One 都能读。JPEG 不重压，RAW 写同名 .xmp。",
+      "Flipic 打的星写成 XMP，Lightroom Classic 和 Capture One 怎么读",
+      f"""<p>能。Flipic 里按 <kbd>1</kbd> 到 <kbd>5</kbd> 给照片打星，评分按 XMP 标准写入。Lightroom Classic 和 Capture One 都支持星级评分，也都能读 XMP 里的元数据，所以你在 Flipic 里挑一遍，回到后期软件不用重新打。</p>
+<h2>在 Flipic 里怎么打星</h2>
+<p>打开照片所在的文件夹，双击任意一张，按 <kbd>1</kbd> 到 <kbd>5</kbd> 就是一到五星；右键菜单「评分」里可以改成「未评分」。评过分的照片会在窗口底部正中显示星级。要标记「这张要留」，按 <kbd>P</kbd>，标记存成访达标签，不改照片文件。</p>
+<p>打完一轮，按 <kbd>⇧P</kbd> 只看标记过的照片，或者用「显示 › 只看星级」只看几星以上。筛出来的照片按 <kbd>⇧⌘E</kbd> 可以一次复制或移动到一个文件夹。</p>
+<p>标记和星级是两套东西：星级表示这张有多好，<kbd>P</kbd> 表示这张要留。可以只打星不标记，也可以只标记不打星；两个都做，后面筛选会更灵活。</p>
+<figure>{shot('settings.webp', 'Flipic 设置里的评分快捷键')}<figcaption>评分快捷键也能在设置里改。</figcaption></figure>
+<h2>星级具体存在哪里</h2>
+<p>JPEG、HEIC、TIFF 的评分写进文件本身的元数据，只改信息，不重新压缩。索尼、佳能、尼康等专有 RAW 格式的评分写在旁边同名的 <code>.xmp</code> 文件里，RAW 文件一个字节都不改。同名的 RAW 和 JPG 会一起打分。</p>
+<p>这也是为什么换软件不用重打：XMP 是通用的元数据格式，Lightroom Classic 的评分和版权、关键词等信息都用 XMP 保存；Capture One 也能读嵌入的 XMP 和同名的 .XMP sidecar 文件。</p>
+<p>移动、导出照片时，同名的 <code>.xmp</code> 会跟着 RAW 一起走，不会把评分留在原来的文件夹。用 <kbd>⇧⌘E</kbd> 导出时也一样。</p>
+<h2>Lightroom 和 Capture One 怎么读</h2>
+<p>Lightroom Classic 自己就有 1 到 5 星评分，也支持把元数据写进 XMP 或同名的 sidecar 文件。把 Flipic 生成的 <code>.xmp</code> 和 RAW 放在同一个文件夹、保持同名，Lightroom Classic 读 sidecar 时就能拿到评分。</p>
+<p>Capture One 在「图像 › 元数据」里可以设置 XMP sidecar 的同步方式。选 Load 会从 sidecar 读入，选 Full Sync 会双向同步；只要 .XMP 文件和 RAW 同名，星级就在里面。</p>
+<p>如果一次要挑几百张，建议先按星级过一轮，再用 <kbd>⇧P</kbd> 或星级筛选缩小范围。不要一边挑一边改文件名，先把要留的选出来，导出或交给后期时再整理。</p>
+<h2>挑完交给后期</h2>
+<p>在 Flipic 设置里选好 Lightroom 或 Capture One，看到要修的照片按 <kbd>⌘E</kbd> 就用它打开；同名的 RAW 也在时，打开的是 RAW。想先看 RAW 怎么快速翻，见 <a href="/guides/mac-view-raw/">Mac 上怎么快速看 RAW 照片</a>；想先把废片清掉，见 <a href="/guides/cull-event-photos/">活动照片几百张，怎么在 Mac 上快速挑片</a>。还在选看图软件的话，可以先看 <a href="/guides/mac-image-viewer-recommend/">Mac 看图软件推荐</a>。</p>""",
+      faq=[
+          ('打星会改 RAW 原文件吗？',
+           '不会。RAW 的评分写在旁边同名的 .xmp 文件里，RAW 本身不改；JPEG、HEIC、TIFF 只改文件里的元数据，不重新压缩。'),
+          ('Lightroom 和 Capture One 都能读吗？',
+           'Lightroom Classic 和 Capture One 都支持星级和 XMP 元数据；把同名 .xmp 与 RAW 放在一起，打开或导入时就能读到。'),
+          ('打星要买 Pro 吗？',
+           '不用。打星、按星级筛选、标记、导出都是免费的，Pro 只加批量整理等额外功能。'),
+      ], title_suffix=False, updated="2026-11-07", published="2026-11-07")
+
+guide("zh", "/guides/burst-closed-eyes-cleanup/", "连拍、闭眼、拍糊的照片，Mac 上先挑再删",
+      "连拍、闭眼、拍糊怎么清理",
+      "连拍、闭眼、拍糊的照片不用一张张翻。Flipic 清理模式先在 Mac 本机分好组并推荐保留，删之前还能过一眼，删错了也能撤销。",
+      "先让清理模式分好连拍、闭眼、拍糊，再决定删哪些",
+      f"""<p>一场活动拍几百张，最花时间的往往不是修图，是从里面挑出能用的几十张。用 Flipic 打开整个文件夹，按 <kbd>⇧⌘K</kbd> 进入清理模式，它先在 Mac 本机把照片过一遍，再让你决定删哪些。</p>
+<p>它不是只有活动才用得上。婚礼、聚会、孩子运动会，一次拍几百张的场合都适合；如果照片本来就不多，手动翻页更直接。</p>
+<h2>它会把照片分成四类</h2>
+<p>清理模式分成相似连拍、内容完全相同的文件、闭眼、模糊或虚焦四类。连拍组里会推荐保留最清楚、没人闭眼的那张，其余默认勾上；闭眼的照片会框出是哪张脸，方便你放大确认。</p>
+<p>检测用的是 macOS 自带的 Vision 框架，清晰度、人脸和闭眼都在你自己的 Mac 上算，照片不会上传。它只负责分组和推荐，不替你删。</p>
+<p>它适合一次几百张的活动、会议、婚礼，也适合清理手机导出来的重复照片。只拍了几十张的话，直接按方向键翻就够，不必为了用功能而用功能。</p>
+<figure>{shot('cleanup.webp', 'Flipic 清理模式按相似连拍分组并推荐保留', 1440, 967)}<figcaption>每组标出推荐保留的那张，删之前可以逐个取消。</figcaption></figure>
+<h2>删之前过一眼</h2>
+<p>自动判断会有误判，尤其是连拍里表情差别很小的时候。点缩略图上的勾可以取消或重新选中，按 <kbd>空格</kbd> 能放大检查。确认以后按「移到废纸篓」，照片会先进废纸篓，不会立刻消失。</p>
+<p>删错了按 <kbd>⌘Z</kbd> 可以放回来。同名的 RAW 和 JPG 会当成一张照片处理，不会只删掉一半。</p>
+<p>清理模式只做第一轮分组，最后留哪张还是得自己看。把明显的废片去掉以后，剩下的照片再按方向键一张张过，按星级和标记挑，会轻松一些。</p>
+<p>检测结果放在 <code>~/Library/Caches/Flipic</code>，删掉也不影响照片；它不会往你的照片文件夹里写东西。重要拍摄还是先备份，再批量删。</p>
+<h2>删完再打星，交给后期</h2>
+<p>剩下的照片按 <kbd>→</kbd> 一张张翻，按 <kbd>1</kbd> 到 <kbd>5</kbd> 打星，按 <kbd>P</kbd> 标记要留的。挑完按 <kbd>⇧P</kbd> 只看标记过的，或者按星级筛选，再用 <kbd>⇧⌘E</kbd> 一起导出。打星和 Lightroom 的关系见 <a href="/guides/star-rating-lightroom/">Mac 照片打星，Lightroom 能认吗</a>。</p>
+<p>清理模式是免费的，不需要 Pro。整个挑片流程可以看 <a href="/guides/cull-event-photos/">活动照片几百张，怎么在 Mac 上快速挑片</a>；RAW 和 JPG 同名时怎么处理，见 <a href="/guides/mac-view-raw/">Mac 上怎么快速看 RAW 照片</a>。还在选软件的话，见 <a href="/guides/mac-image-viewer-recommend/">Mac 看图软件推荐</a>。</p>""",
+      faq=[
+          ('清理模式收费吗？',
+           '免费，不需要 Pro。'),
+          ('删掉的照片能找回来吗？',
+           '会先进废纸篓，按 ⌘Z 可以放回刚删的照片。'),
+          ('RAW 和 JPG 会被分开删吗？',
+           '不会。同名的 RAW 和 JPG 算一张，一起处理。'),
+      ], title_suffix=False, updated="2026-11-07", published="2026-11-07")
+
+guide("en", "/en/guides/photo-mechanic-alternative-mac/", "Photo Mechanic alternative for Mac: a free culling viewer",
+      "Photo Mechanic alternative",
+      "Photo Mechanic is a mature paid pro tool with far more features. Flipic is a free, open-source Mac viewer for quick paging, focus checks, stars and marks.",
+      "A lighter, free option for paging, focus, stars and marks",
+      f"""<p>Photo Mechanic is a mature, paid professional photo browser from Camera Bits. It is built for high-volume ingest, browsing, culling, metadata and upload workflows, and it does far more than Flipic. If you mainly need to open a folder, page through photos, check focus, rate and mark, Flipic is a free, open-source alternative for that narrower job.</p>
+<h2>What Photo Mechanic is built for</h2>
+<p>Photo Mechanic is a full workflow tool. Its own tour highlights copying cards and culling while the files are still being ingested, a contact sheet for browsing, keywords and IPTC metadata, batch copy/delete/rename, side-by-side comparison, and export or upload to galleries and services. It also has a Plus version with an image database for cataloging files across drives.</p>
+<p>That breadth is the point. If you shoot for clients and need ingest, metadata, captions and delivery in one place, Photo Mechanic is the more complete tool. It is also paid software, with a free trial; check Camera Bits for current licensing.</p>
+<h2>What Flipic covers</h2>
+<p>Flipic starts from a folder, not a catalog. Copy the card yourself, double-click any photo, and press <kbd>←</kbd> <kbd>→</kbd> to move through the folder. There is no import step and no library to maintain. That is a smaller promise than Photo Mechanic makes, and it is deliberate.</p>
+<p>For culling, the useful keys are all there. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus. Press <kbd>1</kbd> to <kbd>5</kbd> to rate, <kbd>P</kbd> to mark keepers. Press <kbd>C</kbd> for two photos side by side or <kbd>⇧C</kbd> for four, with zoom and pan synced. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac before you decide what to delete. Viewing, ratings, marks, side-by-side comparison and Cleanup Mode are free.</p>
+<figure>{shot('filmstrip.webp', 'Flipic thumbnail strip and arrow-key paging')}<figcaption>Flipic: open one photo, then page through the folder.</figcaption></figure>
+<h2>Where the two differ</h2>
+<p>Photo Mechanic is stronger when the job includes ingest automation, detailed metadata, keywording and delivery. Flipic is stronger when you want to open a folder quickly and judge one photo at a time without a catalog. Flipic is also Mac-only, MIT-licensed and small; it needs macOS 13 or later.</p>
+<p>Photo Mechanic is not the only heavier option, and Flipic is not trying to replace it. If you already use Photo Mechanic for the parts of the workflow that matter to you, keep it. Use Flipic when you just want to look at the pictures and pick.</p>
+<h2>Can you use both?</h2>
+<p>Yes. Many photographers keep a full workflow app for ingest and metadata, then open the folder in a lighter viewer for a quick pass. Flipic does not lock anything into a catalog, so trying it does not change your files. If you later decide you need the wider workflow, you can go back without a migration.</p>
+<p>For the broader field, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>. For a culling routine that starts with rejects, see <a href="/en/guides/cull-photos-on-mac/">how to cull hundreds of event photos on a Mac</a>.</p>""",
+      faq=[
+          ('Is Flipic a drop-in replacement for Photo Mechanic?',
+           'No. Photo Mechanic covers ingest, metadata, keywording and delivery; Flipic is a smaller viewer for paging, focus, ratings, marks and culling. If you need the full workflow, keep Photo Mechanic.'),
+          ('Is Flipic free?',
+           'Yes, free and open source (MIT). An optional paid Pro adds batch tools; viewing, ratings, marks, side-by-side comparison and Cleanup Mode are free.'),
+          ('Does Flipic import or catalog photos?',
+           'No. It reads the folder you open and does not build a library or copy the files.'),
+      ], title_suffix=False, updated="2026-11-07", published="2026-11-07")
+
+guide("en", "/en/guides/view-raw-files-mac/", "How to quickly view RAW files on a Mac",
+      "View RAW files on Mac",
+      "View a folder of camera RAW files on a Mac with the arrow keys, check focus at 100%, rate with 1–5 and handle same-name RAW+JPG pairs in one place.",
+      "Open a folder of RAW files, page with the arrows and check focus",
+      f"""<p>Copy the RAW files to a folder on your Mac, open that folder in Flipic, double-click any photo and use <kbd>←</kbd> <kbd>→</kbd> to move through the folder. There is no import step and no catalog. Flipic opens common camera RAW formats including ARW, CR2, CR3, NEF, RAF and DNG.</p>
+<h2>Quick Look or a folder viewer</h2>
+<p>Quick Look is a quick way to glance at a few files: select them in Finder, press <kbd>Space</kbd>, and use the arrow keys to browse the selection. It is useful when you already know which files you want. The limit is that you are browsing a selection, not the whole folder.</p>
+<p>Quick Look is also temporary: close the window and the selection is gone. A folder viewer keeps the folder open, so you can come back to the same place after a break.</p>
+<p>A folder viewer fits when you want to start at one photo and keep going. Flipic reads the folder as it is, so the next photo is whatever comes next in the folder, not the next item you happened to select. You can sort by name, date taken, date modified or file size.</p>
+<h2>Check focus before you rate</h2>
+<p>Point at the eyes or another detail and press <kbd>0</kbd> to zoom to 100% there. Press it again to fit the photo. Press <kbd>I</kbd> for the camera, lens, shutter speed, aperture, ISO and date taken. When two frames look close, press <kbd>C</kbd> to compare two side by side, or <kbd>⇧C</kbd> for four.</p>
+<p>If you shoot bursts, comparing two frames saves going back and forth between them and trying to remember the last. The compare view keeps the same zoom and position, which is exactly what you need for eyes and expressions.</p>
+<p>Then rate with <kbd>1</kbd> to <kbd>5</kbd> and mark keepers with <kbd>P</kbd>. Ratings are written as standard XMP: into the file for JPEG, HEIC and TIFF, and into a same-name <code>.xmp</code> sidecar for proprietary RAW. The RAW file itself is not changed.</p>
+<figure>{shot('zoom.webp', 'Flipic zooming to 100% at the pointer to check focus')}<figcaption>Press 0 to check focus; press it again to fit.</figcaption></figure>
+<h2>A simple RAW routine</h2>
+<ol><li>Copy the card to a folder. Do not rename anything yet.</li><li>Open the folder in Flipic and page from the first frame, pressing <kbd>0</kbd> on anything that looks soft.</li><li>Rate the keepers with <kbd>1</kbd> to <kbd>5</kbd>, mark the ones you want to edit with <kbd>P</kbd>, then deal with the rejects.</li></ol>
+<h2>RAW and JPG with the same name</h2>
+<p>If your camera writes both a RAW and a JPG, the free version shows them as two photos. They are still treated as a pair when you rate, delete, move or export them, and Cleanup Mode counts them as one. The Pro version can show the pair as one photo; press <kbd>V</kbd> to switch between the RAW and the JPG.</p>
+<p>To review a burst, see <a href="/en/guides/compare-photos-side-by-side-mac/">how to compare similar photos side by side on Mac</a>. To make Flipic the default viewer, open Settings (<kbd>⌘,</kbd>) and click Make Default Viewer; common image formats and camera RAW are set in one go.</p>
+<p>If you are choosing a viewer, the wider list is in <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>. If you are culling a whole shoot, the event workflow is in <a href="/en/guides/cull-photos-on-mac/">how to cull hundreds of event photos on a Mac</a>.</p>""",
+      faq=[
+          ('Does viewing a RAW change the file?',
+           'No. Viewing only reads it. Ratings on proprietary RAW go into a same-name .xmp sidecar; the RAW itself is not changed.'),
+          ('Can I see RAW and JPG as one photo?',
+           'The free version shows them as two but treats them as a pair when rating, deleting, moving and exporting. Pro can merge the pair and switch with V.'),
+          ('Which RAW formats does Flipic open?',
+           'Common camera RAW including ARW, CR2, CR3, NEF, RAF and DNG. Other formats macOS can decode generally open too.'),
+      ], title_suffix=False, updated="2026-11-07", published="2026-11-07")
+
+guide("en", "/en/guides/compare-photos-side-by-side-mac/", "How to compare similar photos side by side on Mac",
+      "Compare photos side by side",
+      "Compare two or four similar shots side by side on a Mac, with zoom and pan synced, to check focus and expressions before you pick a keeper.",
+      "Two or four frames at once, with zoom and pan synced",
+      f"""<p>Open the folder in Flipic, find the first frame you want to compare and press <kbd>C</kbd>. That puts two photos side by side. Press <kbd>⇧C</kbd> to compare four at once. Zooming and dragging move every pane together by default, so you are looking at the same spot in each frame.</p>
+<h2>Two or four?</h2>
+<p>Two works well when you are deciding between the last two frames of a burst: one may have the sharper eye, the other a stronger expression. Four is useful earlier, when you have a short run of similar shots and want to see the whole run before narrowing down.</p>
+<p>A useful habit is to compare first, then rate. If you rate one frame before looking at its neighbour, you may keep the first one out of habit rather than because you compared it.</p>
+<p>The compare view is for judging, not for editing. It does not merge files or create a new copy. You are still looking at the originals in the folder, and you can rate or delete from the same window.</p>
+<h2>How to check focus across frames</h2>
+<p>Press <kbd>0</kbd> to zoom to 100% at the pointer. Because the panes stay in sync, the same area stays in view when you move between them. If one pane needs a small adjustment without moving the others, hold <kbd>⌥</kbd> while you drag it. Press <kbd>⇧L</kbd> to turn syncing off, and press it again to turn it back on.</p>
+<p>Use <kbd>←</kbd> <kbd>→</kbd> to move through the folder and load another pair or set. When you have a keeper, press <kbd>1</kbd> to <kbd>5</kbd> to rate it or <kbd>P</kbd> to mark it. Press <kbd>⌘⌫</kbd> to move a reject to the Trash.</p>
+<h2>A simple compare routine</h2>
+<ol><li>Open the folder and find the first frame of a short run.</li><li>Press <kbd>C</kbd> for two or <kbd>⇧C</kbd> for four, then press <kbd>0</kbd> to check the eyes.</li><li>Rate the keeper, page on with <kbd>→</kbd>, and repeat for the next run.</li></ol>
+<h2>When side by side helps most</h2>
+<p>It helps with bursts where the difference is a blink, a slight turn of the head, or focus that lands on the ear instead of the eye. Looking at one photo at a time makes those differences hard to hold in memory; two panes at the same zoom make them easier to see.</p>
+<p>It also helps with a sequence of group photos, where you want the frame where everyone looks awake and nobody is half-turned. Four panes are enough for most short sequences; longer runs are easier to handle by paging and rating first.</p>
+<p>Side-by-side comparison is free, along with viewing, ratings, marks, filtering, export and Cleanup Mode. If you want the culling routine around it, see <a href="/en/guides/cull-photos-on-mac/">how to cull hundreds of event photos on a Mac</a>. For the RAW workflow, see <a href="/en/guides/view-raw-files-mac/">how to quickly view RAW files on a Mac</a>, and for the wider field, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>.</p>""",
+      faq=[
+          ('Is side-by-side comparison free?',
+           'Yes, along with viewing, ratings, marks, filtering, export and Cleanup Mode.'),
+          ('Can I compare more than two photos?',
+           'Press C for two photos or Shift-C for four.'),
+          ('Why did only one pane move?',
+           'Hold Option (⌥) to nudge one pane on its own; Shift-L turns syncing off and on.'),
+      ], title_suffix=False, updated="2026-11-07", published="2026-11-07")
+
 
 
 # ---------------------------------------------------------------- 渲染
