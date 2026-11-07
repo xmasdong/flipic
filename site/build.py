@@ -258,7 +258,7 @@ def shot(name, alt, w=1440, h=900, eager=False):
 
 HOME = {
     "zh": {
-        "title": "Flipic Mac 看图：摄影师挑片用的免费看图软件，方向键翻页、看焦点、打星",
+        "title": "Flipic：免费的 Mac 看图软件，摄影师挑片用",
         "desc": "Flipic 是给摄影师挑片用的免费 Mac 看图软件。导完卡，双击一张照片，用方向键翻完整个文件夹，按 0 在鼠标处放大到 100% 看焦点，按 1–5 打星、P 标记要留的，星级 Lightroom 和 Capture One 都能读。支持主流相机 RAW，免费开源。",
         "eyebrow": "给摄影师挑片用的 Mac 看图软件",
         "h1": "导完卡，<br>用方向键挑一遍",
@@ -324,8 +324,8 @@ HOME = {
         "end": "下载 Flipic",
     },
     "en": {
-        "title": "Flipic for Mac: a free photo viewer for culling, with arrow keys, focus check and star ratings",
-        "desc": "A free, open-source photo viewer for photographers on Mac. Double-click a photo from the card and arrow through the folder, press 0 to check focus at 100%, rate with 1–5 and mark keepers with P. Lightroom and Capture One read the ratings. Supports camera RAW.",
+        "title": "Flipic: free photo viewer for Mac, built for culling",
+        "desc": "A free, open-source Mac photo viewer for culling: double-click a photo, arrow through the folder, check focus, rate 1–5. Lightroom reads the ratings. RAW.",
         "eyebrow": "A Mac photo viewer for culling a shoot",
         "h1": "Offload the card,<br>cull with the arrow keys",
         "lede": "After a shoot, Preview makes you open photos one at a time, and Lightroom wants an import first. Flipic opens the folder as it is: double-click any photo, press → for the next one, 0 to zoom to 100% at the pointer and check focus, 1–5 to rate and P to mark keepers. Ratings are saved as standard XMP, so they are still there in Lightroom and Capture One.",
@@ -395,15 +395,18 @@ HOME = {
 GUIDES = {"zh": [], "en": []}
 
 
-def guide(lang, path, title, short, desc, summary, body, howto=None):
-    GUIDES[lang].append(dict(path=path, title=title, short=short, desc=desc, summary=summary, body=body, howto=howto))
+def guide(lang, path, title, short, desc, summary, body, howto=None, faq=None, title_suffix=True):
+    GUIDES[lang].append(dict(path=path, title=title, short=short, desc=desc, summary=summary, body=body,
+                             howto=howto, faq=faq, title_suffix=title_suffix))
 
 
 guide("zh", "/guides/mac-next-image/", "Mac 预览怎么看下一张图片？三种办法",
       "Mac 预览怎么看下一张",
       "Mac 自带的「预览」打开一张图后翻不到下一张。这里讲三种办法：访达里全选再打开、空格快速查看、用 Flipic 双击后直接按左右键。",
       "预览只打开单张时翻不了；全选打开、空格快速查看、换个看图软件",
-      f"""<p>在访达里双击一张照片，「预览」只会打开这一张，按方向键没有反应。这是因为预览只显示你交给它的文件，没打开的那些它不知道。下面三种办法按顺手程度排。</p>
+      f"""<p>在访达里双击一张照片，「预览」只会打开这一张。下面三种办法按顺手程度排。</p>
+<h2>为什么方向键翻不过去</h2>
+<p>「预览」不会把一个文件夹当成一组照片。双击一张时，它只打开你点的那一个文件，窗口里没有别的图，方向键自然没有下一张可翻。只有把多张图一起用预览打开，方向键才会在这些图之间切换。所以要么一次全选打开，要么换一个直接读整个文件夹的看图软件。</p>
 <h2>办法一：在访达里全选，再一起打开</h2>
 <ol><li>在访达里打开照片所在的文件夹，按 <kbd>⌘A</kbd> 全选。</li><li>按 <kbd>⌘↓</kbd>（或右键选「打开」），所有图片会一起进到预览里。</li><li>在预览里按 <kbd>↑</kbd> <kbd>↓</kbd> 或 <kbd>←</kbd> <kbd>→</kbd> 切换，左侧边栏是缩略图。</li></ol>
 <p>缺点是每次都得先回访达全选；文件夹里几百张时，一次全部打开会慢。</p>
@@ -415,7 +418,15 @@ guide("zh", "/guides/mac-next-image/", "Mac 预览怎么看下一张图片？三
 <figure>{shot('browse-06.webp', 'Flipic 打开一张照片后按方向键翻看同一文件夹')}<figcaption>Flipic 打开一张后，底部缩略图栏是整个文件夹。</figcaption></figure>
 <p>想以后双击照片都用 Flipic 打开：在 Flipic 的设置（<kbd>⌘,</kbd>）里点「设为默认看图软件」。也可以在访达里右键一张图，按住 <kbd>⌥</kbd>，选「始终以此方式打开」› Flipic。</p>
 <p>设好之后可以当快速查看用：在访达里选中照片按 <kbd>⌘↓</kbd> 打开，左右翻看；在设置里打开「按 Esc 关闭窗口」，看完按 <kbd>Esc</kbd> 回到访达。</p>""",
-      howto=["在访达里双击任意一张图片，用 Flipic 打开", "按右方向键看下一张，左方向键看上一张", "按 0 在鼠标处放大到 100%，再按一次回到全图"])
+      howto=["在访达里双击任意一张图片，用 Flipic 打开", "按右方向键看下一张，左方向键看上一张", "按 0 在鼠标处放大到 100%，再按一次回到全图"],
+      faq=[
+          ("Mac 预览怎么翻到下一张照片？",
+           "预览只在你一起打开的文件之间切换。先在访达里全选照片，按 ⌘↓ 一起打开，方向键才有下一张；或者用空格快速查看；也可以换成 Flipic，双击一张后直接按 →。"),
+          ("MacBook 上怎么用方向键看下一张图片？",
+           "双击单张照片时，预览只认识这一张，方向键不会翻到文件夹里的其他图。把照片全选后用预览打开，或者用 Flipic 打开文件夹，用 ← → 一张张翻。"),
+          ("为什么「预览」里按方向键没反应？",
+           "你只把一张图交给了预览，窗口里没有别的图可翻。一次多选几张一起打开，或者换一个读整个文件夹的看图软件。"),
+      ], title_suffix=False)
 
 guide("zh", "/guides/heic-to-jpg-mac/", "Mac 怎么批量把 HEIC 转成 JPG（不用装 Photoshop）",
       "Mac 批量 HEIC 转 JPG",
@@ -468,11 +479,13 @@ guide("zh", "/guides/cull-event-photos/", "活动照片几百张，怎么在 Mac
 <p>在 Flipic 设置里选好 Lightroom、Photoshop 或 Capture One，看到要修的照片按 <kbd>⌘E</kbd> 打开，同名 RAW 在时打开 RAW。导入 Lightroom 时，刚才打的星级也会一起带过去，可以直接按星级筛选。</p>""",
       howto=["用 Flipic 打开整个文件夹，按 ⇧⌘K 进入清理模式", "确认要删的连拍、闭眼、模糊照片，移到废纸篓", "翻看剩下的照片，按 1–5 打星", "按 ⌘E 把选中的照片交给 Lightroom 或 Photoshop"])
 
-guide("en", "/en/guides/mac-preview-next-image/", "How to see the next image in Mac Preview",
-      "Next image in Mac Preview",
-      "Preview opens only the image you double-clicked, so arrow keys do nothing. Three ways to page through a folder: select all, Quick Look, or Flipic.",
-      "Open them all, Quick Look, or a viewer that just pages",
-      f"""<p>Double-click a photo in Finder and Preview opens that one file; the arrow keys go nowhere because Preview only knows about the files you handed it. Here are three ways around that, from most to least effort.</p>
+guide("en", "/en/guides/mac-preview-next-image/", "How to go to the next photo or picture in Mac Preview",
+      "Next photo in Mac Preview",
+      "Preview opens only the photo you double-clicked, so arrow keys do nothing. Three ways to see the next picture on a Mac: select all, Quick Look, or Flipic.",
+      "Why the arrows stop, and three ways to page through the folder",
+      f"""<p>Double-click a photo in Finder and Preview opens that one file. Here are three ways to page through the rest of the folder, from most to least effort.</p>
+<h2>Why the arrow keys don't go to the next picture</h2>
+<p>Preview doesn't treat a folder as a set of photos. When you double-click one file, it opens a window with exactly that file in it, so there is no next picture for the arrow keys to reach. The keys do work once several images are open in the same window; then they move between those images. That's why the fix is either opening the whole folder at once or using a viewer that reads the folder from the start.</p>
 <h2>1. Select all in Finder, then open</h2>
 <ol><li>Open the folder in Finder and press <kbd>⌘A</kbd>.</li><li>Press <kbd>⌘↓</kbd> (or choose Open). Every image lands in one Preview window.</li><li>Use <kbd>↑</kbd> <kbd>↓</kbd> or <kbd>←</kbd> <kbd>→</kbd> to move between them; thumbnails sit in the sidebar.</li></ol>
 <p>You have to go back to Finder every time, and opening hundreds of files at once is slow.</p>
@@ -484,7 +497,15 @@ guide("en", "/en/guides/mac-preview-next-image/", "How to see the next image in 
 <figure>{shot('browse-06.webp', 'Flipic paging through a folder with the arrow keys')}<figcaption>Open one photo; the thumbnail strip is the whole folder.</figcaption></figure>
 <p>To make Flipic open photos by default, click Make Default Viewer in Settings (<kbd>⌘,</kbd>), or Control-click an image in Finder, hold <kbd>⌥</kbd> and choose Always Open With › Flipic.</p>
 <p>It then works like Quick Look: select a photo, press <kbd>⌘↓</kbd>, page with the arrows, and with Esc Closes Window turned on, press <kbd>Esc</kbd> to go back to Finder.</p>""",
-      howto=["Double-click any image in Finder to open it in Flipic", "Press the right arrow key for the next image and the left arrow for the previous one", "Press 0 to zoom to 100% at the pointer; press it again to fit"])
+      howto=["Double-click any image in Finder to open it in Flipic", "Press the right arrow key for the next image and the left arrow for the previous one", "Press 0 to zoom to 100% at the pointer; press it again to fit"],
+      faq=[
+          ("How do I go to the next photo in Preview on Mac?",
+           "Preview only pages through images you opened together. Select all the photos in Finder, press ⌘↓ to open them in one window, then use the arrow keys. Quick Look and Flipic are the other two ways described above."),
+          ("How do I see the next picture on a Mac without selecting every file?",
+           "Open the folder in Flipic and double-click any photo; the arrow keys then move through every image in that folder. Quick Look only moves between the files you selected in Finder first."),
+          ("Can I move to the next photo on a MacBook with the arrow keys?",
+           "Not after double-clicking a single photo, because Preview only knows that one file. Open several photos together, use Quick Look, or use Flipic, and the arrow keys move between them."),
+      ], title_suffix=False)
 
 guide("en", "/en/guides/batch-convert-heic-to-jpg-mac/", "How to batch convert HEIC to JPG on Mac",
       "Batch convert HEIC to JPG",
@@ -545,7 +566,7 @@ guide("zh", "/guides/mac-image-viewer-recommend/", "Mac 看图软件推荐（202
 <table><thead><tr><th>软件</th><th>协议</th><th>适合</th></tr></thead><tbody>
 <tr><td>Flipic</td><td>MIT</td><td>只用 Mac、想要 Windows 看图软件那种手感：双击后方向键翻整个文件夹，按 0 在鼠标处放大到 100%，打星、标记、挑片</td></tr>
 <tr><td>PicView</td><td>GPL-3.0</td><td>Mac 和 Windows 都用；支持的格式多，相机 RAW 也在列；可以 <code>brew install picview</code></td></tr>
-<tr><td>FlowVision</td><td>GPL-3.0</td><td>喜欢按瀑布流网格浏览整个文件夹，也看视频；Swift 写的原生 Mac 软件</td></tr>
+<tr><td>FlowVision</td><td>GPL-3.0</td><td>喜欢按瀑布流网格浏览整个文件夹，也看视频；Swift 写的原生 Mac 软件。和 Flipic 的区别：它偏网格浏览，Flipic 偏单张方向键翻页挑片</td></tr>
 <tr><td>qView</td><td>GPL-3.0</td><td>只想看图、越简单越好；界面只有图片和标题栏，方向键翻页</td></tr>
 <tr><td>nomacs</td><td>GPL-3.0</td><td>Windows、Linux 上用惯了 nomacs；功能多，RAW 用 LibRaw 解</td></tr>
 <tr><td>Oculante</td><td>MIT</td><td>想要速度和一点简单编辑；Rust 写的，跨平台</td></tr>
@@ -571,7 +592,7 @@ guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image view
 <table><thead><tr><th>Viewer</th><th>License</th><th>Good for</th></tr></thead><tbody>
 <tr><td>Flipic</td><td>MIT</td><td>Mac-only users who want the Windows-viewer feel: arrow keys through the folder, 0 to zoom to 100% at the pointer, ratings, marks and culling</td></tr>
 <tr><td>PicView</td><td>GPL-3.0</td><td>People on both Mac and Windows; a long format list including camera RAW; <code>brew install picview</code></td></tr>
-<tr><td>FlowVision</td><td>GPL-3.0</td><td>Browsing a folder as a waterfall grid, with video; a native Swift app</td></tr>
+<tr><td><a href="/en/guides/flowvision-alternative/">FlowVision</a></td><td>GPL-3.0</td><td>Browsing a folder as a waterfall grid, with video; a native Swift app</td></tr>
 <tr><td>qView</td><td>GPL-3.0</td><td>The most minimal option: just the image and a title bar, arrow keys to page</td></tr>
 <tr><td>nomacs</td><td>GPL-3.0</td><td>People who already use it on Windows or Linux; feature-rich, RAW through LibRaw</td></tr>
 <tr><td>Oculante</td><td>MIT (parts GPL)</td><td>Speed plus light editing; written in Rust</td></tr>
@@ -585,6 +606,30 @@ guide("en", "/en/guides/open-source-image-viewers-mac/", "Open-source image view
 <ul><li>You just want to double-click a photo and arrow through the folder: Flipic, qView or PicView. Flipic is the closest to IrfanView or Honeyview in feel.</li><li>You mostly cull RAW and need focus and histograms: FastRawViewer.</li><li>You want one big tool that also organizes and converts: XnView MP.</li><li>You like grids: FlowVision.</li></ul>
 <p>Disclosure: Flipic is made by the people behind this site. Viewing, ratings, marks, filtering and export are free and MIT-licensed; an optional paid Pro adds batch tools that most people won't need.</p>
 <figure>{{shot('filmstrip.webp', 'Flipic thumbnail strip and arrow-key paging')}}<figcaption>Flipic: double-click a photo, then arrow through the folder.</figcaption></figure>""")
+
+guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic: which free Mac photo viewer fits you",
+      "FlowVision vs Flipic",
+      "FlowVision and Flipic are both free, open-source Mac photo viewers. FlowVision browses folders as a grid; Flipic pages one photo at a time for culling.",
+      "Two free, open-source viewers with different ideas about browsing",
+      f"""<p>FlowVision and Flipic are both free, open-source image viewers for Mac, and they start from different ideas. FlowVision is built around seeing a whole folder at once in a waterfall or grid layout, with video alongside the photos. Flipic is built around one photo at a time: double-click any image, then use the arrow keys to work through the folder and rate what you want to keep. Neither is a replacement for the other; the right one depends on how you look at photos.</p>
+<h2>FlowVision vs Flipic at a glance</h2>
+<table><thead><tr><th></th><th>FlowVision</th><th>Flipic</th></tr></thead><tbody>
+<tr><td>Price</td><td>Free</td><td>Free; optional Pro for batch tools</td></tr>
+<tr><td>License</td><td>GPL-3.0</td><td>MIT</td></tr>
+<tr><td>Minimum macOS</td><td>macOS 11.0 or later</td><td>macOS 13 or later</td></tr>
+<tr><td>Main view</td><td>Waterfall and grid layouts</td><td>One photo at a time, with a thumbnail strip</td></tr>
+<tr><td>Camera RAW</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Built for</td><td>Browsing and organizing folders</td><td>Culling a shoot with ratings and marks</td></tr>
+</tbody></table>
+<h2>Where FlowVision fits</h2>
+<p>FlowVision is the one to try if you think in folders. Its waterfall and grid layouts show many images at different sizes at once, which suits going through a shoot, a download folder or a reference library before deciding what to open. It plays video in the same window, so mixed folders of clips and stills stay in one place. The app also handles file management while you browse: move, copy and rename files, add tags and ratings, and jump between folders with right-click gestures. It is GPL-3.0, needs macOS 11.0 or later, and handles camera RAW.</p>
+<h2>Where Flipic fits</h2>
+<p>Flipic is the one to try if you cull by stepping through photos. Open a folder, double-click any photo and press <kbd>←</kbd> or <kbd>→</kbd>; the window moves through the folder one image at a time, with a thumbnail strip along the bottom. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus, <kbd>1</kbd>–<kbd>5</kbd> to rate, and <kbd>P</kbd> to mark keepers. Ratings are written as standard XMP, so Lightroom, Bridge and Capture One can read them. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac, and nothing is deleted until you choose Move to Trash. Flipic is MIT-licensed, a 4.1 MB download, needs macOS 13 or later, and runs on Apple silicon and Intel.</p>
+<h2>Which should you pick?</h2>
+<p>If you want to see a whole folder at once and keep video in the same view, FlowVision fits better. If you want to open one photo and go forward and back with the arrow keys while rating and marking, Flipic fits better. Both are free and open source, so trying both costs nothing but a download.</p>
+<h2>FlowVision facts and links</h2>
+<p>FlowVision is at <a href="https://github.com/netdcy/FlowVision">github.com/netdcy/FlowVision</a> and <a href="https://flowvision.app/">flowvision.app</a>. The details above were checked on 7 November 2026 against those two pages: the repository is GPL-3.0, the README lists macOS 11.0 or later, the source handles camera RAW and video, and the latest release is 1.7.6 from 8 September 2026.</p>""",
+      title_suffix=False)
 
 
 # ---------------------------------------------------------------- 渲染
@@ -662,14 +707,24 @@ def render_guide(lang, g):
         schema.append({"@context": "https://schema.org", "@type": "HowTo", "name": g["title"], "inLanguage": t["lang"],
                        "tool": [{"@type": "HowToTool", "name": "Flipic"}],
                        "step": [{"@type": "HowToStep", "position": i + 1, "text": s} for i, s in enumerate(g["howto"])]})
-    out = head(lang, g["path"], g["title"] + (" | Flipic Mac 看图" if lang == "zh" else " | Flipic for Mac"), g["desc"], schema, og_type="article") + header(lang, g["path"])
+    if g["faq"]:
+        schema.append(faq_schema(g["faq"]))
+    suffix = ""
+    if g["title_suffix"]:
+        suffix = " | Flipic Mac 看图" if lang == "zh" else " | Flipic for Mac"
+    page_title = g["title"] + suffix
+    out = head(lang, g["path"], page_title, g["desc"], schema, og_type="article") + header(lang, g["path"])
     related = "".join(f'<a href="{o["path"]}">{esc(o["title"])}</a>' for o in GUIDES[lang] if o is not g)
+    faq_html = ""
+    if g["faq"]:
+        faq_items = "".join(f"<details><summary>{esc(q)}</summary><p>{a}</p></details>" for q, a in g["faq"])
+        faq_html = f'<section class="faq"><h2>{t["faq"]}</h2>{faq_items}</section>\n'
     out += f"""<main id="main" class="narrow article">
 <p class="crumbs"><a href="{t['home']}">{t['crumbs_home']}</a> › <a href="{t['home']}#guides">{t['crumbs_guides']}</a></p>
 <h1>{esc(g['title'])}</h1>
 <p class="updated">{t['updated']}</p>
 <div class="prose">{g['body']}</div>
-<div class="cta"><p>{t['cta']}</p>{download_block(lang)}</div>
+{faq_html}<div class="cta"><p>{t['cta']}</p>{download_block(lang)}</div>
 <nav class="related" aria-label="{t['related']}"><h2>{t['related']}</h2>{related}</nav>
 </main>
 """
@@ -1080,11 +1135,17 @@ def main():
     # sitemap：每个地址带上中英对应版本
     items = []
     for u in urls:
-        zh = u if u in PAIRS else PAIRS_REV.get(u)
-        en = PAIRS.get(u) if u in PAIRS else u
-        alts = (f'<xhtml:link rel="alternate" hreflang="zh-CN" href="{BASE}{zh}"/>'
-                f'<xhtml:link rel="alternate" hreflang="en" href="{BASE}{en}"/>'
-                f'<xhtml:link rel="alternate" hreflang="x-default" href="{BASE}{en}"/>')
+        if u in PAIRS:
+            zh, en = u, PAIRS[u]
+        elif u in PAIRS_REV:
+            zh, en = PAIRS_REV[u], u
+        else:
+            zh = en = None
+        alts = ""
+        if zh and en:
+            alts = (f'<xhtml:link rel="alternate" hreflang="zh-CN" href="{BASE}{zh}"/>'
+                    f'<xhtml:link rel="alternate" hreflang="en" href="{BASE}{en}"/>'
+                    f'<xhtml:link rel="alternate" hreflang="x-default" href="{BASE}{en}"/>')
         pri = "1.0" if u in ("/", "/en/") else "0.7"
         items.append(f"<url><loc>{BASE}{u}</loc><lastmod>{UPDATED}</lastmod><priority>{pri}</priority>{alts}</url>")
     (OUT / "sitemap.xml").write_text('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '

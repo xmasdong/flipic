@@ -1,6 +1,7 @@
 # flipic.app 官网：Workers 静态资源 + 自定义域名（Cloudflare 自动建 DNS 记录）
 # 部署：python3 build.py && wrangler deploy
 name = "flipic-site"
+main = "worker.js"
 compatibility_date = "2026-10-01"
 routes = [
   { pattern = "flipic.app", custom_domain = true },
@@ -9,5 +10,7 @@ routes = [
 
 [assets]
 directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
 not_found_handling = "404-page"
 html_handling = "auto-trailing-slash"
