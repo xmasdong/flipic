@@ -3,6 +3,8 @@ import AppKit
 /// 底部横向缩略图胶片条
 final class FilmstripView: NSScrollView {
     let collectionView = FilmstripCollectionView()
+    /// 常驻的细滚动条：系统的浮动滚动条不动就藏起来，看不出这一张在文件夹里大概的位置
+    private let scrollBar = FilmstripScrollBar()
 
     /// 缩略图大小（点），设置里可选；格子是正方形，缩略图栏高度 = 格子 + 上下各 6
     static let thumbSizes: [CGFloat] = [48, 64, 96, 128]
@@ -40,11 +42,27 @@ final class FilmstripView: NSScrollView {
 
         drawsBackground = false
         borderType = .noBorder
-        hasHorizontalScroller = true
+        hasHorizontalScroller = false
         hasVerticalScroller = false
-        autohidesScrollers = true
-        scrollerStyle = .overlay
         documentView = collectionView
+
+        scrollBar.scrollView = self
+        addSubview(scrollBar)
+        contentView.postsBoundsChangedNotifications = true
+        collectionView.postsFrameChangedNotifications = true
+        for (name, obj) in [(NSView.boundsDidChangeNotification, contentView as NSView),
+                            (NSView.frameDidChangeNotification, collectionView as NSView)] {
+            NotificationCenter.default.addObserver(forName: name, object: obj, queue: .main) { [weak self] _ in
+                self?.scrollBar.needsDisplay = true
+            }
+        }
+    }
+
+    /// 滚动条放在缩略图下面留的那 6 点里，不压在缩略图上
+    override func tile() {
+        super.tile()
+        scrollBar.frame = NSRect(x: 10, y: isFlipped ? bounds.height - 6 : 0, width: max(bounds.width - 20, 0), height: 6)
+        scrollBar.needsDisplay = true
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -192,4 +210,78 @@ final class FilmstripItem: NSCollectionViewItem {
             view.alphaValue = isSelected ? 1 : 0.62
         }
     }
+}
+
+/// 缩略图栏底部的滚动条：一直显示，拖动滑块或点在空处都能滚；照片少、一屏放得下时不画
+final class FilmstripScrollBar: NSView {
+    weak var scrollView: NSScrollView?
+    private var dragStart: (mouse: CGFloat, offset: CGFloat)?
+    private var hovering = false
+
+    private struct Metrics {
+        let knob: NSRect
+        let maxOffset: CGFloat
+        let travel: CGFloat
+    }
+
+    private var metrics: Metrics? {
+        guard let sv = scrollView, let doc = sv.documentView, bounds.width > 0 else { return nil }
+        let visible = sv.contentView.bounds.width
+        let total = doc.frame.width
+        guard total > visible + 1 else { return nil }
+        let w = max(bounds.width * visible / total, 28)
+        let maxOffset = total - visible
+        let travel = bounds.width - w
+        let x = travel * min(max(sv.contentView.bounds.minX / maxOffset, 0), 1)
+        return Metrics(knob: NSRect(x: x, y: (bounds.height - 4) / 2, width: w, height: 4),
+                       maxOffset: maxOffset, travel: travel)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard let m = metrics else { return }
+        let active = hovering || dragStart != nil
+        NSColor.labelColor.withAlphaComponent(active ? 0.6 : 0.4).setFill()
+        NSBezierPath(roundedRect: m.knob, xRadius: 2, yRadius: 2).fill()
+    }
+
+    private func scroll(to offset: CGFloat) {
+        guard let sv = scrollView, let m = metrics else { return }
+        let x = min(max(offset, 0), m.maxOffset)
+        sv.contentView.scroll(to: NSPoint(x: x, y: sv.contentView.bounds.minY))
+        sv.reflectScrolledClipView(sv.contentView)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        guard let sv = scrollView, var m = metrics else { return }
+        let p = convert(event.locationInWindow, from: nil)
+        // 点在空处：滑块中心移到点的位置，接着可以拖
+        if !m.knob.insetBy(dx: 0, dy: -3).contains(p), m.travel > 0 {
+            scroll(to: (p.x - m.knob.width / 2) / m.travel * m.maxOffset)
+            guard let n = metrics else { return }
+            m = n
+        }
+        dragStart = (p.x, sv.contentView.bounds.minX)
+        needsDisplay = true
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let start = dragStart, let m = metrics, m.travel > 0 else { return }
+        let p = convert(event.locationInWindow, from: nil)
+        scroll(to: start.offset + (p.x - start.mouse) / m.travel * m.maxOffset)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        dragStart = nil
+        needsDisplay = true
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect],
+                                       owner: self, userInfo: nil))
+    }
+
+    override func mouseEntered(with event: NSEvent) { hovering = true; needsDisplay = true }
+    override func mouseExited(with event: NSEvent) { hovering = false; needsDisplay = true }
 }

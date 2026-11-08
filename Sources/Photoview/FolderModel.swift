@@ -61,6 +61,8 @@ final class FolderModel {
     private(set) var filter: PhotoFilter?
     /// 不单独显示的文件（JPG 和 RAW 合并显示时藏起来的那一张），仍在整个文件夹的列表里
     private(set) var hidden: Set<URL> = []
+    /// 打开的文件夹；照片全被删光了也还记着，别处再放进来能接着显示
+    private(set) var folderURL: URL?
 
     /// 排序方式与方向，跨启动记住；sortReversed 是在该方式自然方向上反过来
     var sortKey: SortKey {
@@ -93,6 +95,19 @@ final class FolderModel {
             for i in all.indices where all[i].url == url { change(&all[i]) }
             unfiltered = all
         }
+    }
+
+    /// 被别的软件改过的照片（修改时间或大小和记下的不一样）：更新记录，返回这些文件。
+    /// Flipic 自己写星级、旋转造成的变化只更新记录，不算在内
+    func takeModifiedOutside() -> [URL] {
+        var changed: [URL] = []
+        for item in allItems {
+            guard let s = FolderWatcher.stamp(of: item.url),
+                  s.modified != item.modified || s.size != item.fileSize else { continue }
+            update(item.url) { $0.modified = s.modified; $0.fileSize = s.size }
+            if !FolderWatcher.isOwnWrite(item.url, s) { changed.append(item.url) }
+        }
+        return changed
     }
 
     func setMarked(_ on: Bool, url: URL) { update(url) { $0.marked = on } }
@@ -191,6 +206,7 @@ final class FolderModel {
         let std = url.standardizedFileURL
         let folderURL = isDir.boolValue ? std : std.deletingLastPathComponent()
         let target: URL? = isDir.boolValue ? nil : std
+        self.folderURL = folderURL
 
         // 列目录时一并取回时间与大小，排序不再逐个 stat
         var urls = ((try? FileManager.default.contentsOfDirectory(
@@ -199,12 +215,7 @@ final class FolderModel {
             .map { folderURL.appendingPathComponent($0.lastPathComponent) }
         if let target, !urls.contains(target) { urls.append(target) }
 
-        items = urls.map { u in
-            let v = try? u.resourceValues(forKeys: Set(Self.resourceKeys))
-            return ImageItem(url: u, pixelSize: nil, modified: v?.contentModificationDate,
-                             created: v?.creationDate, fileSize: v?.fileSize ?? 0,
-                             marked: Marks.isMarked(tagNames: v?.tagNames))
-        }
+        items = urls.map(Self.makeItem)
         unfiltered = nil
         filter = nil
         hidden = []
@@ -214,7 +225,36 @@ final class FolderModel {
     }
 
     /// 回到开始页：清空列表
+    private static func makeItem(_ u: URL) -> ImageItem {
+        let v = try? u.resourceValues(forKeys: Set(resourceKeys))
+        return ImageItem(url: u, pixelSize: nil, modified: v?.contentModificationDate,
+                         created: v?.creationDate, fileSize: v?.fileSize ?? 0,
+                         marked: Marks.isMarked(tagNames: v?.tagNames))
+    }
+
+    /// 和磁盘对一遍：别处新放进来的照片按当前排序插进列表，当前这张不动。
+    /// 不见了的文件（删掉、改名、移走）返回在 missing 里；removing 为 true 时才从列表拿掉。
+    /// 有的软件存盘是先删再写，看到不见了先别急着拿，过一会儿再对一次
+    func syncWithDisk(removing: Bool) -> (added: [URL], missing: Set<URL>) {
+        guard let folderURL else { return ([], []) }
+        let onDisk = Set(((try? FileManager.default.contentsOfDirectory(
+            at: folderURL, includingPropertiesForKeys: Self.resourceKeys, options: [.skipsHiddenFiles])) ?? [])
+            .filter { ImageLoader.isSupportedExtension($0.lastPathComponent) }
+            .map { folderURL.appendingPathComponent($0.lastPathComponent) })
+        let known = Set(allItems.map(\.url))
+        let missing = known.subtracting(onDisk)
+        let added = onDisk.subtracting(known).sorted { $0.path < $1.path }
+        if removing, !missing.isEmpty { remove(urls: missing) }
+        if !added.isEmpty {
+            let cur = current?.url
+            rebuild(allItems + added.map(Self.makeItem), keeping: cur)
+            resort(keeping: cur ?? current?.url)
+        }
+        return (added, missing)
+    }
+
     func clear() {
+        folderURL = nil
         items = []
         unfiltered = nil
         filter = nil

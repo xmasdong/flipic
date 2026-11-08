@@ -32,6 +32,7 @@ enum Rating {
         let r = clamp(rating)
         let ext = url.pathExtension.lowercased()
         if embeddable.contains(ext), writeEmbedded(r, to: url) {
+            FolderWatcher.noteOwnWrite(url)
             // 之前写过旁车文件的，清掉免得两处不一致
             let side = sidecarURL(for: url)
             if FileManager.default.fileExists(atPath: side.path), readSidecar(side) != nil, !hasOtherSidecarOwner(side, except: url) {

@@ -494,6 +494,7 @@ final class ImageLoader {
             try? fm.removeItem(at: tmp)
             return .failed
         }
+        FolderWatcher.noteOwnWrite(url)
         ImageLoader.shared.evict(url: url)
         return lossless ? .lossless : .reencoded
     }

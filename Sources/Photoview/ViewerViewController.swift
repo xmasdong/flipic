@@ -105,6 +105,10 @@ final class ViewerViewController: NSViewController {
     private var lastNavDirection = 1
     private var fullRequested = false
     private var folderGeneration = 0
+    /// 别的软件（Photoshop 等）存了文件夹里的照片，自动换成新的
+    private lazy var folderWatcher = FolderWatcher { [weak self] in self?.folderDidChange() }
+    /// 看到有文件不见了，过一会儿再对一次才从列表拿掉
+    private var pendingRemovalCheck: DispatchWorkItem?
     /// 打开的是文件夹且用户还没翻页：拍摄时间读完重排后回到新的第一张
     private var showFirstAfterResort = false
     /// 按住空格预览：进入前的窗口与界面状态，退出时原样恢复；非 nil 即正在预览
@@ -280,6 +284,9 @@ final class ViewerViewController: NSViewController {
                                                name: SettingsWindowController.didChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshShortcutTips),
                                                name: Shortcuts.didChange, object: nil)
+        // 从 Photoshop 切回来时再对一遍，监听漏掉的（网络盘、外接盘）也能换上
+        NotificationCenter.default.addObserver(self, selector: #selector(appDidBecomeActive(_:)),
+                                               name: NSApplication.didBecomeActiveNotification, object: nil)
 
         filmstrip.translatesAutoresizingMaskIntoConstraints = false
         filmstrip.collectionView.dataSource = self
@@ -910,6 +917,7 @@ final class ViewerViewController: NSViewController {
         }
         filmstrip.collectionView.reloadData()
         filmstrip.scrollTo(index: folder.index)
+        folderWatcher.watch(folder.folderURL)
         if ok {
             view.window?.makeFirstResponder(imageView)
             showImage(resetToFit: true)
@@ -1153,6 +1161,83 @@ final class ViewerViewController: NSViewController {
         BenchProbe.log(String(format: "settle in %.0fms lead=%.0fms/%.0fms", wait * 1000, draftCost * 1000, stepIntervalAvg * 1000))
         timer.schedule(deadline: .now() + wait, leeway: .milliseconds(2))
         timer.resume()
+    }
+
+    @objc private func appDidBecomeActive(_ note: Notification) { folderDidChange() }
+
+    /// 文件夹有变化：先换掉被改过的照片，再对一遍新增和不见了的
+    private func folderDidChange(removing: Bool = false) {
+        guard folder.folderURL != nil else { return }
+        reloadChangedFiles()
+        syncFolderWithDisk(removing: removing)
+    }
+
+    /// 别处新放进来的照片加进列表和缩略图栏，删掉、改名走的拿掉；当前这张还在就停在它上面。
+    /// 并排对比、清理模式里先不动，回到看图时（切回来、下次有变化）再对
+    private func syncFolderWithDisk(removing: Bool) {
+        guard mainViewerActive, cleanup == nil else { return }
+        let before = folder.current?.url
+        let wasEmpty = folder.count == 0
+        let r = folder.syncWithDisk(removing: removing)
+        if !removing, !r.missing.isEmpty {
+            pendingRemovalCheck?.cancel()
+            let work = DispatchWorkItem { [weak self] in self?.folderDidChange(removing: true) }
+            pendingRemovalCheck = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: work)
+        }
+        let removed = removing ? r.missing : []
+        guard !r.added.isEmpty || !removed.isEmpty else { return }
+        for u in removed { loader.evict(url: u); prefetchedURLs.remove(u) }
+        #if FLIPIC_PRO
+        if !r.added.isEmpty { applyMergePairs(keep: folder.current?.url) }
+        #endif
+        filmstrip.collectionView.reloadData()
+        if folder.count == 0 {
+            imageView.set(image: nil, resetToFit: true, isNew: true)
+            emptyState.isHidden = false
+            emptyHint.stringValue = L10n.t("ui.noMore", "文件夹里没有更多图片了")
+            updateControlsPresence()
+            updateHUD()
+        } else if wasEmpty || folder.current?.url != before {
+            emptyState.isHidden = true
+            updateControlsPresence()
+            showImage(resetToFit: true)
+            filmstrip.scrollTo(index: folder.index)
+        } else {
+            syncFilmstripSelection()
+            updateHUD()
+        }
+    }
+
+    /// 文件夹里有照片被别的软件改过：清掉旧缓存、刷新缩略图；正在看的这张原地换成新的，缩放和位置不动
+    private func reloadChangedFiles() {
+        guard folder.count > 0 else { return }
+        let changed = folder.takeModifiedOutside()
+        guard !changed.isEmpty else { return }
+        for u in changed { loader.evict(url: u) }
+        prefetchedURLs.subtract(changed)
+        let rows = changed.compactMap { u in folder.items.firstIndex { $0.url == u } }
+        filmstrip.collectionView.reloadItems(at: Set(rows.map { IndexPath(item: $0, section: 0) }))
+        guard let url = folder.current?.url, changed.contains(url) else { return }
+        guard mainViewerActive else { showImage(resetToFit: false); return }
+        // 直接解全分辨率：放大着看的时候不用再等一轮
+        generation += 1
+        let gen = generation
+        fullRequested = true
+        let loader = self.loader
+        decodeQueue.addOperation { [weak self] in
+            guard self?.generation == gen, let info = loader.info(for: url) else { return }
+            let full = info.isAnimated ? nil : loader.fullImage(for: url)
+            DispatchQueue.main.async {
+                guard let self, self.generation == gen else { return }
+                // 动图走原来的播放流程
+                guard let full else { self.showImage(resetToFit: false); return }
+                self.shown = .sharp
+                self.adopt(full, logicalSize: info.pixelSize, resetToFit: false, isNew: false)
+                self.updateExifPanel()
+                self.loadRating(for: url)
+            }
+        }
     }
 
     /// 由视图在放大超过预览分辨率时触发：后台解码全分辨率并原位替换
@@ -3370,6 +3455,8 @@ final class ViewerViewController: NSViewController {
         thumbQueue.cancelAllOperations()
         endRapidPaging()
         folder.clear()
+        folderWatcher.stop()
+        pendingRemovalCheck?.cancel()
         prefetchedURLs.removeAll()
         imageView.set(image: nil, resetToFit: true, isNew: true)
         exifPanel.isHidden = true
