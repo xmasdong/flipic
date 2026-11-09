@@ -602,16 +602,30 @@ final class ZoomableImageView: NSView {
     private enum SwipeAxis { case undecided, horizontal, vertical }
     private var swipeAxis = SwipeAxis.vertical
     private var swipeStart = CGSize.zero
+    /// 方向还没定时内容往哪边走（scrollingDeltaX 累计，和平移同号）
+    private var swipeStartDX: CGFloat = 0
     private var swipeAccum: CGFloat = 0
     private var swipeFlipped = false
 
-    /// 照片在适应窗口时，触控板双指左右滑一次翻一张：往左滑下一张、往右滑上一张（跟着手指走）。
-    /// 放大后横向滑动照常平移；鼠标滚轮没有横向，不受影响。处理了就返回 true
+    /// 放大着的照片还能不能往这边拖：contentDX 是内容要移动的方向（和平移同号）。
+    /// 只剩不到 24 点也算拖到头了：稍微放大一点时左右只多出一小条，不用先拖一下才能翻
+    private func canPanHorizontally(_ contentDX: CGFloat) -> Bool {
+        let w = contentSize.width * scale
+        guard w > bounds.width + 0.5 else { return false }
+        let room = contentDX < 0 ? origin.x - (bounds.width - w) : -origin.x
+        return room >= 24
+    }
+
+    /// 触控板双指左右滑一次翻一张：往左滑下一张、往右滑上一张（跟着手指走）。
+    /// 滚动设成缩放（默认）时，横向滑动放大后也没别的用处，照样翻页；
+    /// 滚动设成翻页时放大后横向滑动是平移，已经拖到这一边的边上（或左右没超出窗口）再滑一次才翻页，
+    /// 只看手势开头，拖着拖着到边不会顺势翻走。鼠标滚轮没有横向，不受影响。处理了就返回 true
     private func handleHorizontalSwipe(_ event: NSEvent) -> Bool {
         guard event.hasPreciseScrollingDeltas else { return false }
         if event.phase == .began {
-            swipeAxis = mode == .fit ? .undecided : .vertical
+            swipeAxis = .undecided
             swipeStart = .zero
+            swipeStartDX = 0
             swipeAccum = 0
             swipeFlipped = false
         }
@@ -623,9 +637,13 @@ final class ZoomableImageView: NSView {
         case .undecided:
             swipeStart.width += abs(event.scrollingDeltaX)
             swipeStart.height += abs(event.scrollingDeltaY)
-            // 还没看出方向：「开始」事件照常往下传（上下翻页靠它重置计数），之后的先不动
-            guard max(swipeStart.width, swipeStart.height) >= 6 else { return event.phase != .began }
+            swipeStartDX += event.scrollingDeltaX
+            // 还没看出方向：「开始」事件照常往下传（上下翻页靠它重置计数），之后的先不动；
+            // 放大后滚动是平移的，照常平移，到了边上平移本来就不动
+            let pans = mode != .fit && Self.wheelNavigates
+            guard max(swipeStart.width, swipeStart.height) >= 6 else { return pans ? false : event.phase != .began }
             swipeAxis = swipeStart.width > swipeStart.height * 1.5 ? .horizontal : .vertical
+            if swipeAxis == .horizontal, pans, canPanHorizontally(swipeStartDX) { swipeAxis = .vertical }
             if swipeAxis == .vertical { return false }
             fallthrough
         case .horizontal:
