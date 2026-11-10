@@ -1,5 +1,6 @@
 import Foundation
 import ImageIO
+import UniformTypeIdentifiers
 
 struct ExifEntry {
     let label: String
@@ -46,6 +47,7 @@ enum ExifReader {
     }
 
     static func read(url: URL) -> [ExifEntry] {
+        if Video.isVideo(url) { return VideoInfo.read(url: url) }
         guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
               let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] else {
             return []
@@ -70,18 +72,46 @@ enum ExifReader {
         if let list = exif?["ISOSpeedRatings"] as? [Any], let iso = list.compactMap({ $0 as? Int }).first {
             shot.append("ISO \(iso)")
         }
-        if let fl = exif?["FocalLength"] as? Double, fl > 0 { shot.append(String(format: "%.0f mm", fl)) }
+        if let fl = exif?["FocalLength"] as? Double, fl > 0 {
+            var t = String(format: "%.0f mm", fl)
+            // 等效焦距：手机和 APS-C 机身的实际焦距不好对照，括号里给 35mm 等效
+            if let eq = exif?["FocalLenIn35mmFilm"] as? Int, eq > 0, abs(Double(eq) - fl) >= 1 {
+                t += " " + L10n.f("exif.equiv", "（等效 %d mm）", eq)
+            }
+            shot.append(t)
+        }
         if !shot.isEmpty {
             entries.append(ExifEntry(label: L10n.t("exif.params", "拍摄参数"), value: shot.joined(separator: " · ")))
         }
         if let bias = exif?["ExposureBiasValue"] as? Double, bias != 0 {
             entries.append(ExifEntry(label: L10n.t("exif.bias", "曝光补偿"), value: String(format: "%+.1f EV", bias)))
         }
+        if let mode = programText(exif?["ExposureProgram"] as? Int) {
+            entries.append(ExifEntry(label: L10n.t("exif.program", "曝光模式"), value: mode))
+        }
+        if let m = meteringText(exif?["MeteringMode"] as? Int) {
+            entries.append(ExifEntry(label: L10n.t("exif.metering", "测光"), value: m))
+        }
+        if let flash = exif?["Flash"] as? Int {
+            entries.append(ExifEntry(label: L10n.t("exif.flash", "闪光灯"),
+                                     value: flash & 1 == 1 ? L10n.t("exif.flashOn", "闪光") : L10n.t("exif.flashOff", "未闪光")))
+        }
+        if let wb = exif?["WhiteBalance"] as? Int {
+            entries.append(ExifEntry(label: L10n.t("exif.wb", "白平衡"),
+                                     value: wb == 1 ? L10n.t("exif.wbManual", "手动") : L10n.t("exif.wbAuto", "自动")))
+        }
         if let date = exif?["DateTimeOriginal"] as? String, !date.isEmpty {
-            entries.append(ExifEntry(label: L10n.t("exif.date", "拍摄时间"), value: formatExifDate(date)))
+            var t = formatExifDate(date)
+            if let tz = exif?["OffsetTimeOriginal"] as? String, !tz.isEmpty { t += " (UTC" + tz + ")" }
+            entries.append(ExifEntry(label: L10n.t("exif.date", "拍摄时间"), value: t))
         }
         if let w = props["PixelWidth"] as? Int, let h = props["PixelHeight"] as? Int {
-            entries.append(ExifEntry(label: L10n.t("exif.size", "尺寸"), value: "\(w) × \(h)"))
+            let mp = Double(w * h) / 1_000_000
+            entries.append(ExifEntry(label: L10n.t("exif.size", "尺寸"),
+                                     value: "\(w) × \(h) · " + L10n.f("exif.megapixels", "%@ 百万像素", String(format: mp >= 10 ? "%.0f" : "%.1f", mp))))
+        }
+        if let type = CGImageSourceGetType(src) as String?, let desc = UTType(type)?.localizedDescription {
+            entries.append(ExifEntry(label: L10n.t("exif.format", "格式"), value: desc))
         }
         if let depth = depthText(src: src, props: props) {
             entries.append(ExifEntry(label: L10n.t("exif.depth", "色深"), value: depth))
@@ -91,6 +121,16 @@ enum ExifReader {
         }
         if let place = location(props) {
             entries.append(place)
+        }
+        if let sw = tiff?["Software"] as? String, !sw.isEmpty {
+            entries.append(ExifEntry(label: L10n.t("exif.software", "软件"), value: sw))
+        }
+        let iptc = props[kCGImagePropertyIPTCDictionary as String] as? [String: Any]
+        if let artist = (tiff?["Artist"] as? String) ?? (iptc?["Byline"] as? [String])?.first, !artist.isEmpty {
+            entries.append(ExifEntry(label: L10n.t("exif.artist", "作者"), value: artist))
+        }
+        if let c = (tiff?["Copyright"] as? String) ?? (iptc?["CopyrightNotice"] as? String), !c.isEmpty {
+            entries.append(ExifEntry(label: L10n.t("exif.copyright", "版权"), value: c))
         }
         if let attr = try? FileManager.default.attributesOfItem(atPath: url.path),
            let bytes = attr[.size] as? Int {
@@ -129,6 +169,28 @@ enum ExifReader {
         }
         let link = URL(string: String(format: "https://maps.apple.com/?ll=%.6f,%.6f&q=%.6f,%.6f", lat, lon, lat, lon))
         return ExifEntry(label: L10n.t("exif.location", "拍摄地点"), value: text, link: link)
+    }
+
+    private static func programText(_ v: Int?) -> String? {
+        switch v {
+        case 1: return L10n.t("exif.pManual", "手动 (M)")
+        case 2: return L10n.t("exif.pProgram", "程序自动 (P)")
+        case 3: return L10n.t("exif.pAperture", "光圈优先 (A)")
+        case 4: return L10n.t("exif.pShutter", "快门优先 (S)")
+        default: return nil
+        }
+    }
+
+    private static func meteringText(_ v: Int?) -> String? {
+        switch v {
+        case 1: return L10n.t("exif.mAverage", "平均")
+        case 2: return L10n.t("exif.mCenter", "中央重点")
+        case 3: return L10n.t("exif.mSpot", "点测光")
+        case 4: return L10n.t("exif.mMultiSpot", "多点")
+        case 5: return L10n.t("exif.mPattern", "评价测光")
+        case 6: return L10n.t("exif.mPartial", "局部")
+        default: return nil
+        }
     }
 
     private static func shutterText(_ t: Double) -> String {

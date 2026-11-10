@@ -1226,12 +1226,12 @@ final class ViewerViewController: NSViewController {
 
     /// 翻到视频或离开视频：照片工具栏和视频控制条换位置，可见状态跟着当前的控件显隐走
     private func videoActiveChanged() {
-        // 视频画面占满：缩略图栏先收起，回到照片时放回来
-        if video.isActive, !filmstrip.isHidden {
+        // 播放时画面占满：缩略图栏收起；暂停、播完或回到照片时放回来
+        if video.isActive, video.isPlaying, !filmstrip.isHidden {
             filmstripHiddenForVideo = true
             filmstrip.isHidden = true
             filmstripHeight.constant = 0
-        } else if !video.isActive, filmstripHiddenForVideo {
+        } else if !(video.isActive && video.isPlaying), filmstripHiddenForVideo {
             filmstripHiddenForVideo = false
             filmstrip.isHidden = false
             filmstripHeight.constant = FilmstripView.stripHeight
@@ -1248,17 +1248,17 @@ final class ViewerViewController: NSViewController {
     private func handleVideoKey(_ event: NSEvent) -> Bool {
         guard currentIsVideo, mainViewerActive else { return false }
         let mods = event.modifierFlags.intersection([.command, .option, .control, .shift])
-        switch event.keyCode {
-        case 36, 76 where mods.isEmpty:
+        // where 只约束 case 里最后一个模式，按键和修饰键分开判断
+        let code = event.keyCode
+        if (code == 36 || code == 76), mods.isEmpty {
             video.toggle()
             pokeControls()
             return true
-        case 123, 124 where mods == .shift:
-            video.seek(by: event.keyCode == 123 ? -5 : 5)
+        }
+        if (code == 123 || code == 124), mods == .shift {
+            video.seek(by: code == 123 ? -5 : 5)
             pokeControls()
             return true
-        default:
-            break
         }
         switch Shortcuts.action(for: event) {
         case .rotateCW, .rotateCCW, .zoomEye, .copyText, .saveRotation: return true
@@ -1647,7 +1647,7 @@ final class ViewerViewController: NSViewController {
     private func renderExifPanel(_ entries: [ExifEntry]) {
         for v in exifStack.arrangedSubviews { v.removeFromSuperview() }
 
-        let title = NSTextField(labelWithString: L10n.t("ui.exifTitle", "照片信息"))
+        let title = NSTextField(labelWithString: currentIsVideo ? L10n.t("ui.videoInfoTitle", "视频信息") : L10n.t("ui.exifTitle", "照片信息"))
         title.font = .boldSystemFont(ofSize: 13)
         title.textColor = .secondaryLabelColor
         exifStack.addArrangedSubview(title)

@@ -297,6 +297,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--info-dump") {
+            // 测试用：把信息面板里的字段打出来
+            for path in CommandLine.arguments[(i + 1)...] where !path.hasPrefix("-") {
+                for e in ExifReader.read(url: URL(fileURLWithPath: path)) { NSLog("INFODUMP %@ | %@ | %@", (path as NSString).lastPathComponent, e.label, e.value) }
+            }
+            NSApp.terminate(nil)
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--feedback-test"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in

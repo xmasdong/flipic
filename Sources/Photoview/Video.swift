@@ -165,7 +165,7 @@ final class VideoPlayback {
     /// 这台 Mac 播放不了：提示一次，回车也只是再提示
     private(set) var unplayable = false
     var onMessage: ((String) -> Void)?
-    /// 挂上或拆掉播放器：看图界面据此换掉照片工具栏
+    /// 挂上或拆掉播放器、开始或停止播放：看图界面据此换工具栏、收放缩略图栏
     var onActiveChange: (() -> Void)?
 
     static var muted: Bool {
@@ -220,6 +220,7 @@ final class VideoPlayback {
         endObserver = NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: p.currentItem, queue: .main) { [weak self] _ in
             self?.atEnd = true
             self?.refresh()
+            self?.onActiveChange?()
         }
         onActiveChange?()
         refresh()
@@ -253,9 +254,10 @@ final class VideoPlayback {
             p.play()
         }
         refresh()
+        onActiveChange?()
     }
 
-    func pause() { player?.pause(); refresh() }
+    func pause() { player?.pause(); refresh(); onActiveChange?() }
 
     func seek(by seconds: Double) {
         guard let p = player else { return }
@@ -288,4 +290,133 @@ final class VideoPlayback {
 
     /// 测试用：当前播放位置（秒）
     var debugTime: Double { player?.currentTime().seconds ?? -1 }
+}
+
+/// 信息面板（I）里的视频信息：从文件头读，不解码画面。别在主线程调
+enum VideoInfo {
+    static func read(url: URL) -> [ExifEntry] {
+        let asset = AVURLAsset(url: url)
+        var out: [ExifEntry] = []
+        func add(_ key: String, _ zh: String, _ v: String?) {
+            if let v, !v.isEmpty { out.append(ExifEntry(label: L10n.t(key, zh), value: v)) }
+        }
+        let meta = asset.commonMetadata + asset.metadata
+        func string(_ ids: [String]) -> String? {
+            for id in ids {
+                if let item = meta.first(where: { $0.identifier?.rawValue == id || ($0.key as? String) == id }),
+                   let s = item.stringValue?.trimmingCharacters(in: .whitespaces), !s.isEmpty { return s }
+            }
+            return nil
+        }
+
+        // 设备：手机和不少相机写 QuickTime 的 make / model
+        let make = string(["mdta/com.apple.quicktime.make", "com.apple.quicktime.make"])
+        let model = string(["mdta/com.apple.quicktime.model", "com.apple.quicktime.model"])
+        if let model {
+            add("exif.camera", "相机", (make.map { model.hasPrefix($0) } ?? false) ? model : [make, model].compactMap { $0 }.joined(separator: " "))
+        }
+        if let date = asset.creationDate?.dateValue {
+            let f = DateFormatter()
+            f.dateFormat = "yyyy-MM-dd HH:mm"
+            add("exif.date", "拍摄时间", f.string(from: date))
+        }
+        let d = asset.duration.seconds
+        if d.isFinite, d > 0 { add("video.duration", "时长", Video.timeText(d)) }
+
+        if let v = asset.tracks(withMediaType: .video).first {
+            let r = CGRect(origin: .zero, size: v.naturalSize).applying(v.preferredTransform)
+            let w = Int(abs(r.width).rounded()), h = Int(abs(r.height).rounded())
+            var res = "\(w) × \(h)"
+            if let label = resolutionLabel(w, h) { res += " · " + label }
+            add("exif.size", "尺寸", res)
+            if v.nominalFrameRate > 0 { add("video.fps", "帧率", fpsText(Double(v.nominalFrameRate))) }
+            if let fd = (v.formatDescriptions as? [CMFormatDescription])?.first {
+                var parts = [codecName(CMFormatDescriptionGetMediaSubType(fd))]
+                let ext = CMFormatDescriptionGetExtensions(fd) as? [String: Any] ?? [:]
+                if let bits = ext[kCMFormatDescriptionExtension_BitsPerComponent as String] as? Int, bits > 8 { parts.append(L10n.f("exif.bits", "%d 位", bits)) }
+                let transfer = ext[kCMFormatDescriptionExtension_TransferFunction as String] as? String
+                if transfer == (kCMFormatDescriptionTransferFunction_SMPTE_ST_2084_PQ as String) { parts.append("HDR (PQ)") }
+                else if transfer == (kCMFormatDescriptionTransferFunction_ITU_R_2100_HLG as String) { parts.append("HDR (HLG)") }
+                add("video.codec", "视频编码", parts.joined(separator: " · "))
+            }
+            if v.estimatedDataRate > 0 { add("video.bitrate", "码率", String(format: "%.1f Mbps", Double(v.estimatedDataRate) / 1_000_000)) }
+        }
+        if let a = asset.tracks(withMediaType: .audio).first,
+           let fd = (a.formatDescriptions as? [CMFormatDescription])?.first,
+           let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(fd)?.pointee {
+            var parts = [codecName(CMFormatDescriptionGetMediaSubType(fd))]
+            if asbd.mSampleRate > 0 { parts.append(String(format: "%.1f kHz", asbd.mSampleRate / 1000)) }
+            if asbd.mChannelsPerFrame == 1 { parts.append(L10n.t("video.mono", "单声道")) }
+            else if asbd.mChannelsPerFrame == 2 { parts.append(L10n.t("video.stereo", "立体声")) }
+            else if asbd.mChannelsPerFrame > 2 { parts.append(L10n.f("video.channels", "%d 声道", Int(asbd.mChannelsPerFrame))) }
+            add("video.audio", "音频", parts.joined(separator: " · "))
+        } else {
+            add("video.audio", "音频", L10n.t("video.noAudio", "无"))
+        }
+        if let iso = string(["mdta/com.apple.quicktime.location.ISO6709", "com.apple.quicktime.location.ISO6709"]),
+           let entry = location(iso) { out.append(entry) }
+        if let sw = string(["mdta/com.apple.quicktime.software", "com.apple.quicktime.software"]) { add("exif.software", "软件", sw) }
+        if let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.size] as? Int {
+            out.append(ExifEntry(label: L10n.t("exif.file", "文件"),
+                                 value: url.lastPathComponent + " · " + ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)))
+        }
+        return out
+    }
+
+    private static func resolutionLabel(_ w: Int, _ h: Int) -> String? {
+        let short = min(w, h), long = max(w, h)
+        if long >= 7600 { return "8K" }
+        if long >= 3800 || short >= 2100 { return "4K" }
+        if short >= 1440 { return "1440p" }
+        if short >= 1080 { return "1080p" }
+        if short >= 720 { return "720p" }
+        return nil
+    }
+
+    private static func fpsText(_ f: Double) -> String {
+        // 29.97、59.94 这类按两位小数，整数帧率不带小数
+        abs(f - f.rounded()) < 0.01 ? String(format: "%.0f fps", f) : String(format: "%.2f fps", f)
+    }
+
+    private static func codecName(_ t: FourCharCode) -> String {
+        let s = String(bytes: [24, 16, 8, 0].map { UInt8((t >> $0) & 0xFF) }, encoding: .ascii) ?? "?"
+        switch s {
+        case "avc1", "avc3": return "H.264"
+        case "hvc1", "hev1": return "HEVC (H.265)"
+        case "apch": return "ProRes 422 HQ"
+        case "apcn": return "ProRes 422"
+        case "apcs": return "ProRes 422 LT"
+        case "apco": return "ProRes 422 Proxy"
+        case "ap4h": return "ProRes 4444"
+        case "ap4x": return "ProRes 4444 XQ"
+        case "mp4v": return "MPEG-4"
+        case "jpeg": return "Motion JPEG"
+        case "aac ": return "AAC"
+        case "lpcm", "sowt", "twos", "in24", "in32": return "PCM"
+        case "alac": return "ALAC"
+        case "ac-3": return "AC-3"
+        case ".mp3": return "MP3"
+        default: return s.trimmingCharacters(in: .whitespaces).uppercased()
+        }
+    }
+
+    /// ISO 6709：+24.4797+118.0819+012.000/
+    private static func location(_ iso: String) -> ExifEntry? {
+        // 按正负号切开：每段是一个数
+        var nums: [Double] = []
+        var cur = ""
+        for ch in iso {
+            if ch == "+" || ch == "-" || ch == "/" {
+                if let v = Double(cur) { nums.append(v) }
+                cur = ch == "/" ? "" : String(ch)
+            } else { cur.append(ch) }
+        }
+        if let v = Double(cur) { nums.append(v) }
+        guard nums.count >= 2, abs(nums[0]) <= 90, abs(nums[1]) <= 180, !(nums[0] == 0 && nums[1] == 0) else { return nil }
+        let lat = nums[0], lon = nums[1]
+        var text = String(format: "%.5f° %@, %.5f° %@", abs(lat), lat >= 0 ? "N" : "S", abs(lon), lon >= 0 ? "E" : "W")
+        if nums.count >= 3 { text += String(format: " · %.0f m", nums[2]) }
+        let link = URL(string: String(format: "https://maps.apple.com/?ll=%.6f,%.6f&q=%.6f,%.6f", lat, lon, lat, lon))
+        return ExifEntry(label: L10n.t("exif.location", "拍摄地点"), value: text, link: link)
+    }
 }
