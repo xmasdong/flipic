@@ -773,3 +773,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.videos" = "Videos:";
 "set.videosCheck" = "Videos im Ordner anzeigen";
 "set.videosNote" = "MP4-, MOV- und M4V-Dateien erscheinen zusammen mit deinen Fotos; Return startet die Wiedergabe. Unterstützt werden nur Formate, die macOS abspielen kann; es werden keine zusätzlichen Decoder geladen.";
+"msg.compareFirstFour" = "%d Fotos ausgewählt; die ersten 4 werden verglichen";
+"menu.openRecent" = "Benutzte Dokumente";
+"menu.clearRecent" = "Einträge löschen";
+"ui.recent" = "Zuletzt geöffnet";

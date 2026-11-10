@@ -773,3 +773,7 @@ Return  إعادة تسمية الصورة الحالية
 "set.videos" = "الفيديو:";
 "set.videosCheck" = "إظهار مقاطع الفيديو في المجلد";
 "set.videosNote" = "تظهر ملفات MP4 وMOV وM4V مع الصور؛ اضغط Return للتشغيل. تُدعم فقط الصيغ التي يستطيع macOS تشغيلها، دون تنزيل برامج فك ترميز إضافية.";
+"msg.compareFirstFour" = "تم تحديد %d صور؛ تتم مقارنة أول 4";
+"menu.openRecent" = "فتح الأحدث";
+"menu.clearRecent" = "مسح القائمة";
+"ui.recent" = "الأحدث";

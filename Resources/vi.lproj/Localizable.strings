@@ -773,3 +773,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.videos" = "Video:";
 "set.videosCheck" = "Hiển thị video trong thư mục";
 "set.videosNote" = "Tệp MP4, MOV và M4V được liệt kê cùng ảnh; nhấn Return để phát. Chỉ hỗ trợ các định dạng macOS phát được, không tải thêm bộ giải mã.";
+"msg.compareFirstFour" = "Đã chọn %d ảnh; so sánh 4 ảnh đầu";
+"menu.openRecent" = "Mở mục gần đây";
+"menu.clearRecent" = "Xóa menu";
+"ui.recent" = "Gần đây";

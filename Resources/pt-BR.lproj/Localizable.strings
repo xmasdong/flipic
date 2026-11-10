@@ -773,3 +773,7 @@ Arraste uma pasta ou imagem para abrir";
 "set.videos" = "Vídeos:";
 "set.videosCheck" = "Mostrar vídeos da pasta";
 "set.videosNote" = "Arquivos MP4, MOV e M4V aparecem junto com as fotos; pressione Return para reproduzir. Só são suportados os formatos que o macOS reproduz, sem baixar decodificadores extras.";
+"msg.compareFirstFour" = "%d fotos selecionadas; comparando as 4 primeiras";
+"menu.openRecent" = "Abrir Recente";
+"menu.clearRecent" = "Limpar Menu";
+"ui.recent" = "Recentes";

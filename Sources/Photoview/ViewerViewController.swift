@@ -299,6 +299,12 @@ final class ViewerViewController: NSViewController {
         filmstrip.collectionView.delegate = self
         filmstrip.collectionView.register(FilmstripItem.self, forItemWithIdentifier: Self.filmstripID)
         filmstrip.collectionView.onClick = { [weak self] i, mods in self?.filmstripClicked(i, mods) }
+        filmstrip.collectionView.onBlankClick = { [weak self] in
+            guard let self, self.filmstrip.collectionView.selectionIndexPaths.count > 1 else { return }
+            self.keepStripSelection = false
+            self.syncFilmstripSelection()
+            self.updateRatingLabel()
+        }
         filmstrip.collectionView.dragURLs = { [weak self] i in self?.filmstripDragURLs(from: i) ?? [] }
         view.addSubview(filmstrip)
 
@@ -862,7 +868,45 @@ final class ViewerViewController: NSViewController {
         emptyState.addArrangedSubview(title)
         emptyState.addArrangedSubview(emptyHint)
         emptyState.addArrangedSubview(button)
+        recentList.orientation = .vertical
+        recentList.alignment = .centerX
+        recentList.spacing = 2
+        emptyState.addArrangedSubview(recentList)
+        emptyState.setCustomSpacing(24, after: button)
         view.addSubview(emptyState)
+        refreshRecentList()
+        NotificationCenter.default.addObserver(forName: Recents.didChange, object: nil, queue: .main) { [weak self] _ in
+            self?.refreshRecentList()
+        }
+    }
+
+    /// 开始页「打开…」下面列最近打开过的 5 个文件夹，点一下直接打开
+    private let recentList = NSStackView()
+
+    private func refreshRecentList() {
+        recentList.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        let urls = Recents.folders.prefix(5)
+        guard !urls.isEmpty else { return }
+        let head = NSTextField(labelWithString: L10n.t("ui.recent", "最近打开"))
+        head.font = .systemFont(ofSize: 11, weight: .semibold)
+        head.textColor = .tertiaryLabelColor
+        recentList.addArrangedSubview(head)
+        for u in urls {
+            let b = NSButton(title: u.lastPathComponent, target: self, action: #selector(openRecentFolder(_:)))
+            b.isBordered = false
+            b.contentTintColor = .secondaryLabelColor
+            b.font = .systemFont(ofSize: 13)
+            b.toolTip = u.path
+            b.identifier = NSUserInterfaceItemIdentifier(u.path)
+            b.lineBreakMode = .byTruncatingMiddle
+            b.widthAnchor.constraint(lessThanOrEqualToConstant: 360).isActive = true
+            recentList.addArrangedSubview(b)
+        }
+    }
+
+    @objc private func openRecentFolder(_ sender: NSButton) {
+        guard let path = sender.identifier?.rawValue else { return }
+        open(url: URL(fileURLWithPath: path, isDirectory: true))
     }
 
     // MARK: - 打开与加载
@@ -931,6 +975,7 @@ final class ViewerViewController: NSViewController {
         filmstrip.collectionView.reloadData()
         filmstrip.scrollTo(index: folder.index)
         folderWatcher.watch(folder.folderURL)
+        if ok, let dir = folder.folderURL { Recents.note(dir) }
         if ok {
             view.window?.makeFirstResponder(imageView)
             showImage(resetToFit: true)
@@ -3134,7 +3179,15 @@ final class ViewerViewController: NSViewController {
         }
         if slideshowActive { stopSlideshow() }
         imageView.endPeek()
-        let n = min(want, folder.count)
+        // 缩略图栏里多选了几张：就对比选中的这几张（最多 4 张），不再从当前这张往后排
+        let picked = compareView == nil
+            ? filmstrip.collectionView.selectionIndexPaths.map(\.item).filter { folder.items.indices.contains($0) }.sorted()
+            : []
+        let usePicked = picked.count >= 2
+        if usePicked, picked.count > 4 {
+            flash(L10n.f("msg.compareFirstFour", "选了 %d 张，只对比前 4 张", picked.count))
+        }
+        let n = usePicked ? min(picked.count, 4) : min(want, folder.count)
         let cv: CompareView
         if let existing = compareView {
             cv = existing
@@ -3162,7 +3215,7 @@ final class ViewerViewController: NSViewController {
         var next = startCount == 0 ? folder.index : (used.max() ?? folder.index) + 1
         for i in startCount..<n {
             while used.contains(next % folder.count) { next += 1 }
-            let idx = next % folder.count
+            let idx = usePicked ? picked[i] : next % folder.count
             used.append(idx)
             configurePane(cv.panes[i], at: i)
             loadPane(cv.panes[i], index: idx)

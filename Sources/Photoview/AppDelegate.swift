@@ -297,6 +297,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--feedback-test"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runFeedbackTest()
+                }
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--video-test"), i + 1 < CommandLine.arguments.count {
             let folder = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -1027,7 +1037,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// 「打开方式」子菜单每次展开时按当前照片现列可用的软件
     func menuNeedsUpdate(_ menu: NSMenu) {
+        if menu === recentMenu { populateRecentMenu(); return }
         activeViewer?.populateOpenWithMenu(menu)
+    }
+
+    // MARK: - 最近打开
+
+    /// 「文件 › 最近打开」：系统记下的最近打开过的文件夹，点一下在当前窗口打开
+    private let recentMenu = NSMenu()
+
+    private func populateRecentMenu() {
+        recentMenu.removeAllItems()
+        let urls = Recents.folders
+        for u in urls {
+            let it = NSMenuItem(title: u.lastPathComponent, action: #selector(openRecent(_:)), keyEquivalent: "")
+            it.target = self
+            it.representedObject = u
+            it.toolTip = u.path
+            it.image = NSWorkspace.shared.icon(forFile: u.path)
+            it.image?.size = NSSize(width: 16, height: 16)
+            recentMenu.addItem(it)
+        }
+        if !urls.isEmpty { recentMenu.addItem(.separator()) }
+        let clear = NSMenuItem(title: L10n.t("menu.clearRecent", "清除菜单"), action: urls.isEmpty ? nil : #selector(clearRecent(_:)), keyEquivalent: "")
+        clear.target = self
+        recentMenu.addItem(clear)
+    }
+
+    @objc func openRecent(_ sender: NSMenuItem) {
+        guard let u = sender.representedObject as? URL else { return }
+        application(NSApp, open: [u])
+    }
+
+    @objc private func clearRecent(_ sender: Any?) {
+        NSDocumentController.shared.clearRecentDocuments(nil)
+        NotificationCenter.default.post(name: Recents.didChange, object: nil)
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { !Self.keepRunning }
@@ -1242,6 +1286,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         addMenu(L10n.t("menu.file", "文件")) { m in
             item(m, L10n.t("menu.newWindow", "新建窗口"), #selector(AppDelegate.newWindowAction(_:)), "n").target = self
             item(m, L10n.t("menu.open", "打开…"), #selector(ViewerViewController.openFolderPanel(_:)), "o")
+            let recent = NSMenuItem(title: L10n.t("menu.openRecent", "最近打开"), action: nil, keyEquivalent: "")
+            recentMenu.title = recent.title
+            recentMenu.delegate = self
+            recent.submenu = recentMenu
+            m.addItem(recent)
             let openWith = NSMenuItem(title: L10n.t("menu.openWith", "打开方式"), action: nil, keyEquivalent: "")
             let openWithMenu = NSMenu(title: openWith.title)
             openWithMenu.delegate = self

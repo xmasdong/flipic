@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import CoreServices
 
 /// 盯着正在看的文件夹：Photoshop 之类的软件存了里面的照片，回调一次（0.3 秒内连续写入合成一次）
@@ -66,5 +66,26 @@ final class FolderWatcher {
     static func isOwnWrite(_ url: URL, _ s: Stamp) -> Bool {
         lock.lock(); defer { lock.unlock() }
         return ownWrites[url.standardizedFileURL] == s
+    }
+}
+
+/// 最近打开过的文件夹：记在系统的「最近使用的项目」里（访达、Dock 菜单也认），开始页和「文件 › 最近打开」都从这里读
+enum Recents {
+    static let didChange = Notification.Name("FlipicRecentsDidChange")
+
+    static func note(_ folder: URL) {
+        NSDocumentController.shared.noteNewRecentDocumentURL(folder)
+        NotificationCenter.default.post(name: didChange, object: nil)
+    }
+
+    /// 还在的文件夹，最近的在前，最多 10 个
+    static var folders: [URL] {
+        var seen = Set<String>()
+        return NSDocumentController.shared.recentDocumentURLs.filter { u in
+            var isDir: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: u.path, isDirectory: &isDir), isDir.boolValue,
+                  seen.insert(u.standardizedFileURL.path).inserted else { return false }
+            return true
+        }.prefix(10).map { $0 }
     }
 }

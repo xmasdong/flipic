@@ -773,3 +773,7 @@ Return  表示中の画像を名称変更
 "set.videos" = "ビデオ：";
 "set.videosCheck" = "フォルダ内のビデオを表示";
 "set.videosNote" = "MP4、MOV、M4Vを写真と一緒に表示し、returnキーで再生します。macOSが再生できる形式のみ対応し、追加のデコーダはダウンロードしません。";
+"msg.compareFirstFour" = "%d 枚選択中。最初の 4 枚を比較します";
+"menu.openRecent" = "最近使った項目を開く";
+"menu.clearRecent" = "メニューを消去";
+"ui.recent" = "最近使った項目";

@@ -773,3 +773,7 @@ Arrastra una carpeta o imagen para abrir";
 "set.videos" = "Vídeos:";
 "set.videosCheck" = "Mostrar vídeos de la carpeta";
 "set.videosNote" = "Los archivos MP4, MOV y M4V aparecen junto a tus fotos; pulsa Retorno para reproducirlos. Solo se admiten los formatos que macOS puede reproducir, sin descargar decodificadores adicionales.";
+"msg.compareFirstFour" = "%d fotos seleccionadas; se comparan las 4 primeras";
+"menu.openRecent" = "Abrir recientes";
+"menu.clearRecent" = "Borrar menú";
+"ui.recent" = "Recientes";

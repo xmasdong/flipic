@@ -785,3 +785,7 @@ Drop a folder or image to open";
 "set.videos" = "Videos:";
 "set.videosCheck" = "Show videos in the folder";
 "set.videosNote" = "MP4, MOV and M4V files are listed with your photos; press Return to play. Only formats macOS can play are supported, and no extra decoders are downloaded.";
+"msg.compareFirstFour" = "%d photos selected; comparing the first 4";
+"menu.openRecent" = "Open Recent";
+"menu.clearRecent" = "Clear Menu";
+"ui.recent" = "Recent";

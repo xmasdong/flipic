@@ -773,3 +773,7 @@ Déposez un dossier ou une image pour ouvrir";
 "set.videos" = "Vidéos :";
 "set.videosCheck" = "Afficher les vidéos du dossier";
 "set.videosNote" = "Les fichiers MP4, MOV et M4V apparaissent avec vos photos ; appuyez sur Retour pour les lire. Seuls les formats lus par macOS sont pris en charge, sans décodeur supplémentaire.";
+"msg.compareFirstFour" = "%d photos sélectionnées ; comparaison des 4 premières";
+"menu.openRecent" = "Ouvrir l’élément récent";
+"menu.clearRecent" = "Effacer le menu";
+"ui.recent" = "Récents";

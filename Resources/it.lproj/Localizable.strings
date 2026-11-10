@@ -773,3 +773,7 @@ Trascina una cartella o un'immagine per aprire";
 "set.videos" = "Video:";
 "set.videosCheck" = "Mostra i video nella cartella";
 "set.videosNote" = "I file MP4, MOV e M4V compaiono insieme alle foto; premi Invio per riprodurli. Sono supportati solo i formati che macOS sa riprodurre, senza scaricare decodificatori aggiuntivi.";
+"msg.compareFirstFour" = "%d foto selezionate; confronto le prime 4";
+"menu.openRecent" = "Apri recenti";
+"menu.clearRecent" = "Cancella menu";
+"ui.recent" = "Recenti";

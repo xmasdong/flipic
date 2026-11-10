@@ -778,3 +778,7 @@ Return  重新命名目前圖片
 "set.videos" = "影片：";
 "set.videosCheck" = "在資料夾中顯示影片";
 "set.videosNote" = "MP4、MOV、M4V 會和照片一起列出，按 Return 鍵播放。只播放系統內建支援的格式，不另外下載解碼器。";
+"msg.compareFirstFour" = "選了 %d 張，只比較前 4 張";
+"menu.openRecent" = "打開最近使用過的";
+"menu.clearRecent" = "清除選單";
+"ui.recent" = "最近打開";

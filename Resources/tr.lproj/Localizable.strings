@@ -773,3 +773,7 @@ Açmak için klasör veya resim sürükleyin";
 "set.videos" = "Videolar:";
 "set.videosCheck" = "Klasördeki videoları göster";
 "set.videosNote" = "MP4, MOV ve M4V dosyaları fotoğraflarla birlikte listelenir; oynatmak için Return’e basın. Yalnızca macOS’in oynatabildiği biçimler desteklenir, ek kod çözücü indirilmez.";
+"msg.compareFirstFour" = "%d fotoğraf seçildi; ilk 4’ü karşılaştırılıyor";
+"menu.openRecent" = "Son Kullanılanı Aç";
+"menu.clearRecent" = "Menüyü Temizle";
+"ui.recent" = "Son Kullanılanlar";

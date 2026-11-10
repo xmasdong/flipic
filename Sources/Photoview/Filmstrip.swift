@@ -82,6 +82,8 @@ final class FilmstripCollectionView: NSCollectionView {
     var onClick: ((Int, NSEvent.ModifierFlags) -> Void)?
     /// 拖出去的文件：按下的那张在多选里就拖整组，否则只拖它
     var dragURLs: ((Int) -> [URL])?
+    /// 点在空白处：多选收回到只选当前这一张
+    var onBlankClick: (() -> Void)?
 
     private var downEvent: NSEvent?
     private var downIndex: Int?
@@ -91,8 +93,8 @@ final class FilmstripCollectionView: NSCollectionView {
 
     override func mouseDown(with event: NSEvent) {
         downEvent = nil
-        // 空白处不框选
-        guard let ip = indexPathForItem(at: convert(event.locationInWindow, from: nil)) else { return }
+        // 空白处不框选，只把多选收回来
+        guard let ip = indexPathForItem(at: convert(event.locationInWindow, from: nil)) else { onBlankClick?(); return }
         let mods = event.modifierFlags.intersection([.shift, .command, .control])
         downEvent = event
         downIndex = ip.item

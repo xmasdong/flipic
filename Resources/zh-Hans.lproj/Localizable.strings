@@ -790,3 +790,7 @@ Esc  先关掉右上角的照片信息
 "set.videos" = "视频：";
 "set.videosCheck" = "在文件夹里显示视频";
 "set.videosNote" = "MP4、MOV、M4V 和照片一起列出，回车播放。只播系统自带能播的格式，不额外下载解码器。";
+"msg.compareFirstFour" = "选了 %d 张，只对比前 4 张";
+"menu.openRecent" = "最近打开";
+"menu.clearRecent" = "清除菜单";
+"ui.recent" = "最近打开";
