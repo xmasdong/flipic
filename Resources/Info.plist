@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>zh_CN</string>
 	<key>CFBundleDisplayName</key>
-	<string>Flipic</string>
+	<string>Flipic Lens</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -28,11 +28,11 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.xmasdong.photoview</string>
 	<key>CFBundleName</key>
-	<string>Flipic</string>
+	<string>Flipic Lens</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.22</string>
+	<string>1.0.23</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -45,7 +45,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>60</string>
+	<string>61</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.photography</string>
 	<key>LSMinimumSystemVersion</key>

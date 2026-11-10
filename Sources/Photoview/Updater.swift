@@ -142,10 +142,12 @@ final class Updater: NSObject, URLSessionDownloadDelegate {
               Self.run("/usr/sbin/spctl", ["--assess", "--type", "execute", staged.path]) == 0 else { return .failure(.signature) }
 
         DispatchQueue.main.async { [weak self] in self?.window?.status(L10n.t("update.installing", "正在安装…")) }
-        // 替换：旧版本挪到缓存目录，新版本放到原来的位置；Finder 里的名字统一成 Flipic.app
+        // 替换：旧版本挪到缓存目录，新版本放到原来的位置。原来叫 Flipic.app 或 Flipic Lens.app 就保持原名，
+        // 不顺手改名：改了名 Dock 里固定的图标会跟着旧文件走，点开的还是旧版本；别的名字（Flipic 2.app 之类）统一成 Flipic Lens.app
         let current = Bundle.main.bundleURL
         let parent = current.deletingLastPathComponent()
-        let target = parent.appendingPathComponent("Flipic.app")
+        let keepName = ["Flipic.app", "Flipic Lens.app"].contains(current.lastPathComponent)
+        let target = parent.appendingPathComponent(keepName ? current.lastPathComponent : "Flipic Lens.app")
         let backup = dir.appendingPathComponent("Previous.app")
         do {
             try? FileManager.default.removeItem(at: backup)
