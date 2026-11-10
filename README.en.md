@@ -7,7 +7,7 @@
 <p align="center"><a href="README.md">简体中文</a> · <b>English</b></p>
 
 <p align="center">
-  A Mac photo viewer for culling a shoot. Offload the card, double-click one photo, cull with the arrow keys.<br>Formerly PixDeck; renamed Flipic in 0.5.0.
+  A Mac photo viewer for culling a shoot. Offload the card, double-click one photo, cull with the arrow keys.
 </p>
 
 <p align="center">
@@ -26,9 +26,8 @@
 
 ![Flipic Lens browsing a folder](docs/screenshot-browse.jpg)
 
-After a shoot I wanted to go through the photos first, but Preview opens them one at a time and Lightroom wants an import. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is 4.1 MB, it makes no network connections by default, and there is no account.
+After a shoot I wanted to go through the photos first, but Preview opens them one at a time and Lightroom wants an import. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is 4.7 MB, it makes no network connections by default, and there is no account.
 
-Starting November 2026, the app is called Flipic Lens (formerly Flipic). The iPhone app “Flipic: Photo Organizer” on the App Store is made by another developer and is not related. Download links, license keys and settings are unchanged.
 
 ## Culling a shoot
 

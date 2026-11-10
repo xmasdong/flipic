@@ -7,7 +7,7 @@
 <p align="center"><b>简体中文</b> · <a href="README.en.md">English</a></p>
 
 <p align="center">
-  给摄影师挑片用的 Mac 看图软件。导完卡，双击一张，用方向键挑一遍。<br>原名 PixDeck，0.5.0 起改名 Flipic。
+  给摄影师挑片用的 Mac 看图软件。导完卡，双击一张，用方向键挑一遍。
 </p>
 
 <p align="center">
@@ -26,9 +26,8 @@
 
 ![Flipic Lens 浏览照片](docs/screenshot-browse.jpg)
 
-拍完一组想先挑一挑，Mac 自带的「预览」只能一张张打开，开 Lightroom 又得先导入。我自己嫌麻烦，就做了 Flipic Lens：双击文件夹里随便一张，左右键往下翻，看中的打个星，回到 Lightroom 里星还在。现在用它的基本都是摄影师，很多功能也是他们提的。安装包 4.1 MB，默认不联网，不要账号。
+拍完一组想先挑一挑，Mac 自带的「预览」只能一张张打开，开 Lightroom 又得先导入。我自己嫌麻烦，就做了 Flipic Lens：双击文件夹里随便一张，左右键往下翻，看中的打个星，回到 Lightroom 里星还在。现在用它的基本都是摄影师，很多功能也是他们提的。安装包 4.7 MB，默认不联网，不要账号。
 
-2026 年 11 月起，软件从 Flipic 改名为 Flipic Lens。App Store 上另有一个 iPhone App 叫「Flipic: Photo Organizer」，是另一位开发者的产品；改名是为了区分。下载地址、激活码和设置都不变。
 
 ## 挑一组片大概是这样
 
