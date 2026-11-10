@@ -12,7 +12,7 @@ OUT = ROOT / "public"
 BASE = "https://flipic.app"
 UPDATED = "2026-10-31"
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "4.4 MB"
+SIZE = "4.6 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
