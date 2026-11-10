@@ -107,6 +107,11 @@ final class ViewerViewController: NSViewController {
     private var folderGeneration = 0
     /// 别的软件（Photoshop 等）存了文件夹里的照片，自动换成新的
     private lazy var folderWatcher = FolderWatcher { [weak self] in self?.folderDidChange() }
+    /// 翻到视频时的播放器和底部控制条
+    private(set) lazy var video = VideoPlayback(imageView: imageView)
+    /// 翻到视频时自动收起了缩略图栏
+    private var filmstripHiddenForVideo = false
+    var currentIsVideo: Bool { folder.current.map { Video.isVideo($0.url) } ?? false }
     /// 看到有文件不见了，过一会儿再对一次才从列表拿掉
     private var pendingRemovalCheck: DispatchWorkItem?
     /// 打开的是文件夹且用户还没翻页：拍摄时间读完重排后回到新的第一张
@@ -227,6 +232,7 @@ final class ViewerViewController: NSViewController {
         imageView.onTrash = { [weak self] in self?.trashCurrent(nil) }
         imageView.onSlideshow = { [weak self] in self?.toggleSlideshow(nil) }
         imageView.onRename = { [weak self] in self?.renameCurrent(nil) }
+        imageView.onKeyIntercept = { [weak self] event in self?.handleVideoKey(event) ?? false }
         imageView.onCommand = { [weak self] action in self?.perform(action) }
         imageView.onSingleClick = { [weak self] in self?.toggleSlideshowPause() }
         imageView.onFirstFrame = { [weak self] size in
@@ -333,6 +339,8 @@ final class ViewerViewController: NSViewController {
 
             toolbarView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             toolbarView.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: -8),
+            video.bar.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            video.bar.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: -8),
 
             prevArrowContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             prevArrowContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
@@ -392,9 +400,11 @@ final class ViewerViewController: NSViewController {
         guard visible != controlsVisible else { return }
         controlsVisible = visible
         var targets: [NSView] = [prevArrowContainer!, nextArrowContainer!]
-        if Self.showToolbar { targets += [toolbarView, cornerBar] }
+        // 看视频时照片工具栏换成视频控制条
+        if Self.showToolbar { targets += video.isActive ? [cornerBar] : [toolbarView, cornerBar] }
         if Self.showFileName { targets.append(fileNameBar) }
         if liveMovie != nil { targets.append(liveBadge) }
+        if video.isActive { targets.append(video.bar) }
         if visible { placeFileName() }
         if filmstripFloating && filmstripHeight.constant > 0 { targets.append(filmstrip) }
         if visible {
@@ -699,6 +709,9 @@ final class ViewerViewController: NSViewController {
             }
         }
         view.addSubview(toolbarView)
+        view.addSubview(video.bar)
+        video.onMessage = { [weak self] m in self?.flash(m, seconds: 3) }
+        video.onActiveChange = { [weak self] in self?.videoActiveChanged() }
         buildTopCorners()
 
         NSLayoutConstraint.activate([
@@ -958,6 +971,7 @@ final class ViewerViewController: NSViewController {
         view.window?.title = url.lastPathComponent
         fileNameLabel.stringValue = url.lastPathComponent
         updateLivePhoto(for: url)
+        video.show(mainViewerActive && cleanup == nil ? url : nil)
         decodeQueue.cancelAllOperations()
         draftQueue.cancelAllOperations()
         updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)
@@ -1165,6 +1179,48 @@ final class ViewerViewController: NSViewController {
 
     @objc private func appDidBecomeActive(_ note: Notification) { folderDidChange() }
 
+    /// 翻到视频或离开视频：照片工具栏和视频控制条换位置，可见状态跟着当前的控件显隐走
+    private func videoActiveChanged() {
+        // 视频画面占满：缩略图栏先收起，回到照片时放回来
+        if video.isActive, !filmstrip.isHidden {
+            filmstripHiddenForVideo = true
+            filmstrip.isHidden = true
+            filmstripHeight.constant = 0
+        } else if !video.isActive, filmstripHiddenForVideo {
+            filmstripHiddenForVideo = false
+            filmstrip.isHidden = false
+            filmstripHeight.constant = FilmstripView.stripHeight
+            filmstrip.scrollTo(index: folder.index)
+        }
+        let showTools = controlsVisible && Self.showToolbar
+        toolbarView.isHidden = video.isActive || !showTools
+        toolbarView.alphaValue = toolbarView.isHidden ? 0 : 1
+        video.bar.isHidden = !video.isActive || !controlsVisible
+        video.bar.alphaValue = video.bar.isHidden ? 0 : 1
+    }
+
+    /// 看视频时：回车播放 / 暂停，⇧← ⇧→ 快退快进 5 秒；旋转、放大到眼睛、识别文字这些只对照片有用的键不响应
+    private func handleVideoKey(_ event: NSEvent) -> Bool {
+        guard currentIsVideo, mainViewerActive else { return false }
+        let mods = event.modifierFlags.intersection([.command, .option, .control, .shift])
+        switch event.keyCode {
+        case 36, 76 where mods.isEmpty:
+            video.toggle()
+            pokeControls()
+            return true
+        case 123, 124 where mods == .shift:
+            video.seek(by: event.keyCode == 123 ? -5 : 5)
+            pokeControls()
+            return true
+        default:
+            break
+        }
+        switch Shortcuts.action(for: event) {
+        case .rotateCW, .rotateCCW, .zoomEye, .copyText, .saveRotation: return true
+        default: return false
+        }
+    }
+
     /// 文件夹有变化：先换掉被改过的照片，再对一遍新增和不见了的
     private func folderDidChange(removing: Bool = false) {
         guard folder.folderURL != nil else { return }
@@ -1344,7 +1400,7 @@ final class ViewerViewController: NSViewController {
         showImage(resetToFit: false)
     }
 
-    private func goTo(_ index: Int) {
+    func goTo(_ index: Int) {
         lastNavDirection = index >= folder.index ? 1 : -1
         showFirstAfterResort = false
         notePagingStep()
@@ -1835,6 +1891,8 @@ final class ViewerViewController: NSViewController {
     }
 
     @objc func toggleFilmstrip(_ sender: Any?) {
+        // 看视频时自己按了 T：以用户为准，离开视频时不再自动放回来
+        filmstripHiddenForVideo = false
         let show = filmstrip.isHidden
         filmstrip.isHidden = !show
         filmstripHeight.constant = show ? FilmstripView.stripHeight : 0
@@ -1913,10 +1971,16 @@ final class ViewerViewController: NSViewController {
         case "rating":
             updateRatingLabel()
         case "toolbar":
-            toolbarView.isHidden = !Self.showToolbar || folder.current == nil || !controlsVisible
+            let hideTools = !Self.showToolbar || folder.current == nil || !controlsVisible
+            toolbarView.isHidden = hideTools || video.isActive
             toolbarView.alphaValue = toolbarView.isHidden ? 0 : 1
-            cornerBar.isHidden = toolbarView.isHidden
-            cornerBar.alphaValue = toolbarView.alphaValue
+            cornerBar.isHidden = hideTools
+            cornerBar.alphaValue = hideTools ? 0 : 1
+        case "videos":
+            // 重新列一遍文件夹；正在看的视频被关掉了就回到文件夹开头
+            guard let dir = folder.folderURL else { break }
+            let cur = folder.current?.url
+            open(url: cur.map { Video.isVideo($0) && !Video.enabled ? dir : $0 } ?? dir)
         case "fileName":
             fileNameBar.isHidden = !Self.showFileName || folder.current == nil || !controlsVisible
             fileNameBar.alphaValue = fileNameBar.isHidden ? 0 : 1
@@ -1978,6 +2042,7 @@ final class ViewerViewController: NSViewController {
 
     @objc func toggleCleanup(_ sender: Any?) {
         exitCompare()
+        video.clear()
         if let cleanup {
             cleanup.finish(nil)
             return
@@ -2078,7 +2143,7 @@ final class ViewerViewController: NSViewController {
 
     /// 只分析停下来以后屏幕上的清晰图（预览；放大后已经换成原图就用原图），草图、动图、对比、清理、放映时都不分析
     private func startLiveTextIfSettled() {
-        guard let liveText, TextRecognition.autoAnalyze, liveTextGen != generation, shown == .sharp, !rapidPaging,
+        guard let liveText, TextRecognition.autoAnalyze, !currentIsVideo, liveTextGen != generation, shown == .sharp, !rapidPaging,
               mainViewerActive, cleanup == nil, slideshowTimer == nil, !imageView.isAnimated,
               let image = textSourceImage() else { return }
         liveTextGen = generation
@@ -3051,6 +3116,7 @@ final class ViewerViewController: NSViewController {
     private var debugOptionHeld = false
 
     @objc func toggleCompare(_ sender: Any?) {
+        video.clear()
         if let cv = compareView, cv.panes.count == 2 { exitCompare() } else { enterCompare(2) }
     }
 
@@ -3479,6 +3545,7 @@ final class ViewerViewController: NSViewController {
         folder.clear()
         folderWatcher.stop()
         pendingRemovalCheck?.cancel()
+        video.clear()
         prefetchedURLs.removeAll()
         imageView.set(image: nil, resetToFit: true, isNew: true)
         exifPanel.isHidden = true
@@ -3564,7 +3631,7 @@ final class ViewerViewController: NSViewController {
     // MARK: - 设为桌面壁纸
 
     @objc func setWallpaper(_ sender: Any?) {
-        guard let item = folder.current, let screen = NSScreen.main else { return }
+        guard let item = folder.current, !Video.isVideo(item.url), let screen = NSScreen.main else { return }
         do {
             try NSWorkspace.shared.setDesktopImageURL(item.url, for: screen, options: [:])
             flash(L10n.f("msg.wallpaperSet", "已设为桌面壁纸： %@", item.url.lastPathComponent))
@@ -3629,7 +3696,7 @@ final class ViewerViewController: NSViewController {
         guard let current = folder.current else { return }
         let table = [("public.jpeg", "jpg"), ("public.png", "png"), ("public.heic", "heic")]
         let (uti, ext) = table[index]
-        let srcItems = folder.items
+        let srcItems = folder.items.filter { !Video.isVideo($0.url) }
         let outDir = current.url.deletingLastPathComponent().appendingPathComponent("Converted-\(ext)")
         try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
         isProcessing = true
@@ -3751,7 +3818,7 @@ final class ViewerViewController: NSViewController {
 
     /// ⌘S：导出压缩副本（保存面板交给用户选择位置、文件名、格式与质量）
     @objc func exportAs(_ sender: Any?) {
-        guard let item = folder.current, !isProcessing, let window = view.window else { return }
+        guard let item = folder.current, !Video.isVideo(item.url), !isProcessing, let window = view.window else { return }
         let panel = NSSavePanel()
         panel.title = L10n.t("exp.title", "导出压缩图片")
         panel.message = L10n.t("exp.message", "选择保存位置、文件名与格式")
@@ -6312,15 +6379,20 @@ extension ViewerViewController: NSCollectionViewDataSource, NSCollectionViewDele
         guard idx < folder.count else { return item }
         let url = folder.items[idx].url
         item.setMarked(folder.items[idx].marked)
+        let isVideo = Video.isVideo(url)
+        item.setDuration(isVideo ? Video.cachedMeta(url)?.duration : nil)
         if let cached = loader.cachedThumb(for: url) {
             item.setThumbnail(cached)
         } else {
             item.setThumbnail(nil)
             thumbQueue.addOperation { [loader] in
                 let t = loader.thumb(for: url)
+                // 视频出缩略图时顺带读过文件头，时长已经在缓存里
+                let d = isVideo ? Video.cachedMeta(url)?.duration : nil
                 DispatchQueue.main.async {
                     if item.itemIndex == idx {
                         item.setThumbnail(t)
+                        if isVideo { item.setDuration(d) }
                     }
                 }
             }

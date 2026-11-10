@@ -772,3 +772,9 @@ Return  重新命名目前圖片
 "trashbrowse.originalMissing" = "不知道這幾張原本在哪裡，用「放回到…」挑一個資料夾";
 "trashbrowse.choose" = "放回到哪個資料夾";
 "trashbrowse.failed" = "%d 張沒能放回";
+"video.playTip" = "播放 / 暫停（Return 鍵）";
+"video.muteTip" = "靜音";
+"video.unplayable" = "這台 Mac 無法播放這段影片，可以在 Finder 裡用其他 App 開啟";
+"set.videos" = "影片：";
+"set.videosCheck" = "在資料夾中顯示影片";
+"set.videosNote" = "MP4、MOV、M4V 會和照片一起列出，按 Return 鍵播放。只播放系統內建支援的格式，不另外下載解碼器。";

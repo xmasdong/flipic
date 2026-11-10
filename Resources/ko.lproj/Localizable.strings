@@ -767,3 +767,9 @@ Return  현재 이미지 이름 변경
 "trashbrowse.originalMissing" = "이 사진들이 원래 어디에 있었는지 Flipic은 알지 못합니다. “다른 위치로 되돌리기…”를 눌러 폴더를 선택하세요.";
 "trashbrowse.choose" = "되돌릴 폴더 선택";
 "trashbrowse.failed" = "%d장을 되돌리지 못했습니다";
+"video.playTip" = "재생 / 일시 정지(Return)";
+"video.muteTip" = "음소거";
+"video.unplayable" = "이 Mac에서는 이 동영상을 재생할 수 없습니다. Finder에서 다른 앱으로 여세요.";
+"set.videos" = "동영상:";
+"set.videosCheck" = "폴더의 동영상 표시";
+"set.videosNote" = "MP4, MOV, M4V 파일을 사진과 함께 표시하며 Return 키로 재생합니다. macOS에서 재생할 수 있는 형식만 지원하며 별도의 디코더를 내려받지 않습니다.";

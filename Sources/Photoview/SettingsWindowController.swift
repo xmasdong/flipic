@@ -563,6 +563,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     private let hdr = NSButton(checkboxWithTitle: L10n.t("set.hdrCheck", "显示 HDR 照片的高光"), target: nil, action: nil)
     private let hdrNote = note("")
     private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
+    private let videosCheck = NSButton(checkboxWithTitle: L10n.t("set.videosCheck", "在文件夹里显示视频"), target: nil, action: nil)
     private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
     private let fileNameCheck = NSButton(checkboxWithTitle: L10n.t("set.fileNameCheck", "移动鼠标时在左上角显示文件名"), target: nil, action: nil)
     private let backdropPopup = NSPopUpButton()
@@ -592,6 +593,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         escCloses.target = self; escCloses.action = #selector(escChanged)
         ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
         toolbarCheck.target = self; toolbarCheck.action = #selector(toolbarChanged)
+        videosCheck.target = self; videosCheck.action = #selector(videosChanged)
         fileNameCheck.target = self; fileNameCheck.action = #selector(fileNameChanged)
         hdr.target = self; hdr.action = #selector(hdrChanged)
         liveText.target = self; liveText.action = #selector(liveTextChanged)
@@ -613,6 +615,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         var rows: [[NSView]] = [
             [label(L10n.t("set.paging", "翻页：")), pagingRow],
             [label(L10n.t("set.rating", "评分：")), ratingBadge],
+            [label(L10n.t("set.videos", "视频：")), videosCheck],
+            spacerRow(note(L10n.t("set.videosNote", "MP4、MOV、M4V 和照片一起列出，回车播放。只播系统自带能播的格式，不额外下载解码器。"))),
             [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
             [label(L10n.t("set.backdrop", "背景：")), backdropPopup],
             [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
@@ -628,7 +632,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             rows.insert(contentsOf: [
                 [label(L10n.t("set.text", "文字：")), liveText],
                 spacerRow(note(L10n.t("set.liveTextNote", "在一张照片上停留片刻后识别图中文字，可以直接选中、复制、查询。关掉后，「复制图中全部文字」仍可使用。"))),
-            ], at: 7)
+            ], at: 9)
         }
         let g = grid(rows)
         // 说明行紧贴上一行
@@ -647,6 +651,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         escCloses.state = ViewerViewController.escCloses ? .on : .off
         ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
         toolbarCheck.state = ViewerViewController.showToolbar ? .on : .off
+        videosCheck.state = Video.enabled ? .on : .off
         fileNameCheck.state = ViewerViewController.showFileName ? .on : .off
         backdropPopup.selectItem(withTag: ZoomableImageView.backdropStyle.rawValue)
         thumbPopup.selectItem(withTag: Int(FilmstripView.thumbSize))
@@ -707,6 +712,11 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     @objc private func fileNameChanged() {
         ViewerViewController.showFileName = fileNameCheck.state == .on
         SettingsWindowController.notify("fileName")
+    }
+
+    @objc private func videosChanged() {
+        Video.enabled = videosCheck.state == .on
+        SettingsWindowController.notify("videos")
     }
 
     @objc private func toolbarChanged() {

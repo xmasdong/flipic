@@ -813,6 +813,26 @@ final class ZoomableImageView: NSView {
         apply(animated: animated)
     }
 
+    // MARK: - 视频画面
+
+    private var overlayLayer: CALayer?
+
+    /// 视频画面放进照片图层里，跟着照片一起缩放、平移；传 nil 拿掉
+    func setOverlayLayer(_ l: CALayer?) {
+        overlayLayer?.removeFromSuperlayer()
+        overlayLayer = l
+        guard let l else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        l.frame = imageLayer.bounds
+        l.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+        imageLayer.addSublayer(l)
+        CATransaction.commit()
+    }
+
+    /// 键盘事件先给上层看一眼（看视频时回车播放、⇧← ⇧→ 快退快进），处理了就不再往下走
+    var onKeyIntercept: ((NSEvent) -> Bool)?
+
     // MARK: - 键盘
 
     var isPeeking: Bool { spacePeeking }
@@ -840,6 +860,7 @@ final class ZoomableImageView: NSView {
 
     override func keyDown(with event: NSEvent) {
         onActivity?()
+        if onKeyIntercept?(event) == true { return }
         if let action = Shortcuts.action(for: event) {
             perform(action, event)
             return

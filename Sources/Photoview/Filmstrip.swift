@@ -194,6 +194,31 @@ final class FilmstripItem: NSCollectionViewItem {
     /// 没标记过的格子不创建勾的视图
     private var hasMarkIcon = false
 
+    /// 视频格子右下角的时长；照片的格子不创建
+    private lazy var durationLabel: NSTextField = {
+        let l = NSTextField(labelWithString: "")
+        l.font = .monospacedDigitSystemFont(ofSize: 9, weight: .semibold)
+        l.textColor = .white
+        l.wantsLayer = true
+        l.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.55).cgColor
+        l.layer?.cornerRadius = 3
+        l.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(l)
+        NSLayoutConstraint.activate([
+            l.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -3),
+            l.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -3),
+        ])
+        return l
+    }()
+    private var hasDuration = false
+
+    func setDuration(_ seconds: Double?) {
+        guard seconds != nil || hasDuration else { return }
+        hasDuration = true
+        durationLabel.isHidden = seconds == nil
+        if let seconds { durationLabel.stringValue = " " + Video.timeText(seconds) + " " }
+    }
+
     func setMarked(_ on: Bool) {
         guard on || hasMarkIcon else { return }
         hasMarkIcon = true

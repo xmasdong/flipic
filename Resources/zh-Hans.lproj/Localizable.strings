@@ -784,3 +784,9 @@ Esc  先关掉右上角的照片信息
 "trashbrowse.originalMissing" = "不知道这几张原来在哪，用「放回到…」挑个文件夹";
 "trashbrowse.choose" = "放回到哪个文件夹";
 "trashbrowse.failed" = "%d 张没能放回";
+"video.playTip" = "播放 / 暂停（回车）";
+"video.muteTip" = "静音";
+"video.unplayable" = "这台 Mac 播放不了这个视频，可以在访达里用别的软件打开";
+"set.videos" = "视频：";
+"set.videosCheck" = "在文件夹里显示视频";
+"set.videosNote" = "MP4、MOV、M4V 和照片一起列出，回车播放。只播系统自带能播的格式，不额外下载解码器。";

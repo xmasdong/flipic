@@ -767,3 +767,9 @@ Return  إعادة تسمية الصورة الحالية
 "trashbrowse.originalMissing" = "لا يعرف Flipic من أين جاءت؛ استخدم «نقل مجددًا إلى…» لاختيار مجلد.";
 "trashbrowse.choose" = "اختر مجلدًا لنقلها إليه مرة أخرى";
 "trashbrowse.failed" = "تعذّر إرجاع %d";
+"video.playTip" = "تشغيل / إيقاف مؤقت (Return)";
+"video.muteTip" = "كتم الصوت";
+"video.unplayable" = "لا يمكن لهذا الـ Mac تشغيل هذا الفيديو. يمكنك فتحه بتطبيق آخر من Finder.";
+"set.videos" = "الفيديو:";
+"set.videosCheck" = "إظهار مقاطع الفيديو في المجلد";
+"set.videosNote" = "تظهر ملفات MP4 وMOV وM4V مع الصور؛ اضغط Return للتشغيل. تُدعم فقط الصيغ التي يستطيع macOS تشغيلها، دون تنزيل برامج فك ترميز إضافية.";

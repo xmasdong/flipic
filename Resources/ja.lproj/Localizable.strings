@@ -767,3 +767,9 @@ Return  表示中の画像を名称変更
 "trashbrowse.originalMissing" = "Flipic にはこれらの写真が元あった場所がわかりません。「別の場所に戻す…」でフォルダを選んでください。";
 "trashbrowse.choose" = "戻す先のフォルダを選択";
 "trashbrowse.failed" = "%d 枚を戻せませんでした";
+"video.playTip" = "再生 / 一時停止（return）";
+"video.muteTip" = "消音";
+"video.unplayable" = "このMacではこのビデオを再生できません。Finderから別のアプリで開いてください。";
+"set.videos" = "ビデオ：";
+"set.videosCheck" = "フォルダ内のビデオを表示";
+"set.videosNote" = "MP4、MOV、M4Vを写真と一緒に表示し、returnキーで再生します。macOSが再生できる形式のみ対応し、追加のデコーダはダウンロードしません。";

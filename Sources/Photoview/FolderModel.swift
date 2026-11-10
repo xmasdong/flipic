@@ -211,9 +211,10 @@ final class FolderModel {
         // 列目录时一并取回时间与大小，排序不再逐个 stat
         var urls = ((try? FileManager.default.contentsOfDirectory(
             at: folderURL, includingPropertiesForKeys: Self.resourceKeys, options: [.skipsHiddenFiles])) ?? [])
-            .filter { ImageLoader.isSupportedExtension($0.lastPathComponent) }
+            .filter { Self.isListable($0.lastPathComponent) }
             .map { folderURL.appendingPathComponent($0.lastPathComponent) }
         if let target, !urls.contains(target) { urls.append(target) }
+        urls = Video.dropLiveCompanions(urls)
 
         items = urls.map(Self.makeItem)
         unfiltered = nil
@@ -225,6 +226,11 @@ final class FolderModel {
     }
 
     /// 回到开始页：清空列表
+    /// 列表里显示的文件：图片，加上系统能播的视频（设置里可以关）
+    static func isListable(_ name: String) -> Bool {
+        ImageLoader.isSupportedExtension(name) || (Video.enabled && Video.isVideoName(name))
+    }
+
     private static func makeItem(_ u: URL) -> ImageItem {
         let v = try? u.resourceValues(forKeys: Set(resourceKeys))
         return ImageItem(url: u, pixelSize: nil, modified: v?.contentModificationDate,
@@ -237,10 +243,10 @@ final class FolderModel {
     /// 有的软件存盘是先删再写，看到不见了先别急着拿，过一会儿再对一次
     func syncWithDisk(removing: Bool) -> (added: [URL], missing: Set<URL>) {
         guard let folderURL else { return ([], []) }
-        let onDisk = Set(((try? FileManager.default.contentsOfDirectory(
+        let onDisk = Set(Video.dropLiveCompanions(((try? FileManager.default.contentsOfDirectory(
             at: folderURL, includingPropertiesForKeys: Self.resourceKeys, options: [.skipsHiddenFiles])) ?? [])
-            .filter { ImageLoader.isSupportedExtension($0.lastPathComponent) }
-            .map { folderURL.appendingPathComponent($0.lastPathComponent) })
+            .filter { Self.isListable($0.lastPathComponent) }
+            .map { folderURL.appendingPathComponent($0.lastPathComponent) }))
         let known = Set(allItems.map(\.url))
         let missing = known.subtracting(onDisk)
         let added = onDisk.subtracting(known).sorted { $0.path < $1.path }

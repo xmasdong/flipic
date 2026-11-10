@@ -297,6 +297,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--video-test"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runVideoTest()
+                }
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--swipe-test"), i + 1 < CommandLine.arguments.count {
             let file = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in

@@ -20,7 +20,8 @@ struct CleanupUnit: Hashable {
     static func make(from items: [ImageItem]) -> [CleanupUnit] {
         var groups: [String: [ImageItem]] = [:]
         var order: [String] = []
-        for it in items {
+        // 清理只看照片，视频不参与
+        for it in items where !Video.isVideo(it.url) {
             let key = it.url.deletingPathExtension().path.lowercased()
             if groups[key] == nil { order.append(key) }
             groups[key, default: []].append(it)

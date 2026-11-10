@@ -129,6 +129,7 @@ final class ImageLoader {
     /// ImageIO 降采样解码：maxPixel 是需要的最大边长像素
     /// allowEmbedded：允许直接用文件内嵌的 EXIF 缩略图（胶片条用，免去整图解码）
     static func renderThumbnail(url: URL, maxPixel: CGFloat, allowEmbedded: Bool = false, hdr: Bool = false) -> CGImage? {
+        if Video.isVideo(url) { return Video.poster(url, maxPixel: maxPixel) }
         // 用内嵌缩略图时只读文件头那一小段，不整个读
         guard let src = allowEmbedded
                 ? CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary)
@@ -160,6 +161,12 @@ final class ImageLoader {
     /// 只读文件头拿原图尺寸与动图标记，不解码像素
     func info(for url: URL) -> ImageInfo? {
         if let hit = infoCache.object(forKey: url as NSURL) { return hit.info }
+        if Video.isVideo(url) {
+            guard let m = Video.meta(url) else { return nil }
+            let info = ImageInfo(pixelSize: m.size, isAnimated: false)
+            infoCache.setObject(InfoBox(info), forKey: url as NSURL)
+            return info
+        }
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
         return info(for: url, source: src)
     }
@@ -214,6 +221,8 @@ final class ImageLoader {
     func draft(for url: URL, previewPixel: CGFloat) -> (image: CGImage, sharp: Bool)? {
         if let hit = cachedPreview(for: url, maxPixel: previewPixel) { return (hit, true) }
         if let hit = cachedDraft(for: url) { return (hit, false) }
+        // 视频只取一帧，没有更快的草图
+        if Video.isVideo(url) { return preview(for: url, maxPixel: previewPixel).map { ($0, true) } }
         // 非 RAW 整个文件读一次，读文件头和解码共用，不再为文件头单独开一次文件
         let raw = CleanupUnit.isRaw(url)
         let src = raw ? nil : Self.imageSource(url: url)
@@ -269,6 +278,7 @@ final class ImageLoader {
 
     /// 全分辨率解码（带 EXIF 方向校正），不写缓存；maxPixel 给出时最长边不超过它
     static func decodedFull(url: URL, maxPixel: CGFloat? = nil, hdr: Bool = false) -> CGImage? {
+        if Video.isVideo(url) { return Video.poster(url, maxPixel: maxPixel) }
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else {
             return nil
         }
@@ -500,6 +510,7 @@ final class ImageLoader {
     }
 
     func evict(url: URL) {
+        Video.forget(url)
         previewCache.remove(url)
         fullCache.remove(url)
         thumbCache.remove(url)
