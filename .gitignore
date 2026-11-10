@@ -14,3 +14,6 @@ pro-worker/
 
 # 本机私有配置（Mac App Store 版名字等）
 site/private.json
+
+# 外链分发台账（本地，不进公开仓库）
+distribution/

@@ -406,6 +406,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let peekKeep = NSButton(checkboxWithTitle: L10n.t("set.peekKeep", "贴合预览翻上一张、下一张时，窗口留在原地"), target: nil, action: nil)
     private let autoUpdate = NSButton(checkboxWithTitle: L10n.t("set.autoUpdate", "自动检查更新（每天一次）"), target: nil, action: nil)
     private let keepRunning = NSButton(checkboxWithTitle: L10n.t("set.keepRunning", "关掉窗口后留在后台，再打开图片更快"), target: nil, action: nil)
+    private let trashLocal = NSButton(checkboxWithTitle: L10n.t("set.trashLocalCheck", "删除外置盘上的照片时，复制到本机废纸篓"), target: nil, action: nil)
     private let themePopup = NSPopUpButton()
     private let editorName = NSTextField(labelWithString: "")
     private let editorIcon = NSImageView()
@@ -418,6 +419,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         sortPopup.target = self; sortPopup.action = #selector(sortChanged)
         descending.target = self; descending.action = #selector(sortChanged)
         keepRunning.target = self; keepRunning.action = #selector(keepRunningChanged)
+        trashLocal.target = self; trashLocal.action = #selector(trashLocalChanged)
         for (m, title) in [(Theme.Mode.dark, L10n.t("set.theme.dark", "深色")), (.light, L10n.t("set.theme.light", "浅色")),
                            (.system, L10n.t("set.theme.system", "跟随系统"))] {
             themePopup.addItem(withTitle: title)
@@ -459,11 +461,13 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.appearance", "外观：")), themePopup],
             spacerRow(note(L10n.t("set.appearanceNote", "工作台、设置等窗口跟着变；看图窗口一直是深色，方便看曝光和颜色。"))),
             [label(L10n.t("set.background", "后台：")), keepRunning],
+            [label(L10n.t("set.trash", "删除：")), trashLocal],
+            spacerRow(note(L10n.t("set.trashNote", "打开后，外置盘（U 盘、移动硬盘）上的照片删除时先复制到本机废纸篓再删原文件，所有删除都在一处查看和清空。代价是要多复制一份，几百张 RAW 会慢一些，也会临时占本机空间；复制不成时仍然退回该盘自己的废纸篓。关掉后和访达一样，进该盘自己的废纸篓。"))),
             [label(L10n.t("set.update", "更新：")), updateRow],
             spacerRow(note(L10n.t("set.updateNote", "Flipic 默认不联网。打开后每天最多查一次，只向官网请求最新版本号，不发送任何数据。"))),
         ])
-        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 后期软件 7 说明 8 外观 9 说明 10 后台 11 更新 12 说明
-        for r in [1, 4, 7, 9, 12] { g.row(at: r).topPadding = -4 }
+        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 后期软件 7 说明 8 外观 9 说明 10 后台 11 删除 12 说明 13 更新 14 说明
+        for r in [1, 4, 7, 9, 12, 14] { g.row(at: r).topPadding = -4 }
         view = host(g)
         reload()
     }
@@ -476,6 +480,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         sortPopup.selectItem(withTag: UserDefaults.standard.integer(forKey: "sortKey"))
         descending.state = UserDefaults.standard.bool(forKey: "sortReversed") ? .on : .off
         keepRunning.state = AppDelegate.keepRunning ? .on : .off
+        trashLocal.state = Trash.copyExternalToLocal ? .on : .off
         themePopup.selectItem(withTag: Theme.mode.rawValue)
         openPeek.state = ViewerViewController.openInPeek ? .on : .off
         peekKeep.state = ViewerViewController.peekKeepsPosition ? .on : .off
@@ -520,6 +525,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     @objc private func openPeekChanged() { ViewerViewController.openInPeek = openPeek.state == .on }
     @objc private func peekKeepChanged() { ViewerViewController.peekKeepsPosition = peekKeep.state == .on }
     @objc private func keepRunningChanged() { AppDelegate.keepRunning = keepRunning.state == .on }
+    @objc private func trashLocalChanged() { Trash.copyExternalToLocal = trashLocal.state == .on }
 
     @objc private func chooseEditorApp() {
         let panel = NSOpenPanel()

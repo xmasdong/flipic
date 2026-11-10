@@ -408,20 +408,20 @@ final class CleanupController: NSViewController {
         // 实况照片的同名 MOV 也一起删，不留下拆开的一半
         var urls = sel.flatMap(\.allURLs)
         for u in urls { for f in ViewerViewController.companions(of: u) where !urls.contains(f) { urls.append(f) } }
-        NSWorkspace.shared.recycle(urls) { [weak self] moved, _ in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                let record = moved.map { (original: $0.key, trashed: $0.value) }
-                let gone = Set(moved.keys)
-                self.units.removeAll { $0.allURLs.contains { gone.contains($0) } }
-                for u in record { ImageLoader.shared.evict(url: u.original) }
-                self.undoStack.append(record)
-                self.changed = true
-                self.preview.isHidden = true
-                self.rebuild()
-                let photos = sel.filter { gone.contains($0.primary) }.count
-                self.statusLabel.stringValue = L10n.f("cleanup.trashed", "已移到废纸篓 %d 张 · ⌘Z 撤销", photos)
-            }
+        if Trash.usesLocalCopy(urls) { statusLabel.stringValue = L10n.t("trash.copying", "正在复制到本机废纸篓…") }
+        Trash.trash(urls) { [weak self] out in
+            guard let self else { return }
+            // 只有真挪进废纸篓的才从列表里拿掉；没挪动的留在原处，不能假装删了
+            let record = out.moved.map { (original: $0.key, trashed: $0.value) }
+            let gone = Set(out.moved.keys)
+            self.units.removeAll { $0.allURLs.contains { gone.contains($0) } }
+            for u in record { ImageLoader.shared.evict(url: u.original) }
+            self.undoStack.append(record)
+            self.changed = true
+            self.preview.isHidden = true
+            self.rebuild()
+            let photos = sel.filter { gone.contains($0.primary) }.count
+            self.statusLabel.stringValue = Trash.summary(out, count: photos)
         }
     }
 

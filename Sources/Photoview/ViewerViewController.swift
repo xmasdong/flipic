@@ -1715,16 +1715,20 @@ final class ViewerViewController: NSViewController {
         // 合并显示的那一对、实况照片的同名 MOV、设好的附属文件一起删
         var urls = folder.withHiddenPartners([item.url])
         for u in urls { for f in Self.companions(of: u) where !urls.contains(f) { urls.append(f) } }
-        NSWorkspace.shared.recycle(urls) { [weak self] moved, _ in
-            DispatchQueue.main.async {
-                // 记下来，⌘Z 或「放回刚才删掉的照片」能放回去
-                if !moved.isEmpty { Self.lastTrash = TrashRecord(moved: moved, photo: item.url) }
-                guard let self, self.generation == gen else { return }
-                for u in urls { self.loader.evict(url: u) }
-                let others = Set(urls.dropFirst())
-                let remaining = self.folder.removeCurrent()
-                if !others.isEmpty { self.folder.remove(urls: others) }
-                if remaining {
+        if Trash.usesLocalCopy(urls) { flash(L10n.t("trash.copying", "正在复制到本机废纸篓…"), seconds: 600) }
+        Trash.trash(urls) { [weak self] out in
+            // 记下来，⌘Z 或「放回刚才删掉的照片」能放回去
+            if !out.moved.isEmpty { Self.lastTrash = TrashRecord(moved: out.moved, photo: item.url) }
+            guard let self, self.generation == gen else { return }
+            let gone = Set(out.moved.keys)
+            for u in gone { self.loader.evict(url: u) }
+            // 只有真挪走了的才从列表里拿掉：没挪动的（盘只读、没权限）留在原处，不能假装删了
+            let currentGone = gone.contains(item.url)
+            if currentGone { _ = self.folder.removeCurrent() }
+            let others = gone.subtracting([item.url])
+            if !others.isEmpty { self.folder.remove(urls: others) }
+            if currentGone {
+                if self.folder.count > 0 {
                     self.filmstrip.collectionView.reloadData()
                     self.showImage(resetToFit: false)
                 } else {
@@ -1735,7 +1739,10 @@ final class ViewerViewController: NSViewController {
                     self.filmstrip.collectionView.reloadData()
                     self.updateHUD()
                 }
+            } else {
+                self.filmstrip.collectionView.reloadData()
             }
+            self.flash(Trash.summary(out, count: gone.count), seconds: 3)
         }
     }
 
@@ -1744,25 +1751,24 @@ final class ViewerViewController: NSViewController {
         let gen = generation
         var urls = folder.withHiddenPartners(picked)
         for u in urls { for f in Self.companions(of: u) where !urls.contains(f) { urls.append(f) } }
-        NSWorkspace.shared.recycle(urls) { [weak self] moved, _ in
-            DispatchQueue.main.async {
-                if !moved.isEmpty { Self.lastTrash = TrashRecord(moved: moved, photo: nil) }
-                guard let self, self.generation == gen else { return }
-                let gone = Set(moved.keys)
-                for u in gone { self.loader.evict(url: u) }
-                self.folder.remove(urls: gone)
-                self.filmstrip.collectionView.reloadData()
-                if self.folder.count > 0 {
-                    self.showImage(resetToFit: false)
-                } else {
-                    self.imageView.set(image: nil, resetToFit: true, isNew: true)
-                    self.emptyState.isHidden = false
-                    self.updateControlsPresence()
-                    self.emptyHint.stringValue = L10n.t("ui.noMore", "文件夹里没有更多图片了")
-                    self.updateHUD()
-                }
-                self.flash(L10n.f("pro.trashed", "已移到废纸篓 %d 个文件", moved.count), seconds: 3)
+        if Trash.usesLocalCopy(urls) { flash(L10n.t("trash.copying", "正在复制到本机废纸篓…"), seconds: 600) }
+        Trash.trash(urls) { [weak self] out in
+            if !out.moved.isEmpty { Self.lastTrash = TrashRecord(moved: out.moved, photo: nil) }
+            guard let self, self.generation == gen else { return }
+            let gone = Set(out.moved.keys)
+            for u in gone { self.loader.evict(url: u) }
+            if !gone.isEmpty { self.folder.remove(urls: gone) }
+            self.filmstrip.collectionView.reloadData()
+            if self.folder.count > 0 {
+                self.showImage(resetToFit: false)
+            } else {
+                self.imageView.set(image: nil, resetToFit: true, isNew: true)
+                self.emptyState.isHidden = false
+                self.updateControlsPresence()
+                self.emptyHint.stringValue = L10n.t("ui.noMore", "文件夹里没有更多图片了")
+                self.updateHUD()
             }
+            self.flash(Trash.summary(out, count: gone.count), seconds: 3)
         }
     }
 
@@ -1774,8 +1780,17 @@ final class ViewerViewController: NSViewController {
         let photo: URL?
     }
 
-    /// 最近一次删除。单张删除和 Pro 的批量删除共用这一份，新的删除覆盖旧的；所有看图窗口共用
-    static var lastTrash: TrashRecord?
+    private static var storedTrash: TrashRecord?
+
+    /// 最近一次删除。单张删除和 Pro 的批量删除共用这一份，新的删除覆盖旧的；所有看图窗口共用。
+    /// 同时存一份到磁盘：退出重开、装上更新以后，「放回」和「在 Finder 中显示」还能用
+    static var lastTrash: TrashRecord? {
+        get { storedTrash }
+        set {
+            storedTrash = newValue
+            TrashLedger.save(newValue)
+        }
+    }
 
     static var canRestoreTrash: Bool { lastTrash != nil }
 
@@ -1800,6 +1815,13 @@ final class ViewerViewController: NSViewController {
     @objc func undo(_ sender: Any?) {
         if let w = view.window, w.firstResponder is NSText { w.undoManager?.undo(); return }
         restoreLastTrash(sender)
+    }
+
+    /// 文件菜单「在 Finder 中显示刚才删掉的照片」：外置盘的照片进的是那块盘自己的废纸篓，
+    /// 本机废纸篓里翻不到，用这个直接跳到它们现在待的地方
+    @objc func revealLastTrash(_ sender: Any?) {
+        guard let rec = Self.lastTrash else { return }
+        Trash.revealInFinder(rec.moved.values.sorted { $0.path < $1.path })
     }
 
     @objc func zoomIn(_ sender: Any?) { imageView.zoomIn() }
@@ -6429,6 +6451,9 @@ extension ViewerViewController: NSMenuItemValidation {
         }
         if menuItem.action == #selector(restoreLastTrash(_:)) {
             return Self.canRestoreTrash && !isProcessing
+        }
+        if menuItem.action == #selector(revealLastTrash(_:)) {
+            return Self.canRestoreTrash
         }
         if menuItem.action == #selector(undo(_:)) {
             if let w = view.window, w.firstResponder is NSText { return w.undoManager?.canUndo ?? false }

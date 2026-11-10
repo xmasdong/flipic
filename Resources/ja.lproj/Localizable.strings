@@ -714,3 +714,56 @@ Return  表示中の画像を名称変更
 "wb.nameEmpty" = "名前を入力してください";
 "wb.recognizing" = "写真内のテキストを認識中…";
 "wb.slideshowOn" = "スライドショー · 1 枚 %d 秒 · S または Esc で停止";
+
+/* 1.0.19 */
+"set.trash" = "削除：";
+"set.trashLocalCheck" = "外付けドライブの写真を削除するとき、この Mac のゴミ箱にコピー";
+"set.trashNote" = "オンにすると、外付けドライブ（USB メモリ、ポータブルハードディスク）の写真は、元のファイルを消す前にこの Mac のゴミ箱へコピーされ、削除したものをすべて 1 か所で確認して空にできます。その分コピーが増えるため、数百枚の RAW では少し時間がかかり、この Mac の空き容量も一時的に使います。コピーできない場合は、これまでどおりそのドライブのゴミ箱に入ります。オフにすると Finder と同じく、そのドライブのゴミ箱に入ります。";
+"trash.copying" = "この Mac のゴミ箱にコピー中…";
+"trash.movedLocal" = "%d 枚をこの Mac のゴミ箱に入れました · ⌘Z で取り消し";
+"trash.movedVolume" = "「%@」のゴミ箱に %d 枚を移動しました · ⌘Z で取り消し";
+"trash.someFailed" = "%d 個は移動できず、元の場所に残っています";
+"menu.revealTrash" = "削除した写真を Finder で表示";
+"menu.trashHelp" = "削除した写真を戻す…";
+"trashhelp.title" = "削除した写真を戻す";
+"trashhelp.intro" = "Flipic の削除は「ゴミ箱に入れる」で、完全に消すことはありません。";
+"trashhelp.introNote" = "写真がどこに入るかは、写真のあったディスクによって変わります：";
+"trashhelp.localHead" = "この Mac の内蔵ディスク上の写真";
+"trashhelp.localBody" = "この Mac のゴミ箱（%@）に入り、Finder のサイドバーと Dock から見られます。";
+"trashhelp.externalHead" = "外付けドライブ上の写真";
+"trashhelp.externalBody" = "そのドライブ自身のゴミ箱に入ります。場所は「ドライブ名/.Trashes/ユーザー番号」で、この Mac のゴミ箱ではありません。ドライブを外すと見られなくなるので、つないでから下のボタンで開いてください。";
+"trashhelp.externalWhy" = "「ゴミ箱に見当たらない」よくある原因はこれです。削除に失敗したのではなく、入る場所が違うだけです。";
+"trashhelp.networkHead" = "NAS、ネットワークディスク、読み取り専用の NTFS ドライブ";
+"trashhelp.networkBody" = "こうした場所には通常ゴミ箱がないため、削除できません。Flipic は移動できなかったこととファイルが元の場所に残っていることを知らせ、写真は元のフォルダにそのまま残ります。失われることはありません。";
+"trashhelp.restoreHead" = "元の場所に戻すには";
+"trashhelp.restore1" = "· Flipic で ⌘Z を押すか、「ファイル › 削除した写真を戻す」を選びます。外付けドライブでも同じですが、ディスクをまたいでコピーするため少し時間がかかります。";
+"trashhelp.restore2" = "· ゴミ箱を空にしてしまった場合や、別の Mac の場合は、Time Machine などのバックアップからしか戻せません。";
+"trashhelp.settingHead" = "これからもこの Mac のゴミ箱に入れるには";
+"trashhelp.settingBody" = "設定 › 一般 › 削除で「外付けドライブの写真を削除するとき、この Mac のゴミ箱にコピー」をオンにします。削除に少し時間がかかり、この Mac の空き容量も一時的に使います。";
+"trashhelp.undo" = "直前の削除を取り消す";
+"trashhelp.reveal" = "Finder で表示";
+"trashhelp.openLocal" = "この Mac のゴミ箱を開く";
+"trashhelp.openVolume" = "「%@」のゴミ箱を開く";
+"trashhelp.restoredTitle" = "%d 個のファイルを戻しました";
+"trashhelp.restoredBody" = "Flipic に戻れば表示されます。リストは自動で更新されます。";
+"trashhelp.ok" = "OK";
+"trashhelp.close" = "完了";
+
+/* 1.0.20 */
+"trashhelp.browse" = "ゴミ箱にある最近の写真を見る";
+"trashbrowse.title" = "ゴミ箱にある写真";
+"trashbrowse.scanning" = "ゴミ箱にある写真を探しています…";
+"trashbrowse.empty" = "一覧にできる写真が見つかりませんでした。macOS ではアプリがこの Mac のゴミ箱を読めないため、Finder で直接開いて確認してください。";
+"trashbrowse.found" = "%d 枚見つかりました";
+"trashbrowse.colName" = "写真";
+"trashbrowse.colDate" = "削除日時";
+"trashbrowse.colWhere" = "場所";
+"trashbrowse.restoreTo" = "別の場所に戻す…";
+"trashbrowse.restoreOriginal" = "元の場所に戻す";
+"trashbrowse.reveal" = "Finder で表示";
+"trashbrowse.rescan" = "再スキャン";
+"trashbrowse.whereLocal" = "この Mac のゴミ箱";
+"trashbrowse.restored" = "%d 枚を戻しました";
+"trashbrowse.originalMissing" = "Flipic にはこれらの写真が元あった場所がわかりません。「別の場所に戻す…」でフォルダを選んでください。";
+"trashbrowse.choose" = "戻す先のフォルダを選択";
+"trashbrowse.failed" = "%d 枚を戻せませんでした";

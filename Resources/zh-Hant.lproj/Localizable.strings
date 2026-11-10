@@ -719,3 +719,56 @@ Return  重新命名目前圖片
 "wb.nameEmpty" = "名稱不能為空";
 "wb.recognizing" = "正在辨識圖中文字…";
 "wb.slideshowOn" = "幻燈片播放中 · 每張 %d 秒 · S 或 Esc 停止";
+
+/* 1.0.19 */
+"set.trash" = "刪除：";
+"set.trashLocalCheck" = "刪除外接磁碟上的照片時，複製到本機垃圾桶";
+"set.trashNote" = "打開後，外接磁碟（USB 隨身碟、行動硬碟）上的照片刪除時會先複製到本機垃圾桶，再刪除原始檔案，所有刪除的內容都在同一處檢視和清空。代價是要多複製一份，幾百張 RAW 會慢一些，也會暫時佔用本機空間；複製不成時仍然退回該磁碟自己的垃圾桶。關掉後和 Finder 一樣，會進該磁碟自己的垃圾桶。";
+"trash.copying" = "正在複製到本機垃圾桶…";
+"trash.movedLocal" = "已移到本機垃圾桶 %d 張 · ⌘Z 還原";
+"trash.movedVolume" = "已移到「%@」的垃圾桶 %d 張 · ⌘Z 還原";
+"trash.someFailed" = "%d 個沒能移到垃圾桶，還在原處";
+"menu.revealTrash" = "在 Finder 中顯示剛才刪掉的照片";
+"menu.trashHelp" = "找回刪掉的照片…";
+"trashhelp.title" = "找回刪掉的照片";
+"trashhelp.intro" = "Flipic 刪照片是「移到垃圾桶」，不會直接抹掉。";
+"trashhelp.introNote" = "東西去哪裡了，取決於照片在哪個磁碟上：";
+"trashhelp.localHead" = "本機硬碟上的照片";
+"trashhelp.localBody" = "會進本機垃圾桶（%@），Finder 側邊欄和 Dock 都看得到。";
+"trashhelp.externalHead" = "外接磁碟上的照片";
+"trashhelp.externalBody" = "會進這塊磁碟自己的垃圾桶，位置是「磁碟名稱/.Trashes/你的使用者編號」，不在本機垃圾桶裡。磁碟拔掉以後就看不到了，接上磁碟用下面的按鈕可以直接打開。";
+"trashhelp.externalWhy" = "「垃圾桶裡找不到」最常見的就是這個原因：不是沒刪成功，是位置不一樣。";
+"trashhelp.networkHead" = "NAS、網路磁碟和唯讀的 NTFS 磁碟";
+"trashhelp.networkBody" = "這類位置通常沒有垃圾桶，刪不掉。Flipic 會提示沒能移到垃圾桶、檔案還在原處，照片仍然留在原來的資料夾裡，不會遺失。";
+"trashhelp.restoreHead" = "想移回原處";
+"trashhelp.restore1" = "· 在 Flipic 裡按 ⌘Z，或者「檔案 › 放回剛才刪掉的照片」。外接磁碟也一樣，只是要跨磁碟複製回來，會慢一點。";
+"trashhelp.restore2" = "· 如果早就清空過垃圾桶、或者換了電腦，就只能從時光機等備份裡找。";
+"trashhelp.settingHead" = "想以後都放在本機垃圾桶";
+"trashhelp.settingBody" = "設定 › 一般 › 刪除，打開「刪除外接磁碟上的照片時，複製到本機垃圾桶」。打開後刪除會慢一些，也會暫時佔用本機空間。";
+"trashhelp.undo" = "還原最近一次刪除";
+"trashhelp.reveal" = "在 Finder 中顯示";
+"trashhelp.openLocal" = "打開本機垃圾桶";
+"trashhelp.openVolume" = "打開「%@」的垃圾桶";
+"trashhelp.restoredTitle" = "已放回 %d 個檔案";
+"trashhelp.restoredBody" = "回到 Flipic 就能看到；列表會自動重新整理。";
+"trashhelp.ok" = "好";
+"trashhelp.close" = "完成";
+
+/* 1.0.20 */
+"trashhelp.browse" = "看看垃圾桶裡最近的圖片";
+"trashbrowse.title" = "垃圾桶裡的照片";
+"trashbrowse.scanning" = "正在垃圾桶裡找照片…";
+"trashbrowse.empty" = "沒找到能列出來的照片。本機垃圾桶裡的內容系統不讓 App 讀，可以在 Finder 裡直接看。";
+"trashbrowse.found" = "找到 %d 張";
+"trashbrowse.colName" = "照片";
+"trashbrowse.colDate" = "刪除時間";
+"trashbrowse.colWhere" = "位置";
+"trashbrowse.restoreTo" = "放回到…";
+"trashbrowse.restoreOriginal" = "放回原處";
+"trashbrowse.reveal" = "在 Finder 中顯示";
+"trashbrowse.rescan" = "重新檢查";
+"trashbrowse.whereLocal" = "本機垃圾桶";
+"trashbrowse.restored" = "已放回 %d 張";
+"trashbrowse.originalMissing" = "不知道這幾張原本在哪裡，用「放回到…」挑一個資料夾";
+"trashbrowse.choose" = "放回到哪個資料夾";
+"trashbrowse.failed" = "%d 張沒能放回";

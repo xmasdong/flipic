@@ -731,3 +731,56 @@ Esc  先关掉右上角的照片信息
 "wb.nameEmpty" = "名称不能为空";
 "wb.recognizing" = "正在识别图中文字…";
 "wb.slideshowOn" = "幻灯片放映中 · 每张 %d 秒 · S 或 Esc 停止";
+
+/* 1.0.19 删除与外置盘废纸篓 */
+"set.trash" = "删除：";
+"set.trashLocalCheck" = "删除外置盘上的照片时，复制到本机废纸篓";
+"set.trashNote" = "打开后，外置盘（U 盘、移动硬盘）上的照片删除时先复制到本机废纸篓再删原文件，所有删除都在一处查看和清空。代价是要多复制一份，几百张 RAW 会慢一些，也会临时占本机空间；复制不成时仍然退回该盘自己的废纸篓。关掉后和访达一样，进该盘自己的废纸篓。";
+"trash.copying" = "正在复制到本机废纸篓…";
+"trash.movedLocal" = "已移到本机废纸篓 %d 张 · ⌘Z 撤销";
+"trash.movedVolume" = "已移到「%@」的废纸篓 %d 张 · ⌘Z 撤销";
+"trash.someFailed" = "%d 个没挪动成功，还在原处";
+"menu.revealTrash" = "在 Finder 中显示刚才删掉的照片";
+"menu.trashHelp" = "找回删掉的照片…";
+"trashhelp.title" = "找回删掉的照片";
+"trashhelp.intro" = "Flipic 删照片是「移到废纸篓」，没有直接抹掉。";
+"trashhelp.introNote" = "东西去哪了，取决于照片在哪个盘上：";
+"trashhelp.localHead" = "本机硬盘上的照片";
+"trashhelp.localBody" = "进本机废纸篓（%@），访达侧边栏和程序坞都能看到。";
+"trashhelp.externalHead" = "外置盘上的照片";
+"trashhelp.externalBody" = "进这块盘自己的废纸篓，位置是「盘名/.Trashes/你的用户编号」，不在本机废纸篓里。盘拔掉以后就看不到了，接上盘用下面的按钮能直接打开。";
+"trashhelp.externalWhy" = "「废纸篓里找不到」最常见的就是这个原因：不是没删成功，是位置不一样。";
+"trashhelp.networkHead" = "NAS、网络盘和只读的 NTFS 盘";
+"trashhelp.networkBody" = "这类位置通常没有废纸篓，删不掉。Flipic 会提示没能挪动成功、文件还在原处，照片仍然留在原来的文件夹里，不会丢。";
+"trashhelp.restoreHead" = "想挪回原处";
+"trashhelp.restore1" = "· 在 Flipic 里按 ⌘Z，或者「文件 › 放回刚才删掉的照片」。外置盘也一样，只是要跨盘复制回来，会慢一点。";
+"trashhelp.restore2" = "· 如果早就清空过废纸篓、或者换了电脑，就只能从时间机器等备份里找。";
+"trashhelp.settingHead" = "想以后都放在本机废纸篓";
+"trashhelp.settingBody" = "设置 › 通用 › 删除，打开「删除外置盘上的照片时，复制到本机废纸篓」。打开后删除会慢一些，也会临时占本机空间。";
+"trashhelp.undo" = "撤销最近一次删除";
+"trashhelp.reveal" = "在 Finder 中显示";
+"trashhelp.openLocal" = "打开本机废纸篓";
+"trashhelp.openVolume" = "打开「%@」的废纸篓";
+"trashhelp.restoredTitle" = "已放回 %d 个文件";
+"trashhelp.restoredBody" = "回到 Flipic 就能看到；列表会自动刷新。";
+"trashhelp.ok" = "好";
+"trashhelp.close" = "好";
+
+/* 1.0.20 废纸篓浏览 */
+"trashhelp.browse" = "看看废纸篓里最近的图片";
+"trashbrowse.title" = "废纸篓里的照片";
+"trashbrowse.scanning" = "正在找废纸篓里的照片…";
+"trashbrowse.empty" = "没找到能列出来的照片。本机废纸篓里的照片系统不让 App 读，可以在访达里直接看。";
+"trashbrowse.found" = "找到 %d 张";
+"trashbrowse.colName" = "照片";
+"trashbrowse.colDate" = "删除时间";
+"trashbrowse.colWhere" = "位置";
+"trashbrowse.restoreTo" = "放回到…";
+"trashbrowse.restoreOriginal" = "放回原处";
+"trashbrowse.reveal" = "在 Finder 中显示";
+"trashbrowse.rescan" = "重新扫描";
+"trashbrowse.whereLocal" = "本机废纸篓";
+"trashbrowse.restored" = "已放回 %d 张";
+"trashbrowse.originalMissing" = "不知道这几张原来在哪，用「放回到…」挑个文件夹";
+"trashbrowse.choose" = "放回到哪个文件夹";
+"trashbrowse.failed" = "%d 张没能放回";

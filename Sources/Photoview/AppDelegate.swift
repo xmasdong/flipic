@@ -75,6 +75,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Theme.apply()
+        // 删除落点自测：--trashtest <文件夹>，跑完自己退出
+        if let i = CommandLine.arguments.firstIndex(of: "--trashtest"), i + 1 < CommandLine.arguments.count {
+            TrashSelfTest.run(folder: URL(fileURLWithPath: CommandLine.arguments[i + 1]))
+            return
+        }
+        // 上次删掉的照片（可能是退出或升级前删的）如果还在废纸篓里，读回来，菜单里的「放回」「显示」照样可用
+        ViewerViewController.lastTrash = TrashLedger.load()
+        // 废纸篓浏览窗口截图：--trashbrowseshot <png>
+        if let i = CommandLine.arguments.firstIndex(of: "--trashbrowseshot"), i + 1 < CommandLine.arguments.count {
+            TrashBrowserWindowController.shared.debugShot(to: CommandLine.arguments[i + 1])
+            return
+        }
+        // 只扫废纸篓里的照片：--trashscan [数量]，给排查用
+        if let i = CommandLine.arguments.firstIndex(of: "--trashscan") {
+            let limit = i + 1 < CommandLine.arguments.count ? (Int(CommandLine.arguments[i + 1]) ?? 100) : 100
+            TrashSelfTest.scanOnly(limit: limit)
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--peekopentest"), i + 1 < CommandLine.arguments.count {
             // --peekopentest <照片>：按设置打开单张照片，记录是否直接进入贴合预览；再按空格回到普通窗口
             let file = CommandLine.arguments[i + 1]
@@ -1094,6 +1112,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         FeedbackWindowController.shared.show()
     }
 
+    /// 帮助 › 找回删掉的照片：说明外置盘有自己的废纸篓，并给出直接打开的入口
+    @objc func showTrashHelp(_ sender: Any?) {
+        TrashHelpWindowController.shared.show()
+    }
+
     /// 全局快捷键：Flipic 在最前面就收起来（回到刚才的软件），否则叫到最前面
     func toggleAppVisibility() {
         if NSApp.isActive && !NSApp.isHidden, controllers.contains(where: { $0.window?.isVisible == true }) {
@@ -1241,6 +1264,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)))
             item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
             item(m, L10n.t("menu.restoreTrash", "放回刚才删掉的照片"), #selector(ViewerViewController.restoreLastTrash(_:)))
+            item(m, L10n.t("menu.revealTrash", "在 Finder 中显示刚才删掉的照片"), #selector(ViewerViewController.revealLastTrash(_:)))
         }
         // 标准「编辑」菜单：输入框（激活码、重命名、设置）里的 ⌘V、⌘C、⌘A 都靠这些菜单项生效
         addMenu(L10n.t("menu.edit", "编辑")) { m in
@@ -1369,6 +1393,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         helpMenu.addItem(NSMenuItem(title: L10n.t("menu.shortcuts", "快捷键说明"),
                                     action: #selector(ViewerViewController.showShortcuts(_:)),
                                     keyEquivalent: "/"))
+        let recover = NSMenuItem(title: L10n.t("menu.trashHelp", "找回删掉的照片…"),
+                                 action: #selector(AppDelegate.showTrashHelp(_:)), keyEquivalent: "")
+        recover.target = self
+        helpMenu.addItem(recover)
         helpItem.submenu = helpMenu
 
         NSApp.mainMenu = main
