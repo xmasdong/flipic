@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/icon-256.png" width="128" height="128" alt="Flipic icon">
+  <img src="docs/icon-256.png" width="128" height="128" alt="Flipic Lens icon">
 </p>
 
-<h1 align="center">Flipic</h1>
+<h1 align="center">Flipic Lens</h1>
 
 <p align="center"><a href="README.md">简体中文</a> · <b>English</b></p>
 
@@ -24,13 +24,15 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-444" alt="MIT"></a>
 </p>
 
-![Flipic browsing a folder](docs/screenshot-browse.jpg)
+![Flipic Lens browsing a folder](docs/screenshot-browse.jpg)
 
-After a shoot I wanted to go through the photos first, but Preview opens them one at a time and Lightroom wants an import. So I made Flipic: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is 4.1 MB, it makes no network connections by default, and there is no account.
+After a shoot I wanted to go through the photos first, but Preview opens them one at a time and Lightroom wants an import. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is 4.1 MB, it makes no network connections by default, and there is no account.
+
+Starting November 2026, the app is called Flipic Lens (formerly Flipic). The iPhone app “Flipic: Photo Organizer” on the App Store is made by another developer and is not related. Download links, license keys and settings are unchanged.
 
 ## Culling a shoot
 
-1. Copy the card to your Mac and double-click any photo. There is no import and no library; Flipic reads the folder as it is.
+1. Copy the card to your Mac and double-click any photo. There is no import and no library; Flipic Lens reads the folder as it is.
 2. Page with ← →. To check focus, point at the eyes and press 0 to zoom to 100%. Not sure which frame of a burst to keep? Press C to put two side by side.
 3. Rate with 1–5, mark keepers with P.
 4. For an event with hundreds of shots, press ⇧⌘K and let Cleanup Mode group similar bursts, closed eyes and blurry frames first; you decide what to delete.
@@ -38,11 +40,11 @@ After a shoot I wanted to go through the photos first, but Preview opens them on
 
 ## Why it works this way
 
-**No import.** Flipic doesn't copy your photos or build a library of its own, so closing it leaves nothing behind. The photos stay in their folders and you keep organizing them however you already do. The only thing written elsewhere is Cleanup Mode's analysis, in `~/Library/Caches/Flipic`, which is safe to delete.
+**No import.** Flipic Lens doesn't copy your photos or build a library of its own, so closing it leaves nothing behind. The photos stay in their folders and you keep organizing them however you already do. The only thing written elsewhere is Cleanup Mode's analysis, in `~/Library/Caches/Flipic`, which is safe to delete.
 
 **Ratings as XMP.** Stars are saved as standard XMP, which Lightroom, Bridge and Capture One read, so you never rate twice. JPEG and HEIC only get their metadata changed and are not recompressed; camera RAW ratings go into a .xmp file with the same name, and the RAW itself is never touched.
 
-**Marks as Finder tags.** P adds a Finder tag called Flipic instead of changing the photo. Click the tag in the Finder sidebar and every marked photo is there, with or without Flipic.
+**Marks as Finder tags.** P adds a Finder tag called Flipic instead of changing the photo. Click the tag in the Finder sidebar and every marked photo is there, with or without Flipic Lens.
 
 **Fast paging.** Photos are decoded at the size your screen needs, and the original is read only when you zoom in far enough to see a difference. The next few photos are prepared one at a time in the background so they don't compete with the one you're looking at, and the cache is capped by how much memory your Mac has, so an 8 GB machine isn't swamped. That's why 48-megapixel images keep up when you hold an arrow key.
 
@@ -53,12 +55,12 @@ After a shoot I wanted to go through the photos first, but Preview opens them on
 ## Install
 
 1. Download [Flipic.dmg](https://github.com/xmasdong/flipic/releases/latest/download/Flipic.dmg)
-2. Open the disk image and drag Flipic into Applications
+2. Open the disk image and drag Flipic Lens into Applications
 3. The first time you launch it, macOS reminds you the app came from the internet; click Open
 
 Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Release notes are on the [Releases](https://github.com/xmasdong/flipic/releases) page.
 
-To make Flipic your default viewer, open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go. You can also Control-click an image in Finder, hold ⌥ and choose Always Open With › Flipic.
+To make Flipic Lens your default viewer, open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go. You can also Control-click an image in Finder, hold ⌥ and choose Always Open With › Flipic Lens.
 
 Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, page with the arrow keys, and press Esc to close (turn on Esc Closes Window in Settings first). The Space key in Finder belongs to the system's Quick Look and can't be taken over by another app.
 
@@ -92,7 +94,7 @@ Press 1 to 5 to give a photo one to five stars; the Rating submenu in the right-
 
 **Cleanup Mode**
 
-After an event or a conference shoot with hundreds of frames, press ⇧⌘K. Flipic checks the whole folder on your Mac and sorts the results into four groups: similar bursts, exact duplicates, closed eyes, and blurry or out-of-focus shots. In every burst it suggests the sharpest frame where nobody is blinking as the keeper and checks the rest; for closed eyes, it outlines the face it flagged.
+After an event or a conference shoot with hundreds of frames, press ⇧⌘K. Flipic Lens checks the whole folder on your Mac and sorts the results into four groups: similar bursts, exact duplicates, closed eyes, and blurry or out-of-focus shots. In every burst it suggests the sharpest frame where nobody is blinking as the keeper and checks the rest; for closed eyes, it outlines the face it flagged.
 
 Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. A RAW file and the JPEG with the same name are treated as one photo. Detection can be wrong, so give the selection a quick look before you delete.
 
@@ -110,7 +112,7 @@ Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. 
 
 Pick Photoshop, Lightroom, Capture One or any other app in Settings, then press ⌘E to open the current photo in it. If a RAW file with the same name sits next to the JPEG, the RAW is what gets opened. File › Open With and the right-click menu let you pick a different app on the fly.
 
-To jump between your editor and Flipic, record a global shortcut in Settings › Shortcuts: press it in any app to bring Flipic to the front, and again to hide it.
+To jump between your editor and Flipic Lens, record a global shortcut in Settings › Shortcuts: press it in any app to bring Flipic Lens to the front, and again to hide it.
 
 **Settings and shortcuts**
 
@@ -149,7 +151,7 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 
 Viewing, rating, marking, filtering, exporting, side-by-side comparison and Cleanup Mode stay free, and all of that code is in this repository (MIT).
 
-Flipic Pro is for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 7-day trial. Since 1.0, Pro adds three things:
+Flipic Lens Pro is for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 7-day trial. Since 1.0, Pro adds three things:
 
 - **Workbench** (⌥⌘B): one project per shoot; rate, mark and delete in a grid, filter by closed eyes, blur and bursts, with a large preview showing the shooting settings and a histogram
 - **Find by content** (⌘F): type "dog", "beach" or "night" and the matching photos in the current folder are picked out; turn on the more accurate recognition to search with a phrase such as "dog running on the beach" (a one-time download of about 141 MB in Settings, then fully offline)
@@ -161,11 +163,11 @@ The other Pro features: press E to zoom to the eyes (paging keeps the spot), clo
 
 ## Privacy
 
-Flipic makes no network connections by default, has no account and collects no data. It only reads the images you open. Only when you choose Check for Updates… or turn on automatic update checks in Settings does it fetch a version file (version.json) from the website, sending no data (Pro also reads the list of keys revoked after refunds from that file); only Update Now downloads the new version from GitHub Releases, checks its signature and Apple notarization, and replaces the app. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. Only when you rate a photo does Flipic write the rating into its metadata or a same-name .xmp file. Three other things connect, and only when you trigger them: sending feedback from About Flipic sends only what you wrote, your email and the app and macOS versions; activating Pro registers once with pay.flipic.app (only hashes of the key's order number and of this Mac's device ID, no email or computer name, and activation still works if it fails); downloading the more accurate recognition model in Settings fetches it from GitHub Releases. Recognition and search run on your Mac and photos are never uploaded. All the code is in this repository, so you can check for yourself.
+Flipic Lens makes no network connections by default, has no account and collects no data. It only reads the images you open. Only when you choose Check for Updates… or turn on automatic update checks in Settings does it fetch a version file (version.json) from the website, sending no data (Pro also reads the list of keys revoked after refunds from that file); only Update Now downloads the new version from GitHub Releases, checks its signature and Apple notarization, and replaces the app. Cleanup Mode keeps its analysis in `~/Library/Caches/Flipic` and never writes anything into your photo folders. Only when you rate a photo does Flipic Lens write the rating into its metadata or a same-name .xmp file. Three other things connect, and only when you trigger them: sending feedback from About Flipic Lens sends only what you wrote, your email and the app and macOS versions; activating Pro registers once with pay.flipic.app (only hashes of the key's order number and of this Mac's device ID, no email or computer name, and activation still works if it fails); downloading the more accurate recognition model in Settings fetches it from GitHub Releases. Recognition and search run on your Mac and photos are never uploaded. All the code is in this repository, so you can check for yourself.
 
 ## Building from source
 
-Flipic is written in Swift and AppKit with no third-party dependencies. You need macOS 13 or later and Xcode 15 or the Swift 5.9 command line tools.
+Flipic Lens is written in Swift and AppKit with no third-party dependencies. You need macOS 13 or later and Xcode 15 or the Swift 5.9 command line tools.
 
 ```bash
 git clone https://github.com/xmasdong/flipic.git
@@ -197,7 +199,7 @@ Sources/Photoview/
   CleanupController.swift      Cleanup Mode interface
   SettingsWindowController.swift  Settings window
   Shortcuts.swift              Customizable shortcuts
-  HotKey.swift                 Global shortcut to show / hide Flipic
+  HotKey.swift                 Global shortcut to show / hide Flipic Lens
   Rating.swift                 Star ratings (XMP)
   UpdateChecker.swift          Update check (off by default; fetches version.json from the website)
   Updater.swift                Update Now: download, verify signature and notarization, replace and relaunch
@@ -211,8 +213,8 @@ A few launch arguments help with debugging without touching the UI:
 
 ```bash
 Flipic=build/Flipic.app/Contents/MacOS/Flipic
-$Flipic --bench <folder>            # paging latency, memory, main-thread stalls
-$Flipic --cleanup-report <folder>   # per-photo Cleanup Mode metrics and groups
+$Flipic Lens --bench <folder>            # paging latency, memory, main-thread stalls
+$Flipic Lens --cleanup-report <folder>   # per-photo Cleanup Mode metrics and groups
 ```
 
 ## Contributing
