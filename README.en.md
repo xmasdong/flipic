@@ -26,7 +26,7 @@
 
 ![Flipic Lens browsing a folder](docs/screenshot-browse.jpg)
 
-After a shoot I wanted to go through the photos first, but Preview opens them one at a time and Lightroom wants an import. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is 4.7 MB, it makes no network connections by default, and there is no account.
+After a shoot I wanted to go through the photos first, but Preview opens them one at a time and Lightroom wants an import. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is 4.8 MB, it makes no network connections by default, and there is no account.
 
 
 ## Culling a shoot
