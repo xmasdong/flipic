@@ -245,7 +245,7 @@ Return  重新命名目前圖片
 "sc.group.view" = "顯示";
 "sc.group.file" = "檔案";
 "sc.group.tools" = "工具";
-"sc.a.zoomAtPointer" = "在滑鼠處放大到 100%，再按復原";
+"sc.a.zoomAtPointer" = "在滑鼠處放大到 100%，再按復原；按住時放開即復原";
 "sc.a.peek" = "貼合照片比例預覽";
 "sc.a.fullscreen" = "全螢幕";
 "sc.recording" = "按下快速鍵…";

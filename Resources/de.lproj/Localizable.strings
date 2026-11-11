@@ -245,7 +245,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "sc.group.view" = "Darstellung";
 "sc.group.file" = "Ablage";
 "sc.group.tools" = "Werkzeuge";
-"sc.a.zoomAtPointer" = "Am Zeiger auf 100 % zoomen, erneut drücken zum Anpassen";
+"sc.a.zoomAtPointer" = "Am Zeiger auf 100 % zoomen, erneut drücken zum Anpassen; gedrückt halten zum Ansehen, loslassen zum Anpassen";
 "sc.a.peek" = "Vorschau im Seitenverhältnis des Fotos";
 "sc.a.fullscreen" = "Vollbild";
 "sc.recording" = "Kurzbefehl drücken …";

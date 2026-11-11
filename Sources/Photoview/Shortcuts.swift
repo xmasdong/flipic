@@ -158,7 +158,7 @@ enum ShortcutAction: String, CaseIterable {
         case .last: return L10n.t("menu.last", "最后一张")
         case .zoomIn: return L10n.t("menu.zoomIn", "放大")
         case .zoomOut: return L10n.t("menu.zoomOut", "缩小")
-        case .zoomAtPointer: return L10n.t("sc.a.zoomAtPointer", "在鼠标处放大到 100%，再按恢复")
+        case .zoomAtPointer: return L10n.t("sc.a.zoomAtPointer", "在鼠标处放大到 100%，再按恢复；按住时松手即恢复")
         case .actualSize: return L10n.t("menu.actualSize", "实际大小 (100%)")
         case .peek: return L10n.t("sc.a.peek", "贴合照片比例预览")
         case .fullscreen: return L10n.t("sc.a.fullscreen", "全屏")

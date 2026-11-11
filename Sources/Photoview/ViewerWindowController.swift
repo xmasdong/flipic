@@ -1,6 +1,8 @@
 import AppKit
 
 final class ViewerWindowController: NSWindowController {
+    /// 记窗口大小位置用的名字：沿用改名前的，保留老用户的窗口
+    static let frameName = "PixDeckMainWindow"
 
     convenience init() {
         let window = NSWindow(
@@ -13,13 +15,35 @@ final class ViewerWindowController: NSWindowController {
         window.backgroundColor = .black
         window.isOpaque = true
         window.minSize = NSSize(width: 640, height: 420)
-        // 沿用改名前的键，保留老用户的窗口大小和位置；第一次打开才居中。
-        // 自动保存的名字要设在窗口控制器上：设在窗口上会被控制器自己的空名字盖掉，位置一直存不下来
-        if !window.setFrameUsingName("PixDeckMainWindow") { window.center() }
         self.init(window: window)
         shouldCascadeWindows = false
-        windowFrameAutosaveName = "PixDeckMainWindow"
         contentViewController = ViewerViewController()
+        // 用上次的大小和位置；第一次打开才居中。要放在装内容之后：装内容时窗口会按内容视图的默认大小重设一次
+        if !window.setFrameUsingName(Self.frameName) { window.center() }
+        // 自己存，不用系统的自动保存：一个名字同一时间只归一个窗口，关掉的窗口没释放前名字还占着，
+        // 后开的窗口（访达里每双击一张就新开一个）改了大小也存不下来，下次双击又是默认大小
+        let nc = NotificationCenter.default
+        for name in [NSWindow.didResizeNotification, NSWindow.didMoveNotification, NSWindow.didEndLiveResizeNotification] {
+            nc.addObserver(self, selector: #selector(rememberFrame(_:)), name: name, object: window)
+        }
+        nc.addObserver(self, selector: #selector(fullScreenTransition(_:)), name: NSWindow.willEnterFullScreenNotification, object: window)
+        nc.addObserver(self, selector: #selector(fullScreenTransition(_:)), name: NSWindow.willExitFullScreenNotification, object: window)
+        nc.addObserver(self, selector: #selector(fullScreenTransition(_:)), name: NSWindow.didEnterFullScreenNotification, object: window)
+        nc.addObserver(self, selector: #selector(fullScreenTransition(_:)), name: NSWindow.didExitFullScreenNotification, object: window)
+    }
+
+    /// 进出全屏的动画过程中也会发调整大小，那时的大小不记
+    private var inFullScreenTransition = false
+    @objc private func fullScreenTransition(_ note: Notification) {
+        inFullScreenTransition = note.name == NSWindow.willEnterFullScreenNotification || note.name == NSWindow.willExitFullScreenNotification
+    }
+
+    /// 记下普通窗口的大小和位置，下次打开沿用。全屏、最小化不记；
+    /// 贴合照片比例的预览也不记（进入预览前的大小在那之前已经记过了）
+    @objc private func rememberFrame(_ note: Notification) {
+        guard let w = window, w.isVisible, !inFullScreenTransition, !w.styleMask.contains(.fullScreen), !w.isMiniaturized,
+              viewerVC?.isPeeking != true else { return }
+        w.saveFrame(usingName: Self.frameName)
     }
 
     private var viewerVC: ViewerViewController? { contentViewController as? ViewerViewController }
@@ -59,6 +83,7 @@ final class ViewerWindowController: NSWindowController {
     func runCompareTest(outDir: String) { viewerVC?.runCompareTest(outDir: outDir) }
     func runPNGTest(outDir: String, folder: String) { viewerVC?.runPNGTest(outDir: outDir, folder: folder) }
     func runRawTest(outDir: String) { viewerVC?.runRawTest(outDir: outDir) }
+    func runZoomKeyTest() { viewerVC?.runZoomKeyTest() }
     func runExportTest(outDir: String) { viewerVC?.runExportTest(outDir: outDir) }
     func runRatingShot(outDir: String) { viewerVC?.runRatingShot(outDir: outDir) }
     func runSettingsTest(outDir: String) { viewerVC?.runSettingsTest(outDir: outDir) }

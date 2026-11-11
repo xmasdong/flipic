@@ -5212,6 +5212,66 @@ final class ViewerViewController: NSViewController {
         at(0.5) { NSApp.terminate(nil) }
     }
 
+    /// --zoomkeytest：0 键短按切换、按住（含系统重复事件）松手还原、已放大时按住
+    func runZoomKeyTest() {
+        func ev(_ type: NSEvent.EventType, repeatKey: Bool = false) -> NSEvent? {
+            NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: view.window?.windowNumber ?? 0,
+                             context: nil, characters: "0", charactersIgnoringModifiers: "0", isARepeat: repeatKey, keyCode: 29)
+        }
+        func down(_ r: Bool = false) { if let e = ev(.keyDown, repeatKey: r) { imageView.keyDown(with: e) } }
+        func up() { if let e = ev(.keyUp) { imageView.keyUp(with: e) } }
+        func st() -> String { imageView.isFit ? "fit" : String(format: "x%.2f", imageView.displayedScale) }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.5) { self.view.window?.makeFirstResponder(self.imageView); NSLog("ZK 0-start %@", st()) }
+        // 短按：放大，松手保持
+        at(0.2) { down() }
+        at(0.1) { up() }
+        at(0.5) { NSLog("ZK 1-tap -> %@ (want zoomed)", st()) }
+        at(0.2) { down() }
+        at(0.1) { up() }
+        at(0.5) { NSLog("ZK 2-tap again -> %@ (want fit)", st()) }
+        // 按住：中间系统连发重复事件，画面不能来回切；松手回到适应窗口
+        at(0.2) { down() }
+        for _ in 0..<6 { at(0.08) { down(true) } }
+        at(0.2) { NSLog("ZK 3-holding -> %@ (want zoomed)", st()) }
+        at(0.1) { up() }
+        at(0.5) { NSLog("ZK 4-released -> %@ (want fit)", st()) }
+        // 已经放大时按住：这一下是还原，松手不再放大
+        at(0.2) { down() }
+        at(0.1) { up() }
+        at(0.5) { NSLog("ZK 5-zoomed -> %@", st()) }
+        at(0.2) { down() }
+        at(0.6) { up() }
+        at(0.5) { NSLog("ZK 6-hold while zoomed -> %@ (want fit)", st()) }
+        // 按住时拖动看别处：位置要跟着鼠标走，仍是放大；松手回到适应窗口
+        let b = imageView.bounds
+        func mouse(_ type: NSEvent.EventType, _ x: CGFloat, _ y: CGFloat) -> NSEvent? {
+            let p = imageView.convert(CGPoint(x: x, y: y), to: nil)
+            return NSEvent.mouseEvent(with: type, location: p, modifierFlags: [], timestamp: 0, windowNumber: view.window?.windowNumber ?? 0,
+                                      context: nil, eventNumber: 0, clickCount: 1, pressure: 1)
+        }
+        var o0 = CGPoint.zero
+        at(0.2) { down() }
+        for _ in 0..<5 { at(0.08) { down(true) } }
+        at(0.1) { o0 = self.imageView.debugOrigin; if let e = mouse(.leftMouseDown, b.midX, b.midY) { self.imageView.mouseDown(with: e) } }
+        for i in 1...5 { at(0.05) { if let e = mouse(.leftMouseDragged, b.midX + CGFloat(i) * 40, b.midY + CGFloat(i) * 20) { self.imageView.mouseDragged(with: e) } } }
+        at(0.1) {
+            let o = self.imageView.debugOrigin
+            NSLog("ZK 7-drag while holding -> %@ moved=(%.0f,%.0f) (want zoomed, moved 200,100)", st(), o.x - o0.x, o.y - o0.y)
+        }
+        // 拖到一半松开 0：回到适应窗口，鼠标继续拖也不能把图拖走
+        at(0.1) { up() }
+        at(0.5) { o0 = self.imageView.debugOrigin }
+        for i in 6...8 { at(0.05) { if let e = mouse(.leftMouseDragged, b.midX + CGFloat(i) * 40, b.midY) { self.imageView.mouseDragged(with: e) } } }
+        at(0.1) {
+            let o = self.imageView.debugOrigin
+            NSLog("ZK 8-release mid-drag, keep dragging -> %@ moved=(%.0f,%.0f) (want fit, moved 0,0)", st(), o.x - o0.x, o.y - o0.y)
+            if let e = mouse(.leftMouseUp, b.midX, b.midY) { self.imageView.mouseUp(with: e) }
+        }
+        at(0.3) { NSApp.terminate(nil) }
+    }
+
     /// --exporttest <输出目录> <文件夹>：只看 4 星以上 → 复制到 copy/（里面先放一个同名文件）→ 移动到 move/ → 回到剩下的全部照片。
     /// 星级要事先写好：a.jpg 5 星、pair 4 星（RAW 用旁车 .xmp）、c.jpg 2 星
     func runExportTest(outDir: String) {
@@ -6185,6 +6245,10 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 测试用：当前是否在贴合预览、窗口比例、是不是打开时自动进的
+    /// 正在按照片比例预览（窗口临时变成照片的形状）
+    var isPeeking: Bool { peekSaved != nil }
+    func debugEnterPeek() { imageView.enterPeek() }
+
     var debugPeekState: String {
         let f = view.window?.frame ?? .zero
         let px = imageView.pixelSize

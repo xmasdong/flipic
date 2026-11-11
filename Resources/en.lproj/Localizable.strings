@@ -257,7 +257,7 @@ Drop a folder or image to open";
 "sc.group.view" = "View";
 "sc.group.file" = "File";
 "sc.group.tools" = "Tools";
-"sc.a.zoomAtPointer" = "Zoom to 100% at pointer, press again to fit";
+"sc.a.zoomAtPointer" = "Zoom to 100% at pointer, press again to fit; hold to peek, release to fit";
 "sc.a.peek" = "Preview fitted to the photo";
 "sc.a.fullscreen" = "Full Screen";
 "sc.recording" = "Type shortcut…";

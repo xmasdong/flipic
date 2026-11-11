@@ -257,7 +257,7 @@ Esc  先关掉右上角的照片信息
 "sc.group.view" = "显示";
 "sc.group.file" = "文件";
 "sc.group.tools" = "工具";
-"sc.a.zoomAtPointer" = "在鼠标处放大到 100%，再按恢复";
+"sc.a.zoomAtPointer" = "在鼠标处放大到 100%，再按恢复；按住时松手即恢复";
 "sc.a.peek" = "贴合照片比例预览";
 "sc.a.fullscreen" = "全屏";
 "sc.recording" = "按下快捷键…";

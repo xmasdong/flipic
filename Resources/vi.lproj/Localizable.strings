@@ -245,7 +245,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "sc.group.view" = "Hiển thị";
 "sc.group.file" = "Tệp";
 "sc.group.tools" = "Công cụ";
-"sc.a.zoomAtPointer" = "Phóng to 100% tại con trỏ, nhấn lần nữa để trở lại";
+"sc.a.zoomAtPointer" = "Phóng to 100% tại con trỏ, nhấn lần nữa để trở lại; giữ để xem, thả ra để trở lại";
 "sc.a.peek" = "Xem trước vừa tỷ lệ ảnh";
 "sc.a.fullscreen" = "Toàn màn hình";
 "sc.recording" = "Nhấn phím tắt…";

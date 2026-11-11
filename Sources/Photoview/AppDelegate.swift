@@ -154,6 +154,71 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             NSApp.terminate(nil)
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--winsizecold"), i + 1 < CommandLine.arguments.count {
+            // --winsizecold <文件> [宽x高]：冷启动打开一张，报窗口大小；给了大小就改成它再退出，下一次冷启动看是否沿用
+            let file = URL(fileURLWithPath: CommandLine.arguments[i + 1])
+            let target = i + 2 < CommandLine.arguments.count ? CommandLine.arguments[i + 2].split(separator: "x").compactMap { Double($0) } : []
+            buildMenu()
+            launched = true
+            application(NSApp, open: [file])
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                guard let w = self.activeController?.window else { NSApp.terminate(nil); return }
+                NSLog("WSC open -> %dx%d", Int(w.frame.width), Int(w.frame.height))
+                if target.count == 2 { w.setFrame(NSRect(x: w.frame.minX, y: w.frame.maxY - target[1], width: target[0], height: target[1]), display: true) }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { NSApp.terminate(nil) }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--winsizetest"), i + 2 < CommandLine.arguments.count {
+            // --winsizetest <文件1> <文件2>：从访达双击打开、拖窗口大小、关窗，下次双击要沿用上次的大小。
+            // 窗口全关了 App 还在后台；同时开两个窗口时，改的是后开的那个
+            let a = URL(fileURLWithPath: CommandLine.arguments[i + 1]), b = URL(fileURLWithPath: CommandLine.arguments[i + 2])
+            let key = "NSWindow Frame " + ViewerWindowController.frameName
+            let savedFrame = UserDefaults.standard.object(forKey: key)
+            UserDefaults.standard.removeObject(forKey: key)
+            buildMenu()
+            launched = true
+            func size() -> String {
+                guard let w = self.activeController?.window else { return "-" }
+                return "\(Int(w.frame.width))x\(Int(w.frame.height))"
+            }
+            func resize(_ w: CGFloat, _ h: CGFloat) {
+                guard let win = self.activeController?.window else { return }
+                win.setFrame(NSRect(x: win.frame.minX, y: win.frame.maxY - h, width: w, height: h), display: true)
+            }
+            var t = 0.0
+            func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+            at(0.5) { self.application(NSApp, open: [a]) }
+            at(1.0) { NSLog("WS 1-first open -> %@ (default 1280x860)", size()); resize(900, 600) }
+            at(0.3) { NSLog("WS 1b-saved=%@", UserDefaults.standard.string(forKey: key) ?? "nil"); self.activeController?.window?.performClose(nil) }
+            at(0.5) { NSLog("WS 1c-saved after close=%@", UserDefaults.standard.string(forKey: key) ?? "nil"); self.application(NSApp, open: [b]) }
+            at(1.0) { NSLog("WS 2-reopen after close -> %@ (want 900x600)", size()); resize(1000, 700) }
+            at(0.3) { self.activeController?.window?.performClose(nil) }
+            at(0.5) { self.application(NSApp, open: [a]) }
+            at(1.0) { NSLog("WS 3-reopen again -> %@ (want 1000x700)", size()) }
+            // 第一个窗口还开着时再双击一张：新窗口和前面的一样大；改它的大小，两个都关掉，下次用它的大小
+            at(0.2) { self.application(NSApp, open: [b]) }
+            at(1.0) { NSLog("WS 4-second window -> %@ windows=%d (want 1000x700, 2)", size(), self.controllers.count); resize(1100, 750) }
+            at(0.3) { self.controllers.first?.window?.performClose(nil) }
+            at(0.3) { self.controllers.first?.window?.performClose(nil) }
+            at(0.5) { self.application(NSApp, open: [a]) }
+            at(1.0) { NSLog("WS 5-after two windows -> %@ (want 1100x750)", size()) }
+            // 全屏的大小不记：全屏时关掉，下次还是全屏前的窗口
+            at(0.2) { self.activeController?.window?.toggleFullScreen(nil) }
+            at(2.0) { NSLog("WS 6-fullscreen -> %@", size()); self.activeController?.window?.performClose(nil) }
+            at(1.5) { self.application(NSApp, open: [b]) }
+            at(1.5) { NSLog("WS 7-after fullscreen close -> %@ (want 1100x750)", size()) }
+            // 空格预览时窗口变成照片的形状，这时关掉，下次也还是普通窗口的大小
+            at(0.2) { (self.activeController?.contentViewController as? ViewerViewController)?.debugEnterPeek() }
+            at(1.0) { NSLog("WS 8-peek -> %@", size()); self.activeController?.window?.performClose(nil) }
+            at(0.5) { self.application(NSApp, open: [a]) }
+            at(1.0) { NSLog("WS 9-after peek close -> %@ (want 1100x750)", size()) }
+            at(0.3) {
+                if let savedFrame { UserDefaults.standard.set(savedFrame, forKey: key) } else { UserDefaults.standard.removeObject(forKey: key) }
+                NSApp.terminate(nil)
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--multiwintest"), i + 1 < CommandLine.arguments.count {
             // --multiwintest <文件...>：模拟从访达逐个打开、一次打开多张、关掉一个、改设置、关掉开关后替换
             let files = CommandLine.arguments[(i + 1)...].filter { !$0.hasPrefix("-") && !$0.hasPrefix("(") }.map { URL(fileURLWithPath: $0) }
@@ -865,6 +930,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runExportTest(outDir: outDir) }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--zoomkeytest"), i + 1 < CommandLine.arguments.count {
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runZoomKeyTest() }
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--rawtest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]

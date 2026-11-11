@@ -245,7 +245,7 @@ Arraste uma pasta ou imagem para abrir";
 "sc.group.view" = "Visualizar";
 "sc.group.file" = "Arquivo";
 "sc.group.tools" = "Ferramentas";
-"sc.a.zoomAtPointer" = "Zoom de 100% no ponteiro, pressione de novo para ajustar";
+"sc.a.zoomAtPointer" = "Zoom de 100% no ponteiro, pressione de novo para ajustar; segure para espiar, solte para ajustar";
 "sc.a.peek" = "Pré-visualização ajustada à foto";
 "sc.a.fullscreen" = "Tela cheia";
 "sc.recording" = "Digite o atalho…";

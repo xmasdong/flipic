@@ -245,7 +245,7 @@ Açmak için klasör veya resim sürükleyin";
 "sc.group.view" = "Görüntü";
 "sc.group.file" = "Dosya";
 "sc.group.tools" = "Araçlar";
-"sc.a.zoomAtPointer" = "İmleçte %100'e yakınlaştır, tekrar basınca sığdır";
+"sc.a.zoomAtPointer" = "İmleçte %100'e yakınlaştır, tekrar basınca sığdır; basılı tutup bırakınca sığdır";
 "sc.a.peek" = "Fotoğrafa uyan önizleme";
 "sc.a.fullscreen" = "Tam ekran";
 "sc.recording" = "Kısayola basın…";

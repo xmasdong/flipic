@@ -245,7 +245,7 @@ Return  表示中の画像を名称変更
 "sc.group.view" = "表示";
 "sc.group.file" = "ファイル";
 "sc.group.tools" = "ツール";
-"sc.a.zoomAtPointer" = "ポインタの位置で 100% に拡大、もう一度押すと戻す";
+"sc.a.zoomAtPointer" = "ポインタの位置で 100% に拡大、もう一度押すと戻す。押し続けると離したときに戻る";
 "sc.a.peek" = "写真の縦横比に合わせてプレビュー";
 "sc.a.fullscreen" = "フルスクリーン";
 "sc.recording" = "キーを押してください…";

@@ -103,6 +103,8 @@ final class ZoomableImageView: NSView {
     var rotationTurns: Int { quarterTurns }
 
     var displayedScale: CGFloat { scale }
+    /// 测试用：图像当前位置
+    var debugOrigin: CGPoint { origin }
 
     /// 诊断用：当前缩放是否等于适应窗口、图片中心偏离视图中心多少点
     var fitDiagnostics: String {
@@ -904,6 +906,25 @@ final class ZoomableImageView: NSView {
         }
     }
 
+    /// 按住放大键：按下时从适应窗口放大的那次，记下键码和时间
+    private var heldZoomKey: (code: UInt16, at: CFTimeInterval)?
+    /// 按住超过这么久才算「按住看一眼」，松手还原；短按照旧是切换
+    static let springHoldSeconds: CFTimeInterval = 0.3
+
+    override func keyUp(with event: NSEvent) {
+        if let held = heldZoomKey, held.code == event.keyCode {
+            heldZoomKey = nil
+            if CACurrentMediaTime() - held.at >= Self.springHoldSeconds, mode != .fit {
+                // 按住时可以拖着看别处；拖到一半松开 0，这次拖动作废，不然鼠标再动会把还原后的整张图拖走
+                dragStartOrigin = nil
+                dragStartPoint = nil
+                fit(animate: true)
+            }
+            return
+        }
+        super.keyUp(with: event)
+    }
+
     override func keyDown(with event: NSEvent) {
         onActivity?()
         if onKeyIntercept?(event) == true { return }
@@ -928,7 +949,13 @@ final class ZoomableImageView: NSView {
         case .last: onLast?()
         case .zoomIn: zoomIn()
         case .zoomOut: zoomOut()
-        case .zoomAtPointer: toggleFitActual(at: mouseInView)   // 同 Lyn：在鼠标处放大到 100%，再按恢复
+        case .zoomAtPointer:
+            // 同 Lyn：在鼠标处放大到 100%，再按恢复。按住不放时系统会连发，只认第一次按下；
+            // 按住超过一会儿再松开算「看一眼」，松手就回到适应窗口（弹簧式，见 keyUp）
+            guard !event.isARepeat else { return }
+            let zoomingIn = mode == .fit
+            toggleFitActual(at: mouseInView)
+            heldZoomKey = zoomingIn ? (event.keyCode, CACurrentMediaTime()) : nil
         case .actualSize: actualSize()
         case .peek:
             // 按住不放时系统会连发重复事件，只认第一次按下

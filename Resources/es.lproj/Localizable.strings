@@ -245,7 +245,7 @@ Arrastra una carpeta o imagen para abrir";
 "sc.group.view" = "Visualización";
 "sc.group.file" = "Archivo";
 "sc.group.tools" = "Herramientas";
-"sc.a.zoomAtPointer" = "Zoom al 100 % en el puntero, pulsa otra vez para ajustar";
+"sc.a.zoomAtPointer" = "Zoom al 100 % en el puntero, pulsa otra vez para ajustar; mantén pulsado para mirar y suelta para ajustar";
 "sc.a.peek" = "Vista previa ajustada a la foto";
 "sc.a.fullscreen" = "Pantalla completa";
 "sc.recording" = "Pulsa el atajo…";

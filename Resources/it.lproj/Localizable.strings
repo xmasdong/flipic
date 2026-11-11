@@ -245,7 +245,7 @@ Trascina una cartella o un'immagine per aprire";
 "sc.group.view" = "Vista";
 "sc.group.file" = "File";
 "sc.group.tools" = "Strumenti";
-"sc.a.zoomAtPointer" = "Zoom al 100% sul puntatore, premi di nuovo per adattare";
+"sc.a.zoomAtPointer" = "Zoom al 100% sul puntatore, premi di nuovo per adattare; tieni premuto per guardare, rilascia per adattare";
 "sc.a.peek" = "Anteprima adattata alla foto";
 "sc.a.fullscreen" = "Schermo intero";
 "sc.recording" = "Premi l’abbreviazione…";

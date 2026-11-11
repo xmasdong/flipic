@@ -245,7 +245,7 @@ Déposez un dossier ou une image pour ouvrir";
 "sc.group.view" = "Présentation";
 "sc.group.file" = "Fichier";
 "sc.group.tools" = "Outils";
-"sc.a.zoomAtPointer" = "Zoomer à 100 % sous le pointeur, appuyer à nouveau pour ajuster";
+"sc.a.zoomAtPointer" = "Zoomer à 100 % sous le pointeur, appuyer à nouveau pour ajuster ; maintenir pour un aperçu, relâcher pour ajuster";
 "sc.a.peek" = "Aperçu ajusté au format de la photo";
 "sc.a.fullscreen" = "Plein écran";
 "sc.recording" = "Tapez le raccourci…";
