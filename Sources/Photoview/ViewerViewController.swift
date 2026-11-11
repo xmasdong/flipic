@@ -5185,6 +5185,33 @@ final class ViewerViewController: NSViewController {
         at(0.5) { NSApp.terminate(nil) }
     }
 
+    /// --rawtest <截图目录> <文件夹>：每个文件记下尺寸、预览 / 原图 / 缩略图能否解出、是否走了内嵌预览，并截图
+    func runRawTest(outDir: String) {
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        for (k, item) in folder.items.enumerated() {
+            let u = item.url
+            at(0.3) { self.goTo(k) }
+            at(2.0) {
+                let info = self.loader.info(for: u)
+                let pv = self.loader.preview(for: u, maxPixel: 2000)
+                let full = ImageLoader.decodedFull(url: u)
+                let th = ImageLoader.renderThumbnail(url: u, maxPixel: 160, allowEmbedded: true)
+                NSLog("RAW sim=%d %@ info=%@ preview=%@ full=%@ thumb=%@ embedded=%d shown=%@", ImageLoader.debugIgnoreSystemRAW ? 1 : 0, u.lastPathComponent,
+                      info.map { "\(Int($0.pixelSize.width))x\(Int($0.pixelSize.height))" } ?? "nil",
+                      pv.map { "\($0.width)x\($0.height)" } ?? "nil", full.map { "\($0.width)x\($0.height)" } ?? "nil",
+                      th.map { "\($0.width)x\($0.height)" } ?? "nil", EmbeddedPreview.debugUsed(u) ? 1 : 0,
+                      self.imageView.pixelSize == .zero ? "blank" : "\(Int(self.imageView.pixelSize.width))x\(Int(self.imageView.pixelSize.height))")
+                self.captureWindow(to: "\(outDir)/\(k)-\(u.lastPathComponent).png", raw: true)
+                // 屏幕锁着时窗口截图是黑的：把解出来的预览图也存一份，直接看解码结果
+                if let pv, let d = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/\(k)-\(u.lastPathComponent)-preview.jpg") as CFURL, "public.jpeg" as CFString, 1, nil) {
+                    CGImageDestinationAddImage(d, pv, nil); CGImageDestinationFinalize(d)
+                }
+            }
+        }
+        at(0.5) { NSApp.terminate(nil) }
+    }
+
     /// --exporttest <输出目录> <文件夹>：只看 4 星以上 → 复制到 copy/（里面先放一个同名文件）→ 移动到 move/ → 回到剩下的全部照片。
     /// 星级要事先写好：a.jpg 5 星、pair 4 星（RAW 用旁车 .xmp）、c.jpg 2 星
     func runExportTest(outDir: String) {

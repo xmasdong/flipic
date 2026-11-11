@@ -89,6 +89,7 @@ final class ImageLoader {
         "jpg", "jpeg", "jpe", "png", "heic", "heif", "webp", "gif", "bmp",
         "tif", "tiff", "jp2", "jxl", "avif", "ico", "icns",
         "dng", "arw", "cr2", "cr3", "nef", "raf", "orf", "rw2", "srw", "pef",
+        "nrw", "crw", "sr2", "srf", "3fr", "fff", "iiq", "erf", "rwl", "mrw", "kdc", "dcr", "mef", "mos", "gpr", "x3f",
         "psd", "tga", "exr", "hdr",
     ]
 
@@ -131,12 +132,13 @@ final class ImageLoader {
     static func renderThumbnail(url: URL, maxPixel: CGFloat, allowEmbedded: Bool = false, hdr: Bool = false) -> CGImage? {
         if Video.isVideo(url) { return Video.poster(url, maxPixel: maxPixel) }
         // 用内嵌缩略图时只读文件头那一小段，不整个读
-        guard let src = allowEmbedded
-                ? CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary)
-                : imageSource(url: url) else {
-            return nil
-        }
-        return renderThumbnail(source: src, maxPixel: maxPixel, allowEmbedded: allowEmbedded, hdr: hdr)
+        let src = allowEmbedded
+            ? CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary)
+            : imageSource(url: url)
+        let simulateOld = debugIgnoreSystemRAW && !allowEmbedded && CleanupUnit.isRaw(url)
+        if !simulateOld, let src, let img = renderThumbnail(source: src, maxPixel: maxPixel, allowEmbedded: allowEmbedded, hdr: hdr) { return img }
+        // 系统还不支持这台相机的 RAW：用文件里的 JPEG 预览
+        return CleanupUnit.isRaw(url) ? EmbeddedPreview.image(url, maxPixel: maxPixel) : nil
     }
 
     static func renderThumbnail(source src: CGImageSource, maxPixel: CGFloat, allowEmbedded: Bool = false, hdr: Bool = false) -> CGImage? {
@@ -167,14 +169,25 @@ final class ImageLoader {
             infoCache.setObject(InfoBox(info), forKey: url as NSURL)
             return info
         }
-        guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else {
+            return embeddedInfo(for: url)
+        }
         return info(for: url, source: src)
     }
 
+    /// 系统读不出尺寸的 RAW：按内嵌 JPEG 预览的尺寸算
+    private func embeddedInfo(for url: URL) -> ImageInfo? {
+        guard CleanupUnit.isRaw(url), let f = EmbeddedPreview.locate(url) else { return nil }
+        let info = ImageInfo(pixelSize: f.size, isAnimated: false)
+        infoCache.setObject(InfoBox(info), forKey: url as NSURL)
+        return info
+    }
+
     private func info(for url: URL, source src: CGImageSource) -> ImageInfo? {
-        guard let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] else { return nil }
+        guard let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] else { return embeddedInfo(for: url) }
         let w = props[kCGImagePropertyPixelWidth as String] as? Int ?? 0
         let h = props[kCGImagePropertyPixelHeight as String] as? Int ?? 0
+        if w == 0 || h == 0, let e = embeddedInfo(for: url) { return e }
         let orientation = props[kCGImagePropertyOrientation as String] as? Int ?? 1
         let swapped = (5...8).contains(orientation)
         let info = ImageInfo(pixelSize: swapped ? CGSize(width: h, height: w) : CGSize(width: w, height: h),
@@ -279,6 +292,14 @@ final class ImageLoader {
     /// 全分辨率解码（带 EXIF 方向校正），不写缓存；maxPixel 给出时最长边不超过它
     static func decodedFull(url: URL, maxPixel: CGFloat? = nil, hdr: Bool = false) -> CGImage? {
         if Video.isVideo(url) { return Video.poster(url, maxPixel: maxPixel) }
+        if !(debugIgnoreSystemRAW && CleanupUnit.isRaw(url)), let img = systemDecodedFull(url: url, maxPixel: maxPixel, hdr: hdr) { return img }
+        return CleanupUnit.isRaw(url) ? EmbeddedPreview.image(url, maxPixel: maxPixel) : nil
+    }
+
+    /// 测试用：当作系统解不了 RAW（缩略图照常），在新系统上模拟老 macOS 打开新相机 RAW 的样子
+    static let debugIgnoreSystemRAW = UserDefaults.standard.bool(forKey: "debugIgnoreSystemRAW")
+
+    private static func systemDecodedFull(url: URL, maxPixel: CGFloat?, hdr: Bool) -> CGImage? {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else {
             return nil
         }

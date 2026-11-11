@@ -866,6 +866,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runExportTest(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--rawtest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runRawTest(outDir: outDir) }
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--pngtest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runPNGTest(outDir: outDir, folder: folder) }

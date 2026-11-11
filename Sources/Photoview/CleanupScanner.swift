@@ -12,7 +12,8 @@ struct CleanupUnit: Hashable {
 
     var allURLs: [URL] { [primary] + companions }
 
-    static let rawExtensions: Set<String> = ["dng", "arw", "cr2", "cr3", "nef", "raf", "orf", "rw2", "srw", "pef"]
+    static let rawExtensions: Set<String> = ["dng", "arw", "cr2", "cr3", "nef", "raf", "orf", "rw2", "srw", "pef",
+                                             "nrw", "crw", "sr2", "srf", "3fr", "fff", "iiq", "erf", "rwl", "mrw", "kdc", "dcr", "mef", "mos", "gpr", "x3f"]
 
     static func isRaw(_ url: URL) -> Bool { rawExtensions.contains(url.pathExtension.lowercased()) }
 
