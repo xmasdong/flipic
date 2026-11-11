@@ -73,6 +73,8 @@ final class ZoomableImageView: NSView {
         layer?.addSublayer(backdropLayer)
         layer?.addSublayer(imageLayer)
         imageLayer.isHidden = true
+        NotificationCenter.default.addObserver(self, selector: #selector(settingsDidChange(_:)),
+                                               name: SettingsWindowController.didChange, object: nil)
         imageLayer.magnificationFilter = .trilinear
         imageLayer.minificationFilter = .trilinear
 
@@ -126,6 +128,11 @@ final class ZoomableImageView: NSView {
         }
         baseImage = newSrc
         image = displayed
+        // 草图换清晰图时草图没有标记，保留上一次的判断，免得棋盘格闪一下
+        if isNew || ImageLoader.isTransparent(newSrc) || newSrc == nil {
+            imageIsTransparent = ImageLoader.isTransparent(newSrc)
+            updateTransparencyGrid()
+        }
         // 换图默认直接切换；打开「翻页渐变」或幻灯片放映时淡入淡出
         let fade: TimeInterval? = isNew ? (pendingFadeDuration ?? (Self.fadeTransition ? 0.25 : nil)) : nil
         if isNew { pendingFadeDuration = nil }
@@ -155,6 +162,43 @@ final class ZoomableImageView: NSView {
 
     /// 照片没铺满窗口时周围露出来的底：纯黑、磨砂玻璃（透出窗口后面的桌面再模糊，系统材质）、照片色磨砂
     enum BackdropStyle: Int { case black, glass, photo }
+
+    /// 设置 › 通用 › 背景：带透明的图（PNG、GIF 等）透明的地方垫棋盘格，看得出哪里是空的。默认开
+    static var showsTransparencyGrid: Bool {
+        get { UserDefaults.standard.object(forKey: "transparencyGrid") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "transparencyGrid") }
+    }
+
+    /// 8 点一格的浅灰棋盘格，按屏幕点固定大小，放大缩小格子都不变（和 Photoshop 一样）
+    private static let checkerColor: CGColor = {
+        let cell: CGFloat = 8
+        let img = NSImage(size: NSSize(width: cell * 2, height: cell * 2), flipped: false) { r in
+            NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1).setFill(); r.fill()
+            NSColor(srgbRed: 0.8, green: 0.8, blue: 0.8, alpha: 1).setFill()
+            NSRect(x: 0, y: 0, width: cell, height: cell).fill()
+            NSRect(x: cell, y: cell, width: cell, height: cell).fill()
+            return true
+        }
+        return NSColor(patternImage: img).cgColor
+    }()
+
+    /// 当前这张是不是带透明（动图的帧单独判断）
+    private var imageIsTransparent = false
+
+    private func updateTransparencyGrid() {
+        let on = Self.showsTransparencyGrid && imageIsTransparent
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        imageLayer.backgroundColor = on ? Self.checkerColor : nil
+        CATransaction.commit()
+    }
+
+    /// 测试用：现在是否垫着棋盘格
+    var debugTransparencyGrid: Bool { imageLayer.backgroundColor != nil }
+
+    @objc private func settingsDidChange(_ n: Notification) {
+        if n.userInfo?["what"] as? String == "transparencyGrid" { updateTransparencyGrid() }
+    }
 
     /// 设置 › 通用 › 背景，默认照片色磨砂
     static var backdropStyle: BackdropStyle {
@@ -310,6 +354,8 @@ final class ZoomableImageView: NSView {
                     : frame
                 self.image = display
                 self.imageLayer.contents = display
+                let clear = ImageLoader.hasAlphaChannel(frame)
+                if clear != self.imageIsTransparent { self.imageIsTransparent = clear; self.updateTransparencyGrid() }
                 if !gotFirst {
                     gotFirst = true
                     self.logicalSize = CGSize(width: frame.width, height: frame.height)

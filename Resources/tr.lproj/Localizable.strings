@@ -811,3 +811,8 @@ Açmak için klasör veya resim sürükleyin";
 "exif.mMultiSpot" = "Çok noktalı";
 "exif.mPattern" = "Matris";
 "exif.mPartial" = "Kısmi";
+"set.transparencyGrid" = "Saydam alanların arkasında dama deseni göster";
+"set.recents" = "Son klasörler:";
+"set.recentsCheck" = "Son açılan klasörleri hatırla ve göster";
+"set.recentsNote" = "Kapalıyken başlangıç sayfası ve Dosya › Son Kullanılanı Aç klasör listelemez, yenilerini de kaydetmez. Toplantıda ekran paylaşmadan önce kapatabilirsiniz. Mevcut kayıtlar silinmez.";
+"menu.recentOff" = "Ayarlardan kapatıldı";

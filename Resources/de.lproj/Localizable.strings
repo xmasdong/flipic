@@ -811,3 +811,8 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "exif.mMultiSpot" = "Mehrfeld-Spot";
 "exif.mPattern" = "Matrix";
 "exif.mPartial" = "Teil";
+"set.transparencyGrid" = "Schachbrettmuster hinter transparenten Bereichen";
+"set.recents" = "Zuletzt geöffnet:";
+"set.recentsCheck" = "Zuletzt geöffnete Ordner merken und anzeigen";
+"set.recentsNote" = "Wenn aus, zeigen die Startseite und Ablage › Zuletzt benutzte Dokumente keine Ordner mehr an, und neue werden nicht gespeichert. Praktisch, bevor du in einem Meeting den Bildschirm teilst. Vorhandene Einträge bleiben erhalten.";
+"menu.recentOff" = "In den Einstellungen ausgeschaltet";

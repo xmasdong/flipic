@@ -57,6 +57,7 @@ final class ViewerWindowController: NSWindowController {
     func runThemeShots(outDir: String) { viewerVC?.runThemeShots(outDir: outDir) }
     #endif
     func runCompareTest(outDir: String) { viewerVC?.runCompareTest(outDir: outDir) }
+    func runPNGTest(outDir: String, folder: String) { viewerVC?.runPNGTest(outDir: outDir, folder: folder) }
     func runExportTest(outDir: String) { viewerVC?.runExportTest(outDir: outDir) }
     func runRatingShot(outDir: String) { viewerVC?.runRatingShot(outDir: outDir) }
     func runSettingsTest(outDir: String) { viewerVC?.runSettingsTest(outDir: outDir) }

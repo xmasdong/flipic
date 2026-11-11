@@ -811,3 +811,8 @@ Return  表示中の画像を名称変更
 "exif.mMultiSpot" = "マルチスポット";
 "exif.mPattern" = "評価測光";
 "exif.mPartial" = "部分";
+"set.transparencyGrid" = "透明な部分に市松模様を表示";
+"set.recents" = "最近使った項目：";
+"set.recentsCheck" = "最近開いたフォルダを記録して表示";
+"set.recentsNote" = "オフにすると、スタートページと「ファイル › 最近使った項目を開く」にフォルダが表示されず、新しく記録もされません。会議で画面共有する前にオフにできます。既存の記録は削除されません。";
+"menu.recentOff" = "設定でオフになっています";

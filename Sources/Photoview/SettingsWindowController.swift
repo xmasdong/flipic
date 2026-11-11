@@ -567,6 +567,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
     private let fileNameCheck = NSButton(checkboxWithTitle: L10n.t("set.fileNameCheck", "移动鼠标时在左上角显示文件名"), target: nil, action: nil)
     private let backdropPopup = NSPopUpButton()
+    private let recentsCheck = NSButton(checkboxWithTitle: L10n.t("set.recentsCheck", "记录并显示最近打开的文件夹"), target: nil, action: nil)
+    private let transparencyCheck = NSButton(checkboxWithTitle: L10n.t("set.transparencyGrid", "透明的地方显示棋盘格"), target: nil, action: nil)
     private let liveText = NSButton(checkboxWithTitle: L10n.t("set.liveText", "自动识别图中文字"), target: nil, action: nil)
 
     override func loadView() {
@@ -606,6 +608,12 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             backdropPopup.lastItem?.tag = t
         }
         backdropPopup.target = self; backdropPopup.action = #selector(backdropChanged)
+        transparencyCheck.target = self; transparencyCheck.action = #selector(transparencyChanged)
+        recentsCheck.target = self; recentsCheck.action = #selector(recentsChanged)
+        let backdropRow = NSStackView(views: [backdropPopup, transparencyCheck])
+        backdropRow.orientation = .vertical
+        backdropRow.alignment = .leading
+        backdropRow.spacing = 8
         let pagingRow = NSStackView(views: [fade, wrap])
         pagingRow.orientation = .vertical
         pagingRow.alignment = .leading
@@ -618,8 +626,10 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.videos", "视频：")), videosCheck],
             spacerRow(note(L10n.t("set.videosNote", "MP4、MOV、M4V 和照片一起列出，回车播放。只播系统自带能播的格式，不额外下载解码器。"))),
             [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
-            [label(L10n.t("set.backdrop", "背景：")), backdropPopup],
+            [label(L10n.t("set.backdrop", "背景：")), backdropRow],
             [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
+            [label(L10n.t("set.recents", "最近打开：")), recentsCheck],
+            spacerRow(note(L10n.t("set.recentsNote", "关掉后，开始页和「文件 › 最近打开」都不再列出文件夹，也不再记录。开会投屏前可以关掉。已有的记录不会删除。"))),
             [label(L10n.t("set.hdr", "HDR：")), hdr],
             spacerRow(hdrNote),
             [label(L10n.t("set.esc", "Esc 键：")), escCloses],
@@ -632,7 +642,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             rows.insert(contentsOf: [
                 [label(L10n.t("set.text", "文字：")), liveText],
                 spacerRow(note(L10n.t("set.liveTextNote", "在一张照片上停留片刻后识别图中文字，可以直接选中、复制、查询。关掉后，「复制图中全部文字」仍可使用。"))),
-            ], at: 9)
+            ], at: rows.firstIndex { $0.first is NSTextField && ($0.first as? NSTextField)?.stringValue == L10n.t("set.esc", "Esc 键：") } ?? rows.count)
         }
         let g = grid(rows)
         // 说明行紧贴上一行
@@ -654,6 +664,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         videosCheck.state = Video.enabled ? .on : .off
         fileNameCheck.state = ViewerViewController.showFileName ? .on : .off
         backdropPopup.selectItem(withTag: ZoomableImageView.backdropStyle.rawValue)
+        transparencyCheck.state = ZoomableImageView.showsTransparencyGrid ? .on : .off
+        recentsCheck.state = Recents.enabled ? .on : .off
         thumbPopup.selectItem(withTag: Int(FilmstripView.thumbSize))
         slideFade.state = ViewerViewController.slideshowFade ? .on : .off
         let hdrOK = ImageLoader.hdrSupported
@@ -707,6 +719,13 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     @objc private func backdropChanged() {
         ZoomableImageView.backdropStyle = ZoomableImageView.BackdropStyle(rawValue: backdropPopup.selectedTag()) ?? .photo
         SettingsWindowController.notify("backdrop")
+    }
+
+    @objc private func recentsChanged() { Recents.enabled = recentsCheck.state == .on }
+
+    @objc private func transparencyChanged() {
+        ZoomableImageView.showsTransparencyGrid = transparencyCheck.state == .on
+        SettingsWindowController.notify("transparencyGrid")
     }
 
     @objc private func fileNameChanged() {

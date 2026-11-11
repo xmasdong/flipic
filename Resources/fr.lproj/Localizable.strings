@@ -811,3 +811,8 @@ Déposez un dossier ou une image pour ouvrir";
 "exif.mMultiSpot" = "Multi-spot";
 "exif.mPattern" = "Matricielle";
 "exif.mPartial" = "Partielle";
+"set.transparencyGrid" = "Afficher un damier sous les zones transparentes";
+"set.recents" = "Dossiers récents :";
+"set.recentsCheck" = "Mémoriser et afficher les dossiers ouverts récemment";
+"set.recentsNote" = "Désactivé, la page d’accueil et Fichier › Ouvrir l’élément récent n’affichent plus de dossiers et n’en enregistrent plus. Pratique avant de partager votre écran en réunion. Les entrées existantes sont conservées.";
+"menu.recentOff" = "Désactivé dans les réglages";

@@ -811,3 +811,8 @@ Trascina una cartella o un'immagine per aprire";
 "exif.mMultiSpot" = "Multi-spot";
 "exif.mPattern" = "Valutativa";
 "exif.mPartial" = "Parziale";
+"set.transparencyGrid" = "Mostra una scacchiera dietro le aree trasparenti";
+"set.recents" = "Cartelle recenti:";
+"set.recentsCheck" = "Ricorda e mostra le cartelle aperte di recente";
+"set.recentsNote" = "Se disattivato, la pagina iniziale e File › Apri recenti non mostrano più cartelle e non ne registrano di nuove. Utile prima di condividere lo schermo in una riunione. Le voci esistenti restano.";
+"menu.recentOff" = "Disattivato nelle impostazioni";

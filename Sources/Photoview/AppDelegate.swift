@@ -866,6 +866,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runExportTest(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--pngtest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runPNGTest(outDir: outDir, folder: folder) }
         } else if let i = CommandLine.arguments.firstIndex(of: "--comparetest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
             let folder = CommandLine.arguments[i + 2]
@@ -1100,6 +1103,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             it.image = NSWorkspace.shared.icon(forFile: u.path)
             it.image?.size = NSSize(width: 16, height: 16)
             recentMenu.addItem(it)
+        }
+        if !Recents.enabled {
+            let off = NSMenuItem(title: L10n.t("menu.recentOff", "已在设置里关闭"), action: nil, keyEquivalent: "")
+            off.isEnabled = false
+            recentMenu.addItem(off)
+            return
         }
         if !urls.isEmpty { recentMenu.addItem(.separator()) }
         let clear = NSMenuItem(title: L10n.t("menu.clearRecent", "清除菜单"), action: urls.isEmpty ? nil : #selector(clearRecent(_:)), keyEquivalent: "")

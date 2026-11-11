@@ -828,3 +828,8 @@ Esc  先关掉右上角的照片信息
 "exif.mMultiSpot" = "多点";
 "exif.mPattern" = "评价测光";
 "exif.mPartial" = "局部";
+"set.transparencyGrid" = "透明的地方显示棋盘格";
+"set.recents" = "最近打开：";
+"set.recentsCheck" = "记录并显示最近打开的文件夹";
+"set.recentsNote" = "关掉后，开始页和「文件 › 最近打开」都不再列出文件夹，也不再记录。开会投屏前可以关掉。已有的记录不会删除。";
+"menu.recentOff" = "已在设置里关闭";

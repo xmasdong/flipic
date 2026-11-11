@@ -5131,6 +5131,60 @@ final class ViewerViewController: NSViewController {
         at(0.8) { NSApp.terminate(nil) }
     }
 
+    /// --pngtest <截图目录> <文件夹>：开始页的最近打开（开 / 关）、关着时打开文件夹不记录；
+    /// 透明 PNG、不透明 PNG、JPEG、GIF 依次截图，再关掉棋盘格截一次。测完恢复原来的设置
+    func runPNGTest(outDir: String, folder path: String) {
+        let savedGrid = ZoomableImageView.showsTransparencyGrid, savedRecents = Recents.enabled
+        let target = URL(fileURLWithPath: path).standardizedFileURL.path
+        func recorded() -> Bool { NSDocumentController.shared.recentDocumentURLs.contains { $0.standardizedFileURL.path == target } }
+        func listed() -> Int { recentList.arrangedSubviews.count }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.0) {
+            Recents.enabled = true
+            Recents.note(URL(fileURLWithPath: path).deletingLastPathComponent())
+        }
+        at(0.5) {
+            NSLog("PNG 1-start recents on: listed=%d folders=%d", listed(), Recents.folders.count)
+            self.captureWindow(to: "\(outDir)/1-start-on.png", raw: true)
+        }
+        at(0.5) {
+            Recents.enabled = false
+            NSLog("PNG 2-start recents off: listed=%d folders=%d menuOff=%@", listed(), Recents.folders.count, L10n.t("menu.recentOff", "已在设置里关闭"))
+        }
+        at(0.6) { self.captureWindow(to: "\(outDir)/2-start-off.png", raw: true) }
+        at(0.3) { self.open(url: URL(fileURLWithPath: path)) }
+        at(1.5) { NSLog("PNG 3-opened while off: recorded=%d", recorded() ? 1 : 0) }
+        let names = ["logo.png", "opaque.png", "photo.jpg", "anim.gif"]
+        for (k, n) in names.enumerated() {
+            at(0.3) { if let i = self.folder.items.firstIndex(where: { $0.url.lastPathComponent == n }) { self.goTo(i) } }
+            at(1.2) {
+                NSLog("PNG 4-%@ grid=%d", n, self.imageView.debugTransparencyGrid ? 1 : 0)
+                self.captureWindow(to: "\(outDir)/4-\(k)-\(n).png", raw: true)
+            }
+        }
+        at(0.3) { if let i = self.folder.items.firstIndex(where: { $0.url.lastPathComponent == "logo.png" }) { self.goTo(i) } }
+        at(1.0) {
+            ZoomableImageView.showsTransparencyGrid = false
+            SettingsWindowController.notify("transparencyGrid")
+        }
+        at(0.5) {
+            NSLog("PNG 5-grid off: grid=%d", self.imageView.debugTransparencyGrid ? 1 : 0)
+            self.captureWindow(to: "\(outDir)/5-grid-off.png", raw: true)
+            ZoomableImageView.showsTransparencyGrid = true
+            SettingsWindowController.notify("transparencyGrid")
+        }
+        at(0.3) { self.imageView.debugToggle(at: CGPoint(x: self.imageView.bounds.width * 0.3, y: self.imageView.bounds.height * 0.3)) }
+        at(1.2) { NSLog("PNG 6-zoomed grid=%d", self.imageView.debugTransparencyGrid ? 1 : 0); self.captureWindow(to: "\(outDir)/6-zoomed.png", raw: true) }
+        at(0.3) {
+            Recents.enabled = true
+            NSLog("PNG 7-recents back on: recorded=%d", recorded() ? 1 : 0)
+            ZoomableImageView.showsTransparencyGrid = savedGrid
+            Recents.enabled = savedRecents
+        }
+        at(0.5) { NSApp.terminate(nil) }
+    }
+
     /// --exporttest <输出目录> <文件夹>：只看 4 星以上 → 复制到 copy/（里面先放一个同名文件）→ 移动到 move/ → 回到剩下的全部照片。
     /// 星级要事先写好：a.jpg 5 星、pair 4 星（RAW 用旁车 .xmp）、c.jpg 2 星
     func runExportTest(outDir: String) {

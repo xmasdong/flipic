@@ -346,7 +346,32 @@ final class ImageLoader {
     private static let surfacesLock = NSLock()
     private static let displaySpace = CGColorSpace(name: CGColorSpace.displayP3)!
 
+    /// 文件本身带透明（PNG、GIF、HEIC、TIFF 的 alpha 通道）的图。上屏前统一画成带 alpha 的 BGRA，
+    /// 光看上屏后的像素格式分不出来，所以在转换前按 ImageIO 解出的原始格式记下
+    private static let transparentImages = NSHashTable<AnyObject>.weakObjects()
+
+    static func hasAlphaChannel(_ img: CGImage) -> Bool {
+        switch img.alphaInfo {
+        case .first, .last, .premultipliedFirst, .premultipliedLast, .alphaOnly: return true
+        default: return false
+        }
+    }
+
+    static func isTransparent(_ img: CGImage?) -> Bool {
+        guard let img else { return false }
+        surfacesLock.lock(); defer { surfacesLock.unlock() }
+        return transparentImages.contains(img)
+    }
+
     static func displayReady(_ src: CGImage) -> CGImage {
+        let out = makeDisplayReady(src)
+        if hasAlphaChannel(src) {
+            surfacesLock.lock(); transparentImages.add(out); surfacesLock.unlock()
+        }
+        return out
+    }
+
+    private static func makeDisplayReady(_ src: CGImage) -> CGImage {
         // HDR 开着时 HDR 图原样交给图层，画进 8 位 surface 会把高光截掉；
         // 开关关着时（PQ 这类文件本身就是 HDR 编码）画进 8 位，按普通照片显示
         if isHDR(src) && hdrActive { return src }

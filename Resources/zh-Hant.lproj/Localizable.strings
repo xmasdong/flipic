@@ -816,3 +816,8 @@ Return  重新命名目前圖片
 "exif.mMultiSpot" = "多點";
 "exif.mPattern" = "評價測光";
 "exif.mPartial" = "局部";
+"set.transparencyGrid" = "透明的地方顯示棋盤格";
+"set.recents" = "最近打開：";
+"set.recentsCheck" = "記錄並顯示最近打開的檔案夾";
+"set.recentsNote" = "關掉後，開始頁和「檔案 › 最近打開」都不再列出檔案夾，也不再記錄。開會投影前可以關掉。已有的記錄不會刪除。";
+"menu.recentOff" = "已在設定裡關閉";

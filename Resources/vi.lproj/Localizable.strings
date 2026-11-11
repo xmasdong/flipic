@@ -811,3 +811,8 @@ Kéo thư mục hoặc ảnh vào để mở";
 "exif.mMultiSpot" = "Đa điểm";
 "exif.mPattern" = "Ma trận";
 "exif.mPartial" = "Một phần";
+"set.transparencyGrid" = "Hiện ô bàn cờ ở vùng trong suốt";
+"set.recents" = "Thư mục gần đây:";
+"set.recentsCheck" = "Ghi nhớ và hiện các thư mục mở gần đây";
+"set.recentsNote" = "Khi tắt, trang bắt đầu và Tệp › Mở gần đây không còn liệt kê thư mục và không ghi thêm. Nên tắt trước khi chia sẻ màn hình trong cuộc họp. Các mục đã có vẫn được giữ.";
+"menu.recentOff" = "Đã tắt trong Cài đặt";

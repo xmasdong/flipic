@@ -823,3 +823,8 @@ Drop a folder or image to open";
 "exif.mMultiSpot" = "Multi-spot";
 "exif.mPattern" = "Matrix / evaluative";
 "exif.mPartial" = "Partial";
+"set.transparencyGrid" = "Show a checkerboard behind transparent areas";
+"set.recents" = "Recent folders:";
+"set.recentsCheck" = "Remember and show recently opened folders";
+"set.recentsNote" = "When off, the start page and File › Open Recent no longer list folders, and new ones are not recorded. Turn it off before sharing your screen in a meeting. Existing entries are kept.";
+"menu.recentOff" = "Turned off in Settings";

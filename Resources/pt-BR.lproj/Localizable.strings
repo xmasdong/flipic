@@ -811,3 +811,8 @@ Arraste uma pasta ou imagem para abrir";
 "exif.mMultiSpot" = "Multipontual";
 "exif.mPattern" = "Matricial";
 "exif.mPartial" = "Parcial";
+"set.transparencyGrid" = "Mostrar quadriculado nas áreas transparentes";
+"set.recents" = "Pastas recentes:";
+"set.recentsCheck" = "Lembrar e mostrar pastas abertas recentemente";
+"set.recentsNote" = "Desativado, a página inicial e Arquivo › Abrir Recente não listam mais pastas e não registram novas. Útil antes de compartilhar a tela em uma reunião. Os registros existentes são mantidos.";
+"menu.recentOff" = "Desativado nos Ajustes";

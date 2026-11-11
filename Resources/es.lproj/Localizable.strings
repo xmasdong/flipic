@@ -811,3 +811,8 @@ Arrastra una carpeta o imagen para abrir";
 "exif.mMultiSpot" = "Multipunto";
 "exif.mPattern" = "Matricial";
 "exif.mPartial" = "Parcial";
+"set.transparencyGrid" = "Mostrar un tablero de ajedrez en las zonas transparentes";
+"set.recents" = "Carpetas recientes:";
+"set.recentsCheck" = "Recordar y mostrar las carpetas abiertas recientemente";
+"set.recentsNote" = "Si lo desactivas, la página de inicio y Archivo › Abrir reciente dejan de mostrar carpetas y no se registran nuevas. Útil antes de compartir pantalla en una reunión. Las entradas existentes se conservan.";
+"menu.recentOff" = "Desactivado en Ajustes";

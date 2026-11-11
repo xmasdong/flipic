@@ -73,13 +73,25 @@ final class FolderWatcher {
 enum Recents {
     static let didChange = Notification.Name("FlipicRecentsDidChange")
 
+    /// 设置 › 通用 › 最近打开。关掉后开始页和「文件 › 最近打开」都不列，也不再往里记（开会投屏时不露出别的客户的文件夹）。
+    /// 关掉不删已有记录，再打开时还在；要删用「文件 › 最近打开 › 清除菜单」
+    static var enabled: Bool {
+        get { UserDefaults.standard.object(forKey: "showRecents") as? Bool ?? true }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "showRecents")
+            NotificationCenter.default.post(name: didChange, object: nil)
+        }
+    }
+
     static func note(_ folder: URL) {
+        guard enabled else { return }
         NSDocumentController.shared.noteNewRecentDocumentURL(folder)
         NotificationCenter.default.post(name: didChange, object: nil)
     }
 
     /// 还在的文件夹，最近的在前，最多 10 个
     static var folders: [URL] {
+        guard enabled else { return [] }
         var seen = Set<String>()
         return NSDocumentController.shared.recentDocumentURLs.filter { u in
             var isDir: ObjCBool = false
