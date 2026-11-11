@@ -1677,6 +1677,7 @@ Key facts:
     # 旧的 GitHub Pages 路径结构（/macphoto/...）和常用短地址
     (OUT / "_redirects").write_text("""/download /download/Flipic.dmg 302
 /dmg /download/Flipic.dmg 302
+/download/PixDeck.dmg /download/Flipic.dmg 301
 /macphoto/ / 301
 /macphoto/en/ /en/ 301
 /macphoto/download/* /download/:splat 301
