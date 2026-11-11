@@ -3210,10 +3210,24 @@ final class ViewerViewController: NSViewController {
         // 已有的格子保持原样，新加的格子接着往后放还没出现过的照片
         var used = cv.panes.map(\.photoIndex)
         let startCount = cv.panes.count
+        // 4 格时按 C 缩成 2 格：正在看的那格要是被去掉了，把它的照片挪进留下的最后一格
+        let activePhoto = cv.panes.indices.contains(compareActive) ? cv.panes[compareActive].photoIndex : nil
+        // 格数一变格子大小就变，放大中的格子会保持绝对像素比例，看起来一下放大好几倍。
+        // 记下各格相对适应窗口的缩放和中心，布局完照原样摆回去
+        let states = cv.panes.map { $0.imageView.debugHasImage ? $0.imageView.viewState : nil }
+        let shared = compareState
+        compareLoading = true   // 布局引起的缩放变化不回传成共享状态
         cv.setPaneCount(n)
         cv.layoutSubtreeIfNeeded()
+        for (i, s) in states.prefix(n).enumerated() { if let s { cv.panes[i].imageView.applyViewState(s) } }
+        compareLoading = false
+        compareState = shared
+        if n < startCount, compareActive >= n, let activePhoto {
+            loadPane(cv.panes[n - 1], index: activePhoto)
+            compareActive = n - 1
+        }
         var next = startCount == 0 ? folder.index : (used.max() ?? folder.index) + 1
-        for i in startCount..<n {
+        for i in startCount..<max(startCount, n) {
             while used.contains(next % folder.count) { next += 1 }
             let idx = usePicked ? picked[i] : next % folder.count
             used.append(idx)
@@ -5102,6 +5116,15 @@ final class ViewerViewController: NSViewController {
         at(0.6) { report("4-tab to left pane, P marks it") }
         at(0.2) { key("C", 8, .shift) }
         at(1.5) { report("5-shift-C four panes"); self.captureWindow(to: "\(outDir)/3-four.png", raw: true) }
+        // 用户报的崩溃：四格时按 C。先 Tab 到第 4 格，缩成两格后它那张要留在第 2 格
+        at(0.2) { while self.compareActive < (self.compareView?.panes.count ?? 1) - 1 { key("\t", 48) } }
+        at(0.3) { report("5a-active on last pane") }
+        at(0.2) { key("c", 8) }
+        at(1.2) { report("5b-C in four panes: shrinks to two, keeps active photo"); self.captureWindow(to: "\(outDir)/3b-four-to-two.png", raw: true) }
+        at(0.2) { key("c", 8) }
+        at(1.0) { report("5c-C again: exits") }
+        at(0.2) { key("C", 8, .shift) }
+        at(1.2) { report("5d-shift-C from single: four panes") }
         at(0.2) { key("\u{1B}", 53) }
         at(1.0) { report("6-Esc exits to single view"); self.captureWindow(to: "\(outDir)/4-exit.png", raw: true) }
         at(0.3) { if self.folder.current?.marked == true { self.toggleMark(nil) } }

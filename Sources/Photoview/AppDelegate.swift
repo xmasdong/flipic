@@ -297,6 +297,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--lens-shots"), i + 3 < CommandLine.arguments.count {
+            let args = CommandLine.arguments
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: args[i + 2]))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runLensShots(outDir: args[i + 1], edited: args[i + 3])
+                }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--trip-shots"), i + 3 < CommandLine.arguments.count {
+            let args = CommandLine.arguments
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: args[i + 2]))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runTripShots(outDir: args[i + 1], keysPath: args[i + 3])
+                }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--zang-shots"), i + 4 < CommandLine.arguments.count {
+            let args = CommandLine.arguments
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: args[i + 2]))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 6.0) {
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runZangShots(outDir: args[i + 1], keysPath: args[i + 3], edited: args[i + 4])
+                }
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--zang-wb"), i + 2 < CommandLine.arguments.count {
+            let a1 = CommandLine.arguments[i + 1], a2 = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { WorkbenchTest.runZang(outDir: a1, spec: a2) }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--info-dump") {
             // 测试用：把信息面板里的字段打出来
             for path in CommandLine.arguments[(i + 1)...] where !path.hasPrefix("-") {
