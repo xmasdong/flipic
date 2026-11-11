@@ -622,7 +622,13 @@ final class CleanupItem: NSCollectionViewItem {
     private let keepLabel = NSTextField(labelWithString: L10n.t("cleanup.keep", "推荐保留"))
     private let badgeLabel = NSTextField(labelWithString: "")
 
-    var thumbnail: CGImage? { didSet { imageLayer.contents = thumbnail; view.needsLayout = true } }
+    var thumbnail: CGImage? {
+        didSet {
+            imageLayer.contents = thumbnail
+            imageLayer.backgroundColor = ZoomableImageView.thumbBackground(for: thumbnail)
+            view.needsLayout = true
+        }
+    }
     var isChecked = false { didSet { updateCheck() } }
     var isKeeper = false { didSet { keepLabel.isHidden = !isKeeper } }
     var faces: [CGRect] = [] { didSet { view.needsLayout = true } }

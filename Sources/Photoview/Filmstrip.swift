@@ -167,7 +167,11 @@ final class FilmstripItem: NSCollectionViewItem {
 
     func setThumbnail(_ image: CGImage?) {
         holder.layer?.contents = image
+        holder.layer?.backgroundColor = ZoomableImageView.thumbBackground(for: image)
     }
+
+    /// 测试用：这一格是否垫着棋盘格
+    var debugChecker: Bool { holder.layer?.backgroundColor != nil }
 
     /// 拖动时跟着鼠标走的小图
     var thumbnailImage: NSImage? {

@@ -2040,6 +2040,10 @@ final class ViewerViewController: NSViewController {
             if imageView.isFit { imageView.fit() }
         case "backdrop":
             applyBackdropStyle()
+        case "transparencyGrid":
+            // 缩略图栏里带透明的格子跟着换底（大图由 ZoomableImageView 自己接）
+            filmstrip.collectionView.reloadData()
+            syncFilmstripSelection()
         case "liveText":
             scheduleLiveText(restart: true)
         case "hdr":
@@ -5163,13 +5167,20 @@ final class ViewerViewController: NSViewController {
                 self.captureWindow(to: "\(outDir)/4-\(k)-\(n).png", raw: true)
             }
         }
+        // 缩略图栏：带透明的格子垫棋盘格，不透明的不垫；设置关掉后都不垫
+        func strip() -> String {
+            filmstrip.collectionView.visibleItems().compactMap { $0 as? FilmstripItem }.sorted { $0.itemIndex < $1.itemIndex }
+                .compactMap { c in self.folder.items.indices.contains(c.itemIndex) ? "\(self.folder.items[c.itemIndex].url.lastPathComponent)=\(c.debugChecker ? 1 : 0)" : nil }
+                .joined(separator: " ")
+        }
         at(0.3) { if let i = self.folder.items.firstIndex(where: { $0.url.lastPathComponent == "logo.png" }) { self.goTo(i) } }
         at(1.0) {
+            NSLog("PNG 4b-filmstrip grid on: %@", strip())
             ZoomableImageView.showsTransparencyGrid = false
             SettingsWindowController.notify("transparencyGrid")
         }
         at(0.5) {
-            NSLog("PNG 5-grid off: grid=%d", self.imageView.debugTransparencyGrid ? 1 : 0)
+            NSLog("PNG 5-grid off: grid=%d filmstrip: %@", self.imageView.debugTransparencyGrid ? 1 : 0, strip())
             self.captureWindow(to: "\(outDir)/5-grid-off.png", raw: true)
             ZoomableImageView.showsTransparencyGrid = true
             SettingsWindowController.notify("transparencyGrid")

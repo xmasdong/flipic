@@ -184,6 +184,25 @@ final class ZoomableImageView: NSView {
         return NSColor(patternImage: img).cgColor
     }()
 
+    /// 缩略图用的小一号棋盘格（4 点一格）：格子小，几十点的缩略图里也看得出是透明
+    private static let thumbCheckerColor: CGColor = {
+        let cell: CGFloat = 4
+        let img = NSImage(size: NSSize(width: cell * 2, height: cell * 2), flipped: false) { r in
+            NSColor(srgbRed: 1, green: 1, blue: 1, alpha: 1).setFill(); r.fill()
+            NSColor(srgbRed: 0.8, green: 0.8, blue: 0.8, alpha: 1).setFill()
+            NSRect(x: 0, y: 0, width: cell, height: cell).fill()
+            NSRect(x: cell, y: cell, width: cell, height: cell).fill()
+            return true
+        }
+        return NSColor(patternImage: img).cgColor
+    }()
+
+    /// 缩略图垫在下面的底：带透明的图（ImageIO 解出来带 alpha 通道）垫棋盘格，跟大图一样受设置开关管；其余不垫
+    static func thumbBackground(for img: CGImage?) -> CGColor? {
+        guard showsTransparencyGrid, let img, ImageLoader.hasAlphaChannel(img) else { return nil }
+        return thumbCheckerColor
+    }
+
     /// 当前这张是不是带透明（动图的帧单独判断）
     private var imageIsTransparent = false
 
