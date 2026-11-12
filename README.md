@@ -24,7 +24,11 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-444" alt="MIT"></a>
 </p>
 
-![Flipic Lens browsing a folder](docs/shots/browse-01.webp)
+<p align="center">
+  <a href="docs/media/flipic-lens-demo.mp4"><img src="docs/media/demo.webp" width="960" alt="Flipic Lens paging through a folder of RAW files, zooming to 100% and rating"></a>
+</p>
+
+<p align="center"><sub>Real-time screen recording, 34 RAW files from 34 different cameras. <a href="docs/media/flipic-lens-demo.mp4">Full-quality video</a></sub></p>
 
 After a shoot I wanted to go through the photos first, but Preview isn't built for flipping through hundreds of shots and Lightroom wants an import first. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is about 5 MB, it makes no network connections by default, and there is no account.
 
