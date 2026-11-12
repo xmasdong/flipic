@@ -855,7 +855,7 @@ Açmak için klasör veya resim sürükleyin";
 "set.rotSave" = "Döndürmeyi kaydet:";
 "set.rotSave.ask" = "Her seferinde sor";
 "set.rotRemind" = "Başka bir fotoğrafa geçerken kaydedilmemiş döndürmeyi hatırlat";
-"set.rotSaveNote" = "Her seferinde sor seçiliyken döndürme (R / L) ve düzeltme (⇧R), ⌘⌥S’ye ya da alttaki Kaydet…’e basana kadar yalnızca görünümü değiştirir. Orijinalin üzerine yaz veya Kopya kaydet seçiliyken döndürmeler otomatik kaydedilir. RAW yalnızca JPEG kopyası olarak kaydedilebilir.";
+"set.rotSaveNote" = "Her seferinde sor seçiliyken döndürme (R / L) ve düzeltme (⇧R), ⌘⌥S’ye ya da alttaki Kaydet…’e basana kadar yalnızca görünümü değiştirir. Orijinalin üzerine yaz veya Kopya kaydet seçiliyken döndürmeler otomatik kaydedilir. 90° döndürülen RAW da kayıpsız kaydedilir; düzeltilmiş RAW yalnızca JPEG kopyası olarak kaydedilebilir.";
 "msg.atLastPicked" = "Seçilen fotoğrafların sonuncusu";
 "msg.atFirstPicked" = "Seçilen fotoğrafların ilki";
 "msg.pickedPos" = "Seçilen fotoğraf %1$d / %2$d";

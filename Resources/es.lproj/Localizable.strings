@@ -855,7 +855,7 @@ Arrastra una carpeta o imagen para abrir";
 "set.rotSave" = "Guardar giro:";
 "set.rotSave.ask" = "Preguntar siempre";
 "set.rotRemind" = "Recordar el giro sin guardar al pasar a otra foto";
-"set.rotSaveNote" = "Con Preguntar siempre, girar (R / L) y enderezar (⇧R) solo cambian la vista hasta que pulses ⌘⌥S o Guardar… abajo. Con Sobrescribir original o Guardar una copia, los giros se guardan solos. Los RAW solo se pueden guardar como copia JPEG.";
+"set.rotSaveNote" = "Con Preguntar siempre, girar (R / L) y enderezar (⇧R) solo cambian la vista hasta que pulses ⌘⌥S o Guardar… abajo. Con Sobrescribir original o Guardar una copia, los giros se guardan solos. Los RAW girados 90° también se guardan sin pérdida; los RAW enderezados solo se pueden guardar como copia JPEG.";
 "msg.atLastPicked" = "Última de las fotos seleccionadas";
 "msg.atFirstPicked" = "Primera de las fotos seleccionadas";
 "msg.pickedPos" = "Foto seleccionada %1$d de %2$d";

@@ -947,6 +947,8 @@ final class ViewerViewController: NSViewController {
     private var peekOnFirstImage = false
     /// 这次贴合预览是打开照片时自动进的：开着「按 Esc 关闭窗口」时，Esc 直接关窗口
     private var peekFromOpen = false
+    /// 这个窗口是直接打开照片（从访达双击等）而不是打开文件夹：⌘W 一次就关窗口，跟 Esc 一样
+    private var openedFile = false
 
     var isEmpty: Bool { folder.count == 0 }
     var debugFilmstripHeight: CGFloat { filmstrip.frame.height }
@@ -993,6 +995,7 @@ final class ViewerViewController: NSViewController {
         var isDir: ObjCBool = false
         FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
         showFirstAfterResort = isDir.boolValue
+        openedFile = !isDir.boolValue
         peekOnFirstImage = !isDir.boolValue && Self.openInPeek && !CommandLine.arguments.contains(where: { $0.hasPrefix("--") && !["--peekopentest", "--press-esc", "--press-next"].contains($0) })
         let ok = folder.open(url: url)
         #if FLIPIC_PRO
@@ -1489,7 +1492,10 @@ final class ViewerViewController: NSViewController {
         let picked = filmstrip.collectionView.selectionIndexPaths.map(\.item).filter { folder.items.indices.contains($0) }.sorted()
         guard picked.count > 1 else { return false }
         let cur = folder.index
-        let target = delta > 0 ? picked.first { $0 > cur } : picked.last { $0 < cur }
+        var target = delta > 0 ? picked.first { $0 > cur } : picked.last { $0 < cur }
+        // 开了循环浏览：选中的最后一张往后回到选中的第一张，反过来也一样
+        if target == nil, Self.wrapAround { target = delta > 0 ? picked.first : picked.last }
+        if target == cur { target = nil }
         guard let target else {
             imageView.bounce(direction: delta)
             flash(delta > 0 ? L10n.t("msg.atLastPicked", "已是选中的最后一张") : L10n.t("msg.atFirstPicked", "已是选中的第一张"), seconds: 1.0)
@@ -3655,16 +3661,17 @@ final class ViewerViewController: NSViewController {
         return out.makeImage()
     }
 
-    // MARK: - ⌘W：先回开始页，再关窗口
+    // MARK: - ⌘W：打开的是文件夹时先回开始页，再关窗口
 
-    /// 看着照片时按 ⌘W 回到开始页，换个文件夹不用关窗口；已经在开始页时才关窗口
+    /// 打开文件夹看照片时按 ⌘W 回到开始页，换个文件夹不用关窗口；已经在开始页时才关窗口。
+    /// 直接打开的照片（从访达双击、多选打开）当快速查看用，⌘W 一次就关
     @objc func closePhotosOrWindow(_ sender: Any?) {
         guard let w = view.window else { return }
         if let cleanup {
             cleanup.finish(nil)
             return
         }
-        guard folder.totalCount > 0 else {
+        guard folder.totalCount > 0, !openedFile else {
             w.performClose(nil)
             return
         }
@@ -4241,7 +4248,7 @@ final class ViewerViewController: NSViewController {
         let go: (Bool) -> Void = { [weak self] overwrite in
             self?.performRotationSave(url: url, turns: turns, degrees: degrees, overwrite: overwrite, then: then)
         }
-        guard Straighten.canOverwrite(url) else { go(false); return }
+        guard Straighten.canOverwrite(url, degrees: degrees) else { go(false); return }
         switch Straighten.saveTarget {
         case .overwrite: go(true)
         case .copy: go(false)
@@ -4275,7 +4282,7 @@ final class ViewerViewController: NSViewController {
     private func performRotationSave(url: URL, turns: Int, degrees: Double, overwrite: Bool, then: (() -> Void)?) {
         isProcessing = true
         flash(L10n.t("msg.rotSaving", "保存旋转中…"), seconds: 3600)
-        let raw = !Straighten.canOverwrite(url)
+        let srcIsRaw = CleanupUnit.isRaw(url)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let out = Straighten.save(url: url, quarterTurns: turns, degrees: degrees, overwrite: overwrite)
             DispatchQueue.main.async {
@@ -4291,7 +4298,8 @@ final class ViewerViewController: NSViewController {
                     return
                 }
                 self.rotationAutoSaveFailed = nil
-                if overwrite {
+                let asJPEG = srcIsRaw && saved.pathExtension.lowercased() == "jpg"
+                if overwrite && saved == url {
                     self.flash(out.result == .lossless ? L10n.t("msg.rotSaved", "已保存旋转（无损）")
                                : L10n.t("msg.rotSavedReencoded", "已保存旋转（该格式重新编码）"), seconds: 3)
                     self.rotationJustSaved = url
@@ -4300,7 +4308,7 @@ final class ViewerViewController: NSViewController {
                 } else {
                     // 原图不动：视图回到原样，新文件由文件夹监视加进列表
                     self.imageView.resetRotation()
-                    self.flash(raw ? L10n.f("msg.rotSavedAsJPEG", "RAW 不能直接改，已另存为 %@", saved.lastPathComponent)
+                    self.flash(asJPEG ? L10n.f("msg.rotSavedAsJPEG", "RAW 不能直接改，已另存为 %@", saved.lastPathComponent)
                                : L10n.f("msg.rotSavedAs", "已另存为 %@", saved.lastPathComponent), seconds: 3)
                     self.folderDidChange()
                 }
@@ -4841,6 +4849,17 @@ final class ViewerViewController: NSViewController {
         at(0.5) { key(124); report("9-right -> 5") }
         at(0.5) { key(124); report("10-right -> 8") }
         at(0.5) { key(124); report("11-right at last -> stays 8") }
+        // 开了循环浏览：选中的最后一张往后回到选中的第一张
+        let savedWrap = Self.wrapAround
+        at(0.5) { Self.wrapAround = true; key(124); report("12-wrap on, right at last -> 2") }
+        at(0.5) { key(123); report("13-wrap on, left at first -> 8") }
+        at(0.5) { Self.wrapAround = savedWrap }
+        // ⌘W：打开的是照片时一次就关窗口；打开的是文件夹时先回开始页
+        at(0.5) {
+            let w = self.view.window
+            self.closePhotosOrWindow(nil)
+            NSLog("PICKNAV 14-cmdW after finder-open photos: windowVisible=%d", w?.isVisible == true ? 1 : 0)
+        }
         at(0.6) { NSApp.terminate(nil) }
     }
 
@@ -5564,6 +5583,23 @@ final class ViewerViewController: NSViewController {
         at(4.0) {
             NSLog("STRAIGHTEN 12 auto overwrite+nav: %@ current=%@ sheet=%d", meta("quarter.jpg"),
                   self.folder.current?.url.lastPathComponent ?? "-", self.view.window?.attachedSheet != nil ? 1 : 0)
+        }
+        // RAW 只转 90°：覆盖原图只改方向标记（大小不变），另存一份也还是 RAW
+        at(0.5) {
+            Straighten.saveTarget = .overwrite
+            NSLog("STRAIGHTEN 13 raw before: %@ size=%@", meta("cam.ARW"), "\((try? FileManager.default.attributesOfItem(atPath: path + "/cam.ARW")[.size]) ?? 0)")
+            go("cam.ARW")
+        }
+        at(2.0) { self.rotateCW(nil) }
+        at(4.0) {
+            NSLog("STRAIGHTEN 14 raw overwrite 90: %@ size=%@ pending=%d", meta("cam.ARW"),
+                  "\((try? FileManager.default.attributesOfItem(atPath: path + "/cam.ARW")[.size]) ?? 0)", self.imageView.hasPendingRotation ? 1 : 0)
+            self.captureWindow(to: "\(outDir)/7-raw-overwrite.png", raw: true)
+            Straighten.saveTarget = .copy
+            self.rotateCCW(nil)
+        }
+        at(4.0) {
+            NSLog("STRAIGHTEN 15 raw copy 90: %@ | original %@", meta("cam\(L10n.t("rot.copySuffix", "-旋转")).ARW"), meta("cam.ARW"))
         }
         at(0.5) {
             Straighten.saveTarget = savedTarget

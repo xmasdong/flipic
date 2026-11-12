@@ -61,9 +61,11 @@ enum Straighten {
         set { UserDefaults.standard.set(newValue, forKey: "rotationRemindUnsaved") }
     }
 
-    /// 能原样写回这种格式吗（RAW、WebP 等只能另存成 JPEG）
-    static func canOverwrite(_ url: URL) -> Bool {
-        guard !CleanupUnit.isRaw(url),
+    /// 能原样写回这种格式吗（WebP 等只能另存成 JPEG）。
+    /// RAW 只转 90° 时可以只改方向标记、无损写回；拉直过的 RAW 只能另存成 JPEG
+    static func canOverwrite(_ url: URL, degrees: Double = 0) -> Bool {
+        if CleanupUnit.isRaw(url) { return degrees == 0 && RawOrientation.canRotate(url) }
+        guard
               let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
               let type = CGImageSourceGetType(src) else { return false }
         let writable = (CGImageDestinationCopyTypeIdentifiers() as? [String]) ?? []
@@ -92,7 +94,20 @@ enum Straighten {
     /// 只转了 90° 的：能写方向标记的格式不动像素（无损）；拉直过的要重新编码，JPEG/HEIC 用 0.95 质量，拍摄信息保留
     static func save(url: URL, quarterTurns: Int, degrees: Double, overwrite: Bool) -> Outcome {
         let turns = ((quarterTurns % 4) + 4) % 4
-        let writable = canOverwrite(url)
+        // RAW 只转 90°：改方向标记，原图或副本都保持 RAW。改不了就退回另存 JPEG
+        if CleanupUnit.isRaw(url), degrees == 0, RawOrientation.canRotate(url) {
+            let out = overwrite ? url : copyURL(for: url, ext: url.pathExtension)
+            if overwrite { FolderWatcher.noteOwnWrite(url) }
+            if RawOrientation.write(url: url, clockwiseTurns: turns, to: out) {
+                if overwrite { ImageLoader.shared.evict(url: url) }
+                return Outcome(result: .lossless, url: out)
+            }
+            let fallback = copyURL(for: url, ext: "jpg")
+            let r = reencode(url: url, turns: turns, degrees: degrees, to: fallback, type: UTType.jpeg.identifier)
+            return Outcome(result: r, url: r == .failed ? nil : fallback)
+        }
+        // RAW 走到这里说明拉直过（或改不了方向标记）：只能另存 JPEG
+        let writable = !CleanupUnit.isRaw(url) && canOverwrite(url)
         if overwrite {
             guard writable else { return Outcome(result: .failed, url: nil) }
             if degrees == 0 {

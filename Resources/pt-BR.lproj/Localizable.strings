@@ -855,7 +855,7 @@ Arraste uma pasta ou imagem para abrir";
 "set.rotSave" = "Salvar rotação:";
 "set.rotSave.ask" = "Perguntar sempre";
 "set.rotRemind" = "Lembrar da rotação não salva ao passar para outra foto";
-"set.rotSaveNote" = "Com Perguntar sempre, girar (R / L) e endireitar (⇧R) só mudam a exibição até você pressionar ⌘⌥S ou Salvar… embaixo. Com Substituir original ou Salvar uma cópia, as rotações são salvas automaticamente. RAW só pode ser salvo como cópia JPEG.";
+"set.rotSaveNote" = "Com Perguntar sempre, girar (R / L) e endireitar (⇧R) só mudam a exibição até você pressionar ⌘⌥S ou Salvar… embaixo. Com Substituir original ou Salvar uma cópia, as rotações são salvas automaticamente. RAW girado em 90° também é salvo sem perda; RAW endireitado só pode ser salvo como cópia JPEG.";
 "msg.atLastPicked" = "Última das fotos selecionadas";
 "msg.atFirstPicked" = "Primeira das fotos selecionadas";
 "msg.pickedPos" = "Foto selecionada %1$d de %2$d";
