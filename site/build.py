@@ -267,7 +267,7 @@ HOME = {
         "desc": "Flipic Lens 是给摄影师挑片用的免费 Mac 看图软件。导完卡，双击一张照片，用方向键翻完整个文件夹，按 0 在鼠标处放大到 100% 看焦点，按 1–5 打星、P 标记要留的，星级 Lightroom 和 Capture One 都能读。支持主流相机 RAW，免费开源。",
         "eyebrow": "给摄影师挑片用的 Mac 看图软件",
         "h1": "导完卡，<br>用方向键挑一遍",
-        "lede": "拍完一组想先挑一挑，Mac 自带的「预览」只能一张张打开，开 Lightroom 又得先导入。我自己嫌麻烦，就做了 Flipic Lens：双击文件夹里随便一张，左右键往下翻，看中的打个星，回到 Lightroom 里星还在。现在用它的基本都是摄影师。",
+        "lede": "拍完一组想先挑一挑，Mac 自带的「预览」只能在一起打开的那几张里翻，开 Lightroom 又得先导入。我自己嫌麻烦，就做了 Flipic Lens：双击文件夹里随便一张，左右键往下翻，看中的打个星，回到 Lightroom 里星还在。现在用它的基本都是摄影师。",
         "deck_hint": "这是 Flipic Lens 的实际界面，按键盘上的 <kbd>←</kbd><kbd>→</kbd> 可以翻页",
         "deck_alt": "Flipic Lens 浏览文件夹中的第 {n} 张照片", "prev": "上一张", "next": "下一张",
         "features": [
@@ -275,7 +275,7 @@ HOME = {
              "<p>双击文件夹里任意一张，<kbd>→</kbd> 下一张，<kbd>←</kbd> 上一张，整个文件夹都能翻到。排序默认按文件名，连拍的话改成按拍摄时间会顺一些。</p>"
              "<p>后面几张会先在后台准备好，4800 万像素的照片按住方向键一直翻也跟得上。按一下 <kbd>空格</kbd>，窗口会变成照片的比例，竖拍就是个竖长的窗口。</p>"),
             ("zoom.webp", "Flipic Lens 在鼠标位置放大到 100% 查看对焦", "看清楚焦点对没对上",
-             "<p>鼠标移到眼睛上按 <kbd>0</kbd>，就以那儿为中心放大到 100%，对没对上一下就看出来了，再按一次回到整张。用触控板捏合或者滚轮缩放，也是围着鼠标的位置放大。</p>"
+             "<p>鼠标移到眼睛上按 <kbd>0</kbd>，就以那儿为中心放大到 100%，对没对上一下就看出来了，再按一次回到整张。也可以按住 <kbd>0</kbd>：按着放大，松手就回到整张。用触控板捏合或者滚轮缩放，也是围着鼠标的位置放大。</p>"
              "<p>连拍里拿不准留哪张的话，按 <kbd>C</kbd> 把两张并排放，放大、拖动的时候两张一起动，方便对着同一个地方比。</p>"),
             ("settings.webp", "Flipic Lens 设置窗口：快捷键可以自己改", "打的星 Lightroom 也认",
              "<p><kbd>1</kbd> 到 <kbd>5</kbd> 打星，<kbd>P</kbd> 标记要留的。星级存成标准的 XMP，Lightroom、Bridge、Capture One 都读得到。JPEG 和 HEIC 只改里面的信息，不会重新压缩；RAW 的星级写在旁边一个同名的 .xmp 文件里。标记是访达标签，换个软件也还在。</p>"
@@ -297,7 +297,7 @@ HOME = {
             ("窗口置顶和分享", "点右上角的图钉，窗口就一直浮在最上面，修图时拿来对照参考图挺方便。分享按钮能用隔空投送、信息、邮件发出去。"),
             ("幻灯片", "每张停 1 到 10 秒，切换的渐变时长也能调。单击暂停，暂停时可以手动翻页和打星。"),
             ("HEIC 批量转 JPG", "整个文件夹一次转成 JPEG、PNG 或 HEIC，转好的放在子文件夹里，原图不动。"),
-            ("旋转", "JPEG 和 HEIC 旋转后只改方向标记，画质没有损失。"),
+            ("旋转和拉直", "转 90° 只改方向标记，JPEG、HEIC 和相机 RAW 都不重新编码，画质没有损失。按 ⇧R 拉直，会自动裁成最大的正矩形。"),
             ("批量重命名和导出", "可以按序号批量改名。导出时选格式和质量，导出前能看到大概多大。"),
             ("界面语言", "支持 14 种语言，跟随系统设置。"),
         ],
@@ -312,12 +312,12 @@ HOME = {
             ("HEIC 批量转 JPG", "可以，要逐步导出", "整个文件夹一次转完"),
         ],
         "keys_title": "常用快捷键",
-        "keys": [("← →", "上一张 / 下一张"), ("空格", "窗口贴合照片比例"), ("0", "在鼠标处放大到 100%，再按恢复"),
+        "keys": [("← →", "上一张 / 下一张"), ("空格", "窗口贴合照片比例"), ("0", "在鼠标处放大到 100%，再按恢复；按住时松手就恢复"),
                  ("I", "照片信息"), ("1–5", "打 1 到 5 星"), ("S", "幻灯片放映"), ("⌘E", "在后期软件中编辑"),
                  ("⇧⌘K", "清理模式"), ("⌘⌫", "移到废纸篓"), ("⌘,", "设置，快捷键都能改")],
         "guides_title": "指南",
         "faq": [
-            ("Flipic Lens 收费吗？", "看图、评星、标记、筛选、导出、清理这些都免费，没有广告，也不用注册账号，代码以 MIT 协议开源在 GitHub。另有可选的 <a href=\"/pro/\">Pro</a>，一次买断，只加了批量处理和几个专业功能，大多数人用不上。"),
+            ("Flipic Lens 收费吗？", "看图、评星、标记、筛选、导出、清理这些都免费，没有广告，也不用注册账号，代码以 MIT 协议开源在 GitHub。另有可选的 <a href=\"/pro/\">Pro</a>，¥68 一次买断，下载后可以先试用 7 天，只加了批量处理和几个专业功能，大多数人用不上。"),
             ("Flipic Lens 和 App Store 上的 Flipic 是同一个吗？", "不是。Flipic Lens 原名 Flipic（更早叫 PixDeck），是 Mac 看图挑片软件；App Store 上的「Flipic: Photo Organizer」是另一位开发者的 iPhone App。为了区分，2026 年 11 月起改名 Flipic Lens，下载地址、激活码和设置都不变。"),
             ("从网上下载的安全吗？", "安装包用 Developer ID 签名，并通过了 Apple 公证，macOS 安装时会自动校验。Flipic Lens 默认不联网，不收集任何数据。"),
             ("能代替 Lightroom 挑片吗？", "挑片可以用它。在 Flipic Lens 里翻一遍、打星、删掉废片，打的星 Lightroom 和 Capture One 都读得到。调色修图还是回原来的软件，按 ⌘E 就能把当前这张在那边打开。"),
@@ -336,7 +336,7 @@ HOME = {
         "desc": "Free, open-source Mac photo viewer: double-click a photo, arrow through the folder, check focus, rate 1–5. Lightroom reads the stars. Supports camera RAW.",
         "eyebrow": "A Mac photo viewer for culling a shoot",
         "h1": "Offload the card,<br>cull with the arrow keys",
-        "lede": "After a shoot, Preview makes you open photos one at a time, and Lightroom wants an import first. Flipic Lens opens the folder as it is: double-click any photo, press → for the next one, 0 to zoom to 100% at the pointer and check focus, 1–5 to rate and P to mark keepers. Ratings are saved as standard XMP, so they are still there in Lightroom and Capture One.",
+        "lede": "After a shoot, Preview only pages through the files you opened together, and Lightroom wants an import first. Flipic Lens opens the folder as it is: double-click any photo, press → for the next one, 0 to zoom to 100% at the pointer and check focus, 1–5 to rate and P to mark keepers. Ratings are saved as standard XMP, so they are still there in Lightroom and Capture One.",
         "deck_hint": "This is the real Flipic Lens window. Press <kbd>←</kbd><kbd>→</kbd> on your keyboard to page through",
         "deck_alt": "Flipic Lens showing photo {n} in a folder", "prev": "Previous", "next": "Next",
         "features": [
@@ -344,7 +344,7 @@ HOME = {
              "<p>Double-click any photo in the folder and press <kbd>→</kbd> for the next one or <kbd>←</kbd> for the previous one. Sort by date taken, name, date modified or size; date taken keeps bursts in order.</p>"
              "<p>The next few photos are prepared in the background, so even 48-megapixel images keep up when you hold an arrow key. Press <kbd>Space</kbd> and the window takes the shape of the photo, tall for portrait shots.</p>"),
             ("zoom.webp", "Flipic Lens zooming to 100% at the pointer to check focus", "Press 0 to check focus",
-             "<p>Point at the eyes or whatever needs to be sharp and press <kbd>0</kbd> to zoom to 100% around it; you can tell at once whether it’s in focus. Press it again to see the whole photo. Pinch and scroll-wheel zoom also center on the pointer.</p>"
+             "<p>Point at the eyes or whatever needs to be sharp and press <kbd>0</kbd> to zoom to 100% around it; you can tell at once whether it’s in focus. Press it again to see the whole photo. Or hold <kbd>0</kbd>: it zooms while held and goes back when you let go. Pinch and scroll-wheel zoom also center on the pointer.</p>"
              "<p>Not sure which frame in a burst is sharper? Press <kbd>C</kbd> to put two side by side; zooming and dragging move both, so you compare the same spot.</p>"),
             ("settings-en.webp", "Flipic Lens Settings window with editable shortcuts", "Ratings and marks that Lightroom sees",
              "<p>Press <kbd>1</kbd> to <kbd>5</kbd> to rate and <kbd>P</kbd> to mark keepers. Ratings are saved as standard XMP, which Lightroom, Bridge and Capture One read: JPEG and HEIC only get their metadata changed and are not recompressed, and camera RAW ratings go into a .xmp file with the same name. Marks are Finder tags, so they survive a change of app.</p>"
@@ -366,7 +366,7 @@ HOME = {
             ("Keep on top and share", "Click the pin at the top right to keep the window above other apps, handy for a reference image while editing. The share button sends the photo by AirDrop, Messages or Mail."),
             ("Slideshow", "Each photo stays 1 to 10 seconds and the crossfade length is adjustable. Click to pause; while paused you can page and rate."),
             ("Batch convert HEIC to JPG", "Convert a whole folder to JPEG, PNG or HEIC. The new files go into a subfolder and the originals are left alone."),
-            ("Rotate", "Rotating a JPEG or HEIC only changes its orientation tag, so there is no quality loss."),
+            ("Rotate and straighten", "90° turns only change the orientation tag, for JPEG, HEIC and camera RAW alike, so nothing is re-encoded. Straighten with ⇧R and the photo is cropped to the largest rectangle."),
             ("Batch rename and export", "Rename by sequence number. When exporting, pick a format and quality and see roughly how big the file will be."),
             ("Languages", "14 interface languages, following your system setting."),
         ],
@@ -381,12 +381,12 @@ HOME = {
             ("Batch convert HEIC to JPG", "Yes, export step by step", "A whole folder at once"),
         ],
         "keys_title": "Keyboard shortcuts",
-        "keys": [("← →", "Previous / next photo"), ("Space", "Wrap the window to the photo"), ("0", "Zoom to 100% at the pointer"),
+        "keys": [("← →", "Previous / next photo"), ("Space", "Wrap the window to the photo"), ("0", "Zoom to 100% at the pointer; hold to peek"),
                  ("I", "Photo info"), ("1–5", "Rate one to five stars"), ("S", "Slideshow"), ("⌘E", "Edit in your photo editor"),
                  ("⇧⌘K", "Cleanup Mode"), ("⌘⌫", "Move to Trash"), ("⌘,", "Settings; change any shortcut")],
         "guides_title": "Guides",
         "faq": [
-            ("Is Flipic Lens free?", "Viewing, ratings, marks, filtering, export and Cleanup Mode are free, with no ads and no account, and the code is MIT licensed on GitHub. There is an optional <a href=\"/en/pro/\">Pro</a> one-time purchase that only adds batch and pro tools; most people won’t need it."),
+            ("Is Flipic Lens free?", "Viewing, ratings, marks, filtering, export and Cleanup Mode are free, with no ads and no account, and the code is MIT licensed on GitHub. There is an optional <a href=\"/en/pro/\">Pro</a> upgrade, $12.99 once, with a 7-day trial in every download. It only adds batch and pro tools; most people won’t need it."),
             ("Is Flipic Lens the same as Flipic on the App Store?", "No. Flipic Lens was formerly Flipic (and PixDeck before that) and is a Mac culling app. “Flipic: Photo Organizer” on the App Store is an iPhone app from another developer. We renamed to Flipic Lens in November 2026 to keep the two apart; download links, license keys and settings are unchanged."),
             ("Is the download safe?", "It is signed with a Developer ID and notarized by Apple; macOS checks it on install. Flipic Lens is offline by default and collects no data."),
             ("Can it replace Lightroom for culling?", "For culling, yes; for editing, no. Page through, check focus, rate, mark and delete rejects in Flipic Lens, and Lightroom or Capture One will read the ratings. Edit in the app you already use; ⌘E opens the current photo there."),
