@@ -856,3 +856,7 @@ Arraste uma pasta ou imagem para abrir";
 "set.rotSave.ask" = "Perguntar sempre";
 "set.rotRemind" = "Lembrar da rotação não salva ao passar para outra foto";
 "set.rotSaveNote" = "Girar (R / L) e endireitar (⇧R) só mudam a exibição. Pressione ⌘⌥S ou Salvar… embaixo para gravar no arquivo. RAW só pode ser salvo como cópia JPEG.";
+"msg.atLastPicked" = "Última das fotos selecionadas";
+"msg.atFirstPicked" = "Primeira das fotos selecionadas";
+"msg.pickedPos" = "Foto selecionada %1$d de %2$d";
+"msg.openedPicked" = "%d fotos abertas selecionadas. ← → passa só entre elas";

@@ -856,3 +856,7 @@ Déposez un dossier ou une image pour ouvrir";
 "set.rotSave.ask" = "Demander à chaque fois";
 "set.rotRemind" = "Me rappeler une rotation non enregistrée en changeant de photo";
 "set.rotSaveNote" = "Pivoter (R / L) et redresser (⇧R) ne changent que l’affichage. Appuyez sur ⌘⌥S ou sur Enregistrer… en bas pour modifier le fichier. Les RAW ne peuvent être enregistrés qu’en copie JPEG.";
+"msg.atLastPicked" = "Dernière des photos sélectionnées";
+"msg.atFirstPicked" = "Première des photos sélectionnées";
+"msg.pickedPos" = "Photo sélectionnée %1$d sur %2$d";
+"msg.openedPicked" = "%d photos ouvertes sélectionnées. ← → passe uniquement de l’une à l’autre";

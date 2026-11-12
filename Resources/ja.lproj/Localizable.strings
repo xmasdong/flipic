@@ -856,3 +856,7 @@ Return  表示中の画像を名称変更
 "set.rotSave.ask" = "毎回確認する";
 "set.rotRemind" = "ほかの写真に移るとき、保存していない回転を知らせる";
 "set.rotSaveNote" = "回転（R / L）と傾き補正（⇧R）は表示だけが変わります。⌘⌥S か下の「保存…」でファイルに書き込みます。RAW は JPEG のコピーとしてのみ保存できます。";
+"msg.atLastPicked" = "選択した写真の最後です";
+"msg.atFirstPicked" = "選択した写真の最初です";
+"msg.pickedPos" = "選択した写真 %1$d / %2$d";
+"msg.openedPicked" = "選択して開いた %d 枚を選択中。← → でこの中だけを移動します";

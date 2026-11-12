@@ -956,6 +956,22 @@ final class ViewerViewController: NSViewController {
         }
     }
 
+    /// 从访达多选几张一起打开（同一个文件夹）：打开第一张，并在缩略图栏里选中这几张，← → 只在它们之间翻
+    func open(urls: [URL]) {
+        guard let first = urls.first else { return }
+        open(url: first)
+        let want = Set(urls.map { $0.standardizedFileURL.path })
+        let idx = folder.items.indices.filter { want.contains(folder.items[$0].url.standardizedFileURL.path) }
+        guard idx.count > 1 else { return }
+        if !idx.contains(folder.index), let i = idx.first { goTo(i) }
+        keepStripSelection = true
+        filmstrip.collectionView.selectionIndexPaths = Set(idx.map { IndexPath(item: $0, section: 0) })
+        keepStripSelection = false
+        stripAnchor = nil
+        updateRatingLabel()
+        flash(L10n.f("msg.openedPicked", "已选中打开的 %d 张，← → 只在这几张里翻", idx.count), seconds: 2.5)
+    }
+
     func open(url: URL) {
         exitCompare()
         #if FLIPIC_PRO
@@ -1438,6 +1454,8 @@ final class ViewerViewController: NSViewController {
 
     func navigate(_ delta: Int) {
         if !advancingSlideshow, holdForUnsavedRotation({ [weak self] in self?.navigate(delta) }) { return }
+        // 缩略图栏里 ⌘ / ⇧ 多选了几张：← → 只在选中的这几张之间跳，多选保留（挑片时对比用）
+        if !advancingSlideshow, navigateWithinPicked(delta) { return }
         // 手动翻页不带幻灯片的渐变
         if !advancingSlideshow { imageView.pendingFadeDuration = nil }
         if BenchProbe.traceNav { NSLog("TRACE navigate delta=%d slideshow=%d from=%d", delta, advancingSlideshow ? 1 : 0, folder.index) }
@@ -1457,6 +1475,35 @@ final class ViewerViewController: NSViewController {
         #endif
         folder.go(delta)
         showImage(resetToFit: false)
+    }
+
+    /// 多选时翻页：跳到上一张 / 下一张选中的。返回 false 表示没在多选，照常翻页
+    private func navigateWithinPicked(_ delta: Int) -> Bool {
+        guard cleanup == nil, compareView == nil, delta != 0 else { return false }
+        let picked = filmstrip.collectionView.selectionIndexPaths.map(\.item).filter { folder.items.indices.contains($0) }.sorted()
+        guard picked.count > 1 else { return false }
+        let cur = folder.index
+        let target = delta > 0 ? picked.first { $0 > cur } : picked.last { $0 < cur }
+        guard let target else {
+            imageView.bounce(direction: delta)
+            flash(delta > 0 ? L10n.t("msg.atLastPicked", "已是选中的最后一张") : L10n.t("msg.atFirstPicked", "已是选中的第一张"), seconds: 1.0)
+            return true
+        }
+        lastNavDirection = delta
+        showFirstAfterResort = false
+        notePagingStep()
+        #if FLIPIC_PRO
+        rememberZoomForPaging()
+        #endif
+        keepStripSelection = true
+        folder.jump(to: target)
+        showImage(resetToFit: false)
+        keepStripSelection = false
+        if let pos = picked.firstIndex(of: target) {
+            flash(L10n.f("msg.pickedPos", "选中的第 %1$d / %2$d 张", pos + 1, picked.count), seconds: 0.8)
+        }
+        if CommandLine.arguments.contains("--multiselecttest") { NSLog("MULTI picked-nav delta=%d -> %d sel=%d", delta, target, picked.count) }
+        return true
     }
 
     func goTo(_ index: Int) {
@@ -4708,6 +4755,42 @@ final class ViewerViewController: NSViewController {
         at(0.2) { key("P", 35, .shift) }
         at(0.8) { report("6-marked only again (unmarked one gone)") }
         at(0.2) { key("P", 35, .shift) }
+        at(0.6) { NSApp.terminate(nil) }
+    }
+
+    /// --pickednavtest <截图目录> <文件夹>：⌘ 点选 #1 #4 #7，再用真的 → ← 键事件翻页：只在这三张里跳、多选不丢，
+    /// 到头弹一下；最后普通点一张、→ 恢复逐张翻
+    func runPickedNavTest(outDir: String) {
+        let cv = filmstrip.collectionView
+        func sel() -> String { cv.selectionIndexPaths.map(\.item).sorted().map { "\($0)" }.joined(separator: ",") }
+        func key(_ code: UInt16) {
+            guard let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                           windowNumber: view.window?.windowNumber ?? 0, context: nil,
+                                           characters: code == 124 ? "\u{F703}" : "\u{F702}", charactersIgnoringModifiers: code == 124 ? "\u{F703}" : "\u{F702}",
+                                           isARepeat: false, keyCode: code) else { return }
+            view.window?.makeFirstResponder(imageView)
+            imageView.keyDown(with: e)
+        }
+        func report(_ tag: String) { NSLog("PICKNAV %@ | sel=[%@] current=%d", tag, sel(), folder.index) }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        at(0.0) { self.goTo(0) }
+        at(0.6) { self.filmstripClicked(1, []); self.filmstripClicked(4, .command); self.filmstripClicked(7, .command); report("0-picked") }
+        at(0.5) { key(123); report("1-left from 7 -> 4") }
+        at(0.5) { key(123); report("2-left -> 1") }
+        at(0.5) { key(123); report("3-left at first -> stays 1") }
+        at(0.5) { key(124); report("4-right -> 4") }
+        at(0.5) { key(124); report("5-right -> 7"); self.captureWindow(to: "\(outDir)/picked-nav.png", raw: true) }
+        at(0.5) { key(124); report("6-right at last -> stays 7") }
+        at(0.5) { self.filmstripClicked(2, []); key(124); report("7-plain click 2, right -> 3 single") }
+        at(0.6) {
+            let urls = [2, 5, 8].map { self.folder.items[$0].url }
+            (NSApp.delegate as? AppDelegate)?.application(NSApp, open: urls)
+        }
+        at(1.5) { report("8-finder open #2 #5 #8") }
+        at(0.5) { key(124); report("9-right -> 5") }
+        at(0.5) { key(124); report("10-right -> 8") }
+        at(0.5) { key(124); report("11-right at last -> stays 8") }
         at(0.6) { NSApp.terminate(nil) }
     }
 

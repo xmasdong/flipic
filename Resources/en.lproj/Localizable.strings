@@ -868,3 +868,7 @@ Drop a folder or image to open";
 "set.rotSave.ask" = "Ask every time";
 "set.rotRemind" = "Remind me about unsaved rotation when I go to another photo";
 "set.rotSaveNote" = "Rotating (R / L) and straightening (⇧R) only change the view. Press ⌘⌥S or Save… at the bottom to write it to the file. RAW files can only be saved as a JPEG copy.";
+"msg.atLastPicked" = "Last of the selected photos";
+"msg.atFirstPicked" = "First of the selected photos";
+"msg.pickedPos" = "Selected photo %1$d of %2$d";
+"msg.openedPicked" = "Opened %d selected photos. ← → moves only between them";

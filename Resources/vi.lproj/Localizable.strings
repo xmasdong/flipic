@@ -856,3 +856,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.rotSave.ask" = "Hỏi mỗi lần";
 "set.rotRemind" = "Nhắc khi chuyển sang ảnh khác mà chưa lưu phép xoay";
 "set.rotSaveNote" = "Xoay (R / L) và làm thẳng (⇧R) chỉ thay đổi cách hiển thị. Nhấn ⌘⌥S hoặc Lưu… ở dưới để ghi vào tệp. RAW chỉ có thể lưu thành bản sao JPEG.";
+"msg.atLastPicked" = "Ảnh cuối trong các ảnh đã chọn";
+"msg.atFirstPicked" = "Ảnh đầu trong các ảnh đã chọn";
+"msg.pickedPos" = "Ảnh đã chọn %1$d / %2$d";
+"msg.openedPicked" = "Đã chọn %d ảnh vừa mở. ← → chỉ chuyển giữa các ảnh này";

@@ -83,6 +83,7 @@ final class ViewerWindowController: NSWindowController {
     func runCompareTest(outDir: String) { viewerVC?.runCompareTest(outDir: outDir) }
     func runPNGTest(outDir: String, folder: String) { viewerVC?.runPNGTest(outDir: outDir, folder: folder) }
     func runStraightenTest(outDir: String, folder: String) { viewerVC?.runStraightenTest(outDir: outDir, folder: folder) }
+    func runPickedNavTest(outDir: String) { viewerVC?.runPickedNavTest(outDir: outDir) }
     func runRawTest(outDir: String) { viewerVC?.runRawTest(outDir: outDir) }
     func runZoomKeyTest() { viewerVC?.runZoomKeyTest() }
     func runExportTest(outDir: String) { viewerVC?.runExportTest(outDir: outDir) }
@@ -106,6 +107,7 @@ final class ViewerWindowController: NSWindowController {
     }
 
     func open(_ url: URL) { viewerVC?.open(url: url) }
+    func open(urls: [URL]) { viewerVC?.open(urls: urls) }
     /// 显示这张：已经在看它所在的文件夹就直接翻过去，否则打开它
     func show(photo url: URL) { viewerVC?.show(photo: url) }
     func openFolderPanel() { viewerVC?.openFolderPanel(nil) }

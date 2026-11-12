@@ -944,6 +944,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runRawTest(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--pickednavtest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                self?.windowController?.open(URL(fileURLWithPath: folder))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runPickedNavTest(outDir: outDir) }
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--straightentest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runStraightenTest(outDir: outDir, folder: folder) }
@@ -1143,6 +1149,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let first = urls.first else { return }
         guard launched || windowController != nil else {
             pendingURLs += urls
+            return
+        }
+        // 访达里多选同一个文件夹的几张一起打开：一个窗口，选中这几张，← → 只在它们之间翻
+        let files = urls.filter { !$0.hasDirectoryPath && !((try? $0.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory ?? false) }
+        if files.count > 1, files.count == urls.count,
+           Set(files.map { $0.deletingLastPathComponent().standardizedFileURL.path }).count == 1 {
+            let wc: ViewerWindowController
+            if let a = activeController, a.window?.isVisible == true { wc = a } else { wc = newViewerWindow() }
+            wc.showWindow(nil)
+            wc.open(urls: files)
+            NSApp.activate(ignoringOtherApps: true)
             return
         }
         let batch = urls.count <= 6 ? urls : [first]
