@@ -278,7 +278,7 @@ HOME = {
              "<p>鼠标移到眼睛上按 <kbd>0</kbd>，就以那儿为中心放大到 100%，对没对上一下就看出来了，再按一次回到整张。也可以按住 <kbd>0</kbd>：按着放大，松手就回到整张。用触控板捏合或者滚轮缩放，也是围着鼠标的位置放大。</p>"
              "<p>连拍里拿不准留哪张的话，按 <kbd>C</kbd> 把两张并排放，放大、拖动的时候两张一起动，方便对着同一个地方比。</p>"),
             ("settings.webp", "Flipic Lens 设置窗口：快捷键可以自己改", "打的星 Lightroom 也认",
-             "<p><kbd>1</kbd> 到 <kbd>5</kbd> 打星，<kbd>P</kbd> 标记要留的。星级存成标准的 XMP，Lightroom、Bridge、Capture One 都读得到。JPEG 和 HEIC 只改里面的信息，不会重新压缩；RAW 的星级写在旁边一个同名的 .xmp 文件里。标记是访达标签，换个软件也还在。</p>"
+             "<p><kbd>1</kbd> 到 <kbd>5</kbd> 打星，再按一次同样的数字取消，<kbd>P</kbd> 标记要留的。星级存成标准的 XMP，Lightroom、Bridge、Capture One 都读得到。JPEG 和 HEIC 只改里面的信息，不会重新压缩；RAW 的星级写在旁边一个同名的 .xmp 文件里。标记是访达标签，换个软件也还在。</p>"
              "<p>挑完按 <kbd>⇧P</kbd> 只看标记过的，或者只看几星以上的，再按 <kbd>⇧⌘E</kbd> 一起拷到别的文件夹。快捷键用不惯的话，设置里每个都能改。</p>"),
             ("cleanup.webp", "Flipic Lens 清理模式：相似连拍分组与推荐保留", "让它先把废片找出来",
              "<p>一场活动拍下来几百张，可以按 <kbd>⇧⌘K</kbd> 打开清理模式。它在你自己的 Mac 上把整个文件夹过一遍，相似的连拍、一模一样的文件、闭眼的、糊的分别归到一起，每组里标出最清楚的那张。</p>"
@@ -313,7 +313,7 @@ HOME = {
         ],
         "keys_title": "常用快捷键",
         "keys": [("← →", "上一张 / 下一张"), ("空格", "窗口贴合照片比例"), ("0", "在鼠标处放大到 100%，再按恢复；按住时松手就恢复"),
-                 ("I", "照片信息"), ("1–5", "打 1 到 5 星"), ("S", "幻灯片放映"), ("⌘E", "在后期软件中编辑"),
+                 ("I", "照片信息"), ("1–5", "打 1 到 5 星，再按一次取消"), ("S", "幻灯片放映"), ("⌘E", "在后期软件中编辑"),
                  ("⇧⌘K", "清理模式"), ("⌘⌫", "移到废纸篓"), ("⌘,", "设置，快捷键都能改")],
         "guides_title": "指南",
         "faq": [
@@ -347,7 +347,7 @@ HOME = {
              "<p>Point at the eyes or whatever needs to be sharp and press <kbd>0</kbd> to zoom to 100% around it; you can tell at once whether it’s in focus. Press it again to see the whole photo. Or hold <kbd>0</kbd>: it zooms while held and goes back when you let go. Pinch and scroll-wheel zoom also center on the pointer.</p>"
              "<p>Not sure which frame in a burst is sharper? Press <kbd>C</kbd> to put two side by side; zooming and dragging move both, so you compare the same spot.</p>"),
             ("settings-en.webp", "Flipic Lens Settings window with editable shortcuts", "Ratings and marks that Lightroom sees",
-             "<p>Press <kbd>1</kbd> to <kbd>5</kbd> to rate and <kbd>P</kbd> to mark keepers. Ratings are saved as standard XMP, which Lightroom, Bridge and Capture One read: JPEG and HEIC only get their metadata changed and are not recompressed, and camera RAW ratings go into a .xmp file with the same name. Marks are Finder tags, so they survive a change of app.</p>"
+             "<p>Press <kbd>1</kbd> to <kbd>5</kbd> to rate (the same number again clears it) and <kbd>P</kbd> to mark keepers. Ratings are saved as standard XMP, which Lightroom, Bridge and Capture One read: JPEG and HEIC only get their metadata changed and are not recompressed, and camera RAW ratings go into a .xmp file with the same name. Marks are Finder tags, so they survive a change of app.</p>"
              "<p>When you’re done, <kbd>⇧P</kbd> shows only marked photos, or show only a minimum rating, and <kbd>⇧⌘E</kbd> copies them to another folder. Every shortcut can be changed in Settings.</p>"),
             ("cleanup-en.webp", "Flipic Lens Cleanup Mode grouping similar bursts", "Bursts, closed eyes and blur, found for you",
              "<p>After an event, press <kbd>⇧⌘K</kbd> for Cleanup Mode. Flipic Lens checks the folder on your Mac and groups similar bursts, exact duplicates, closed eyes and blurry shots, marking the sharpest photo in each group.</p>"
@@ -382,7 +382,7 @@ HOME = {
         ],
         "keys_title": "Keyboard shortcuts",
         "keys": [("← →", "Previous / next photo"), ("Space", "Wrap the window to the photo"), ("0", "Zoom to 100% at the pointer; hold to peek"),
-                 ("I", "Photo info"), ("1–5", "Rate one to five stars"), ("S", "Slideshow"), ("⌘E", "Edit in your photo editor"),
+                 ("I", "Photo info"), ("1–5", "Rate one to five stars; again to clear"), ("S", "Slideshow"), ("⌘E", "Edit in your photo editor"),
                  ("⇧⌘K", "Cleanup Mode"), ("⌘⌫", "Move to Trash"), ("⌘,", "Settings; change any shortcut")],
         "guides_title": "Guides",
         "faq": [
