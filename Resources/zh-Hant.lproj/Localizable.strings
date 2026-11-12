@@ -860,7 +860,7 @@ Return  重新命名目前圖片
 "set.rotSave" = "儲存旋轉：";
 "set.rotSave.ask" = "每次詢問";
 "set.rotRemind" = "切換到其他照片時，提醒尚未儲存的旋轉";
-"set.rotSaveNote" = "旋轉（R / L）和拉直（⇧R）只先改變顯示，按 ⌘⌥S 或底部的「儲存…」才寫入檔案。RAW 只能另存成 JPEG。";
+"set.rotSaveNote" = "選「每次詢問」時，旋轉（R / L）和拉直（⇧R）只先改變顯示，按 ⌘⌥S 或底部的「儲存…」才寫入檔案；選覆蓋原圖或另存一份，轉完會自動儲存。RAW 只能另存成 JPEG。";
 "msg.atLastPicked" = "已是選取的最後一張";
 "msg.atFirstPicked" = "已是選取的第一張";
 "msg.pickedPos" = "選取的第 %1$d / %2$d 張";

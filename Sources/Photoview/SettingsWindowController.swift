@@ -667,7 +667,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.backdrop", "背景：")), backdropRow],
             [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
             [label(L10n.t("set.rotSave", "保存旋转：")), rotRow],
-            spacerRow(note(L10n.t("set.rotSaveNote", "旋转（R / L）和拉直（⇧R）先只改显示，按 ⌘⌥S 或底部的「保存…」才写进文件。RAW 只能另存成 JPEG。"))),
+            spacerRow(note(L10n.t("set.rotSaveNote", "选「每次询问」时，旋转（R / L）和拉直（⇧R）先只改显示，按 ⌘⌥S 或底部的「保存…」才写进文件；选覆盖原图或另存一份，转完会自动保存。RAW 只能另存成 JPEG。"))),
             [label(L10n.t("set.recents", "最近打开：")), recentsCheck],
             spacerRow(note(L10n.t("set.recentsNote", "关掉后，开始页和「文件 › 最近打开」都不再列出文件夹，也不再记录。开会投屏前可以关掉。已有的记录不会删除。"))),
             [label(L10n.t("set.hdr", "HDR：")), hdr],

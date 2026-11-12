@@ -872,7 +872,7 @@ Esc  先关掉右上角的照片信息
 "set.rotSave" = "保存旋转：";
 "set.rotSave.ask" = "每次询问";
 "set.rotRemind" = "翻到别的照片时，提醒没保存的旋转";
-"set.rotSaveNote" = "旋转（R / L）和拉直（⇧R）先只改显示，按 ⌘⌥S 或底部的「保存…」才写进文件。RAW 只能另存成 JPEG。";
+"set.rotSaveNote" = "选「每次询问」时，旋转（R / L）和拉直（⇧R）先只改显示，按 ⌘⌥S 或底部的「保存…」才写进文件；选覆盖原图或另存一份，转完会自动保存。RAW 只能另存成 JPEG。";
 "msg.atLastPicked" = "已是选中的最后一张";
 "msg.atFirstPicked" = "已是选中的第一张";
 "msg.pickedPos" = "选中的第 %1$d / %2$d 张";

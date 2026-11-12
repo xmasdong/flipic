@@ -855,7 +855,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.rotSave" = "Drehung sichern:";
 "set.rotSave.ask" = "Jedes Mal fragen";
 "set.rotRemind" = "Beim Wechseln an ungesicherte Drehung erinnern";
-"set.rotSaveNote" = "Drehen (R / L) und Ausrichten (⇧R) ändern nur die Ansicht. Mit ⌘⌥S oder „Sichern …“ unten wird die Datei geändert. RAW-Dateien können nur als JPEG-Kopie gesichert werden.";
+"set.rotSaveNote" = "Bei „Jedes Mal fragen“ ändern Drehen (R / L) und Ausrichten (⇧R) nur die Ansicht, bis du ⌘⌥S oder „Sichern …“ unten drückst. Bei „Original überschreiben“ oder „Kopie sichern“ werden Drehungen automatisch gesichert. RAW-Dateien können nur als JPEG-Kopie gesichert werden.";
 "msg.atLastPicked" = "Letztes der ausgewählten Fotos";
 "msg.atFirstPicked" = "Erstes der ausgewählten Fotos";
 "msg.pickedPos" = "Ausgewähltes Foto %1$d von %2$d";
