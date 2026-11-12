@@ -12,7 +12,7 @@ OUT = ROOT / "public"
 BASE = "https://flipic.app"
 UPDATED = "2026-10-31"
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "4.8 MB"
+SIZE = "5 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -88,7 +88,7 @@ T = {
     "zh": {
         "lang": "zh-CN", "home": "/", "features": "功能", "guides": "指南", "faq": "常见问题",
         "other": "English", "download": "免费下载 Mac 版", "github_alt": "也可以从 <a href=\"{gh}/releases/latest\">GitHub</a> 下载",
-        "facts": ["免费开源", "安装包 " + SIZE, "macOS 13 或更新", "Apple 芯片与 Intel 通用", "已通过 Apple 公证", "默认不联网"],
+        "facts": ["免费开源", "安装包约 5 MB", "macOS 13 或更新", "Apple 芯片与 Intel 通用", "已通过 Apple 公证", "默认不联网"],
         "phone": "Flipic Lens 是 Mac 软件，手机上装不了。复制网址，到 Mac 的浏览器里打开就能下载。",
         "phone_btn": "复制网址 flipic.app", "phone_done": "已复制，到 Mac 上粘贴打开",
         "crumbs_home": "Flipic Lens", "crumbs_guides": "指南", "updated": "更新于 " + UPDATED,
@@ -102,7 +102,7 @@ T = {
     "en": {
         "lang": "en", "home": "/en/", "features": "Features", "guides": "Guides", "faq": "FAQ",
         "other": "中文", "download": "Download for Mac, free", "github_alt": "or get it from <a href=\"{gh}/releases/latest\">GitHub</a>",
-        "facts": ["Free and open source", SIZE + " download", "macOS 13 or later", "Apple silicon and Intel", "Notarized by Apple", "Offline by default"],
+        "facts": ["Free and open source", "About 5 MB download", "macOS 13 or later", "Apple silicon and Intel", "Notarized by Apple", "Offline by default"],
         "phone": "Flipic Lens is a Mac app and can't be installed on a phone. Copy the address and open it in a browser on your Mac.",
         "phone_btn": "Copy flipic.app", "phone_done": "Copied. Paste it on your Mac.",
         "crumbs_home": "Flipic Lens", "crumbs_guides": "Guides", "updated": "Updated " + UPDATED,
@@ -264,7 +264,7 @@ def shot(name, alt, w=1440, h=900, eager=False):
 HOME = {
     "zh": {
         "title": "Flipic Lens：免费 Mac 看图软件，摄影师挑片用",
-        "desc": "Flipic Lens 是给摄影师挑片用的免费 Mac 看图软件。导完卡，双击一张照片，用方向键翻完整个文件夹，按 0 在鼠标处放大到 100% 看焦点，按 1–5 打星、P 标记要留的，星级 Lightroom 和 Capture One 都能读。支持主流相机 RAW，免费开源。",
+        "desc": "Flipic Lens 是给摄影师挑片用的免费 Mac 看图软件。导完卡，双击一张照片，用方向键翻完整个文件夹，按住 0 在鼠标处放大到 100% 看焦点，按 1–5 打星、P 标记要留的，星级 Lightroom 和 Capture One 都能读。支持主流相机 RAW，免费开源。",
         "eyebrow": "给摄影师挑片用的 Mac 看图软件",
         "h1": "导完卡，<br>用方向键挑一遍",
         "lede": "拍完一组想先挑一挑，Mac 自带的「预览」只能在一起打开的那几张里翻，开 Lightroom 又得先导入。我自己嫌麻烦，就做了 Flipic Lens：双击文件夹里随便一张，左右键往下翻，看中的打个星，回到 Lightroom 里星还在。现在用它的基本都是摄影师。",
@@ -275,7 +275,7 @@ HOME = {
              "<p>双击文件夹里任意一张，<kbd>→</kbd> 下一张，<kbd>←</kbd> 上一张，整个文件夹都能翻到。排序默认按文件名，连拍的话改成按拍摄时间会顺一些。</p>"
              "<p>后面几张会先在后台准备好，4800 万像素的照片按住方向键一直翻也跟得上。按一下 <kbd>空格</kbd>，窗口会变成照片的比例，竖拍就是个竖长的窗口。</p>"),
             ("zoom.webp", "Flipic Lens 在鼠标位置放大到 100% 查看对焦", "看清楚焦点对没对上",
-             "<p>鼠标移到眼睛上按 <kbd>0</kbd>，就以那儿为中心放大到 100%，对没对上一下就看出来了，再按一次回到整张。也可以按住 <kbd>0</kbd>：按着放大，松手就回到整张。用触控板捏合或者滚轮缩放，也是围着鼠标的位置放大。</p>"
+             "<p>鼠标移到眼睛上按住 <kbd>0</kbd>，就以那儿为中心放大到 100%，对没对上一下就看出来了，松手回到整张。用触控板捏合或者滚轮缩放，也是围着鼠标的位置放大。</p>"
              "<p>连拍里拿不准留哪张的话，按 <kbd>C</kbd> 把两张并排放，放大、拖动的时候两张一起动，方便对着同一个地方比。</p>"),
             ("settings.webp", "Flipic Lens 设置窗口：快捷键可以自己改", "打的星 Lightroom 也认",
              "<p><kbd>1</kbd> 到 <kbd>5</kbd> 打星，再按一次同样的数字取消，<kbd>P</kbd> 标记要留的。星级存成标准的 XMP，Lightroom、Bridge、Capture One 都读得到。JPEG 和 HEIC 只改里面的信息，不会重新压缩；RAW 的星级写在旁边一个同名的 .xmp 文件里。标记是访达标签，换个软件也还在。</p>"
@@ -312,7 +312,7 @@ HOME = {
             ("HEIC 批量转 JPG", "可以，要逐步导出", "整个文件夹一次转完"),
         ],
         "keys_title": "常用快捷键",
-        "keys": [("← →", "上一张 / 下一张"), ("空格", "窗口贴合照片比例"), ("0", "在鼠标处放大到 100%，再按恢复；按住时松手就恢复"),
+        "keys": [("← →", "上一张 / 下一张"), ("空格", "窗口贴合照片比例"), ("0", "按住时在鼠标处放大到 100%，松手恢复"),
                  ("I", "照片信息"), ("1–5", "打 1 到 5 星，再按一次取消"), ("S", "幻灯片放映"), ("⌘E", "在后期软件中编辑"),
                  ("⇧⌘K", "清理模式"), ("⌘⌫", "移到废纸篓"), ("⌘,", "设置，快捷键都能改")],
         "guides_title": "指南",
@@ -332,19 +332,19 @@ HOME = {
         "end": "下载 Flipic Lens",
     },
     "en": {
-        "title": "Flipic Lens: free photo viewer for Mac, built for culling",
-        "desc": "Free, open-source Mac photo viewer: double-click a photo, arrow through the folder, check focus, rate 1–5. Lightroom reads the stars. Supports camera RAW.",
+        "title": "Flipic Lens: next photo with arrow keys, built for culling",
+        "desc": "Free Mac photo viewer for culling: double-click a photo, arrow keys for the next photo, hold 0 to check focus, rate 1 to 5. Lightroom reads the stars.",
         "eyebrow": "A Mac photo viewer for culling a shoot",
         "h1": "Offload the card,<br>cull with the arrow keys",
-        "lede": "After a shoot, Preview only pages through the files you opened together, and Lightroom wants an import first. Flipic Lens opens the folder as it is: double-click any photo, press → for the next one, 0 to zoom to 100% at the pointer and check focus, 1–5 to rate and P to mark keepers. Ratings are saved as standard XMP, so they are still there in Lightroom and Capture One.",
+        "lede": "After a shoot, Preview only pages through the files you opened together, and Lightroom wants an import first. Flipic Lens opens the folder as it is: double-click any photo, press → for the next one, hold 0 to zoom to 100% at the pointer and check focus, 1 to 5 to rate and P to mark keepers. Ratings are saved as standard XMP, so they are still there in Lightroom and Capture One.",
         "deck_hint": "This is the real Flipic Lens window. Press <kbd>←</kbd><kbd>→</kbd> on your keyboard to page through",
         "deck_alt": "Flipic Lens showing photo {n} in a folder", "prev": "Previous", "next": "Next",
         "features": [
             ("filmstrip.webp", "Flipic Lens thumbnail strip and navigation arrows", "Page through the card, no import",
              "<p>Double-click any photo in the folder and press <kbd>→</kbd> for the next one or <kbd>←</kbd> for the previous one. Sort by date taken, name, date modified or size; date taken keeps bursts in order.</p>"
              "<p>The next few photos are prepared in the background, so even 48-megapixel images keep up when you hold an arrow key. Press <kbd>Space</kbd> and the window takes the shape of the photo, tall for portrait shots.</p>"),
-            ("zoom.webp", "Flipic Lens zooming to 100% at the pointer to check focus", "Press 0 to check focus",
-             "<p>Point at the eyes or whatever needs to be sharp and press <kbd>0</kbd> to zoom to 100% around it; you can tell at once whether it’s in focus. Press it again to see the whole photo. Or hold <kbd>0</kbd>: it zooms while held and goes back when you let go. Pinch and scroll-wheel zoom also center on the pointer.</p>"
+            ("zoom.webp", "Flipic Lens zooming to 100% at the pointer to check focus", "Hold 0 to check focus",
+             "<p>Point at the eyes or whatever needs to be sharp and hold <kbd>0</kbd> to zoom to 100% around it; you can tell at once whether it’s in focus. Let go to see the whole photo. Pinch and scroll-wheel zoom also center on the pointer.</p>"
              "<p>Not sure which frame in a burst is sharper? Press <kbd>C</kbd> to put two side by side; zooming and dragging move both, so you compare the same spot.</p>"),
             ("settings-en.webp", "Flipic Lens Settings window with editable shortcuts", "Ratings and marks that Lightroom sees",
              "<p>Press <kbd>1</kbd> to <kbd>5</kbd> to rate (the same number again clears it) and <kbd>P</kbd> to mark keepers. Ratings are saved as standard XMP, which Lightroom, Bridge and Capture One read: JPEG and HEIC only get their metadata changed and are not recompressed, and camera RAW ratings go into a .xmp file with the same name. Marks are Finder tags, so they survive a change of app.</p>"
@@ -430,7 +430,7 @@ guide("zh", "/guides/mac-next-image/", "Mac 预览怎么看下一张图片？三
 <figure>{shot('browse-06.webp', 'Flipic Lens 打开一张照片后按方向键翻看同一文件夹')}<figcaption>Flipic Lens 打开一张后，底部缩略图栏是整个文件夹。</figcaption></figure>
 <p>想以后双击照片都用 Flipic Lens 打开：在 Flipic Lens 的设置（<kbd>⌘,</kbd>）里点「设为默认看图软件」。也可以在访达里右键一张图，按住 <kbd>⌥</kbd>，选「始终以此方式打开」› Flipic Lens。</p>
 <p>设好之后可以当快速查看用：在访达里选中照片按 <kbd>⌘↓</kbd> 打开，左右翻看；在设置里打开「按 Esc 关闭窗口」，看完按 <kbd>Esc</kbd> 回到访达。</p>""",
-      howto=["在访达里双击任意一张图片，用 Flipic Lens 打开", "按右方向键看下一张，左方向键看上一张", "按 0 在鼠标处放大到 100%，再按一次回到全图"],
+      howto=["在访达里双击任意一张图片，用 Flipic Lens 打开", "按右方向键看下一张，左方向键看上一张", "按住 0 在鼠标处放大到 100%，松手回到全图"],
       faq=[
           ("Mac 预览怎么翻到下一张照片？",
            "预览只在你一起打开的文件之间切换。先在访达里全选照片，按 ⌘↓ 一起打开，方向键才有下一张；或者用空格快速查看；也可以换成 Flipic Lens，双击一张后直接按 →。"),
@@ -468,12 +468,12 @@ guide("zh", "/guides/windows-image-viewer-for-mac/", "Windows 看图软件的替
 <h2>Honeyview 和 IrfanView 有 Mac 版吗</h2>
 <p>没有。Honeyview 由 Bandisoft 开发，只出了 Windows 版；IrfanView 官方也只支持 Windows。网上的「Mac 版」要么是别的软件，要么是用 Wine 套壳运行，不建议装来路不明的安装包。</p>
 <h2>Mac 上可以用的替代</h2>
-<p><strong>Flipic Lens</strong>：免费开源，安装包 4.8 MB。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
+<p><strong>Flipic Lens</strong>：免费开源，安装包 5 MB 左右。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
 <p><strong>XnView MP</strong>：功能很全的跨平台看图和管理软件，个人使用免费。适合需要大量格式转换、元数据编辑的人，界面比较复杂。</p>
 <p><strong>qView</strong>：开源的极简看图软件，界面几乎只有图片。功能少，适合只想打开看看的人。</p>
 <h2>换过来后常见的几处不同</h2>
 <ul><li><strong>设成默认：</strong>在 Flipic Lens 设置里点「设为默认看图软件」，以后双击照片就用它打开。</li><li><strong>删除照片：</strong>Mac 上是 <kbd>⌘⌫</kbd> 移到废纸篓，不是 Delete 键。</li><li><strong>滚轮方向：</strong>Mac 默认是「自然滚动」，方向和 Windows 相反，可以在系统设置里改，或用 Mos 只改鼠标。</li></ul>
-<figure>{shot('zoom.webp', 'Flipic Lens 在鼠标位置放大到 100%')}<figcaption>按 0 在鼠标处放大到 100%，再按一次回到全图。</figcaption></figure>""")
+<figure>{shot('zoom.webp', 'Flipic Lens 在鼠标位置放大到 100%')}<figcaption>按住 0 在鼠标处放大到 100%，松手回到全图。</figcaption></figure>""")
 
 guide("zh", "/guides/cull-event-photos/", "Mac 上怎么挑活动照片",
       "活动照片快速挑片",
@@ -492,33 +492,38 @@ guide("zh", "/guides/cull-event-photos/", "Mac 上怎么挑活动照片",
 <p>打完星在 Lightroom 里怎么读，见 <a href="/guides/star-rating-lightroom/">Mac 照片打星，Lightroom 能认吗</a>；连拍、闭眼和拍糊的照片怎么先分组，见 <a href="/guides/burst-closed-eyes-cleanup/">连拍、闭眼、拍糊的照片，Mac 上先挑再删</a>。</p>""",
       howto=["用 Flipic Lens 打开整个文件夹，按 ⇧⌘K 进入清理模式", "确认要删的连拍、闭眼、模糊照片，移到废纸篓", "翻看剩下的照片，按 1–5 打星", "按 ⌘E 把选中的照片交给 Lightroom 或 Photoshop"], updated="2026-11-07")
 
-guide("en", "/en/guides/mac-preview-next-image/", "How to go to the next photo in Mac Preview",
+guide("en", "/en/guides/mac-preview-next-image/", "Next photo in Mac Preview: why arrows fail, 3 fixes",
       "Next photo in Mac Preview",
-      "Preview opens only the photo you double-clicked, so arrow keys do nothing. Three ways to see the next picture on a Mac: select all, Quick Look, or Flipic Lens.",
-      "Why the arrows stop, and three ways to page through the folder",
-      f"""<p>Double-click a photo in Finder and Preview opens that one file. Here are three ways to page through the rest of the folder, from most to least effort.</p>
-<h2>Why the arrow keys don't go to the next picture</h2>
-<p>Preview doesn't treat a folder as a set of photos. When you double-click one file, it opens a window with exactly that file in it, so there is no next picture for the arrow keys to reach. The keys do work once several images are open in the same window; then they move between those images. That's why the fix is either opening the whole folder at once or using a viewer that reads the folder from the start.</p>
-<h2>1. Select all in Finder, then open</h2>
-<ol><li>Open the folder in Finder and press <kbd>⌘A</kbd>.</li><li>Press <kbd>⌘↓</kbd> (or choose Open). Every image lands in one Preview window.</li><li>Use <kbd>↑</kbd> <kbd>↓</kbd> or <kbd>←</kbd> <kbd>→</kbd> to move between them; thumbnails sit in the sidebar.</li></ol>
-<p>You have to go back to Finder every time, and opening hundreds of files at once is slow.</p>
-<h2>2. Use Quick Look with Space</h2>
-<p>Select several images in Finder (or <kbd>⌘A</kbd>), press <kbd>Space</kbd>, then <kbd>←</kbd> <kbd>→</kbd> to step through the selection. Press <kbd>Space</kbd> or <kbd>Esc</kbd> to close.</p>
-<p>Fine for a glance; awkward for zooming, reading EXIF or deleting.</p>
-<h2>3. Use Flipic Lens and just press the arrow keys</h2>
-<p>Flipic Lens is a free, open-source image viewer for Mac. Double-click any photo and press <kbd>→</kbd> for the next one in the folder, no selecting first.</p>
-<figure>{shot('browse-06.webp', 'Flipic Lens paging through a folder with the arrow keys')}<figcaption>Open one photo; the thumbnail strip is the whole folder.</figcaption></figure>
-<p>To make Flipic Lens open photos by default, click Make Default Viewer in Settings (<kbd>⌘,</kbd>), or Control-click an image in Finder, hold <kbd>⌥</kbd> and choose Always Open With › Flipic Lens.</p>
-<p>It then works like Quick Look: select a photo, press <kbd>⌘↓</kbd>, page with the arrows, and with Esc Closes Window turned on, press <kbd>Esc</kbd> to go back to Finder.</p>""",
-      howto=["Double-click any image in Finder to open it in Flipic Lens", "Press the right arrow key for the next image and the left arrow for the previous one", "Press 0 to zoom to 100% at the pointer; press it again to fit"],
+      "To see the next photo in Preview, open the whole folder: select the photos in Finder, press ⌘↓, then use the arrow keys. Quick Look and Flipic Lens also work.",
+      "Why the arrows stop, and how to page a whole folder",
+      f"""<p>Preview opens only the file you double-clicked, so the arrow keys have nothing to move to. The direct fix is to open the folder's photos as a set: select them in Finder, press <kbd>⌘↓</kbd>, and the arrows work inside that Preview window. If you would rather start from one photo and keep paging, double-click it in Flipic Lens and press <kbd>→</kbd>.</p>
+<h2>Next image in the same folder</h2>
+<p>Open the folder in Finder, press <kbd>⌘A</kbd> to select everything, then <kbd>⌘↓</kbd> to open the files in one Preview window. The sidebar lists the set, and the arrow keys or <kbd>Page Down</kbd> move through it. This works, but opening hundreds of RAW files just to look at one is slow, and you make the trip back to Finder every time.</p>
+<h2>Arrow keys: Preview, Quick Look, or a folder viewer</h2>
+<p>If <kbd>←</kbd> <kbd>→</kbd> still do nothing, check what Preview has open: one document has no next image inside it. Apple's shortcut list sends the Up and Down arrows to the sidebar and <kbd>Page Down</kbd> to the next image in the window, so the keys only move inside a set that is already open (<a href="https://support.apple.com/guide/preview/cpprvw0003/mac">Apple Preview shortcuts</a>). Quick Look and a folder viewer take a different route.</p>
+<h2>Quick Look: Space, then the arrow keys</h2>
+<p>Quick Look is built into macOS and needs no extra app. Select one or more files in Finder and press <kbd>Space</kbd>; Apple's guide says the window shows a full-size preview without opening the file, and with several items selected the Left and Right arrow keys move between them (<a href="https://support.apple.com/guide/mac-help/view-and-edit-files-with-quick-look-mh14119/mac">Apple Quick Look guide</a>). MacMost makes the same case for viewing files rather than editing them (<a href="https://macmost.com/use-quick-look-instead-of-preview-to-view-files.html">MacMost</a>). It is a preview window tied to the Finder selection, not a folder browser, and closing it ends the session.</p>
+<h2>MacBook trackpad: swipe left for the next photo</h2>
+<p>In Flipic Lens, two fingers on the trackpad do what the arrow keys do. Swipe left or right to change photos, and left goes to the next one. Pinch to zoom, or double-click to switch between fit and 100%. The recording below is the real app, paging, zooming to 100% and rating in real time.</p>
+<figure>{shot('demo-paging.webp', 'Flipic Lens paging through 34 RAW files from 34 different cameras', 960, 540)}<figcaption>Real-time screen recording: 34 RAW files from 34 different cameras.</figcaption></figure>
+<h2>Like the Windows photo viewer: double-click, then page</h2>
+<p>In the Windows Photos viewer the loop is one double-click, arrows through the folder, wheel to zoom and Delete to reject. Preview does not do that from one file. Flipic Lens, which is free and open source, does: double-click any photo in the folder, press <kbd>←</kbd> <kbd>→</kbd> to page, use the wheel or a pinch to zoom, and <kbd>⌘⌫</kbd> to move a photo to the Trash (the Delete key alone does not). Hold <kbd>0</kbd> to check focus at 100% and let go to fit.</p>
+<h3>Make it the viewer that opens on a double-click</h3>
+<p>Open Settings (<kbd>⌘,</kbd>) and click Make Default Viewer under General; common image formats and camera RAW are set in one go. You can also Control-click a photo in Finder, hold <kbd>⌥</kbd> and choose Always Open With › Flipic Lens. After that, select a photo, press <kbd>⌘↓</kbd>, page with the arrows and press <kbd>Esc</kbd> to go back to Finder (turn on Esc Closes Window in Settings first).</p>
+<p>The Windows Photos habit is mapped out in <a href="/en/guides/mac-photo-viewer-like-windows/">Mac photo viewer like Windows</a>.</p>""",
+      howto=["Double-click any image in Finder to open it in Flipic Lens", "Press the right arrow key for the next image and the left arrow for the previous one", "Hold 0 to zoom to 100% at the pointer; let go to fit"],
       faq=[
-          ("How do I go to the next photo in Preview on Mac?",
-           "Preview only pages through images you opened together. Select all the photos in Finder, press ⌘↓ to open them in one window, then use the arrow keys. Quick Look and Flipic Lens are the other two ways described above."),
-          ("How do I see the next picture on a Mac without selecting every file?",
-           "Open the folder in Flipic Lens and double-click any photo; the arrow keys then move through every image in that folder. Quick Look only moves between the files you selected in Finder first."),
-          ("Can I move to the next photo on a MacBook with the arrow keys?",
-           "Not after double-clicking a single photo, because Preview only knows that one file. Open several photos together, use Quick Look, or use Flipic Lens, and the arrow keys move between them."),
-      ], title_suffix=False, updated="2026-11-07")
+          ("How do I go to the next photo in Mac Preview?",
+           "Open the photos together first: select them in Finder, press ⌘↓, then use the arrow keys or Page Down. Preview cannot page a folder from one double-clicked file."),
+          ("How do I move to the next photo in Mac Preview with the arrow keys?",
+           "The arrows move within the set that is open. If only one file is open, add the others with ⌘A and ⌘↓ in Finder, or switch to Quick Look or Flipic Lens."),
+          ("How do I see the next photo in the same folder?",
+           "Open the folder in Flipic Lens and double-click any photo; ← and → walk the whole folder without selecting files first."),
+          ("How do I go to the next picture on a MacBook?",
+           "Use ← → in Flipic Lens, or swipe left or right with two fingers and swipe left for the next photo. In Preview, open the photos as a set first."),
+          ("Which Mac image viewer has a next image key?",
+           "Preview, Quick Look and Flipic Lens all respond to the arrow keys, but only Flipic Lens reads the whole folder from one double-click. Quick Look moves through the Finder selection."),
+      ], title_suffix=False, updated="2026-11-13")
 
 guide("en", "/en/guides/batch-convert-heic-to-jpg-mac/", "How to batch convert HEIC to JPG on Mac",
       "Batch convert HEIC to JPG",
@@ -546,12 +551,44 @@ guide("en", "/en/guides/irfanview-for-mac/", "IrfanView for Mac: free alternativ
 <h2>Is there an IrfanView for Mac?</h2>
 <p>No. IrfanView officially supports Windows only, and Honeyview from Bandisoft is Windows-only too. Anything labeled "for Mac" is either a different app or Windows software wrapped in Wine, so be careful with unofficial installers.</p>
 <h2>Alternatives that run natively on a Mac</h2>
-<p><strong>Flipic Lens</strong>: free and open source, a 4.8 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
+<p><strong>Flipic Lens</strong>: free and open source, a 5 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
 <p><strong>XnView MP</strong>: a full-featured cross-platform viewer and organizer, free for personal use; great for heavy conversion and metadata work, busier interface.</p>
 <p><strong>qView</strong>: a minimal open-source viewer that is little more than the image; few features by design.</p>
 <h2>Things that work differently on a Mac</h2>
 <ul><li><strong>Default viewer:</strong> click Make Default Viewer in Flipic Lens's Settings.</li><li><strong>Deleting:</strong> <kbd>⌘⌫</kbd> moves a photo to the Trash; the Delete key alone doesn't.</li><li><strong>Scroll direction:</strong> macOS uses natural scrolling, the reverse of Windows; change it in System Settings or for the mouse only with Mos.</li></ul>
-<figure>{shot('zoom.webp', 'Flipic Lens zooming to 100% at the pointer')}<figcaption>Press 0 to zoom to 100% under the pointer; press it again to fit.</figcaption></figure>""")
+<p>For the Windows Photos viewer habit specifically, see <a href="/en/guides/mac-photo-viewer-like-windows/">Mac photo viewer like Windows</a>.</p>
+<figure>{shot('zoom.webp', 'Flipic Lens zooming to 100% at the pointer')}<figcaption>Hold 0 to zoom to 100% under the pointer; let go to fit.</figcaption></figure>""")
+
+guide("en", "/en/guides/mac-photo-viewer-like-windows/", "Free Mac photo viewer like Windows, with arrow keys",
+      "Mac photo viewer like Windows",
+      "Free Mac photo viewer like Windows Photos: double-click one photo, page the whole folder with the arrow keys, zoom with the wheel, delete with ⌘⌫.",
+      "The double-click, arrow, zoom and delete loop, rebuilt on a Mac",
+      f"""<p>If you came from Windows, the Photos viewer gave you a simple loop: double-click a picture, press the arrow keys to move through the folder, scroll to zoom, and press Delete when a shot is no good. macOS splits that loop between Preview, Quick Look and Finder, which is why the first double-click often feels like a dead end.</p>
+<h2>What the Windows Photos viewer does in one window</h2>
+<p>One window, one folder, one photo at a time. The next photo is one arrow key away, the wheel zooms, and Delete removes a shot. Nothing needs importing, and you do not select the rest of the folder before you start. That is the habit this page is about.</p>
+<h2>Where Preview stops</h2>
+<p>Preview is an editor and a document viewer, not a folder browser. Double-click one image and it opens exactly that file. Apple's shortcut list sends the Up and Down arrows to the sidebar and Page Down to the next image in the window, so the keys only reach documents already open (<a href="https://support.apple.com/guide/preview/cpprvw0003/mac">Apple Preview shortcuts</a>). MacMost puts it plainly: after a double-click, Preview cannot move to the next file with the arrow keys (<a href="https://macmost.com/use-quick-look-instead-of-preview-to-view-files.html">MacMost</a>).</p>
+<h2>Where Quick Look stops</h2>
+<p>Quick Look is closer because it follows the Finder selection. Select files, press <kbd>Space</kbd>, and the Left and Right arrows move through the selected items (<a href="https://support.apple.com/guide/mac-help/view-and-edit-files-with-quick-look-mh14119/mac">Apple Quick Look guide</a>). It is still a preview window tied to the Finder selection, not a viewer with a folder behind it: zoom is <kbd>⌘+</kbd> and <kbd>⌘-</kbd> rather than the wheel, and closing the window ends the session.</p>
+<h2>Flipic Lens: the Windows-style loop on a Mac</h2>
+<p>Flipic Lens is a free, open-source Mac photo viewer that reads the folder directly. Double-click any photo, press <kbd>→</kbd> for the next one and <kbd>←</kbd> for the previous one; the strip along the bottom is the rest of the folder. The wheel zooms around the pointer, a pinch zooms on the trackpad, and holding <kbd>0</kbd> shows 100% at the pointer, with the fit view back when you let go. <kbd>⌘⌫</kbd> moves the current photo to the Trash and <kbd>⌘Z</kbd> puts back the last one. Ratings 1 to 5 and <kbd>P</kbd> marks are there when you want them, and the stars are standard XMP that Lightroom reads.</p>
+<h2>Set it as the default photo viewer</h2>
+<p>Open Settings (<kbd>⌘,</kbd>) and click Make Default Viewer under General; common image formats and camera RAW are set in one go. Or Control-click a photo in Finder, hold <kbd>⌥</kbd> and choose Always Open With › Flipic Lens. After that, a double-click opens the photo in Flipic Lens, the arrows page the folder, and with Esc Closes Window turned on, <kbd>Esc</kbd> returns to Finder.</p>
+<h2>Not the same as an IrfanView replacement</h2>
+<p>This page is about the Windows Photos loop. If you are looking for IrfanView or Honeyview themselves, the differences are on the <a href="/en/guides/irfanview-for-mac/">IrfanView for Mac alternatives</a> page. That page covers the Windows-only apps and the native Mac options; this one covers the double-click, arrow, zoom and delete habit.</p>""",
+      howto=["Double-click any photo in Finder to open it in Flipic Lens", "Press the right arrow key for the next photo and the left arrow for the previous one", "Scroll or pinch to zoom; hold 0 for 100% at the pointer", "Press ⌘⌫ to move a reject to the Trash"],
+      faq=[
+          ("Is there a free Mac photo viewer like Windows Photos?",
+           "Yes. Flipic Lens is free and open source, reads a folder without importing, and pages with the arrow keys after one double-click."),
+          ("Is there a Mac image viewer with arrow keys?",
+           "Not one built in that reads a folder from a single double-click. Preview needs the photos opened together, Quick Look moves through a selection, and Flipic Lens reads the folder."),
+          ("How do I zoom and delete like in Windows Photos?",
+           "In Flipic Lens use the wheel or a pinch to zoom, hold 0 for 100% at the pointer, and press ⌘⌫ to move the photo to the Trash; ⌘Z puts it back."),
+          ("How do I set Flipic Lens as my default photo viewer?",
+           "Open Settings (⌘,) and click Make Default Viewer, or Control-click a photo in Finder, hold ⌥ and choose Always Open With › Flipic Lens."),
+          ("Is this the same as an IrfanView alternative?",
+           "No. IrfanView is a specific Windows app; this page is about the Windows Photos habit. The IrfanView page covers that replacement."),
+      ], title_suffix=False, updated="2026-11-13", published="2026-11-13")
 
 guide("en", "/en/guides/cull-photos-on-mac/", "How to cull hundreds of event photos on a Mac",
       "Cull event photos on Mac",
@@ -640,7 +677,7 @@ guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic Lens: wh
 <h2>Where FlowVision fits</h2>
 <p>FlowVision is the one to try if you think in folders. Its waterfall and grid layouts show many images at different sizes at once, which suits going through a shoot, a download folder or a reference library before deciding what to open. It plays video in the same window, so mixed folders of clips and stills stay in one place. The app also handles file management while you browse: move, copy and rename files, add tags and ratings, and jump between folders with right-click gestures. It is GPL-3.0, needs macOS 11.0 or later, and handles camera RAW.</p>
 <h2>Where Flipic Lens fits</h2>
-<p>Flipic Lens is the one to try if you cull by stepping through photos. Open a folder, double-click any photo and press <kbd>←</kbd> or <kbd>→</kbd>; the window moves through the folder one image at a time, with a thumbnail strip along the bottom. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus, <kbd>1</kbd>–<kbd>5</kbd> to rate, and <kbd>P</kbd> to mark keepers. Ratings are written as standard XMP, so Lightroom, Bridge and Capture One can read them. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac, and nothing is deleted until you choose Move to Trash. Flipic Lens is MIT-licensed, a 4.8 MB download, needs macOS 13 or later, and runs on Apple silicon and Intel.</p>
+<p>Flipic Lens is the one to try if you cull by stepping through photos. Open a folder, double-click any photo and press <kbd>←</kbd> or <kbd>→</kbd>; the window moves through the folder one image at a time, with a thumbnail strip along the bottom. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus, <kbd>1</kbd>–<kbd>5</kbd> to rate, and <kbd>P</kbd> to mark keepers. Ratings are written as standard XMP, so Lightroom, Bridge and Capture One can read them. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac, and nothing is deleted until you choose Move to Trash. Flipic Lens is MIT-licensed, a 5 MB download, needs macOS 13 or later, and runs on Apple silicon and Intel.</p>
 <h2>Which should you pick?</h2>
 <p>If you want to see a whole folder at once and keep video in the same view, FlowVision fits better. If you want to open one photo and go forward and back with the arrow keys while rating and marking, Flipic Lens fits better. Both are free and open source, so trying both costs nothing but a download.</p>
 <h2>FlowVision facts and links</h2>
@@ -654,9 +691,9 @@ guide("zh", "/guides/mac-view-raw/", "Mac 上怎么快速看 RAW 照片",
       "在 Mac 上双击 RAW 就能用方向键一张张看，按 0 看焦点，按 1–5 打星。也写清 CR3、NEF、ARW 等格式和 RAW+JPG 同名文件的处理。",
       "RAW 也能双击后一张张翻，看焦点、打星，同名 JPG 一起处理",
       f"""<p>把 RAW 文件拷到 Mac 上，用 Flipic Lens 打开所在文件夹，双击任意一张，按 <kbd>←</kbd> <kbd>→</kbd> 就能一张张翻。不用先导入，也不建图库，CR3、NEF、ARW、RAF、DNG 这些常见相机 RAW 都能直接打开。</p>
-<p>看到要确认焦点的，把鼠标移到眼睛上按 <kbd>0</kbd>，就在那里放大到 100%，再按一次回到整张。想看拍摄参数按 <kbd>I</kbd>，右上角会列出相机、镜头、快门、光圈、ISO 和拍摄时间。</p>
+<p>看到要确认焦点的，把鼠标移到眼睛上按住 <kbd>0</kbd>，就在那里放大到 100%，松手回到整张。想看拍摄参数按 <kbd>I</kbd>，右上角会列出相机、镜头、快门、光圈、ISO 和拍摄时间。</p>
 <p>翻页时先出现一张略糊的预览，停下来马上变清晰；按住方向键一直翻也能跟上。不用先导入，所以也没有导入进度条。</p>
-<figure>{shot('zoom.webp', 'Flipic Lens 在鼠标处放大到 100% 检查焦点')}<figcaption>按 0 在鼠标处放大到 100%，再按一次回到整张。</figcaption></figure>
+<figure>{shot('zoom.webp', 'Flipic Lens 在鼠标处放大到 100% 检查焦点')}<figcaption>按住 0 在鼠标处放大到 100%，松手回到整张。</figcaption></figure>
 <h2>先把整个文件夹翻一遍</h2>
 <p>打开文件夹后，底部缩略图栏就是整个文件夹。按 <kbd>→</kbd> 看下一张，按 <kbd>←</kbd> 回上一张；排序可以按文件名、拍摄时间、修改时间或文件大小，连拍多的时候按拍摄时间会更顺。</p>
 <p>只想快速扫一遍时，按 <kbd>空格</kbd> 让窗口贴合照片比例，再按一次回到原窗口。竖拍的照片会得到一个竖长的窗口，扫起来更顺。</p>
@@ -748,7 +785,7 @@ guide("en", "/en/guides/photo-mechanic-alternative-mac/", "Photo Mechanic altern
 <p>For culling, the useful keys are all there. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus. Press <kbd>1</kbd> to <kbd>5</kbd> to rate, <kbd>P</kbd> to mark keepers. Press <kbd>C</kbd> for two photos side by side or <kbd>⇧C</kbd> for four, with zoom and pan synced. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac before you decide what to delete. Viewing, ratings, marks, side-by-side comparison and Cleanup Mode are free.</p>
 <figure>{shot('filmstrip.webp', 'Flipic Lens thumbnail strip and arrow-key paging')}<figcaption>Flipic Lens: open one photo, then page through the folder.</figcaption></figure>
 <h2>Where the two differ</h2>
-<p>Photo Mechanic is stronger when the job includes ingest automation, detailed metadata, keywording and delivery. Flipic Lens is stronger when you want to open a folder quickly and judge one photo at a time without a catalog. Flipic Lens is also Mac-only, MIT-licensed and a 4.8 MB download; it needs macOS 13 or later.</p>
+<p>Photo Mechanic is stronger when the job includes ingest automation, detailed metadata, keywording and delivery. Flipic Lens is stronger when you want to open a folder quickly and judge one photo at a time without a catalog. Flipic Lens is also Mac-only, MIT-licensed and a 5 MB download; it needs macOS 13 or later.</p>
 <p>Photo Mechanic is not the only heavier option, and Flipic Lens is not trying to replace it. If you already use Photo Mechanic for the parts of the workflow that matter to you, keep it. Use Flipic Lens when you just want to look at the pictures and pick.</p>
 <h2>Can you use both?</h2>
 <p>Yes. You can keep a full workflow app for ingest and metadata, then open the folder in a lighter viewer for a quick pass. Flipic Lens does not import, copy or catalog your files, and opening a folder does not move anything. The only photo data it writes is the rating you set, as standard XMP; marks are stored as Finder tags. Other apps can read the ratings. If you later decide you need the wider workflow, you can go back without a migration.</p>
@@ -772,10 +809,10 @@ guide("en", "/en/guides/view-raw-files-mac/", "How to quickly view RAW files on 
 <p>Quick Look is also temporary: close the window and the selection is gone. A folder viewer keeps the folder open, so you can come back to the same place after a break.</p>
 <p>A folder viewer fits when you want to start at one photo and keep going. Flipic Lens reads the folder as it is, so the next photo is whatever comes next in the folder, not the next item you happened to select. You can sort by name, date taken, date modified or file size.</p>
 <h2>Check focus before you rate</h2>
-<p>Point at the eyes or another detail and press <kbd>0</kbd> to zoom to 100% there. Press it again to fit the photo. Press <kbd>I</kbd> for the camera, lens, shutter speed, aperture, ISO and date taken. When two frames look close, press <kbd>C</kbd> to compare two side by side, or <kbd>⇧C</kbd> for four.</p>
+<p>Point at the eyes or another detail and hold <kbd>0</kbd> to zoom to 100% there. Let go to fit the photo. Press <kbd>I</kbd> for the camera, lens, shutter speed, aperture, ISO and date taken. When two frames look close, press <kbd>C</kbd> to compare two side by side, or <kbd>⇧C</kbd> for four.</p>
 <p>If you shoot bursts, comparing two frames saves going back and forth between them and trying to remember the last. The compare view keeps the same zoom and position, which is exactly what you need for eyes and expressions.</p>
 <p>Then rate with <kbd>1</kbd> to <kbd>5</kbd> and mark keepers with <kbd>P</kbd>. Ratings are written as standard XMP: into the file for JPEG, HEIC and TIFF, and into a same-name <code>.xmp</code> sidecar for proprietary RAW. The RAW file itself is not changed.</p>
-<figure>{shot('zoom.webp', 'Flipic Lens zooming to 100% at the pointer to check focus')}<figcaption>Press 0 to check focus; press it again to fit.</figcaption></figure>
+<figure>{shot('zoom.webp', 'Flipic Lens zooming to 100% at the pointer to check focus')}<figcaption>Hold 0 to check focus; let go to fit.</figcaption></figure>
 <h2>A simple RAW routine</h2>
 <ol><li>Copy the card to a folder. Do not rename anything yet.</li><li>Open the folder in Flipic Lens and page from the first frame, pressing <kbd>0</kbd> on anything that looks soft.</li><li>Rate the keepers with <kbd>1</kbd> to <kbd>5</kbd>, mark the ones you want to edit with <kbd>P</kbd>, then deal with the rejects.</li></ol>
 <h2>RAW and JPG with the same name</h2>
@@ -830,7 +867,7 @@ guide("en", "/en/guides/adobe-bridge-alternative-mac/", "Adobe Bridge vs Flipic 
 <ul><li><strong>Metadata and asset management.</strong> Bridge edits metadata, adds keywords, labels and ratings, and finds files with filters, collections and metadata search.</li><li><strong>Adobe Camera Raw.</strong> Bridge opens RAW files in Camera Raw and sits next to Photoshop and the rest of Creative Cloud.</li><li><strong>Batch work.</strong> Batch rename and batch export, plus PDF contact sheets and publishing to Adobe Stock or Portfolio.</li></ul>
 <h2>Where Flipic Lens fits</h2>
 <ul><li><strong>No import step.</strong> Open the folder, double-click a photo and press the arrow keys. There is no catalog to create or maintain.</li><li><strong>Focus and comparison.</strong> Press 0 to zoom to 100% at the pointer; press C for two photos or Shift-C for four, with zoom and pan synced.</li><li><strong>Ratings and marks in the file.</strong> 1 to 5 stars are written as standard XMP, with a same-name .xmp sidecar for proprietary RAW. P marks are Finder tags.</li></ul>
-<p><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blurry shots. Nothing is deleted until you choose Move to Trash.<br><strong>Small and offline.</strong> A 4.8 MB MIT-licensed Mac app that is offline by default. Pro is a one-time purchase with a 7-day trial; the Workbench adds a project grid.</p>
+<p><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blurry shots. Nothing is deleted until you choose Move to Trash.<br><strong>Small and offline.</strong> A 5 MB MIT-licensed Mac app that is offline by default. Pro is a one-time purchase with a 7-day trial; the Workbench adds a project grid.</p>
 <h2>Using them together</h2>
 <p>Use Bridge when the job is metadata, keywords, Adobe Camera Raw or batch delivery. Use Flipic Lens when you want to open the same folder and cull without importing. Flipic Lens writes standard XMP ratings, so the ratings can travel with the files; Bridge remains the place for the heavier metadata work.</p>
 <p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
@@ -855,7 +892,7 @@ guide("en", "/en/guides/fastrawviewer-alternative-mac/", "FastRawViewer vs Flipi
 <ul><li><strong>RAW data, not an embedded preview.</strong> It renders the RAW and shows a RAW histogram, RAW statistics and highlight inspection.</li><li><strong>Exposure and focus tools.</strong> Shadow Boost, per-channel view, focus peaking and exposure compensation help you see what a converter can recover.</li><li><strong>RAW+JPEG mode.</strong> It handles RAW and JPEG pairs and can work through folders without creating a catalog.</li></ul>
 <h2>Where Flipic Lens fits</h2>
 <ul><li><strong>Simple paging.</strong> Double-click one photo and use the arrow keys through the folder, with no import and no catalog.</li><li><strong>Fast focus checks and comparison.</strong> Press 0 to zoom to 100% at the pointer; C and Shift-C compare two or four frames with synced zoom and pan.</li><li><strong>Ratings and marks.</strong> 1 to 5 stars go into standard XMP, with a same-name .xmp sidecar for proprietary RAW. P marks are Finder tags.</li></ul>
-<p><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.<br><strong>Small and offline.</strong> A 4.8 MB MIT-licensed Mac app, offline by default; Pro adds the Workbench grid and is a one-time purchase with a 7-day trial.</p>
+<p><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.<br><strong>Small and offline.</strong> A 5 MB MIT-licensed Mac app, offline by default; Pro adds the Workbench grid and is a one-time purchase with a 7-day trial.</p>
 <h2>Using them together</h2>
 <p>Open a shoot in FastRawViewer when you need the RAW histogram or a careful exposure check. Use Flipic Lens for the broader pass: page, rate, mark and let Cleanup Mode group the obvious rejects. Both can write ratings to XMP, so pick one app for the rating pass to keep the sidecars predictable.</p>
 <p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
@@ -881,7 +918,7 @@ guide("en", "/en/guides/xnview-mp-alternative-mac/", "XnView MP vs Flipic Lens: 
 <p><strong>Image Compare.</strong> Compare up to four images in one view.</p>
 <h2>Where Flipic Lens fits</h2>
 <ul><li><strong>No catalog to manage.</strong> Open the folder and start paging; no import and no library.</li><li><strong>Focus and comparison.</strong> 0 zooms to 100% at the pointer; C and Shift-C compare two or four photos with synced zoom and pan.</li><li><strong>Ratings in standard XMP.</strong> 1 to 5 stars, with a same-name .xmp sidecar for proprietary RAW; P marks are Finder tags.</li></ul>
-<p><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blur, with you deciding what goes.<br><strong>Small, free and offline.</strong> A 4.8 MB MIT-licensed Mac app. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid.</p>
+<p><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blur, with you deciding what goes.<br><strong>Small, free and offline.</strong> A 5 MB MIT-licensed Mac app. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid.</p>
 <h2>Using them together</h2>
 <p>Use XnView MP for format conversion, batch rename, catalog searches and cross-platform work. Use Flipic Lens when you want to sit in one folder and cull. Both can write XMP ratings, so choose one app for the rating pass if you want to keep the sidecars simple.</p>
 <p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
@@ -906,7 +943,7 @@ guide("en", "/en/guides/apolloone-alternative/", "ApolloOne vs Flipic Lens: two 
 <ul><li><strong>Metadata and keywords.</strong> Full EXIF and IPTC editing, hierarchical keywords and code replacements written as XMP.</li><li><strong>More viewing tools.</strong> Tabs and windows, split-view comparison, HDR display and export, video playback and non-destructive Quick Edit.</li><li><strong>Burst organization.</strong> Stacks and Auto-Stack collapse a burst into one thumbnail, while Focus Score helps compare sharpness.</li></ul>
 <p><strong>Batch work.</strong> Batch rename and conversion are built in.</p>
 <h2>Where Flipic Lens fits</h2>
-<ul><li><strong>Simple and open source.</strong> A 4.8 MB MIT-licensed Mac app with no import and no catalog.</li><li><strong>Culling without setup.</strong> Double-click a photo, arrow through the folder, press 0 to check focus, C or Shift-C to compare, 1 to 5 to rate and P to mark.</li><li><strong>Ratings and marks in standard places.</strong> Stars are standard XMP with a same-name .xmp sidecar for proprietary RAW; P marks are Finder tags.</li></ul>
+<ul><li><strong>Simple and open source.</strong> A 5 MB MIT-licensed Mac app with no import and no catalog.</li><li><strong>Culling without setup.</strong> Double-click a photo, arrow through the folder, press 0 to check focus, C or Shift-C to compare, 1 to 5 to rate and P to mark.</li><li><strong>Ratings and marks in standard places.</strong> Stars are standard XMP with a same-name .xmp sidecar for proprietary RAW; P marks are Finder tags.</li></ul>
 <p><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.<br><strong>Pro when needed.</strong> The Workbench adds a project grid, zoom to the eyes, content and text search, and more, as a one-time purchase with a 7-day trial.</p>
 <h2>Using them together</h2>
 <p>Use ApolloOne when you need IPTC, keywords, HDR or a quick non-destructive edit. Use Flipic Lens when the job is to open a folder and make a first selection. Both write ratings as XMP, so decide which app owns the rating pass if keeping sidecars tidy matters to you.</p>
@@ -958,7 +995,7 @@ guide("zh", "/guides/adobe-bridge-mac/", "Bridge 和 Flipic Lens 怎么选",
 <ul><li><strong>元数据和素材管理。</strong> 改元数据、加关键词、标签和星级，用筛选、收藏夹和元数据搜索找文件。</li><li><strong>Adobe Camera Raw。</strong> 从 Bridge 把 RAW 交给 Camera Raw，和 Photoshop、Creative Cloud 连在一起。</li><li><strong>批处理。</strong> 批量重命名、批量导出、PDF 联系表，也能发 Adobe Stock 或 Portfolio。</li></ul>
 <h2>Flipic Lens 更适合的地方</h2>
 <ul><li><strong>不用导入。</strong> 打开文件夹，双击一张，方向键就翻；没有图库要建，也没有导入步骤。</li><li><strong>看焦点和并排比较。</strong> 按 0 在鼠标处放大到 100%；按 C 两张、⇧C 四张，缩放和拖动同步。</li><li><strong>星级和标记落在文件里。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记是访达标签。</li></ul>
-<p><strong>清理模式。</strong> 免费，在本机分相似连拍、重复、闭眼和模糊；你按「移到废纸篓」之前不会删。<br><strong>小、免费、默认不联网。</strong> 4.8 MB，MIT 开源。Pro 一次买断，下载后可以先试用 7 天，工作台多一个项目宫格。</p>
+<p><strong>清理模式。</strong> 免费，在本机分相似连拍、重复、闭眼和模糊；你按「移到废纸篓」之前不会删。<br><strong>小、免费、默认不联网。</strong> 约 5 MB，MIT 开源。Pro 一次买断，下载后可以先试用 7 天，工作台多一个项目宫格。</p>
 <h2>一起用</h2>
 <p>要写关键词、改元数据、跑 Camera Raw 或做批量交付，用 Bridge。要在同一个文件夹里先挑一遍，用 Flipic Lens。Flipic Lens 写的是标准 XMP 星级，文件带得走；更重的元数据工作还是回 Bridge 做。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
@@ -984,7 +1021,7 @@ guide("zh", "/guides/photo-mechanic-mac/", "Photo Mechanic 的 Mac 替代",
 <p><strong>Plus 版的图库。</strong> 需要跨硬盘管理大量照片时，Plus 版多了图像数据库。</p>
 <h2>Flipic Lens 更适合的地方</h2>
 <ul><li><strong>打开就能挑。</strong> 不导入，不建图库，双击一张就按方向键翻。</li><li><strong>看焦点和比较。</strong> 按 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放同步。</li><li><strong>星级和标记。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记存成访达标签。</li></ul>
-<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些还是你决定。<br><strong>小、免费、默认不联网。</strong> 4.8 MB，MIT 开源。Pro 一次买断，带 7 天试用，工作台有项目宫格。</p>
+<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些还是你决定。<br><strong>小、免费、默认不联网。</strong> 约 5 MB，MIT 开源。Pro 一次买断，带 7 天试用，工作台有项目宫格。</p>
 <h2>一起用</h2>
 <p>要拷卡、写 IPTC、批量改关键词、直接交付，用 Photo Mechanic。照片已经在硬盘上、只想先挑一遍，就用 Flipic Lens。两边的星级都走 XMP，但建议固定一个软件负责打星，免得 sidecar 被两边反复改。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
@@ -1010,7 +1047,7 @@ guide("zh", "/guides/xnview-mp-mac/", "XnView MP 和 Flipic Lens 怎么选",
 <p><strong>四张比较。</strong> Image Compare 最多同时看四张。</p>
 <h2>Flipic Lens 更适合的地方</h2>
 <ul><li><strong>不用图库。</strong> 打开文件夹就翻，不导入，不建库。</li><li><strong>看焦点和比较。</strong> 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放和拖动同步。</li><li><strong>星级写标准 XMP。</strong> 1 到 5 星，专有 RAW 写同名 .xmp；P 标记是访达标签。</li></ul>
-<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼、模糊，删哪些由你决定。<br><strong>小、免费、默认不联网。</strong> 4.8 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</p>
+<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼、模糊，删哪些由你决定。<br><strong>小、免费、默认不联网。</strong> 约 5 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</p>
 <h2>一起用</h2>
 <p>要转格式、批量改名、跨平台看图或在图库里搜，用 XnView MP。要在一个文件夹里先挑一遍，用 Flipic Lens。两边都能写 XMP 星级，固定一个软件打星会更省心。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
@@ -1035,7 +1072,7 @@ guide("zh", "/guides/fastrawviewer-mac/", "FastRawViewer 和 Flipic Lens",
 <ul><li><strong>看的是 RAW 数据。</strong> 不是内嵌 JPEG，给的是 RAW 直方图、RAW 统计和过曝检查。</li><li><strong>曝光和焦点工具。</strong> Shadow Boost、分通道查看、峰值对焦、曝光补偿，帮你看后期还能拉回多少。</li><li><strong>RAW+JPEG 模式。</strong> 同时处理 RAW 和 JPEG，按文件夹浏览，不建图库。</li></ul>
 <h2>Flipic Lens 更适合的地方</h2>
 <ul><li><strong>打开就翻。</strong> 双击一张，方向键翻整个文件夹，不导入，不建库。</li><li><strong>看焦点和比较。</strong> 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放同步。</li><li><strong>星级和标记。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记是访达标签。</li></ul>
-<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些由你决定。<br><strong>小、免费、默认不联网。</strong> 4.8 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</p>
+<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些由你决定。<br><strong>小、免费、默认不联网。</strong> 约 5 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</p>
 <h2>一起用</h2>
 <p>要判断曝光、看 RAW 直方图、峰值对焦，用 FastRawViewer。要快速翻一遍、打星、标记、清理，用 Flipic Lens。两边都能写 XMP 星级，但固定一个软件负责评分，sidecar 更可控。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
@@ -1060,7 +1097,7 @@ guide("en", "/en/compare/", "Compare Mac photo viewers and culling tools",
 <ul><li><strong>Just open a folder and cull:</strong> Flipic Lens, with no import and XMP ratings. Preview can open a file but does not browse a folder on its own.</li><li><strong>Metadata, keywords or Adobe batch work:</strong> Adobe Bridge.</li><li><strong>High-volume ingest, IPTC and delivery:</strong> Photo Mechanic.</li></ul>
 <p><strong>RAW histogram, exposure and focus peaking:</strong> FastRawViewer.<br><strong>Many formats, batch conversion or Linux:</strong> XnView MP.<br><strong>Mac-native metadata, HDR, stacks and quick edits:</strong> ApolloOne.<br><strong>Waterfall or grid browsing with video:</strong> FlowVision.<br><strong>Editing and a long-term catalog:</strong> Lightroom Classic.</p>
 <h2>What Flipic Lens covers</h2>
-<p>Flipic Lens reads the folder you open, double-click any photo and page with the arrow keys. Press 0 to zoom to 100% at the pointer, C or Shift-C to compare two or four frames with synced zoom, 1 to 5 to rate and P to mark. Ratings are standard XMP, with a same-name .xmp sidecar for proprietary RAW; marks are Finder tags. Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac. The app is 4.8 MB, MIT-licensed and offline by default. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid, zoom to the eyes, and content and text search.</p>
+<p>Flipic Lens reads the folder you open, double-click any photo and page with the arrow keys. Press 0 to zoom to 100% at the pointer, C or Shift-C to compare two or four frames with synced zoom, 1 to 5 to rate and P to mark. Ratings are standard XMP, with a same-name .xmp sidecar for proprietary RAW; marks are Finder tags. Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac. The app is about 5 MB, MIT-licensed and offline by default. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid, zoom to the eyes, and content and text search.</p>
 <h2>What this table does not cover</h2>
 <p>Price amounts, camera compatibility and plugin ecosystems change. The table only compares the pricing model and the main job each app is built for; check the vendor page before you buy. For the detailed rows, open the individual comparison pages linked above.</p>
 <p>For the full open-source list, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>.</p>""",
@@ -1085,7 +1122,7 @@ guide("zh", "/compare/", "Mac 看图与挑片软件对比",
 <ul><li><strong>只想打开文件夹挑一遍：</strong> Flipic Lens，不导入，星级写 XMP。预览能打开文件，但不适合翻整个文件夹。</li><li><strong>元数据、关键词或 Adobe 批处理：</strong> Adobe Bridge。</li><li><strong>大量拷卡、IPTC 和交付：</strong> Photo Mechanic。</li></ul>
 <p><strong>RAW 直方图、曝光和峰值对焦：</strong> FastRawViewer。<br><strong>格式多、批量转换或 Linux：</strong> XnView MP。<br><strong>Mac 原生元数据、HDR、堆栈和快速编辑：</strong> ApolloOne。<br><strong>瀑布流或网格浏览，还要看视频：</strong> FlowVision。<br><strong>修图和长期目录管理：</strong> Lightroom Classic。</p>
 <h2>Flipic Lens 覆盖什么</h2>
-<p>Flipic Lens 直接读你打开的文件夹，双击一张就用方向键翻。按 0 在鼠标处放大到 100%，按 C 两张、⇧C 四张，缩放同步；1 到 5 打星，P 标记。星级写标准 XMP，专有 RAW 写同名 .xmp；标记是访达标签。清理模式在本机分连拍、重复、闭眼和模糊。安装包 4.8 MB，MIT 开源，默认不联网。Pro 一次买断，带 7 天试用，多出工作台宫格、放大到眼睛、按内容和文字搜索。</p>
+<p>Flipic Lens 直接读你打开的文件夹，双击一张就用方向键翻。按 0 在鼠标处放大到 100%，按 C 两张、⇧C 四张，缩放同步；1 到 5 打星，P 标记。星级写标准 XMP，专有 RAW 写同名 .xmp；标记是访达标签。清理模式在本机分连拍、重复、闭眼和模糊。安装包约 5 MB，MIT 开源，默认不联网。Pro 一次买断，带 7 天试用，多出工作台宫格、放大到眼睛、按内容和文字搜索。</p>
 <h2>这张表不覆盖什么</h2>
 <p>具体价格、相机兼容性和插件生态会变。表里只写价格模式和主要用途，买之前看各家官网。每一行的详细对比，点上面对应链接。</p>
 <p>开源看图清单见 <a href="/guides/mac-image-viewer-recommend/">Mac 看图软件推荐</a>。</p>""",
