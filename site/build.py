@@ -1266,7 +1266,7 @@ PRO = {
             ("自定义同名文件", "复制、移动、删除照片时，同名的 xmp、dop、pp3 这类附属文件，或者 JPG 和 RAW，可以设置成跟着一起处理。"),
         ],
         "buy": "购买 Pro",
-        "price_note": "一次买断，之后的更新都能用。付款后马上拿到激活码，不用注册账号。",
+        "price_note": "一次买断，之后的更新都能用。付款后马上拿到激活码，不用注册账号。激活码只限本人使用，最多激活你自己的 2 台 Mac。",
         "trial": "下载 Flipic Lens 就带 7 天试用，到期后免费功能照常可用。",
         "free_title": "免费和 Pro",
         "free_head": ("功能", "免费", "Pro"),
@@ -1277,8 +1277,8 @@ PRO = {
                       ("自定义同名关联", "", "有")],
         "faq": [
             ("激活码怎么用？", "付款成功的页面上有激活码和「在 Flipic Lens 中激活」按钮，点一下就激活了。也可以复制激活码，粘贴到 Flipic Lens「设置 › Pro」里。"),
-            ("要联网验证吗？", "激活时联网登记一次，只发激活码订单号和设备号的哈希，没网也能激活。之后在 Mac 上离线验证，Flipic Lens 照样默认不联网。"),
-            ("能装在几台 Mac 上？", "你自己的 Mac 都可以用同一个激活码。"),
+            ("要联网验证吗？", "第一次激活需要联网，把激活码绑定到这台 Mac，只发订单号和设备号的哈希。之后离线也能用，每隔一段时间联网核对一次；长时间（60 天）没联上网，联网一次就恢复。"),
+            ("能装在几台 Mac 上？", "一个激活码只限购买者本人使用，最多激活你自己的 2 台 Mac。换电脑时，先在旧 Mac 的「设置 › Pro」里停用，空出名额；旧 Mac 坏了没法操作的，在 App 里「关于 › 反馈建议」告诉我们解绑。"),
             ("激活码丢了怎么办？", "在 <a href=\"https://pay.flipic.app/recover?lang=zh\">找回激活码</a> 页面输入付款邮箱和卡号后四位就能找回。"),
             ("Flipic Lens 还是开源的吗？", "是。看图和挑片的核心功能继续开源（MIT），Pro 功能的代码不在公开仓库里。"),
         ],
@@ -1344,7 +1344,7 @@ PRO = {
             ("Same-name files", "Choose which files with the same name go along when you copy, move or delete a photo, such as xmp, dop and pp3 sidecars, or JPG and RAW."),
         ],
         "buy": "Buy Pro",
-        "price_note": "One-time purchase with future updates included. You get your key right after paying. No account.",
+        "price_note": "One-time purchase with future updates included. You get your key right after paying. No account. The key is for your own use on up to 2 of your own Macs.",
         "trial": "Every download includes a 7-day trial; after it ends, the free features keep working.",
         "free_title": "Free and Pro",
         "free_head": ("Feature", "Free", "Pro"),
@@ -1355,8 +1355,8 @@ PRO = {
                       ("Custom linked files", "", "Yes")],
         "faq": [
             ("How do I activate?", "The payment confirmation page shows your key and an Activate in Flipic Lens button. Or copy the key and paste it into Flipic Lens › Settings › Pro."),
-            ("Does it need to go online?", "Activation registers once, sending only hashes of the order number and device ID, and still works offline. After that the key is checked offline on your Mac, and Flipic Lens stays offline by default."),
-            ("How many Macs?", "Use the same key on all of your own Macs."),
+            ("Does it need to go online?", "The first activation goes online to bind the key to this Mac, sending only hashes of the order number and device ID. After that it works offline and checks in now and then; if it has been offline for a long time (60 days), going online once restores it."),
+            ("How many Macs?", "A key is for the buyer’s own use and can be activated on up to 2 of your own Macs. When you switch Macs, deactivate it on the old one in Settings › Pro to free the slot. If the old Mac is broken, let us know via About › Send Feedback in the app and we’ll release it."),
             ("I lost my key", "Use <a href=\"https://pay.flipic.app/recover?lang=en\">Recover Key</a> with your payment email and the last four digits of your card."),
             ("Is Flipic Lens still open source?", "Yes. The core viewer and culling features stay open source (MIT). Pro code isn’t in the public repository."),
         ],
@@ -1487,7 +1487,7 @@ def legal_pages(lang):
 <p>另外几种情况会联网，都由你主动触发：在设置里下载「更准的中文识别」模型时，从 GitHub 下载；在「关于 Flipic Lens」里发送反馈时，发送你写的内容、你留的邮箱（可以不填）和 App、系统版本，存在 pay.flipic.app 的反馈记录里，用来回复你和改进软件，不含照片和文件；为了防止刷屏，同时保存一个加盐处理过的 IP 哈希，不保存 IP 本身。</p>
 <p>{store_short}付费下载即是完整版，没有 App 内购买；它不检查更新，更新和付款都由 App Store 负责，App 本身不联网。</p>
 <h2>购买 Pro</h2>
-<p>在官网购买时，付款由 Stripe 处理，银行卡等支付信息由 Stripe 收集，我们看不到完整卡号。付款完成后，pay.flipic.app 从 Stripe 读取这笔订单的邮箱和订单号，生成激活码。激活码里包含邮箱和订单号，在你的 Mac 上离线验证。订单记录保存在我们的 Stripe 账户里，用来帮你找回激活码、处理退款和记账。激活时，Flipic Lens 向 pay.flipic.app 登记一次：只发送订单号的哈希和这台 Mac 设备号的哈希，不含邮箱和电脑名，用来发现被公开转卖的激活码；IP 地址只用来限制请求频率，不保存。付款成功页会把这笔订单的金额和 Stripe 订单编号报给 Google Analytics，用来统计购买次数，不含邮箱。Stripe 如何处理信息见 <a href="{STRIPE_PRIVACY}">Stripe 隐私政策</a>。</p>
+<p>在官网购买时，付款由 Stripe 处理，银行卡等支付信息由 Stripe 收集，我们看不到完整卡号。付款完成后，pay.flipic.app 从 Stripe 读取这笔订单的邮箱和订单号，生成激活码。激活码里包含邮箱和订单号，在你的 Mac 上离线验证。订单记录保存在我们的 Stripe 账户里，用来帮你找回激活码、处理退款和记账。激活时，Flipic Lens 把激活码发给 pay.flipic.app 验证，服务器只记下订单号的哈希和这台 Mac 设备号的哈希（不存邮箱和电脑名），用来把激活码限制在 2 台 Mac 上，之后每隔一段时间核对一次；IP 地址只用来限制请求频率，不保存。付款成功页会把这笔订单的金额和 Stripe 订单编号报给 Google Analytics，用来统计购买次数，不含邮箱。Stripe 如何处理信息见 <a href="{STRIPE_PRIVACY}">Stripe 隐私政策</a>。</p>
 <p>找回激活码时，你填写的邮箱和卡号后四位（或收据号）只用来在 Stripe 里查找订单，不会保存。为了防止有人反复试探，找回页面按 IP 地址限制每分钟的请求次数，IP 地址不保存。</p>
 <p>在 App Store 购买时，付款和账户都由 Apple 处理，我们收不到你的姓名、邮箱或支付信息。见 <a href="{APPLE_PRIVACY}">Apple 隐私政策</a>。</p>
 <h2>网站</h2>
@@ -1505,7 +1505,7 @@ def legal_pages(lang):
 <h2>免费使用</h2>
 <p>Flipic Lens 的源代码以 <a href="https://opensource.org/license/mit">MIT 协议</a>在 <a href="{GITHUB}">GitHub</a> 开源。看图、评星、标记、筛选、导出、清理这些功能免费使用，不需要注册。</p>
 <h2>Pro</h2>
-<p>Pro 是一次性购买，不是订阅。买过以后，之后发布的更新里的 Pro 功能都可以用。Pro 供购买者本人在自己的 Mac 上使用。</p>
+<p>Pro 是一次性购买，不是订阅。买过以后，之后发布的更新里的 Pro 功能都可以用。Pro 只供购买者本人使用，一个激活码最多激活购买者自己的 2 台 Mac，激活时绑定设备，超过 2 台无法激活。</p>
 <p>官网购买得到的激活码请不要公开分享。被公开传播的激活码，以及已经退款或拒付的订单对应的激活码，会被作废。</p>
 <h2>退款</h2>
 <p>在官网购买 Pro 后 {days} 天内，发邮件到 {m} 并附上付款邮箱，我们会全额退款，不需要说明理由。退款后对应的激活码作废。</p>
@@ -1529,7 +1529,7 @@ def legal_pages(lang):
 <p>A few other things connect, and only when you trigger them: downloading the more accurate recognition model in Settings fetches it from GitHub; sending feedback from About Flipic Lens sends what you wrote, the email you leave (optional) and the app and macOS versions, stored in pay.flipic.app’s feedback records so we can reply and improve the app. No photos or files are sent. To stop spam we also keep a salted hash of the IP address, not the address itself.</p>
 <p>{store_short} is a paid download that includes everything, with no in-app purchases. It doesn’t check for updates; the App Store handles updates and payment, and the app itself doesn’t go online.</p>
 <h2>Buying Pro</h2>
-<p>On flipic.app, payment is handled by Stripe. Stripe collects your card details; we never see the full card number. After you pay, pay.flipic.app reads the order’s email address and order ID from Stripe and generates your license key. The key contains the email and order ID and is checked offline on your Mac. Order records stay in our Stripe account and are used to recover keys, handle refunds and keep accounts. On activation, Flipic Lens registers once with pay.flipic.app, sending only a hash of the order ID and a hash of this Mac’s device ID (no email or computer name), so we can spot keys that are being resold publicly; the IP address is used only for rate limiting and is not stored. The payment confirmation page reports the order amount and Stripe order ID to Google Analytics to count purchases, without your email. See the <a href="{STRIPE_PRIVACY}">Stripe Privacy Policy</a>.</p>
+<p>On flipic.app, payment is handled by Stripe. Stripe collects your card details; we never see the full card number. After you pay, pay.flipic.app reads the order’s email address and order ID from Stripe and generates your license key. The key contains the email and order ID and is checked offline on your Mac. Order records stay in our Stripe account and are used to recover keys, handle refunds and keep accounts. On activation, Flipic Lens sends the key to pay.flipic.app for verification; the server stores only a hash of the order ID and a hash of this Mac’s device ID (no email or computer name), to limit each key to 2 Macs, and the app checks in again from time to time; the IP address is used only for rate limiting and is not stored. The payment confirmation page reports the order amount and Stripe order ID to Google Analytics to count purchases, without your email. See the <a href="{STRIPE_PRIVACY}">Stripe Privacy Policy</a>.</p>
 <p>When you recover a key, the email and last four card digits (or receipt number) you enter are used only to look up the order in Stripe and are not stored. To stop repeated guessing, the recovery page limits requests per minute by IP address; the address is not stored.</p>
 <p>On the App Store, Apple handles the payment and your account. We don’t receive your name, email or payment details. See the <a href="{APPLE_PRIVACY}">Apple Privacy Policy</a>.</p>
 <h2>The website</h2>
@@ -1547,7 +1547,7 @@ def legal_pages(lang):
 <h2>Free use</h2>
 <p>Flipic Lens’s source code is available under the <a href="https://opensource.org/license/mit">MIT License</a> on <a href="{GITHUB}">GitHub</a>. Viewing, ratings, marks, filtering, export and Cleanup Mode are free and need no account.</p>
 <h2>Pro</h2>
-<p>Pro is a one-time purchase, not a subscription. Once bought, the Pro features in later updates are included. Pro is for the buyer’s own use on their own Macs.</p>
+<p>Pro is a one-time purchase, not a subscription. Once bought, the Pro features in later updates are included. Pro is for the buyer’s own use only: one key can be activated on up to 2 of the buyer’s own Macs. Activation binds the key to the Mac, and a third Mac can’t be activated.</p>
 <p>Please don’t share a license key from flipic.app publicly. Keys that are shared publicly, and keys for orders that were refunded or disputed, are revoked.</p>
 <h2>Refunds</h2>
 <p>Within {days} days of buying Pro on flipic.app, email {m} with the address you paid with and we’ll refund you in full, no reason needed. The key is revoked after the refund.</p>
