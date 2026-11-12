@@ -332,7 +332,7 @@ HOME = {
         "end": "下载 Flipic Lens",
     },
     "en": {
-        "title": "Flipic Lens: next photo with arrow keys, built for culling",
+        "title": "Flipic Lens: free Mac photo viewer for arrow-key culling",
         "desc": "Free Mac photo viewer for culling: double-click a photo, arrow keys for the next photo, hold 0 to check focus, rate 1 to 5. Lightroom reads the stars.",
         "eyebrow": "A Mac photo viewer for culling a shoot",
         "h1": "Offload the card,<br>cull with the arrow keys",
