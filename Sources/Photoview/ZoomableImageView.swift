@@ -50,6 +50,12 @@ final class ZoomableImageView: NSView {
     private var image: CGImage?          // 当前显示（已应用旋转）的图
     private var baseImage: CGImage?      // 未旋转原图
     private var quarterTurns = 0
+    /// 拉直的角度（顺时针为正，±45°），在 90° 旋转之后再转；转完居中裁成同比例的正矩形
+    private(set) var fineDegrees: Double = 0
+    /// 拉直时拖滑块用的小图（已转好 90°），每动一下只在它上面重算，松手再用原图算一遍
+    private var straightenSource: CGImage?
+    /// 拉直时叠在照片上的网格，方便对齐地平线
+    private let gridLayer = CAShapeLayer()
     private var logicalSize: CGSize = .zero   // 原图（已校正方向、未旋转）像素尺寸
     private var detailRequested = false
     /// 正在显示快速连翻时的低清草图：清晰预览马上就来，这时不按草图的分辨率去要原图
@@ -73,6 +79,19 @@ final class ZoomableImageView: NSView {
         layer?.addSublayer(backdropLayer)
         layer?.addSublayer(imageLayer)
         imageLayer.isHidden = true
+        gridLayer.fillColor = nil
+        gridLayer.strokeColor = NSColor.white.withAlphaComponent(0.22).cgColor
+        gridLayer.lineWidth = 0.5
+        gridLayer.isHidden = true
+        thirdsLayer.fillColor = nil
+        thirdsLayer.strokeColor = NSColor.white.withAlphaComponent(0.6).cgColor
+        thirdsLayer.lineWidth = 1
+        thirdsLayer.shadowColor = NSColor.black.cgColor
+        thirdsLayer.shadowOpacity = 0.5
+        thirdsLayer.shadowRadius = 1
+        thirdsLayer.shadowOffset = .zero
+        gridLayer.addSublayer(thirdsLayer)
+        layer?.addSublayer(gridLayer)
         NotificationCenter.default.addObserver(self, selector: #selector(settingsDidChange(_:)),
                                                name: SettingsWindowController.didChange, object: nil)
         imageLayer.magnificationFilter = .trilinear
@@ -96,7 +115,19 @@ final class ZoomableImageView: NSView {
     var pixelSize: CGSize { image == nil ? .zero : contentSize }
 
     private var contentSize: CGSize {
-        quarterTurns % 2 == 0 ? logicalSize : CGSize(width: logicalSize.height, height: logicalSize.width)
+        let q = quarterTurns % 2 == 0 ? logicalSize : CGSize(width: logicalSize.height, height: logicalSize.width)
+        guard fineDegrees != 0 else { return q }
+        let k = Straighten.cropScale(width: q.width, height: q.height, degrees: fineDegrees)
+        return CGSize(width: (q.width * k).rounded(.down), height: (q.height * k).rounded(.down))
+    }
+
+    /// 有没有转过还没保存（90° 旋转或拉直）
+    var hasPendingRotation: Bool { quarterTurns != 0 || fineDegrees != 0 }
+
+    /// 原图按当前的 90° 旋转和拉直角度变成要显示的图
+    private func displayed(from src: CGImage) -> CGImage {
+        guard fineDegrees != 0 else { return ImageLoader.rotated(src, quarterTurns: quarterTurns) }
+        return Straighten.render(src, quarterTurns: quarterTurns, degrees: fineDegrees) ?? ImageLoader.rotated(src, quarterTurns: quarterTurns)
     }
 
     /// 当前显示图的旋转状态（导出时保持所见即所得）
@@ -122,9 +153,12 @@ final class ZoomableImageView: NSView {
         showingDraft = draft
         if isNew {
             quarterTurns = 0
+            fineDegrees = 0
+            straightenSource = nil
+            showsStraightenGrid = false
             detailRequested = false
         }
-        let displayed = newSrc.flatMap { ImageLoader.rotated($0, quarterTurns: quarterTurns) }
+        let displayed = newSrc.flatMap { self.displayed(from: $0) }
         if let newSrc {
             logicalSize = size ?? CGSize(width: newSrc.width, height: newSrc.height)
         }
@@ -410,12 +444,112 @@ final class ZoomableImageView: NSView {
         }
         guard baseImage != nil else { return }
         quarterTurns = ((quarterTurns + turns) % 4 + 4) % 4
-        image = baseImage.flatMap { ImageLoader.rotated($0, quarterTurns: quarterTurns) }
+        if straightenSource != nil, let baseImage { straightenSource = Self.straightenPreview(baseImage, quarterTurns: quarterTurns) }
+        image = baseImage.flatMap { displayed(from: $0) }
         imageLayer.contents = image
         refreshBackdrop()
         fit(animate: true)
         onRotate?()
     }
+
+    /// 撤掉没保存的旋转和拉直，回到原图
+    func resetRotation() {
+        guard hasPendingRotation, !animationActive, let baseImage else { return }
+        quarterTurns = 0
+        fineDegrees = 0
+        straightenSource = nil
+        image = displayed(from: baseImage)
+        imageLayer.contents = image
+        refreshBackdrop()
+        fit(animate: true)
+        onRotate?()
+    }
+
+    // MARK: - 拉直
+
+    var canStraighten: Bool { baseImage != nil && !animationActive }
+
+    /// 进入拉直：显示网格，准备拖滑块用的小图
+    func beginStraighten() {
+        guard let baseImage, !animationActive else { return }
+        straightenSource = Self.straightenPreview(baseImage, quarterTurns: quarterTurns)
+        showsStraightenGrid = true
+        fit(animate: true)
+    }
+
+    /// 拖滑块时：在小图上转 + 裁，画面框保持同样的比例，网格跟着
+    func setStraighten(degrees: Double) {
+        guard let straightenSource else { return }
+        fineDegrees = max(-Straighten.maxDegrees, min(Straighten.maxDegrees, degrees))
+        let preview = Straighten.render(straightenSource, degrees: fineDegrees) ?? straightenSource
+        image = preview
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        imageLayer.contents = preview
+        CATransaction.commit()
+        fit()
+    }
+
+    /// 结束拉直：degrees 是最终角度（取消就传进来之前的角度），用原图重算一遍
+    func endStraighten(degrees: Double) {
+        straightenSource = nil
+        showsStraightenGrid = false
+        fineDegrees = max(-Straighten.maxDegrees, min(Straighten.maxDegrees, degrees))
+        guard let baseImage else { return }
+        image = displayed(from: baseImage)
+        imageLayer.contents = ImageLoader.surface(for: image) ?? image
+        refreshBackdrop()
+        fit()
+        onRotate?()
+    }
+
+    private static func straightenPreview(_ src: CGImage, quarterTurns: Int) -> CGImage {
+        let rotated = ImageLoader.rotated(src, quarterTurns: quarterTurns)
+        let longSide = CGFloat(max(rotated.width, rotated.height))
+        let target: CGFloat = 1800
+        guard longSide > target else { return rotated }
+        let k = target / longSide
+        let w = max(1, Int(CGFloat(rotated.width) * k)), h = max(1, Int(CGFloat(rotated.height) * k))
+        guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
+                                  space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return rotated }
+        ctx.interpolationQuality = .high
+        ctx.draw(rotated, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return ctx.makeImage() ?? rotated
+    }
+
+    private(set) var showsStraightenGrid = false {
+        didSet {
+            gridLayer.isHidden = !showsStraightenGrid
+            if showsStraightenGrid { layoutGrid() }
+        }
+    }
+
+    /// 网格：三等分线亮一点，再细分成 9×9 的淡线
+    private func layoutGrid() {
+        guard showsStraightenGrid else { return }
+        let f = imageLayer.frame
+        let path = CGMutablePath()
+        for i in 1..<9 where i % 3 != 0 {
+            let x = f.minX + f.width * CGFloat(i) / 9, y = f.minY + f.height * CGFloat(i) / 9
+            path.move(to: CGPoint(x: x, y: f.minY)); path.addLine(to: CGPoint(x: x, y: f.maxY))
+            path.move(to: CGPoint(x: f.minX, y: y)); path.addLine(to: CGPoint(x: f.maxX, y: y))
+        }
+        let thirds = CGMutablePath()
+        for i in 1...2 {
+            let x = f.minX + f.width * CGFloat(i) / 3, y = f.minY + f.height * CGFloat(i) / 3
+            thirds.move(to: CGPoint(x: x, y: f.minY)); thirds.addLine(to: CGPoint(x: x, y: f.maxY))
+            thirds.move(to: CGPoint(x: f.minX, y: y)); thirds.addLine(to: CGPoint(x: f.maxX, y: y))
+        }
+        thirds.addRect(f)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        gridLayer.frame = bounds
+        gridLayer.path = path
+        thirdsLayer.path = thirds
+        CATransaction.commit()
+    }
+    private let thirdsLayer = CAShapeLayer()
 
     // MARK: - 缩放
 
@@ -546,6 +680,7 @@ final class ZoomableImageView: NSView {
         }
         imageLayer.frame = CGRect(origin: origin, size: CGSize(width: w, height: h))
         CATransaction.commit()
+        layoutGrid()
         onImageFrameChange?()
         onZoomChange?(scale)
         if !applyingViewState { onViewChange?(viewState, animated) }

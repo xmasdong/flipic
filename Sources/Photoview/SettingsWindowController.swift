@@ -365,6 +365,28 @@ func note(_ s: String) -> NSTextField {
     return l
 }
 
+/// 文字很长的复选框：超过 maxWidth 就换行。英文、德文这类长语言下不会把设置页撑得比面板还宽（撑宽了左边的标签会被裁掉）
+final class WrapCheckbox: NSButton {
+    var maxWidth: CGFloat = 360 { didSet { invalidateIntrinsicContentSize() } }
+
+    convenience init(title: String, maxWidth: CGFloat = 360) {
+        self.init(checkboxWithTitle: title, target: nil, action: nil)
+        self.maxWidth = maxWidth
+        cell?.wraps = true
+        cell?.lineBreakMode = .byWordWrapping
+        cell?.truncatesLastVisibleLine = false
+    }
+
+    override var intrinsicContentSize: NSSize {
+        guard let cell else { return super.intrinsicContentSize }
+        let big: CGFloat = 10_000
+        let one = cell.cellSize(forBounds: NSRect(x: 0, y: 0, width: big, height: big))
+        if one.width <= maxWidth { return one }
+        let wrapped = cell.cellSize(forBounds: NSRect(x: 0, y: 0, width: maxWidth, height: big))
+        return NSSize(width: maxWidth, height: wrapped.height)
+    }
+}
+
 func grid(_ rows: [[NSView]]) -> NSGridView {
     let g = NSGridView(views: rows)
     g.translatesAutoresizingMaskIntoConstraints = false
@@ -389,6 +411,9 @@ func host(_ g: NSGridView, width: CGFloat = 600) -> NSView {
         g.topAnchor.constraint(equalTo: p.topAnchor, constant: 22),
         g.bottomAnchor.constraint(equalTo: p.bottomAnchor, constant: -22),
         g.centerXAnchor.constraint(equalTo: p.centerXAnchor),
+        // 内容再宽也不能超出面板（超出会两边一起被裁）
+        g.leadingAnchor.constraint(greaterThanOrEqualTo: p.leadingAnchor, constant: 16),
+        g.trailingAnchor.constraint(lessThanOrEqualTo: p.trailingAnchor, constant: -16),
     ])
     return v
 }
@@ -565,11 +590,13 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
     private let videosCheck = NSButton(checkboxWithTitle: L10n.t("set.videosCheck", "在文件夹里显示视频"), target: nil, action: nil)
     private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
-    private let fileNameCheck = NSButton(checkboxWithTitle: L10n.t("set.fileNameCheck", "移动鼠标时在左上角显示文件名"), target: nil, action: nil)
+    private let fileNameCheck = WrapCheckbox(title: L10n.t("set.fileNameCheck", "移动鼠标时在左上角显示文件名"))
     private let backdropPopup = NSPopUpButton()
     private let recentsCheck = NSButton(checkboxWithTitle: L10n.t("set.recentsCheck", "记录并显示最近打开的文件夹"), target: nil, action: nil)
     private let transparencyCheck = NSButton(checkboxWithTitle: L10n.t("set.transparencyGrid", "透明的地方显示棋盘格"), target: nil, action: nil)
     private let liveText = NSButton(checkboxWithTitle: L10n.t("set.liveText", "自动识别图中文字"), target: nil, action: nil)
+    private let rotSavePopup = NSPopUpButton()
+    private let rotRemind = WrapCheckbox(title: L10n.t("set.rotRemind", "翻到别的照片时，提醒没保存的旋转"))
 
     override func loadView() {
         for sec in ViewerViewController.slideshowIntervals {
@@ -618,6 +645,17 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         pagingRow.orientation = .vertical
         pagingRow.alignment = .leading
         pagingRow.spacing = 6
+        for (t, title) in [(Straighten.Target.ask, L10n.t("set.rotSave.ask", "每次询问")),
+                           (.overwrite, L10n.t("rot.overwrite", "覆盖原图")), (.copy, L10n.t("rot.copy", "另存一份"))] {
+            rotSavePopup.addItem(withTitle: title)
+            rotSavePopup.lastItem?.representedObject = t.rawValue
+        }
+        rotSavePopup.target = self; rotSavePopup.action = #selector(rotSaveChanged)
+        rotRemind.target = self; rotRemind.action = #selector(rotRemindChanged)
+        let rotRow = NSStackView(views: [rotSavePopup, rotRemind])
+        rotRow.orientation = .vertical
+        rotRow.alignment = .leading
+        rotRow.spacing = 8
         let slideFadeRow = NSStackView(views: [slideFade, fadePopup])
         slideFadeRow.spacing = 12
         var rows: [[NSView]] = [
@@ -628,6 +666,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
             [label(L10n.t("set.backdrop", "背景：")), backdropRow],
             [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
+            [label(L10n.t("set.rotSave", "保存旋转：")), rotRow],
+            spacerRow(note(L10n.t("set.rotSaveNote", "旋转（R / L）和拉直（⇧R）先只改显示，按 ⌘⌥S 或底部的「保存…」才写进文件。RAW 只能另存成 JPEG。"))),
             [label(L10n.t("set.recents", "最近打开：")), recentsCheck],
             spacerRow(note(L10n.t("set.recentsNote", "关掉后，开始页和「文件 › 最近打开」都不再列出文件夹，也不再记录。开会投屏前可以关掉。已有的记录不会删除。"))),
             [label(L10n.t("set.hdr", "HDR：")), hdr],
@@ -678,7 +718,17 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         if let item = fadePopup.itemArray.first(where: { ($0.representedObject as? Double) == fd }) { fadePopup.select(item) }
         fadePopup.isEnabled = slideFade.state == .on
         liveText.state = TextRecognition.autoAnalyze ? .on : .off
+        if let item = rotSavePopup.itemArray.first(where: { ($0.representedObject as? String) == Straighten.saveTarget.rawValue }) {
+            rotSavePopup.select(item)
+        }
+        rotRemind.state = Straighten.remindUnsaved ? .on : .off
     }
+
+    @objc private func rotSaveChanged() {
+        Straighten.saveTarget = Straighten.Target(rawValue: rotSavePopup.selectedItem?.representedObject as? String ?? "") ?? .ask
+    }
+
+    @objc private func rotRemindChanged() { Straighten.remindUnsaved = rotRemind.state == .on }
 
     @objc private func liveTextChanged() {
         TextRecognition.autoAnalyze = liveText.state == .on

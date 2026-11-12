@@ -82,6 +82,7 @@ final class ViewerWindowController: NSWindowController {
     #endif
     func runCompareTest(outDir: String) { viewerVC?.runCompareTest(outDir: outDir) }
     func runPNGTest(outDir: String, folder: String) { viewerVC?.runPNGTest(outDir: outDir, folder: folder) }
+    func runStraightenTest(outDir: String, folder: String) { viewerVC?.runStraightenTest(outDir: outDir, folder: folder) }
     func runRawTest(outDir: String) { viewerVC?.runRawTest(outDir: outDir) }
     func runZoomKeyTest() { viewerVC?.runZoomKeyTest() }
     func runExportTest(outDir: String) { viewerVC?.runExportTest(outDir: outDir) }

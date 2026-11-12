@@ -76,7 +76,7 @@ enum ShortcutAction: String, CaseIterable {
     case toggleApp
     case prev, next, first, last
     case zoomIn, zoomOut, zoomAtPointer, actualSize, peek, fullscreen
-    case info, filmstrip, slideshow, rotateCW, rotateCCW
+    case info, filmstrip, slideshow, rotateCW, rotateCCW, straighten
     case rename, trash, edit, reveal, exportAs, exportFolder, saveRotation
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
@@ -137,7 +137,7 @@ enum ShortcutAction: String, CaseIterable {
         switch self {
         case .toggleApp: return .global
         case .prev, .next, .first, .last, .zoomIn, .zoomOut, .zoomAtPointer, .actualSize, .peek, .zoomEye: return .browse
-        case .fullscreen, .info, .filmstrip, .slideshow, .rotateCW, .rotateCCW: return .view
+        case .fullscreen, .info, .filmstrip, .slideshow, .rotateCW, .rotateCCW, .straighten: return .view
         case .rename, .trash, .edit, .reveal, .exportAs, .exportFolder, .saveRotation, .share: return .file
         case .pinWindow, .playLive: return .view
         case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench, .copyText: return .tools
@@ -167,6 +167,7 @@ enum ShortcutAction: String, CaseIterable {
         case .slideshow: return L10n.t("menu.slideshow", "幻灯片放映")
         case .rotateCW: return L10n.t("menu.rotateCW", "向右旋转 90°")
         case .rotateCCW: return L10n.t("menu.rotateCCW", "向左旋转 90°")
+        case .straighten: return plain(L10n.t("menu.straighten", "拉直…"))
         case .rename: return plain(L10n.t("menu.rename", "重命名…"))
         case .trash: return L10n.t("menu.trash", "移到废纸篓")
         case .edit: return plain(L10n.t("menu.editChoose", "在后期软件中编辑…"))
@@ -218,6 +219,7 @@ enum ShortcutAction: String, CaseIterable {
         case .slideshow: return KeyCombo(keyCode: 1, chars: "s")
         case .rotateCW: return KeyCombo(keyCode: 15, chars: "r")
         case .rotateCCW: return KeyCombo(keyCode: 37, chars: "l")
+        case .straighten: return KeyCombo(keyCode: 15, mods: .shift, chars: "r")
         case .rename: return KeyCombo(keyCode: 36, chars: "\r")
         case .trash: return KeyCombo(keyCode: 51, mods: .command, chars: "\u{7F}")
         case .edit: return KeyCombo(keyCode: 14, mods: .command, chars: "e")

@@ -11,6 +11,11 @@ final class ViewerViewController: NSViewController {
     let imageView = ZoomableImageView()
     let filmstrip = FilmstripView()
     private let hudView = NSVisualEffectView()
+    /// 拉直 / 旋转没保存时底部那一条
+    let rotationBar = RotationBar()
+    /// 正在拉直时记着进来之前的角度（取消时回到它）；nil = 没在拉直
+    private var straightenStartDegrees: Double?
+    private var rotationPromptOpen = false
     private let hudStack = NSStackView()
     private let hudNameLabel = NSTextField(labelWithString: "")
     private let hudDimsLabel = NSTextField(labelWithString: "")
@@ -232,7 +237,10 @@ final class ViewerViewController: NSViewController {
         imageView.onTrash = { [weak self] in self?.trashCurrent(nil) }
         imageView.onSlideshow = { [weak self] in self?.toggleSlideshow(nil) }
         imageView.onRename = { [weak self] in self?.renameCurrent(nil) }
-        imageView.onKeyIntercept = { [weak self] event in self?.handleVideoKey(event) ?? false }
+        imageView.onKeyIntercept = { [weak self] event in
+            guard let self else { return false }
+            return self.handleStraightenKey(event) || self.handleVideoKey(event)
+        }
         imageView.onCommand = { [weak self] action in self?.perform(action) }
         imageView.onSingleClick = { [weak self] in self?.toggleSlideshowPause() }
         imageView.onFirstFrame = { [weak self] size in
@@ -356,6 +364,7 @@ final class ViewerViewController: NSViewController {
             emptyState.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyState.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -30),
         ])
+        setupRotationBar()
     }
 
     // 左右两侧的翻页大箭头
@@ -689,7 +698,8 @@ final class ViewerViewController: NSViewController {
              ("arrow.down.right.and.arrow.up.left", L10n.t("tip.fit", "适应窗口（0 / 双击）"), #selector(zoomFit(_:))),
              ("1.magnifyingglass", L10n.t("tip.actual", "实际大小（1）"), #selector(zoomActual(_:)))],
             [("rotate.left", L10n.t("tip.rotateCCW", "向左旋转 90°（L）"), #selector(rotateCCW(_:))),
-             ("rotate.right", L10n.t("tip.rotateCW", "向右旋转 90°（R）"), #selector(rotateCW(_:)))],
+             ("rotate.right", L10n.t("tip.rotateCW", "向右旋转 90°（R）"), #selector(rotateCW(_:))),
+             ("level", L10n.t("tip.straighten", "拉直（⇧R）"), #selector(straighten(_:)))],
             [("play.fill", L10n.t("tip.slideshow", "幻灯片放映（S）"), #selector(toggleSlideshow(_:)))],
             [("photo.on.rectangle", L10n.t("tip.strip", "底部缩略图栏开关（T）"), #selector(toggleFilmstrip(_:)))],
             [("folder.badge.plus", L10n.t("tip.exportFolder", "把当前显示的照片复制或移动到文件夹（⇧⌘E）"), #selector(exportToFolder(_:))),
@@ -1012,6 +1022,9 @@ final class ViewerViewController: NSViewController {
         scheduleLiveText(restart: true)
         guard let item = folder.current else { return }
         let url = item.url
+        // 换图（或写回后重新载入）：拉直和没保存的旋转都跟着新图清零，底部那条收起
+        straightenStartDegrees = nil
+        rotationBar.showPending(false)
         // 「窗口」菜单里按文件名区分多个窗口（标题栏本身是隐藏的）；左上角也显示
         view.window?.title = url.lastPathComponent
         fileNameLabel.stringValue = url.lastPathComponent
@@ -1261,7 +1274,7 @@ final class ViewerViewController: NSViewController {
             return true
         }
         switch Shortcuts.action(for: event) {
-        case .rotateCW, .rotateCCW, .zoomEye, .copyText, .saveRotation: return true
+        case .rotateCW, .rotateCCW, .straighten, .zoomEye, .copyText, .saveRotation: return true
         default: return false
         }
     }
@@ -1424,6 +1437,7 @@ final class ViewerViewController: NSViewController {
     }
 
     func navigate(_ delta: Int) {
+        if !advancingSlideshow, holdForUnsavedRotation({ [weak self] in self?.navigate(delta) }) { return }
         // 手动翻页不带幻灯片的渐变
         if !advancingSlideshow { imageView.pendingFadeDuration = nil }
         if BenchProbe.traceNav { NSLog("TRACE navigate delta=%d slideshow=%d from=%d", delta, advancingSlideshow ? 1 : 0, folder.index) }
@@ -1446,6 +1460,7 @@ final class ViewerViewController: NSViewController {
     }
 
     func goTo(_ index: Int) {
+        if index != folder.index, holdForUnsavedRotation({ [weak self] in self?.goTo(index) }) { return }
         lastNavDirection = index >= folder.index ? 1 : -1
         showFirstAfterResort = false
         notePagingStep()
@@ -1976,6 +1991,7 @@ final class ViewerViewController: NSViewController {
         case .reveal: revealInFinder(nil)
         case .exportAs: exportAs(nil)
         case .saveRotation: saveRotation(nil)
+        case .straighten: straighten(nil)
         case .cleanup: if folder.count > 0 { toggleCleanup(nil) }
         case .batchConvert: batchConvert(nil)
         case .batchRename: batchRename(nil)
@@ -2076,6 +2092,7 @@ final class ViewerViewController: NSViewController {
         case #selector(zoomActual(_:)): return .actualSize
         case #selector(rotateCCW(_:)): return .rotateCCW
         case #selector(rotateCW(_:)): return .rotateCW
+        case #selector(straighten(_:)): return .straighten
         case #selector(toggleSlideshow(_:)): return .slideshow
         case #selector(toggleInfoPanel(_:)): return .info
         case #selector(toggleFilmstrip(_:)): return .filmstrip
@@ -2255,14 +2272,13 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 旋转
 
+    // 转完底部会一直显示「旋转还没保存」和保存按钮（RotationBar），不再只闪一下提示
     @objc func rotateCW(_ sender: Any?) {
         imageView.rotate(clockwise: 1)
-        flash(L10n.t("msg.rotHint", "已旋转视图 · ⌘⌥S 可保存到文件"))
     }
 
     @objc func rotateCCW(_ sender: Any?) {
         imageView.rotate(clockwise: -1)
-        flash(L10n.t("msg.rotHint", "已旋转视图 · ⌘⌥S 可保存到文件"))
     }
 
     // MARK: - 幻灯片放映
@@ -4011,36 +4027,190 @@ final class ViewerViewController: NSViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
 
-    /// ⌘⌥S：把视图旋转无损写回文件
-    @objc func saveRotation(_ sender: Any?) {
+    // MARK: - 旋转、拉直与保存
+
+    private func setupRotationBar() {
+        view.addSubview(rotationBar)
+        NSLayoutConstraint.activate([
+            rotationBar.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            rotationBar.bottomAnchor.constraint(equalTo: toolbarView.topAnchor, constant: -10),
+            rotationBar.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 12),
+        ])
+        rotationBar.onDegrees = { [weak self] d in self?.imageView.setStraighten(degrees: d) }
+        rotationBar.onReset = { [weak self] in self?.nudgeStraighten(to: 0) }
+        rotationBar.onCancel = { [weak self] in self?.finishStraighten(apply: false) }
+        rotationBar.onDone = { [weak self] in self?.finishStraighten(apply: true) }
+        rotationBar.onRevert = { [weak self] in self?.imageView.resetRotation() }
+        rotationBar.onSave = { [weak self] in self?.saveRotation(nil) }
+        let previous = imageView.onRotate
+        imageView.onRotate = { [weak self] in
+            previous?()
+            self?.updateRotationBar()
+        }
+    }
+
+    var isStraightening: Bool { straightenStartDegrees != nil }
+
+    private func updateRotationBar() {
+        guard !isStraightening else { return }
+        rotationBar.showPending(imageView.hasPendingRotation && cleanup == nil)
+    }
+
+    /// ⇧R：拉直。滑块或 ← → 调角度，画面实时裁成正矩形，回车完成、Esc 取消
+    @objc func straighten(_ sender: Any?) {
+        guard folder.current != nil, cleanup == nil, !isStraightening else { return }
+        guard !currentIsVideo, imageView.canStraighten else {
+            flash(L10n.t("msg.straightenUnavailable", "视频和动图不能拉直"))
+            return
+        }
+        straightenStartDegrees = imageView.fineDegrees
+        imageView.beginStraighten()
+        rotationBar.showStraighten(degrees: imageView.fineDegrees)
+    }
+
+    private func nudgeStraighten(to d: Double) {
+        let v = max(-Straighten.maxDegrees, min(Straighten.maxDegrees, (d * 10).rounded() / 10))
+        imageView.setStraighten(degrees: v)
+        rotationBar.setDegrees(v)
+    }
+
+    func finishStraighten(apply: Bool) {
+        guard let start = straightenStartDegrees else { return }
+        straightenStartDegrees = nil
+        imageView.endStraighten(degrees: apply ? imageView.fineDegrees : start)
+        updateRotationBar()
+    }
+
+    /// 拉直时的按键：← → 微调（⇧ 每次 1°），回车完成，Esc 取消；其余不带 ⌘ 的键吞掉，免得翻页、打星
+    private func handleStraightenKey(_ event: NSEvent) -> Bool {
+        guard isStraightening else { return false }
+        let mods = event.modifierFlags.intersection([.command, .option, .control, .shift])
+        switch event.keyCode {
+        case 123, 124:
+            let step = mods.contains(.shift) ? 1.0 : 0.1
+            nudgeStraighten(to: imageView.fineDegrees + (event.keyCode == 123 ? -step : step))
+        case 36, 76: finishStraighten(apply: true)
+        case 53: finishStraighten(apply: false)
+        default:
+            return !mods.contains(.command)
+        }
+        return true
+    }
+
+    /// 翻到别的照片前，这张还有没保存的旋转：问一次。返回 true 表示先拦下来，proceed 在用户选完后接着走
+    private func holdForUnsavedRotation(_ proceed: @escaping () -> Void) -> Bool {
+        if isStraightening { finishStraighten(apply: true) }
+        guard imageView.hasPendingRotation, Straighten.remindUnsaved, !rotationPromptOpen,
+              folder.current != nil, let window = view.window, window.attachedSheet == nil else { return false }
+        rotationPromptOpen = true
+        let a = NSAlert()
+        a.messageText = L10n.t("rot.unsaved.title", "这张照片的旋转还没保存")
+        a.informativeText = L10n.t("rot.unsaved.info", "不保存的话，离开后就恢复原样。")
+        a.addButton(withTitle: L10n.t("rot.save", "保存…"))
+        a.addButton(withTitle: L10n.t("rot.discard", "不保存"))
+        a.addButton(withTitle: L10n.t("rot.bar.cancel", "取消"))
+        a.showsSuppressionButton = true
+        a.suppressionButton?.title = L10n.t("rot.unsaved.dontAsk", "以后不再提醒")
+        a.beginSheetModal(for: window) { [weak self] r in
+            guard let self else { return }
+            self.rotationPromptOpen = false
+            if a.suppressionButton?.state == .on {
+                Straighten.remindUnsaved = false
+                SettingsWindowController.notify("rotation")
+            }
+            switch r {
+            case .alertFirstButtonReturn:
+                self.saveRotation(then: proceed)
+            case .alertSecondButtonReturn:
+                self.imageView.resetRotation()
+                proceed()
+            default:
+                break
+            }
+        }
+        return true
+    }
+
+    /// ⌘⌥S：保存旋转。按设置覆盖原图或另存一份（每次询问时弹框，可勾「以后都这样保存」）；RAW 等只能另存成 JPEG
+    @objc func saveRotation(_ sender: Any?) { saveRotation(then: nil) }
+
+    func saveRotation(then: (() -> Void)?) {
+        if isStraightening { finishStraighten(apply: true) }
         guard let item = folder.current, !isProcessing else { return }
         guard !imageView.isAnimated else {
             flash(L10n.t("msg.rotAnimated", "动图不支持写回旋转"))
             return
         }
         let turns = ((imageView.rotationTurns % 4) + 4) % 4
-        guard turns != 0 else {
+        let degrees = imageView.fineDegrees
+        guard turns != 0 || degrees != 0 else {
             flash(L10n.t("msg.rotNone", "当前没有待保存的旋转"))
             return
         }
+        let url = item.url
+        let go: (Bool) -> Void = { [weak self] overwrite in
+            self?.performRotationSave(url: url, turns: turns, degrees: degrees, overwrite: overwrite, then: then)
+        }
+        guard Straighten.canOverwrite(url) else { go(false); return }
+        switch Straighten.saveTarget {
+        case .overwrite: go(true)
+        case .copy: go(false)
+        case .ask:
+            guard let window = view.window else { return }
+            let a = NSAlert()
+            a.messageText = L10n.t("rot.ask.title", "保存旋转")
+            var info = L10n.f("rot.ask.info", "覆盖原图会直接改这个文件；另存一份会在同一个文件夹里新建「%@」，原图不动。",
+                              Straighten.copyURL(for: url, ext: url.pathExtension).lastPathComponent)
+            if degrees != 0 {
+                info += "\n\n" + L10n.t("rot.ask.reencode", "拉直过的照片要重新编码，会用高画质保存，拍摄信息保留。")
+            }
+            a.informativeText = info
+            a.addButton(withTitle: L10n.t("rot.overwrite", "覆盖原图"))
+            a.addButton(withTitle: L10n.t("rot.copy", "另存一份"))
+            a.addButton(withTitle: L10n.t("rot.bar.cancel", "取消"))
+            a.showsSuppressionButton = true
+            a.suppressionButton?.title = L10n.t("rot.ask.remember", "以后都这样保存，不再询问")
+            a.beginSheetModal(for: window) { r in
+                guard r == .alertFirstButtonReturn || r == .alertSecondButtonReturn else { return }
+                let overwrite = r == .alertFirstButtonReturn
+                if a.suppressionButton?.state == .on {
+                    Straighten.saveTarget = overwrite ? .overwrite : .copy
+                    SettingsWindowController.notify("rotation")
+                }
+                go(overwrite)
+            }
+        }
+    }
+
+    private func performRotationSave(url: URL, turns: Int, degrees: Double, overwrite: Bool, then: (() -> Void)?) {
         isProcessing = true
         flash(L10n.t("msg.rotSaving", "保存旋转中…"), seconds: 3600)
+        let raw = !Straighten.canOverwrite(url)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let result = ImageLoader.writeRotation(url: item.url, clockwiseTurns: turns)
+            let out = Straighten.save(url: url, quarterTurns: turns, degrees: degrees, overwrite: overwrite)
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.isProcessing = false
-                switch result {
-                case .lossless:
-                    self.flash(L10n.t("msg.rotSaved", "已保存旋转（无损）"), seconds: 3)
-                case .reencoded:
-                    self.flash(L10n.t("msg.rotSavedReencoded", "已保存旋转（该格式重新编码）"), seconds: 3)
-                case .failed:
+                if CommandLine.arguments.contains("--straightentest") {
+                    NSLog("STRAIGHTEN saved overwrite=%d result=%@ out=%@", overwrite ? 1 : 0, "\(out.result)", out.url?.lastPathComponent ?? "-")
+                }
+                guard out.result != .failed, let saved = out.url else {
                     self.flash(L10n.f("msg.rotFailed", "保存旋转失败： %@", " "), seconds: 3)
                     return
                 }
-                self.loader.evict(url: item.url)
-                self.showImage(resetToFit: false)
+                if overwrite {
+                    self.flash(out.result == .lossless ? L10n.t("msg.rotSaved", "已保存旋转（无损）")
+                               : L10n.t("msg.rotSavedReencoded", "已保存旋转（该格式重新编码）"), seconds: 3)
+                    self.loader.evict(url: url)
+                    self.showImage(resetToFit: false)
+                } else {
+                    // 原图不动：视图回到原样，新文件由文件夹监视加进列表
+                    self.imageView.resetRotation()
+                    self.flash(raw ? L10n.f("msg.rotSavedAsJPEG", "RAW 不能直接改，已另存为 %@", saved.lastPathComponent)
+                               : L10n.f("msg.rotSavedAs", "已另存为 %@", saved.lastPathComponent), seconds: 3)
+                    self.folderDidChange()
+                }
+                then?()
             }
         }
     }
@@ -5133,6 +5303,110 @@ final class ViewerViewController: NSViewController {
         at(1.0) { report("6-Esc exits to single view"); self.captureWindow(to: "\(outDir)/4-exit.png", raw: true) }
         at(0.3) { if self.folder.current?.marked == true { self.toggleMark(nil) } }
         at(0.8) { NSApp.terminate(nil) }
+    }
+
+    /// --straightentest <截图目录> <文件夹>：文件夹里要有 photo.jpg、quarter.jpg、cam.ARW（测试会改动它们）。
+    /// 拉直 5° 截图 → 完成 → 翻页被拦下（取消）→ 另存一份 → 90° 覆盖原图（无损）→ RAW 拉直另存 JPEG → 每次询问的对话框。
+    /// 测完恢复原来的设置
+    func runStraightenTest(outDir: String, folder path: String) {
+        let savedTarget = Straighten.saveTarget, savedRemind = Straighten.remindUnsaved
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        func go(_ name: String) { if let i = folder.items.firstIndex(where: { $0.url.lastPathComponent == name }) { goTo(i) } }
+        func shotSheet(_ sheet: NSWindow?, _ out: String) {
+            guard let sheet, let img = CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(sheet.windowNumber),
+                                                                [.bestResolution, .boundsIgnoreFraming]),
+                  let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: out) as CFURL, UTType.png.identifier as CFString, 1, nil) else { return }
+            CGImageDestinationAddImage(dest, img, nil)
+            CGImageDestinationFinalize(dest)
+        }
+        func meta(_ name: String) -> String {
+            let u = URL(fileURLWithPath: path).appendingPathComponent(name)
+            guard let src = CGImageSourceCreateWithURL(u as CFURL, nil),
+                  let p = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] else { return "\(name)=missing" }
+            let tiff = p[kCGImagePropertyTIFFDictionary as String] as? [String: Any]
+            return String(format: "%@=%dx%d orient=%d model=%@ type=%@", name, p["PixelWidth"] as? Int ?? 0, p["PixelHeight"] as? Int ?? 0,
+                          p[kCGImagePropertyOrientation as String] as? Int ?? 1, tiff?[kCGImagePropertyTIFFModel as String] as? String ?? "-",
+                          (CGImageSourceGetType(src) as String?) ?? "-")
+        }
+        at(0.3) { self.open(url: URL(fileURLWithPath: path)) }
+        at(1.5) {
+            Straighten.remindUnsaved = true
+            go("photo.jpg")
+        }
+        at(1.5) {
+            NSLog("STRAIGHTEN 0 before: %@ px=%@", self.folder.current?.url.lastPathComponent ?? "-", NSStringFromSize(self.imageView.pixelSize))
+            self.straighten(nil)
+            self.nudgeStraighten(to: 5)
+        }
+        at(0.8) {
+            NSLog("STRAIGHTEN 1 live: bar=%@ deg=%.1f grid=%d px=%@", self.rotationBar.debugRow, self.imageView.fineDegrees,
+                  self.imageView.showsStraightenGrid ? 1 : 0, NSStringFromSize(self.imageView.pixelSize))
+            self.captureWindow(to: "\(outDir)/1-straighten-live.png", raw: true)
+            self.finishStraighten(apply: true)
+        }
+        at(1.0) {
+            let k = Straighten.cropScale(width: 8256, height: 5504, degrees: 5)
+            NSLog("STRAIGHTEN 2 done: bar=%@ deg=%.1f pending=%d px=%@ expect=%dx%d", self.rotationBar.debugRow, self.imageView.fineDegrees,
+                  self.imageView.hasPendingRotation ? 1 : 0, NSStringFromSize(self.imageView.pixelSize), Int(8256 * k), Int(5504 * k))
+            self.captureWindow(to: "\(outDir)/2-pending-bar.png", raw: true)
+            self.navigate(1)
+        }
+        at(0.8) {
+            let sheet = self.view.window?.attachedSheet
+            NSLog("STRAIGHTEN 3 navigate held: sheet=%d current=%@", sheet != nil ? 1 : 0, self.folder.current?.url.lastPathComponent ?? "-")
+            shotSheet(sheet, "\(outDir)/3-unsaved-prompt.png")
+            if let sheet { self.view.window?.endSheet(sheet, returnCode: .alertThirdButtonReturn) }
+        }
+        at(0.5) {
+            NSLog("STRAIGHTEN 4 after cancel: current=%@ pending=%d", self.folder.current?.url.lastPathComponent ?? "-", self.imageView.hasPendingRotation ? 1 : 0)
+            Straighten.saveTarget = .copy
+            self.saveRotation(nil)
+        }
+        at(6.0) {
+            NSLog("STRAIGHTEN 5 copy: %@ | original %@ | pending=%d bar=%@", meta(L10n.t("rot.copySuffix", "-旋转").isEmpty ? "" : "photo\(L10n.t("rot.copySuffix", "-旋转")).jpg"),
+                  meta("photo.jpg"), self.imageView.hasPendingRotation ? 1 : 0, self.rotationBar.debugRow)
+            self.captureWindow(to: "\(outDir)/4-after-copy.png", raw: true)
+            go("quarter.jpg")
+        }
+        at(1.5) {
+            self.rotateCW(nil)
+            Straighten.saveTarget = .overwrite
+            self.saveRotation(nil)
+        }
+        at(4.0) {
+            NSLog("STRAIGHTEN 6 overwrite 90: %@ pending=%d", meta("quarter.jpg"), self.imageView.hasPendingRotation ? 1 : 0)
+            go("cam.ARW")
+        }
+        at(2.5) {
+            self.straighten(nil)
+            self.nudgeStraighten(to: -3)
+            self.finishStraighten(apply: true)
+            Straighten.saveTarget = .overwrite   // RAW 改不了原图，应该自动另存成 JPEG
+            self.saveRotation(nil)
+        }
+        at(10.0) {
+            NSLog("STRAIGHTEN 7 raw: %@ | %@", meta("cam\(L10n.t("rot.copySuffix", "-旋转")).jpg"), meta("cam.ARW"))
+            go("quarter.jpg")
+        }
+        at(1.5) {
+            Straighten.saveTarget = .ask
+            self.rotateCCW(nil)
+            self.saveRotation(nil)
+        }
+        at(0.8) {
+            let sheet = self.view.window?.attachedSheet
+            NSLog("STRAIGHTEN 8 ask dialog: sheet=%d", sheet != nil ? 1 : 0)
+            shotSheet(sheet, "\(outDir)/5-ask-dialog.png")
+            if let sheet { self.view.window?.endSheet(sheet, returnCode: .alertThirdButtonReturn) }
+            self.imageView.resetRotation()
+        }
+        at(0.5) {
+            Straighten.saveTarget = savedTarget
+            Straighten.remindUnsaved = savedRemind
+            NSLog("STRAIGHTEN end")
+            NSApp.terminate(nil)
+        }
     }
 
     /// --pngtest <截图目录> <文件夹>：开始页的最近打开（开 / 关）、关着时打开文件夹不记录；

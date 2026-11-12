@@ -944,6 +944,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runRawTest(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--straightentest"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runStraightenTest(outDir: outDir, folder: folder) }
         } else if let i = CommandLine.arguments.firstIndex(of: "--pngtest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runPNGTest(outDir: outDir, folder: folder) }
@@ -1227,6 +1230,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.goLast(_:)): .last,
         #selector(ViewerViewController.rotateCW(_:)): .rotateCW,
         #selector(ViewerViewController.rotateCCW(_:)): .rotateCCW,
+        #selector(ViewerViewController.straighten(_:)): .straighten,
         #selector(ViewerViewController.toggleInfoPanel(_:)): .info,
         #selector(ViewerViewController.toggleFilmstrip(_:)): .filmstrip,
         #selector(ViewerViewController.toggleSlideshow(_:)): .slideshow,
@@ -1474,6 +1478,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             item(m, L10n.t("menu.rotateCCW", "向左旋转 90°"), #selector(ViewerViewController.rotateCCW(_:)))
             item(m, L10n.t("menu.rotateCW", "向右旋转 90°"), #selector(ViewerViewController.rotateCW(_:)))
+            item(m, L10n.t("menu.straighten", "拉直…"), #selector(ViewerViewController.straighten(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.info", "照片信息"), #selector(ViewerViewController.toggleInfoPanel(_:)))
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
