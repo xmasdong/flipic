@@ -257,6 +257,10 @@ Return  重新命名目前圖片
 "sc.clearTip" = "移除這一項的快捷鍵";
 "sc.reserved" = "%@ 是固定按鍵，不能改給別的操作";
 "sc.moved" = "%1$@ 原本用於「%2$@」，那一項已清空";
+"sc.restored" = "%1$@ 已還給「%2$@」";
+"sc.restoreDefault" = "恢復預設";
+"sc.restoreTip" = "改回預設的快捷鍵";
+"sc.restoredDefault" = "「%1$@」已恢復預設的 %2$@";
 "key.space" = "空白鍵";
 "tip.format" = "%1$@（%2$@）";
 "sc.group.global" = "全域（在其他軟體裡也能用）";

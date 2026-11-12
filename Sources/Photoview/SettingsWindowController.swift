@@ -970,11 +970,25 @@ final class ShortcutClearButton: NSButton {
         refusesFirstResponder = true
         toolTip = L10n.t("sc.clearTip", "去掉这一项的快捷键")
         setContentHuggingPriority(.required, for: .horizontal)
+        // 「清除」和「恢复默认」两种文字宽度不同，按宽的那个定宽，各行的按键框保持对齐
+        let font = NSFont.systemFont(ofSize: 11.5)
+        let w = [L10n.t("sc.clear", "清除"), L10n.t("sc.restoreDefault", "恢复默认")]
+            .map { ($0 as NSString).size(withAttributes: [.font: font]).width }.max() ?? 40
+        translatesAutoresizingMaskIntoConstraints = false
+        widthAnchor.constraint(equalToConstant: ceil(w) + 8).isActive = true
         style(hover: false)
     }
 
+    /// 改过的项：按钮是「恢复默认」，点了回到默认键；默认就是现在这个键时才是「清除」
+    var restores = false {
+        didSet {
+            toolTip = restores ? L10n.t("sc.restoreTip", "改回默认的快捷键") : L10n.t("sc.clearTip", "去掉这一项的快捷键")
+            style(hover: false)
+        }
+    }
+
     private func style(hover: Bool) {
-        attributedTitle = NSAttributedString(string: L10n.t("sc.clear", "清除"), attributes: [
+        attributedTitle = NSAttributedString(string: restores ? L10n.t("sc.restoreDefault", "恢复默认") : L10n.t("sc.clear", "清除"), attributes: [
             .foregroundColor: hover ? NSColor.labelColor : NSColor.tertiaryLabelColor,
             .font: NSFont.systemFont(ofSize: 11.5)])
     }
@@ -1096,7 +1110,11 @@ private final class ShortcutSettingsPane: NSViewController, SettingsPane, NSTabl
             rec.onRecord = { [weak self] combo in self?.assign(combo, to: a) }
             // 没有快捷键时「清除」隐藏但占着位置，各行的按键框保持对齐
             let clear = ShortcutClearButton(recorder: rec)
-            clear.isHidden = Shortcuts.combo(for: a) == nil
+            clear.restores = Shortcuts.isCustomized(a) && a.defaultCombo != nil
+            // 没有可点的就透明并禁用，但照样占位，各行的按键框对齐
+            let showsButton = Shortcuts.combo(for: a) != nil || clear.restores
+            clear.alphaValue = showsButton ? 1 : 0
+            clear.isEnabled = showsButton
             let row = NSStackView(views: [title, rec, clear])
             row.detachesHiddenViews = false
             row.setCustomSpacing(4, after: rec)
@@ -1107,9 +1125,22 @@ private final class ShortcutSettingsPane: NSViewController, SettingsPane, NSTabl
     }
 
     private func assign(_ combo: KeyCombo?, to action: ShortcutAction) {
+        let freed = Shortcuts.combo(for: action)
+        // 改过的项点「恢复默认」：回到默认键（默认键被别的操作占着时照常挪过来，并提示）
+        if combo == nil, Shortcuts.isCustomized(action), let def = action.defaultCombo {
+            assign(def, to: action)
+            if status.stringValue.isEmpty {
+                status.stringValue = L10n.f("sc.restoredDefault", "「%1$@」已恢复默认的 %2$@", action.title, def.display)
+            }
+            return
+        }
         guard let combo else {
             Shortcuts.set(nil, for: action)
+            let restored = freed.flatMap { Shortcuts.restoreDefaultOwner(of: $0, excluding: action) }
             reload()
+            if let restored, let freed {
+                status.stringValue = L10n.f("sc.restored", "%1$@ 已还给「%2$@」", freed.display, restored.title)
+            }
             return
         }
         if action == .toggleApp && !combo.isMenuCombo {
@@ -1127,6 +1158,10 @@ private final class ShortcutSettingsPane: NSViewController, SettingsPane, NSTabl
         let previous = Shortcuts.owner(of: combo, excluding: action)
         if let previous { Shortcuts.set(nil, for: previous) }
         Shortcuts.set(combo, for: action)
+        // 这一项原来的键空出来了：如果它本来是别的操作的默认键、那一项现在又空着，就还回去
+        if let freed, !(freed.keyCode == combo.keyCode && freed.mods == combo.mods) {
+            _ = Shortcuts.restoreDefaultOwner(of: freed)
+        }
         reload()
         if let previous {
             status.stringValue = L10n.f("sc.moved", "%1$@ 原来用于「%2$@」，那一项已清空", combo.display, previous.title)

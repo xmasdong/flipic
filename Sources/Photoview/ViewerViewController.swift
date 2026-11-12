@@ -2055,7 +2055,11 @@ final class ViewerViewController: NSViewController {
         case .batchConvert: batchConvert(nil)
         case .batchRename: batchRename(nil)
         case .wallpaper: setWallpaper(nil)
-        case .rate0, .rate1, .rate2, .rate3, .rate4, .rate5: setRating(action.stars ?? 0)
+        case .rate0, .rate1, .rate2, .rate3, .rate4, .rate5:
+            // 再按一次同样的星级就取消评分（选中的几张都是这个星级时）
+            let stars = action.stars ?? 0
+            let same = stars > 0 && !actionURLs.isEmpty && actionURLs.allSatisfy { ratingCache[$0] == stars }
+            setRating(same ? 0 : stars)
         case .mark: toggleMark(nil)
         case .markedOnly: toggleMarkedOnly(nil)
         case .compare: toggleCompare(nil)
@@ -5784,6 +5788,71 @@ final class ViewerViewController: NSViewController {
             report("3-moved: source loses them, back to remaining photos")
         }
         at(0.3) { Self.exportFolderMoves = false; NSApp.terminate(nil) }
+    }
+
+    /// --startoggletest <文件夹>：同一个星级按两次取消评分；1 改给别的操作后再删掉，1 回到「1 星」。测完恢复快捷键设置
+    func runStarToggleTest() {
+        let savedShortcuts = UserDefaults.standard.data(forKey: "customShortcuts")
+        func key(_ ch: String, _ code: UInt16) {
+            guard let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0, windowNumber: view.window?.windowNumber ?? 0,
+                                           context: nil, characters: ch, charactersIgnoringModifiers: ch, isARepeat: false, keyCode: code) else { return }
+            view.window?.makeFirstResponder(imageView)
+            imageView.keyDown(with: e)
+        }
+        var t = 0.0
+        func at(_ dt: Double, _ f: @escaping () -> Void) { t += dt; DispatchQueue.main.asyncAfter(deadline: .now() + t, execute: f) }
+        let one = KeyCombo(keyCode: 18, chars: "1")
+        at(0.0) { self.goTo(0) }
+        at(0.6) { key("2", 19) }
+        at(0.6) { NSLog("STAR 1-press2 rating=%d", self.currentRating); key("2", 19) }
+        at(0.6) { NSLog("STAR 2-press2again rating=%d", self.currentRating); key("3", 20) }
+        at(0.6) { NSLog("STAR 3-press3 rating=%d", self.currentRating); key("2", 19) }
+        at(0.6) {
+            NSLog("STAR 4-press2 from3 rating=%d", self.currentRating)
+            self.setRating(0)
+            // 1 改给「分享」，「1 星」被清空；再删掉分享的 1
+            Shortcuts.set(nil, for: .rate1)
+            Shortcuts.set(one, for: .share)
+            NSLog("STAR 5-moved rate1=%@ share=%@", Shortcuts.combo(for: .rate1)?.display ?? "none", Shortcuts.combo(for: .share)?.display ?? "none")
+            let freed = Shortcuts.combo(for: .share)
+            Shortcuts.set(nil, for: .share)
+            let back = freed.flatMap { Shortcuts.restoreDefaultOwner(of: $0) }
+            NSLog("STAR 6-cleared share: restoredTo=%@ rate1=%@", back?.rawValue ?? "-", Shortcuts.combo(for: .rate1)?.display ?? "none")
+            key("1", 18)
+        }
+        // 设置页里实际点：录键、清除 / 恢复默认
+        let st = SettingsWindowController.shared
+        func r1() -> String { Shortcuts.combo(for: .rate1)?.display ?? "none" }
+        at(0.6) { NSLog("STAR 7-press1 rating=%d", self.currentRating); self.setRating(0); st.show(.shortcuts) }
+        at(0.8) {
+            st.debugRecorder(for: .rate1)?.onRecord?(KeyCombo(keyCode: 18, mods: .option, chars: "1"))
+            NSLog("STAR 8a-rate1 custom=%@", r1())
+            st.debugRecorder(for: .rate1)?.clear()
+            NSLog("STAR 8b-click restore: rate1=%@ status=%@", r1(), st.debugStatus())
+        }
+        at(0.6) {
+            st.debugRecorder(for: .share)?.onRecord?(one)
+            NSLog("STAR 9a-1 to share: rate1=%@ status=%@", r1(), st.debugStatus())
+            st.debugRecorder(for: .share)?.clear()
+            NSLog("STAR 9b-clear share: rate1=%@ share=%@ status=%@", r1(), Shortcuts.combo(for: .share)?.display ?? "none", st.debugStatus())
+        }
+        at(0.6) {
+            st.debugRecorder(for: .rate1)?.clear()
+            NSLog("STAR 10a-clear default rate1=%@", r1())
+        }
+        at(0.8) {
+            if let w = st.window, let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber), [.bestResolution, .boundsIgnoreFraming]),
+               let d = CGImageDestinationCreateWithURL(URL(fileURLWithPath: NSTemporaryDirectory() + "flipic-sc-restore.png") as CFURL, "public.png" as CFString, 1, nil) {
+                CGImageDestinationAddImage(d, img, nil); CGImageDestinationFinalize(d)
+            }
+            st.debugRecorder(for: .rate1)?.clear()
+            NSLog("STAR 10b-click restore again rate1=%@ status=%@", r1(), st.debugStatus())
+        }
+        at(0.6) {
+            if let savedShortcuts { UserDefaults.standard.set(savedShortcuts, forKey: "customShortcuts") }
+            else { UserDefaults.standard.removeObject(forKey: "customShortcuts") }
+        }
+        at(0.6) { NSApp.terminate(nil) }
     }
 
     func runRatingTest() {

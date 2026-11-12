@@ -257,6 +257,10 @@ Return  表示中の画像を名称変更
 "sc.clearTip" = "このショートカットを外す";
 "sc.reserved" = "%@ は固定キーのため割り当てられません";
 "sc.moved" = "%1$@ は「%2$@」に使われていたため、そちらを空にしました";
+"sc.restored" = "%1$@ を「%2$@」に戻しました";
+"sc.restoreDefault" = "デフォルト";
+"sc.restoreTip" = "デフォルトのショートカットに戻す";
+"sc.restoredDefault" = "「%1$@」を %2$@ に戻しました";
 "key.space" = "スペース";
 "tip.format" = "%1$@（%2$@）";
 "sc.group.global" = "グローバル（ほかのアプリでも使えます）";

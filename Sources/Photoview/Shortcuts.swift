@@ -299,6 +299,18 @@ enum Shortcuts {
         save()
     }
 
+    /// 某个键空出来时，还给默认就用这个键、但现在没有快捷键的操作（比如 1 先改给别的操作，「1 星」被清空，
+    /// 后来那个操作的 1 删掉了，1 应该回到「1 星」）。返回拿回键的操作
+    @discardableResult
+    static func restoreDefaultOwner(of freed: KeyCombo, excluding: ShortcutAction? = nil) -> ShortcutAction? {
+        guard owner(of: freed) == nil,
+              let a = ShortcutAction.allCases.first(where: { $0 != excluding && $0.isAvailable && combo(for: $0) == nil && same($0.defaultCombo, freed) })
+        else { return nil }
+        overrides.removeValue(forKey: a.rawValue)
+        save()
+        return a
+    }
+
     static func resetAll() {
         overrides = [:]
         save()

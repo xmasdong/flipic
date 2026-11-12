@@ -70,6 +70,7 @@ final class ViewerWindowController: NSWindowController {
     func runFadeSequence(outDir: String) { viewerVC?.runFadeSequence(outDir: outDir) }
     func runSlideFadeTest() { viewerVC?.runSlideFadeTest() }
     func runRatingTest() { viewerVC?.runRatingTest() }
+    func runStarToggleTest() { viewerVC?.runStarToggleTest() }
     func runMarkTest(outDir: String) { viewerVC?.runMarkTest(outDir: outDir) }
     func runMultiSelectTest(outDir: String) { viewerVC?.runMultiSelectTest(outDir: outDir) }
     #if FLIPIC_PRO

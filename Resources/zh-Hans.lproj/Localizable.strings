@@ -269,6 +269,10 @@ Esc  先关掉右上角的照片信息
 "sc.clearTip" = "去掉这一项的快捷键";
 "sc.reserved" = "%@ 是固定按键，不能改给别的操作";
 "sc.moved" = "%1$@ 原来用于「%2$@」，那一项已清空";
+"sc.restored" = "%1$@ 已还给「%2$@」";
+"sc.restoreDefault" = "恢复默认";
+"sc.restoreTip" = "改回默认的快捷键";
+"sc.restoredDefault" = "「%1$@」已恢复默认的 %2$@";
 "key.space" = "空格";
 "tip.format" = "%1$@（%2$@）";
 "sc.group.global" = "全局（在其他软件里也能用）";
