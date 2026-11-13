@@ -64,7 +64,7 @@ After a shoot I wanted to go through the photos first, but Preview isn't built f
 Or with [Homebrew](https://brew.sh):
 
 ```sh
-brew install --cask xmasdong/flipic/flipic-lens
+brew install xmasdong/flipic/flipic-lens
 ```
 
 Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Release notes are on the [Releases](https://github.com/xmasdong/flipic/releases) page.

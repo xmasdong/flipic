@@ -60,7 +60,7 @@
 也可以用 [Homebrew](https://brew.sh) 装：
 
 ```sh
-brew install --cask xmasdong/flipic/flipic-lens
+brew install xmasdong/flipic/flipic-lens
 ```
 
 需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片都能用。安装包用 Developer ID 签名并通过了 Apple 公证。更新记录在 [Releases](https://github.com/xmasdong/flipic/releases)。
