@@ -190,14 +190,16 @@ def gh_button(lang):
             f'<span class="gh-main">{GITHUB_ICON}<span class="gh-text">Star</span></span>{count}</a>')
 
 
-def download_block(lang, big=True):
+def download_block(lang, big=True, brew=False):
     t = T[lang]
+    brew_line = (f'\n<p class="brew">{"或者用 Homebrew 装：" if lang == "zh" else "Or with Homebrew: "}'
+                 '<code>brew install xmasdong/flipic/flipic-lens</code></p>') if brew else ""
     facts = "".join(f"<li>{f}</li>" for f in t["facts"])
     return f"""<div class="get">
   <a class="btn" href="/download/Flipic.dmg" download>{DOWNLOAD_ICON}{t['download']}</a>
   <span class="alt">{t['github_alt'].format(gh=GITHUB)}</span>
 </div>
-<ul class="facts">{facts}</ul>
+<ul class="facts">{facts}</ul>{brew_line}
 <div class="on-phone"><p>{t['phone']}</p><button class="copy" type="button" data-url="https://flipic.app" data-done="{t['phone_done']}">{t['phone_btn']}</button></div>"""
 
 
@@ -1160,7 +1162,7 @@ def render_home(lang):
   <p class="eyebrow rise">{h['eyebrow']}</p>
   <h1 class="rise">{h['h1']}</h1>
   <p class="lede rise">{h['lede']}</p>
-  <div class="rise">{download_block(lang)}</div>
+  <div class="rise">{download_block(lang, brew=True)}</div>
 </section>
 <section class="wrap stage" aria-label="{'翻页演示' if lang == 'zh' else 'Paging demo'}">
   <div class="frame" id="frame" data-total="8" data-base="{SHOTS}" data-alt="{esc(h['deck_alt'])}">{first}</div>
