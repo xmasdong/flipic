@@ -61,6 +61,12 @@ After a shoot I wanted to go through the photos first, but Preview isn't built f
 2. Open the disk image and drag Flipic Lens into Applications
 3. The first time you launch it, macOS reminds you the app came from the internet; click Open
 
+Or with [Homebrew](https://brew.sh):
+
+```sh
+brew install --cask xmasdong/flipic/flipic-lens
+```
+
 Requires macOS 13 Ventura or later, on Apple silicon or Intel. The app is signed with a Developer ID and notarized by Apple. Release notes are on the [Releases](https://github.com/xmasdong/flipic/releases) page.
 
 To make Flipic Lens your default viewer, open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go. You can also Control-click an image in Finder, hold ⌥ and choose Always Open With › Flipic Lens.

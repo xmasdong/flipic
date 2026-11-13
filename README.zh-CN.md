@@ -57,6 +57,12 @@
 2. 打开 dmg，把 Flipic Lens 拖进「应用程序」
 3. 第一次打开时系统会提示这是从互联网下载的 App，点「打开」
 
+也可以用 [Homebrew](https://brew.sh) 装：
+
+```sh
+brew install --cask xmasdong/flipic/flipic-lens
+```
+
 需要 macOS 13 或更新版本，Apple 芯片和 Intel 芯片都能用。安装包用 Developer ID 签名并通过了 Apple 公证。更新记录在 [Releases](https://github.com/xmasdong/flipic/releases)。
 
 想设成默认看图软件：打开设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 会一次设好。也可以在访达里右键一张图，按住 ⌥ 键，选「始终以此方式打开」› Flipic Lens。
