@@ -14,3 +14,9 @@ binding = "ASSETS"
 run_worker_first = true
 not_found_handling = "404-page"
 html_handling = "auto-trailing-slash"
+
+# 下载和检查更新的请求计数（只有次数，见 worker.js 的 countHit）
+[[d1_databases]]
+binding = "STATS"
+database_name = "flipic-stats"
+database_id = "1a98403a-39c5-41bb-a5b9-9734cf7b41b7"

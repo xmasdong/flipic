@@ -1522,7 +1522,7 @@ def legal_pages(lang):
 <h2>软件本身</h2>
 <p>照片只在你的 Mac 上读取和显示，不会上传到任何地方。软件不需要账号，没有广告、统计和崩溃上报，也不收集设备信息。</p>
 <p>你给照片打的星级写进照片的 XMP 信息，相机 RAW 写在同名的 .xmp 文件里；挑片标记是访达标签；设置保存在这台 Mac 上。这些都留在你自己的电脑上。</p>
-<p>Flipic Lens 默认不联网。只有你打开「自动检查更新」或点「检查更新」时，才会向 flipic.app 请求一个只写着最新版本号的文件，请求里除了软件版本号没有别的信息，也不保存 cookie。你点「立即更新」时，安装包从 GitHub 下载。</p>
+<p>Flipic Lens 默认不联网。只有你打开「自动检查更新」或点「检查更新」时，才会向 flipic.app 请求一个只写着最新版本号的文件，请求里除了软件版本号没有别的信息，也不保存 cookie。服务器只累加这个文件和官网安装包被请求了多少次（按日期、国家和版本号），不保存 IP 地址。你点「立即更新」时，安装包从 GitHub 下载。</p>
 <p>另外几种情况会联网，都由你主动触发：在设置里下载「更准的中文识别」模型时，从 GitHub 下载；在「关于 Flipic Lens」里发送反馈时，发送你写的内容、你留的邮箱（可以不填）和 App、系统版本，存在 pay.flipic.app 的反馈记录里，用来回复你和改进软件，不含照片和文件；为了防止刷屏，同时保存一个加盐处理过的 IP 哈希，不保存 IP 本身。</p>
 <p>{store_short}付费下载即是完整版，没有 App 内购买；它不检查更新，更新和付款都由 App Store 负责，App 本身不联网。</p>
 <h2>购买 Pro</h2>
@@ -1564,7 +1564,7 @@ def legal_pages(lang):
 <h2>The app</h2>
 <p>Your photos are read and shown only on your Mac and are never uploaded. The app has no account, no ads, no analytics and no crash reporting, and it doesn’t collect device information.</p>
 <p>Star ratings are written into each photo’s XMP data, or into a matching .xmp file for camera RAW; marks are Finder tags; settings are stored on your Mac. All of this stays on your computer.</p>
-<p>Flipic Lens is offline by default. Only when you turn on automatic update checks or click Check for Updates does it request a small file from flipic.app that contains the latest version number. The request carries nothing but the app’s version number and stores no cookies. When you click Update Now, the installer is downloaded from GitHub.</p>
+<p>Flipic Lens is offline by default. Only when you turn on automatic update checks or click Check for Updates does it request a small file from flipic.app that contains the latest version number. The request carries nothing but the app’s version number and stores no cookies. The server only adds up how many times this file and the installer on the website are requested (by date, country and version number) and does not keep IP addresses. When you click Update Now, the installer is downloaded from GitHub.</p>
 <p>A few other things connect, and only when you trigger them: downloading the more accurate recognition model in Settings fetches it from GitHub; sending feedback from About Flipic Lens sends what you wrote, the email you leave (optional) and the app and macOS versions, stored in pay.flipic.app’s feedback records so we can reply and improve the app. No photos or files are sent. To stop spam we also keep a salted hash of the IP address, not the address itself.</p>
 <p>{store_short} is a paid download that includes everything, with no in-app purchases. It doesn’t check for updates; the App Store handles updates and payment, and the app itself doesn’t go online.</p>
 <h2>Buying Pro</h2>

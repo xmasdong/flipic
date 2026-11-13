@@ -75,8 +75,35 @@ function withHomeVary(response) {
   });
 }
 
+// 下载和检查更新只累加次数（按北京时间的日期、国家、来源），不存 IP，没有任何标识。
+// App 检查更新时的 User-Agent 是 "Flipic/版本号"，据此按版本分开数
+function clientOf(userAgent) {
+  const app = /^Flipic\/([0-9][0-9.]{0,11})/.exec(userAgent);
+  if (app) return `app ${app[1]}`;
+  if (!userAgent || BOT_RE.test(userAgent)) return "bot";
+  return /^Mozilla\//.test(userAgent) ? "browser" : "other";
+}
+
+async function countHit(env, kind, request) {
+  if (!env.STATS) return;
+  const day = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+  const country = String(request.cf?.country || "").slice(0, 2);
+  await env.STATS.prepare(
+    "INSERT INTO hits (day, kind, country, client, n) VALUES (?, ?, ?, ?, 1) " +
+    "ON CONFLICT (day, kind, country, client) DO UPDATE SET n = n + 1",
+  ).bind(day, kind, country, clientOf(request.headers.get("user-agent") || "")).run();
+}
+
+// 一次下载只数一次：浏览器续传、分段下载会发好几个 Range 请求，只认不带 Range 或从 0 开始的那个
+function isDownloadStart(request, response) {
+  if (request.method !== "GET") return false;
+  const range = request.headers.get("range");
+  if (range && !/^bytes=0-/.test(range.trim())) return false;
+  return response.status === 200 || response.status === 206;
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const host = (request.headers.get("host") || url.hostname).split(":")[0].toLowerCase();
     const proto = (request.headers.get("x-forwarded-proto") || url.protocol.replace(":", "")).toLowerCase();
@@ -90,7 +117,14 @@ export default {
     }
 
     // 只判断中文首页，其他路径一律原样交给静态资源
-    if (url.pathname !== "/") return env.ASSETS.fetch(request);
+    if (url.pathname !== "/") {
+      const response = await env.ASSETS.fetch(request);
+      const kind = url.pathname === "/download/Flipic.dmg" ? "download" : url.pathname === "/version.json" ? "version" : "";
+      if (kind === "download" ? isDownloadStart(request, response) : kind && request.method === "GET" && response.status === 200) {
+        ctx.waitUntil(countHit(env, kind, request).catch(() => {}));
+      }
+      return response;
+    }
 
     const serveHome = async () => withHomeVary(await env.ASSETS.fetch(request));
     const preference = cookieValue(request.headers.get("cookie"), "flipic_lang").toLowerCase();
