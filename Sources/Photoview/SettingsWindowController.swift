@@ -27,6 +27,9 @@ final class SettingsWindowController: NSWindowController {
             (.mouse, L10n.t("set.tab.mouse", "鼠标与触控板"), "computermouse", MouseSettingsPane()),
             (.shortcuts, L10n.t("set.tab.shortcuts", "快捷键"), "keyboard", ShortcutSettingsPane()),
         ]
+        #if FLIPIC_PRO
+        root.panes.append((.pro, "Pro", "seal", ProSettingsPane()))
+        #endif
         window.contentViewController = root
         window.center()
     }

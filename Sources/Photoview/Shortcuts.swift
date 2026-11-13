@@ -87,10 +87,8 @@ enum ShortcutAction: String, CaseIterable {
     case searchContent
 
     /// Pro 功能；开源版里没有，不在快捷键设置里列出
-    /// 快捷键页里 Pro 功能名后面的标；App Store 版全都包含，不加
-    static var proSuffix: String {
-        return " (Pro)"
-    }
+    /// 快捷键页里 Pro 功能名后面的标
+    static var proSuffix: String { " (Pro)" }
 
     var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair, .zoomEye, .workbench, .searchContent].contains(self) }
 

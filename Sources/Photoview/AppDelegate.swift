@@ -1368,7 +1368,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 菜单里不是靠 action 认出来的 Pro 项（比如「发送到」这种子菜单）
     private var proItems: [NSMenuItem] = []
 
-    /// Pro 功能的菜单项右边挂一个「Pro」标，和设置里的标一致；App Store 版全都包含，不挂
+    /// Pro 功能的菜单项右边挂一个「Pro」标，和设置里的标一致
     private func markProItems(in menu: NSMenu) {
         let actions: Set<Selector> = [
             #selector(ViewerViewController.toggleBeforeAfter(_:)), #selector(ViewerViewController.toggleMergePairs(_:)),

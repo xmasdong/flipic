@@ -51,7 +51,7 @@ enum CleanupDebug {
                     lines.append("\(c)\t" + names.joined(separator: " "))
                 }
             }
-            lines.append(String(format: "\n# %d units, %.2fs, %.0f ms/unit (2 workers)", units.count, scanner.elapsed,
+            lines.append(String(format: "\n# %d units, %.2fs, %.0f ms/unit (\(CleanupScanner.workers) workers)", units.count, scanner.elapsed,
                                 scanner.elapsed * 1000 / Double(max(units.count, 1))))
             print(lines.joined(separator: "\n"))
             exit(0)

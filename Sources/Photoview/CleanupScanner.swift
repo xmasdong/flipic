@@ -94,9 +94,15 @@ final class CleanupScanner {
     private let queue: OperationQueue = {
         let q = OperationQueue()
         q.name = "Flipic.cleanup"
-        q.maxConcurrentOperationCount = 2
+        q.maxConcurrentOperationCount = CleanupScanner.workers
         q.qualityOfService = .utility
         return q
+    }()
+    /// 并行路数：核心数的一半，2~6 路。实测 917 张人像 2 路 21 秒、4 路 11 秒、6 路 8 秒，再多基本不涨；
+    /// 每多一路内存多约 20MB。FLIPIC_CLEANUP_WORKERS 仅测速用
+    static let workers: Int = {
+        if let v = Int(ProcessInfo.processInfo.environment["FLIPIC_CLEANUP_WORKERS"] ?? ""), v > 0 { return v }
+        return min(max(ProcessInfo.processInfo.activeProcessorCount / 2, 2), 6)
     }()
     private let lock = NSLock()
     private let cacheURL: URL?
