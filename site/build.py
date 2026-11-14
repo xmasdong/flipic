@@ -56,6 +56,7 @@ PAIRS = {
     "/guides/xnview-mp-mac/": "/en/guides/xnview-mp-alternative-mac/",
     "/guides/fastrawviewer-mac/": "/en/guides/fastrawviewer-alternative-mac/",
     "/compare/": "/en/compare/",
+    "/guides/read-iptc-caption-mac/": "/en/guides/read-iptc-caption-mac/",
 }
 
 # Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
@@ -299,7 +300,9 @@ HOME = {
             ("窗口置顶和分享", "点右上角的图钉，窗口就一直浮在最上面，修图时拿来对照参考图挺方便。分享按钮能用隔空投送、信息、邮件发出去。"),
             ("幻灯片", "每张停 1 到 10 秒，切换的渐变时长也能调。单击暂停，暂停时可以手动翻页和打星。"),
             ("HEIC 批量转 JPG", "整个文件夹一次转成 JPEG、PNG 或 HEIC，转好的放在子文件夹里，原图不动。"),
-            ("旋转和拉直", "转 90° 只改方向标记，JPEG、HEIC 和相机 RAW 都不重新编码，画质没有损失。按 ⇧R 拉直，会自动裁成最大的正矩形。"),
+            ("旋转、裁剪和拉直", "转 90° 只改方向标记，JPEG、HEIC 和相机 RAW 都不重新编码，画质没有损失。按 ⇧R 打开「裁剪与拉直」，拖裁剪框或者选个比例，裁完可以覆盖原图，也可以另存一份。RAW 不会被改，裁剪结果另存成 JPEG。"),
+            ("照片里写的说明", "按 I 打开照片信息，文件里写的标题和说明（IPTC）显示在最上面，下面是作者、署名、版权、地名和关键词，文字可以选中复制。按 ⇧I 在「常用」和「全部」之间切换。这些信息只能看，Flipic Lens 不改。"),
+            ("说明翻译", "说明的语言和界面语言不一样时，说明下面会出现「翻译」按钮，译文显示在原文下方。用的是 macOS 自带的翻译，在本机完成，需要 macOS 15 或更新。"),
             ("批量重命名和导出", "可以按序号批量改名。导出时选格式和质量，导出前能看到大概多大。"),
             ("界面语言", "支持 14 种语言，跟随系统设置。"),
         ],
@@ -315,7 +318,7 @@ HOME = {
         ],
         "keys_title": "常用快捷键",
         "keys": [("← →", "上一张 / 下一张"), ("空格", "窗口贴合照片比例"), ("0", "按住时在鼠标处放大到 100%，松手恢复"),
-                 ("I", "照片信息"), ("1–5", "打 1 到 5 星，再按一次取消"), ("S", "幻灯片放映"), ("⌘E", "在后期软件中编辑"),
+                 ("I", "照片信息"), ("⇧I", "照片信息切换「常用 / 全部」"), ("⇧R", "裁剪与拉直"), ("1–5", "打 1 到 5 星，再按一次取消"), ("S", "幻灯片放映"), ("⌘E", "在后期软件中编辑"),
                  ("⇧⌘K", "清理模式"), ("⌘⌫", "移到废纸篓"), ("⌘,", "设置，快捷键都能改")],
         "guides_title": "指南",
         "faq": [
@@ -324,6 +327,7 @@ HOME = {
             ("从网上下载的安全吗？", "安装包用 Developer ID 签名，并通过了 Apple 公证，macOS 安装时会自动校验。Flipic Lens 默认不联网，不收集任何数据。"),
             ("能代替 Lightroom 挑片吗？", "挑片可以用它。在 Flipic Lens 里翻一遍、打星、删掉废片，打的星 Lightroom 和 Capture One 都读得到。调色修图还是回原来的软件，按 ⌘E 就能把当前这张在那边打开。"),
             ("和 Bridge、Photo Mechanic、Lightroom 有什么不同？", "Bridge 更像素材和元数据工具，Photo Mechanic 强在拷卡、IPTC 和交付，Lightroom Classic 要先进目录再挑。Flipic Lens 只做打开文件夹、翻页、看焦点、打星、标记和清理这一段，挑完再把留下的导入后期。完整对比见 <a href=\"/compare/\">Mac 看图与挑片软件对比</a>。"),
+            ("能看到照片里写的图说（IPTC）吗？", "能。按 I 打开照片信息，文件里写的标题（IPTC Headline）和说明（IPTC Description）显示在面板最上面，下面是作者、署名、版权、地名和关键词。文字可以选中复制，说明里的网址可以点开，按 ⇧I 能在「常用」和「全部」之间切换。说明的语言和界面语言不一样时，说明下面有「翻译」按钮，译文显示在原文下方，用的是 macOS 自带的翻译，在本机完成，文字不会发到服务器，需要 macOS 15 或更新。这些信息只能看，Flipic Lens 不编辑 IPTC 和其他元数据。具体步骤见 <a href=\"/guides/read-iptc-caption-mac/\">Mac 上怎么看照片里的说明</a>。"),
             ("Mac 上怎么看下一张图片？", "用 Flipic Lens 双击任意一张图片，按右方向键就是下一张，左方向键是上一张，同一个文件夹里的图片都能翻到。"),
             ("怎么设为默认看图软件？", "打开 Flipic Lens 的设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 一次设好。"),
             ("能不能一次看很多张，像宫格那样？", "免费版翻片时，底部有缩略图栏，同一个文件夹的照片都列在那里；Pro 的工作台（⌥⌘B）把每场拍摄当一个项目，中间宫格里打星、标记、删除，右边是大图、拍摄参数和直方图。工作台是 Pro 功能，下载后可以先试用 7 天。"),
@@ -368,7 +372,9 @@ HOME = {
             ("Keep on top and share", "Click the pin at the top right to keep the window above other apps, handy for a reference image while editing. The share button sends the photo by AirDrop, Messages or Mail."),
             ("Slideshow", "Each photo stays 1 to 10 seconds and the crossfade length is adjustable. Click to pause; while paused you can page and rate."),
             ("Batch convert HEIC to JPG", "Convert a whole folder to JPEG, PNG or HEIC. The new files go into a subfolder and the originals are left alone."),
-            ("Rotate and straighten", "90° turns only change the orientation tag, for JPEG, HEIC and camera RAW alike, so nothing is re-encoded. Straighten with ⇧R and the photo is cropped to the largest rectangle."),
+            ("Rotate, crop and straighten", "90° turns only change the orientation tag, for JPEG, HEIC and camera RAW alike, so nothing is re-encoded. ⇧R opens Crop & Straighten: drag the frame or pick a ratio, then overwrite the original or save a copy. RAW files are not changed; the crop is saved as a JPEG."),
+            ("Captions stored in the file", "Press I and the headline and caption written into the file (IPTC) are shown at the top of the info panel, above the creator, credit, copyright, place and keywords. The text can be selected and copied. ⇧I switches between Essentials and All. Flipic Lens reads this data and does not edit it."),
+            ("Translate a caption", "When a caption is in a different language from the interface, a Translate button appears under it and the translation is shown below the original. It uses the translation built into macOS, on your Mac, and needs macOS 15 or later."),
             ("Batch rename and export", "Rename by sequence number. When exporting, pick a format and quality and see roughly how big the file will be."),
             ("Languages", "14 interface languages, following your system setting."),
         ],
@@ -384,7 +390,7 @@ HOME = {
         ],
         "keys_title": "Keyboard shortcuts",
         "keys": [("← →", "Previous / next photo"), ("Space", "Wrap the window to the photo"), ("0", "Zoom to 100% at the pointer; hold to peek"),
-                 ("I", "Photo info"), ("1–5", "Rate one to five stars; again to clear"), ("S", "Slideshow"), ("⌘E", "Edit in your photo editor"),
+                 ("I", "Photo info"), ("⇧I", "Photo info: Essentials / All"), ("⇧R", "Crop & Straighten"), ("1–5", "Rate one to five stars; again to clear"), ("S", "Slideshow"), ("⌘E", "Edit in your photo editor"),
                  ("⇧⌘K", "Cleanup Mode"), ("⌘⌫", "Move to Trash"), ("⌘,", "Settings; change any shortcut")],
         "guides_title": "Guides",
         "faq": [
@@ -393,6 +399,7 @@ HOME = {
             ("Is the download safe?", "It is signed with a Developer ID and notarized by Apple; macOS checks it on install. Flipic Lens is offline by default and collects no data."),
             ("Can it replace Lightroom for culling?", "For culling, yes; for editing, no. Page through, check focus, rate, mark and delete rejects in Flipic Lens, and Lightroom or Capture One will read the ratings. Edit in the app you already use; ⌘E opens the current photo there."),
             ("How is Flipic Lens different from Bridge, Photo Mechanic or Lightroom?", "Bridge is an asset and metadata browser, Photo Mechanic is built for ingest, IPTC and delivery, and Lightroom Classic works from an imported catalog. Flipic Lens covers the catalog-free first pass: open a folder, page, check focus, rate, mark and clean up, then send the keepers to your editor. See the <a href=\"/en/compare/\">full comparison</a>."),
+            ("Can I read the caption or IPTC data stored in a photo?", "Yes. Press I and the headline (IPTC Headline) and caption (IPTC Description) written into the file are shown at the top of the info panel, followed by the creator, credit, copyright, place and keywords. The text can be selected and copied, links in a caption can be clicked, and ⇧I switches the panel between Essentials and All. When the caption is in a different language from the interface, a Translate button under it shows a translation below the original. Translation uses the one built into macOS and runs on your Mac, so the text is not sent to a server; it needs macOS 15 or later. Flipic Lens only reads this data and does not edit IPTC or other metadata. Steps are in <a href=\"/en/guides/read-iptc-caption-mac/\">how to read an IPTC caption on a Mac</a>."),
             ("How do I see the next image on a Mac?", "Double-click any image in Flipic Lens and press the right arrow key for the next one, the left arrow for the previous one, across the whole folder."),
             ("How do I make it my default viewer?", "Open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go."),
             ("Can I see many photos at once, in a grid?", "The free version has a thumbnail strip along the bottom while you page through a folder. Pro adds the Workbench (⌥⌘B): one project per shoot, a grid in the middle for rating, marking and deleting, with a large preview, shooting details and a histogram on the right. The Workbench is part of Pro, and every download includes a 7-day trial."),
@@ -787,10 +794,10 @@ guide("en", "/en/guides/photo-mechanic-alternative-mac/", "Photo Mechanic altern
 <p>For culling, the useful keys are all there. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus. Press <kbd>1</kbd> to <kbd>5</kbd> to rate, <kbd>P</kbd> to mark keepers. Press <kbd>C</kbd> for two photos side by side or <kbd>⇧C</kbd> for four, with zoom and pan synced. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac before you decide what to delete. Viewing, ratings, marks, side-by-side comparison and Cleanup Mode are free.</p>
 <figure>{shot('filmstrip.webp', 'Flipic Lens thumbnail strip and arrow-key paging')}<figcaption>Flipic Lens: open one photo, then page through the folder.</figcaption></figure>
 <h2>Where the two differ</h2>
-<p>Photo Mechanic is stronger when the job includes ingest automation, detailed metadata, keywording and delivery. Flipic Lens is stronger when you want to open a folder quickly and judge one photo at a time without a catalog. Flipic Lens is also Mac-only, MIT-licensed and a 5 MB download; it needs macOS 13 or later.</p>
+<p>Photo Mechanic is stronger when the job includes ingest automation, detailed metadata, keywording and delivery. Flipic Lens is stronger when you want to open a folder quickly and judge one photo at a time without a catalog. It shows the IPTC headline and caption stored in a file and can translate the caption, but it does not edit metadata. Flipic Lens is also Mac-only, MIT-licensed and a 5 MB download; it needs macOS 13 or later.</p>
 <p>Photo Mechanic is not the only heavier option, and Flipic Lens is not trying to replace it. If you already use Photo Mechanic for the parts of the workflow that matter to you, keep it. Use Flipic Lens when you just want to look at the pictures and pick.</p>
 <h2>Can you use both?</h2>
-<p>Yes. You can keep a full workflow app for ingest and metadata, then open the folder in a lighter viewer for a quick pass. Flipic Lens does not import, copy or catalog your files, and opening a folder does not move anything. The only photo data it writes is the rating you set, as standard XMP; marks are stored as Finder tags. Other apps can read the ratings. If you later decide you need the wider workflow, you can go back without a migration.</p>
+<p>Yes. You can keep a full workflow app for ingest and metadata, then open the folder in a lighter viewer for a quick pass. Flipic Lens does not import, copy or catalog your files, and opening a folder does not move anything. Unless you rotate or crop a photo, the only photo data it writes is the rating you set, as standard XMP; marks are stored as Finder tags. Other apps can read the ratings. If you later decide you need the wider workflow, you can go back without a migration.</p>
 <p>For the broader field, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>. For a culling routine that starts with rejects, see <a href="/en/guides/cull-photos-on-mac/">how to cull hundreds of event photos on a Mac</a>. The full comparison is at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
       faq=[
           ('Is Flipic Lens a drop-in replacement for Photo Mechanic?',
@@ -799,7 +806,7 @@ guide("en", "/en/guides/photo-mechanic-alternative-mac/", "Photo Mechanic altern
            'Yes, free and open source (MIT). An optional paid Pro adds batch tools; viewing, ratings, marks, side-by-side comparison and Cleanup Mode are free.'),
           ('Does Flipic Lens import or catalog photos?',
            'No. It reads the folder you open and does not build a library or copy the files.'),
-      ], title_suffix=False, updated="2026-11-08", published="2026-11-07")
+      ], title_suffix=False, updated="2026-11-14", published="2026-11-07")
 
 guide("en", "/en/guides/view-raw-files-mac/", "How to quickly view RAW files on a Mac",
       "View RAW files on Mac",
@@ -948,7 +955,7 @@ guide("en", "/en/guides/apolloone-alternative/", "ApolloOne vs Flipic Lens: two 
 <ul><li><strong>Simple and open source.</strong> A 5 MB MIT-licensed Mac app with no import and no catalog.</li><li><strong>Culling without setup.</strong> Double-click a photo, arrow through the folder, press 0 to check focus, C or Shift-C to compare, 1 to 5 to rate and P to mark.</li><li><strong>Ratings and marks in standard places.</strong> Stars are standard XMP with a same-name .xmp sidecar for proprietary RAW; P marks are Finder tags.</li></ul>
 <p><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.<br><strong>Pro when needed.</strong> The Workbench adds a project grid, zoom to the eyes, content and text search, and more, as a one-time purchase with a 7-day trial.</p>
 <h2>Using them together</h2>
-<p>Use ApolloOne when you need IPTC, keywords, HDR or a quick non-destructive edit. Use Flipic Lens when the job is to open a folder and make a first selection. Both write ratings as XMP, so decide which app owns the rating pass if keeping sidecars tidy matters to you.</p>
+<p>Use ApolloOne when you need IPTC editing, keywords, HDR or a quick non-destructive edit. Use Flipic Lens when the job is to open a folder and make a first selection. Flipic Lens shows the IPTC caption stored in a file and can crop and straighten, but it does not edit metadata or adjust color. Both write ratings as XMP, so decide which app owns the rating pass if keeping sidecars tidy matters to you.</p>
 <p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
       faq=[
           ('Is ApolloOne free?',
@@ -959,7 +966,7 @@ guide("en", "/en/guides/apolloone-alternative/", "ApolloOne vs Flipic Lens: two 
            "Flipic Lens's Cleanup Mode groups closed eyes, blur, bursts and duplicates on your Mac. ApolloOne documents stacks and Focus Score, not closed-eye detection."),
           ('Can I use both?',
            'Yes. ApolloOne for metadata, HDR and quick edits; Flipic Lens for a quick, catalog-free cull.'),
-      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+      ], title_suffix=False, updated="2026-11-14", published="2026-11-08")
 
 guide("en", "/en/guides/cull-before-lightroom/", "Cull before Lightroom: why add another app?",
       "Cull before Lightroom",
@@ -1025,18 +1032,18 @@ guide("zh", "/guides/photo-mechanic-mac/", "Photo Mechanic 的 Mac 替代",
 <ul><li><strong>打开就能挑。</strong> 不导入，不建图库，双击一张就按方向键翻。</li><li><strong>看焦点和比较。</strong> 按 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放同步。</li><li><strong>星级和标记。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记存成访达标签。</li></ul>
 <p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些还是你决定。<br><strong>小、免费、默认不联网。</strong> 约 5 MB，MIT 开源。Pro 一次买断，带 7 天试用，工作台有项目宫格。</p>
 <h2>一起用</h2>
-<p>要拷卡、写 IPTC、批量改关键词、直接交付，用 Photo Mechanic。照片已经在硬盘上、只想先挑一遍，就用 Flipic Lens。两边的星级都走 XMP，但建议固定一个软件负责打星，免得 sidecar 被两边反复改。</p>
+<p>要拷卡、写 IPTC、批量改关键词、直接交付，用 Photo Mechanic。照片已经在硬盘上、只想先挑一遍，就用 Flipic Lens。Flipic Lens 能显示文件里写的 IPTC 标题和说明，说明还能翻译，但它不编辑元数据。两边的星级都走 XMP，但建议固定一个软件负责打星，免得 sidecar 被两边反复改。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
       faq=[
           ('Photo Mechanic 有免费版吗？',
            '没有免费版，提供试用；授权可以订阅，也可以买永久授权，具体看 Camera Bits 官网。'),
           ('Photo Mechanic 能做的，Flipic Lens 都能做吗？',
-           '不能。拷卡、IPTC、关键词、Code Replacements 和交付是 Photo Mechanic 的强项；Flipic Lens 只做打开文件夹、翻页、看焦点、打星、标记和清理这一小段。'),
+           '不能。拷卡、写 IPTC、关键词、Code Replacements 和交付是 Photo Mechanic 的强项；Flipic Lens 只做打开文件夹、翻页、看焦点、打星、标记和清理这一小段。'),
           ('两个都用会不会重复打星？',
            '可以只用一边打星。两边的评分都写 XMP，但固定一个软件负责评分，sidecar 更可控。'),
           ('只挑 RAW 用哪个？',
-           '要拷卡和 IPTC 用 Photo Mechanic；只想打开文件夹先看一遍，用 Flipic Lens。'),
-      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+           '要拷卡和写 IPTC 用 Photo Mechanic；只想打开文件夹先看一遍，用 Flipic Lens。'),
+      ], title_suffix=False, updated="2026-11-14", published="2026-11-08")
 
 guide("zh", "/guides/xnview-mp-mac/", "XnView MP 和 Flipic Lens 怎么选",
       "XnView MP 和 Flipic Lens 怎么选",
@@ -1138,6 +1145,79 @@ guide("zh", "/compare/", "Mac 看图与挑片软件对比",
           ('表里有价格吗？',
            '没有。这里只写价格模式，具体金额和授权方式看各家官网。'),
       ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+
+IPTC_SPEC = "https://iptc.org/std/photometadata/specification/IPTC-PhotoMetadata-2025.1.html"
+IPTC_STD = "https://iptc.org/standards/photo-metadata/iptc-standard/"
+
+guide("en", "/en/guides/read-iptc-caption-mac/", "How to read an IPTC caption on a Mac",
+      "Read an IPTC caption on Mac",
+      "A photo's caption is stored in the file as the IPTC Description field. How to look for it in Preview's Inspector, read it in Flipic Lens and translate it.",
+      "Where the caption is stored, and how to read and translate it",
+      f"""<p>A caption written for a photo is stored inside the image file, in a metadata field that the IPTC Photo Metadata Standard calls Description. On a Mac you can look for it in Preview's Inspector, or open the photo in Flipic Lens and press <kbd>I</kbd>, which shows the caption at the top of the photo info panel.</p>
+<h2>Where the caption is stored</h2>
+<p>The IPTC specification defines Description as "A textual description, including captions, of the image" and labels the field Caption/Description. In XMP it is saved as <code>dc:description</code>; in the older IIM format it is <code>2:120 Caption/Abstract</code> (<a href="{IPTC_SPEC}#description">IPTC Photo Metadata Standard 2025.1, Description</a>).</p>
+<p>Headline is a separate field next to it, defined as "A brief synopsis of the caption", and the specification adds that Headline is not the same as Title (<a href="{IPTC_SPEC}#headline">Headline</a>). Both belong to IPTC Core, one of the two schemas in the standard; the other is IPTC Extension (<a href="{IPTC_STD}">IPTC Photo Metadata Standard</a>).</p>
+<h2>Look for it in Preview</h2>
+<p>Apple's Preview guide describes the Inspector window as the place to view information about an image "such as file size, the author name, and the image resolution". Open the photo in Preview and click the Info button in the toolbar. Among the Inspector's tools, More Info is described as "View information about an image in different formats, and about where a photo was taken", and the Keywords inspector shows the keywords assigned to the image (<a href="https://support.apple.com/guide/preview/view-information-about-pdfs-and-images-prvw9c94f0a4/mac">View information about PDFs and images in Preview</a>).</p>
+<p>Apple's page does not list the individual fields, so look through More Info for the description in your own file.</p>
+<h2>Read it in Flipic Lens</h2>
+<ol><li>Open the photo in Flipic Lens. The arrow keys page through the rest of the folder.</li><li>Press <kbd>I</kbd> to open the photo info panel. The headline (IPTC Headline) and caption (IPTC Description) written into the file are at the top, followed by the creator, credit, copyright, place and keywords.</li><li>Press <kbd>⇧I</kbd>, or use the control at the top right of the panel, to switch from Essentials to All.</li></ol>
+<p>All is split into six groups: Description, Credit &amp; Rights, Capture, Image, Location and File. It includes the color model, orientation, resolution and a wire service's transmission reference. Text in the panel can be selected and copied, and a link inside a caption can be clicked. All of this is in the free version.</p>
+<h2>Translate a caption</h2>
+<p>When the caption is in a different language from the interface, a Translate button appears under it. The translation is shown below the original, and the original stays in place.</p>
+<p>Flipic Lens uses the translation built into macOS. It runs on your Mac and the text is not sent to any server. The first time you translate from a language, macOS asks to download that language. Caption translation needs macOS 15 or later.</p>
+<p>To translate every caption without clicking, turn on Settings › Viewing › Translate photo captions automatically. It is off by default.</p>
+<h2>Reading, not editing</h2>
+<p>Flipic Lens reads IPTC data and does not edit it or any other metadata. To write a caption, change a copyright notice or add keywords, use a tool that writes IPTC: a metadata editor, an asset browser with metadata tools, or an ingest and delivery app. The <a href="/en/compare/">comparison of Mac photo viewers and culling tools</a> lists which apps cover that work.</p>""",
+      howto=["Open the photo in Flipic Lens", "Press I to open the photo info panel; the headline and caption stored in the file are at the top",
+             "Press ⇧I to switch the panel between Essentials and All", "If the caption is in another language, click Translate under it (macOS 15 or later)"],
+      faq=[
+          ("Where is a photo's caption stored?",
+           "In the file's metadata, in the IPTC Description field, labelled Caption/Description. It is saved as dc:description in XMP and as 2:120 Caption/Abstract in the older IIM format."),
+          ("How do I view photo description metadata on a Mac?",
+           "In Preview, open the photo and click the Info button in the toolbar to open the Inspector, then look through More Info. In Flipic Lens, press I; the caption stored in the file is at the top of the photo info panel."),
+          ("Can Flipic Lens edit the caption?",
+           "No. It reads IPTC data and does not edit it. Use a tool that writes IPTC metadata to change a caption."),
+          ("Is the caption sent to a server when it is translated?",
+           "No. Translation uses the one built into macOS and runs on your Mac. The first time you translate from a language, macOS asks to download that language. It needs macOS 15 or later."),
+          ("Is reading captions a Pro feature?",
+           "No. The photo info panel, IPTC captions and caption translation are in the free version."),
+      ], title_suffix=False, updated="2026-11-14", published="2026-11-14")
+
+guide("zh", "/guides/read-iptc-caption-mac/", "Mac 上怎么看照片里的说明（IPTC 图说）",
+      "Mac 看照片说明和 IPTC",
+      "照片的说明写在文件的 IPTC Description 字段里。这篇讲在 Mac 上怎么查看 IPTC：用「预览」的检查器找，或者在 Flipic Lens 里按 I 看，外文说明还能翻译。",
+      "照片图说存在哪里，在 Mac 上怎么看、怎么翻译",
+      f"""<p>照片的说明（也有人叫图说）可以直接写在照片文件里，跟着文件走。在 Mac 上可以打开系统自带的「预览」，到检查器里找；也可以用 Flipic Lens 打开，按 <kbd>I</kbd>，说明就显示在照片信息的最上面。</p>
+<h2>说明存在文件的哪里</h2>
+<p>IPTC 照片元数据标准里有一个字段叫 Description，界面上的名字是 Caption/Description。规范给它的定义是“A textual description, including captions, of the image”，就是对这张照片的文字描述，图说也写在这里。它在 XMP 里存成 <code>dc:description</code>，在老的 IIM 格式里是 <code>2:120 Caption/Abstract</code>（<a href="{IPTC_SPEC}#description">IPTC 照片元数据标准 2025.1，Description</a>）。</p>
+<p>旁边还有一个 Headline 字段，定义是“A brief synopsis of the caption”，相当于说明的一句话概要，规范里还写明它和 Title 不一样（<a href="{IPTC_SPEC}#headline">Headline</a>）。这两个字段都属于 IPTC Core，标准的另一部分叫 IPTC Extension（<a href="{IPTC_STD}">IPTC Photo Metadata Standard</a>）。</p>
+<h2>在「预览」里找</h2>
+<p>按 Apple 的使用手册，用「预览」打开照片，点工具栏里的简介按钮（英文页面叫 Info button），会出来检查器窗口，里面能看文件大小、作者姓名、图像分辨率这类信息。检查器里的「更多信息」用来查看不同格式图像的信息和照片的大致拍摄地点，「关键词检查器」看分配给图像的关键词（<a href="https://support.apple.com/zh-cn/guide/preview/prvw9c94f0a4/mac">在 Mac 上的「预览」中查看 PDF 和图像的相关信息</a>）。</p>
+<p>Apple 这一页没有逐个列出字段，照片里的说明要自己到「更多信息」里找一下。</p>
+<h2>在 Flipic Lens 里看</h2>
+<ol><li>用 Flipic Lens 打开照片，按方向键可以翻到同一个文件夹的其他照片。</li><li>按 <kbd>I</kbd> 打开照片信息面板。文件里写的标题（IPTC Headline）和说明（IPTC Description）显示在面板最上面，下面是作者、署名、版权、地名和关键词。</li><li>想看全部字段，按 <kbd>⇧I</kbd> 或者点面板右上角，从「常用」切到「全部」。</li></ol>
+<p>「全部」分成六组：说明、署名与版权、拍摄、图像、地点、文件，色彩模型、方向、分辨率、通讯社的传输编号这些都在里面。面板上的文字可以选中复制，说明里带网址的话可以直接点开。这些都是免费功能。</p>
+<h2>说明是外文的话</h2>
+<p>说明的语言和界面语言不一样时，说明下面会出现「翻译」按钮。点一下，译文显示在原文下方，原文一直留着。</p>
+<p>翻译用的是 macOS 自带的翻译，在本机完成，文字不会发到任何服务器。第一次翻某种语言时，系统会提示下载语言包。这个功能需要 macOS 15 或更新。</p>
+<p>想让每张照片的说明都自动翻译，可以在「设置 › 看图」里打开「自动翻译照片说明」，默认是关的。</p>
+<h2>Flipic Lens 只读这些信息</h2>
+<p>Flipic Lens 只读 IPTC，不编辑它，其他元数据也不改。要写说明、改版权或者加关键词，得用能写 IPTC 的软件，比如元数据编辑软件、带元数据功能的素材浏览器，或者拷卡交付类的软件。哪些软件做这些事，<a href="/compare/">Mac 看图与挑片软件对比</a> 里有一张表。</p>""",
+      howto=["用 Flipic Lens 打开照片", "按 I 打开照片信息面板，文件里写的标题和说明显示在最上面",
+             "按 ⇧I 在「常用」和「全部」之间切换", "说明是外文时，点说明下面的「翻译」（需要 macOS 15 或更新）"],
+      faq=[
+          ("照片的图说存在哪里？",
+           "存在照片文件的元数据里，字段是 IPTC Description（界面名 Caption/Description）。XMP 里存成 dc:description，老的 IIM 格式里是 2:120 Caption/Abstract。"),
+          ("Mac 上怎么查看 IPTC？",
+           "用「预览」打开照片，点工具栏里的简介按钮打开检查器，到「更多信息」里找。用 Flipic Lens 的话按 I，文件里写的标题和说明显示在照片信息面板最上面，按 ⇧I 切到「全部」能看到所有字段。"),
+          ("Flipic Lens 能改照片说明吗？",
+           "不能。Flipic Lens 只读 IPTC，不编辑。要改说明，得用能写 IPTC 元数据的软件。"),
+          ("翻译的时候，说明会被传到网上吗？",
+           "不会。翻译用的是 macOS 自带的翻译，在本机完成。第一次翻某种语言时系统会提示下载语言包，需要 macOS 15 或更新。"),
+          ("看照片说明要买 Pro 吗？",
+           "不用。照片信息面板、IPTC 说明和说明翻译都是免费功能。"),
+      ], title_suffix=False, updated="2026-11-14", published="2026-11-14")
 
 
 
@@ -1674,6 +1754,9 @@ Key facts:
 - Star ratings 1–5 written as XMP (embedded for JPEG/HEIC/TIFF, .xmp sidecar for proprietary RAW), readable by Lightroom, Bridge and Capture One.
 - Cleanup Mode: finds similar bursts, exact duplicates, closed eyes and blurry photos on-device.
 - Batch convert HEIC/JPEG/PNG, batch rename, lossless rotate, slideshow with adjustable crossfade and click-to-pause.
+- IPTC captions (free): press I and the IPTC Headline and Description stored in the file are shown at the top of the photo info panel, above creator, credit, copyright, place and keywords; ⇧I switches between Essentials and All. Read-only: Flipic Lens does not edit IPTC or other metadata.
+- Caption translation (free): when a caption is in a different language from the interface, a Translate button shows the translation below the original, using the translation built into macOS on the Mac itself; nothing is sent to a server. Needs macOS 15 or later.
+- Crop & Straighten (free, ⇧R): drag the crop frame or pick a ratio (Original, Free, 1:1, 4:5, 3:2, 16:9), then overwrite the original or save a copy. Capture info, caption and copyright are kept; RAW files are not changed and the crop is saved as a JPEG. There are no color, exposure, filter or retouching tools; ⌘E hands the photo to Lightroom or Capture One.
 - Optional HDR display, customizable shortcuts, global show/hide shortcut, ⌘E hand-off to Photoshop/Lightroom/Capture One.
 - Formats: JPEG, PNG, HEIC, WebP, GIF, TIFF, AVIF, JPEG XL, camera RAW (Sony, Canon, Nikon, Fujifilm, more).
 - Download: {BASE}/download/Flipic.dmg · Source: {GITHUB} · Current version: {VERSION}
