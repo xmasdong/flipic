@@ -76,7 +76,7 @@ enum ShortcutAction: String, CaseIterable {
     case toggleApp
     case prev, next, first, last
     case zoomIn, zoomOut, zoomAtPointer, actualSize, peek, fullscreen
-    case info, filmstrip, slideshow, rotateCW, rotateCCW, straighten
+    case info, infoLevel, filmstrip, slideshow, rotateCW, rotateCCW, straighten
     case rename, trash, edit, reveal, exportAs, exportFolder, saveRotation
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
@@ -135,7 +135,7 @@ enum ShortcutAction: String, CaseIterable {
         switch self {
         case .toggleApp: return .global
         case .prev, .next, .first, .last, .zoomIn, .zoomOut, .zoomAtPointer, .actualSize, .peek, .zoomEye: return .browse
-        case .fullscreen, .info, .filmstrip, .slideshow, .rotateCW, .rotateCCW, .straighten: return .view
+        case .fullscreen, .info, .infoLevel, .filmstrip, .slideshow, .rotateCW, .rotateCCW, .straighten: return .view
         case .rename, .trash, .edit, .reveal, .exportAs, .exportFolder, .saveRotation, .share: return .file
         case .pinWindow, .playLive: return .view
         case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench, .copyText: return .tools
@@ -161,18 +161,19 @@ enum ShortcutAction: String, CaseIterable {
         case .peek: return L10n.t("sc.a.peek", "贴合照片比例预览")
         case .fullscreen: return L10n.t("sc.a.fullscreen", "全屏")
         case .info: return L10n.t("menu.info", "照片信息")
+        case .infoLevel: return L10n.t("sc.a.infoLevel", "照片信息：常用 / 全部")
         case .filmstrip: return L10n.t("menu.filmstrip", "缩略图栏")
         case .slideshow: return L10n.t("menu.slideshow", "幻灯片放映")
         case .rotateCW: return L10n.t("menu.rotateCW", "向右旋转 90°")
         case .rotateCCW: return L10n.t("menu.rotateCCW", "向左旋转 90°")
-        case .straighten: return plain(L10n.t("menu.straighten", "拉直…"))
+        case .straighten: return plain(L10n.t("menu.straighten", "裁剪与拉直…"))
         case .rename: return plain(L10n.t("menu.rename", "重命名…"))
         case .trash: return L10n.t("menu.trash", "移到废纸篓")
         case .edit: return plain(L10n.t("menu.editChoose", "在后期软件中编辑…"))
         case .reveal: return L10n.t("menu.reveal", "在 Finder 中显示")
         case .exportAs: return plain(L10n.t("menu.exportAs", "导出为…"))
         case .exportFolder: return plain(L10n.t("menu.exportFolder", "导出到文件夹…"))
-        case .saveRotation: return L10n.t("menu.saveRotation", "保存旋转")
+        case .saveRotation: return L10n.t("menu.saveRotation", "保存修改")
         case .cleanup: return L10n.t("menu.cleanup", "清理模式")
         case .batchConvert: return plain(L10n.t("menu.batchConvert", "批量转换格式…"))
         case .batchRename: return plain(L10n.t("menu.batchRename", "批量重命名…"))
@@ -213,6 +214,7 @@ enum ShortcutAction: String, CaseIterable {
         case .peek: return KeyCombo(keyCode: 49, chars: " ")
         case .fullscreen: return KeyCombo(keyCode: 3, chars: "f")
         case .info: return KeyCombo(keyCode: 34, chars: "i")
+        case .infoLevel: return KeyCombo(keyCode: 34, mods: .shift, chars: "i")
         case .filmstrip: return KeyCombo(keyCode: 17, chars: "t")
         case .slideshow: return KeyCombo(keyCode: 1, chars: "s")
         case .rotateCW: return KeyCombo(keyCode: 15, chars: "r")

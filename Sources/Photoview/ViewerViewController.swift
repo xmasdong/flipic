@@ -14,7 +14,6 @@ final class ViewerViewController: NSViewController {
     /// 拉直 / 旋转没保存时底部那一条
     let rotationBar = RotationBar()
     /// 正在拉直时记着进来之前的角度（取消时回到它）；nil = 没在拉直
-    private var straightenStartDegrees: Double?
     private var rotationPromptOpen = false
     /// 设置里定了「覆盖原图」或「另存一份」时，转完停一下就自动保存（连按 R 只存最后一次）
     private var rotationAutoSave: DispatchWorkItem?
@@ -27,8 +26,8 @@ final class ViewerViewController: NSViewController {
     private let hudDimsLabel = NSTextField(labelWithString: "")
     private let hudExifLabel1 = NSTextField(labelWithString: "")
     private let hudExifLabel2 = NSTextField(labelWithString: "")
-    private let exifPanel = NSVisualEffectView()
-    private let exifStack = NSStackView()
+    let exifPanel = InfoPanelView()
+    private var exifClearPending = false
     let emptyState = NSStackView()
     let emptyHint = NSTextField(labelWithString: "")
     private let toolbarView = NSVisualEffectView()
@@ -352,7 +351,8 @@ final class ViewerViewController: NSViewController {
             // 让开右上角的置顶、分享
             exifPanel.topAnchor.constraint(equalTo: view.topAnchor, constant: 46),
             exifPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            exifPanel.widthAnchor.constraint(equalToConstant: 300),
+            // 「全部」里内容比窗口高：面板最多到缩略图栏上方，里面滚动
+            exifPanel.bottomAnchor.constraint(lessThanOrEqualTo: filmstrip.topAnchor, constant: -12),
 
             ratingBadge.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             ratingBadgeBottom,
@@ -705,7 +705,7 @@ final class ViewerViewController: NSViewController {
              ("1.magnifyingglass", L10n.t("tip.actual", "实际大小（1）"), #selector(zoomActual(_:)))],
             [("rotate.left", L10n.t("tip.rotateCCW", "向左旋转 90°（L）"), #selector(rotateCCW(_:))),
              ("rotate.right", L10n.t("tip.rotateCW", "向右旋转 90°（R）"), #selector(rotateCW(_:))),
-             ("level", L10n.t("tip.straighten", "拉直（⇧R）"), #selector(straighten(_:)))],
+             ("crop.rotate", L10n.t("tip.straighten", "裁剪与拉直（⇧R）"), #selector(straighten(_:)))],
             [("play.fill", L10n.t("tip.slideshow", "幻灯片放映（S）"), #selector(toggleSlideshow(_:)))],
             [("photo.on.rectangle", L10n.t("tip.strip", "底部缩略图栏开关（T）"), #selector(toggleFilmstrip(_:)))],
             [("folder.badge.plus", L10n.t("tip.exportFolder", "把当前显示的照片复制或移动到文件夹（⇧⌘E）"), #selector(exportToFolder(_:))),
@@ -840,29 +840,12 @@ final class ViewerViewController: NSViewController {
     }
 
     private func buildExifPanel() {
-        exifPanel.material = .hudWindow
-        exifPanel.blendingMode = .withinWindow
-        exifPanel.state = .active
-        exifPanel.wantsLayer = true
-        exifPanel.layer?.cornerRadius = 12
-        exifPanel.layer?.masksToBounds = true
-        exifPanel.translatesAutoresizingMaskIntoConstraints = false
         exifPanel.isHidden = true
-
-        exifStack.orientation = .vertical
-        exifStack.alignment = .leading
-        exifStack.spacing = 6
-        exifStack.edgeInsets = NSEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
-        exifStack.translatesAutoresizingMaskIntoConstraints = false
-        exifPanel.addSubview(exifStack)
+        exifPanel.onReleaseFocus = { [weak self] in
+            guard let self else { return }
+            self.view.window?.makeFirstResponder(self.imageView)
+        }
         view.addSubview(exifPanel)
-
-        NSLayoutConstraint.activate([
-            exifStack.topAnchor.constraint(equalTo: exifPanel.topAnchor),
-            exifStack.bottomAnchor.constraint(equalTo: exifPanel.bottomAnchor),
-            exifStack.leadingAnchor.constraint(equalTo: exifPanel.leadingAnchor),
-            exifStack.trailingAnchor.constraint(equalTo: exifPanel.trailingAnchor),
-        ])
     }
 
     private func buildEmptyState() {
@@ -1047,8 +1030,8 @@ final class ViewerViewController: NSViewController {
         scheduleLiveText(restart: true)
         guard let item = folder.current else { return }
         let url = item.url
-        // 换图（或写回后重新载入）：拉直和没保存的旋转都跟着新图清零，底部那条收起
-        straightenStartDegrees = nil
+        // 换图（或写回后重新载入）：裁剪、拉直和没保存的旋转都跟着新图清零，底部那条收起
+        if imageView.isCropping { imageView.endCrop(apply: false) }
         rotationBar.showPending(false)
         // 「窗口」菜单里按文件名区分多个窗口（标题栏本身是隐藏的）；左上角也显示
         view.window?.title = url.lastPathComponent
@@ -1709,70 +1692,26 @@ final class ViewerViewController: NSViewController {
     func updateExifPanel() {
         guard !exifPanel.isHidden, let item = folder.current else { return }
         let gen = generation
+        let url = item.url
+        if exifPanel.shownURL != nil, exifPanel.shownURL != url, !exifClearPending {
+            // 一般几毫秒就读完，直接换成新的；大 RAW、网络盘读得慢，或者按住方向键连翻时，
+            // 面板里的字超过一会儿还不是当前这张就先清空，不让别的照片的字留在旁边
+            exifClearPending = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+                guard let self else { return }
+                self.exifClearPending = false
+                if let shown = self.exifPanel.shownURL, shown != self.folder.current?.url {
+                    self.exifPanel.clear(isVideo: self.currentIsVideo)
+                }
+            }
+        }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let entries = ExifReader.read(url: item.url)
+            let info = ExifReader.info(url: url)
             DispatchQueue.main.async {
-                guard let self, self.generation == gen, !self.exifPanel.isHidden else { return }
-                self.renderExifPanel(entries)
+                guard let self, self.generation == gen, !self.exifPanel.isHidden, self.folder.current?.url == url else { return }
+                self.exifPanel.show(info, url: url, rating: self.currentRating, isVideo: self.currentIsVideo)
             }
         }
-    }
-
-    private func renderExifPanel(_ entries: [ExifEntry]) {
-        for v in exifStack.arrangedSubviews { v.removeFromSuperview() }
-
-        let title = NSTextField(labelWithString: currentIsVideo ? L10n.t("ui.videoInfoTitle", "视频信息") : L10n.t("ui.exifTitle", "照片信息"))
-        title.font = .boldSystemFont(ofSize: 13)
-        title.textColor = .secondaryLabelColor
-        exifStack.addArrangedSubview(title)
-
-        if currentRating > 0 {
-            let l = NSTextField(labelWithString: L10n.t("menu.rating", "评分"))
-            l.font = .systemFont(ofSize: 11)
-            l.textColor = .secondaryLabelColor
-            let v = NSTextField(labelWithString: Rating.stars(currentRating))
-            v.font = .systemFont(ofSize: 12)
-            v.textColor = NSColor(calibratedRed: 1.0, green: 0.8, blue: 0.25, alpha: 1)
-            exifStack.addArrangedSubview(l)
-            exifStack.addArrangedSubview(v)
-        }
-        if entries.isEmpty {
-            let none = NSTextField(labelWithString: L10n.t("ui.noExif", "此文件没有 EXIF 信息"))
-            none.font = .systemFont(ofSize: 12)
-            none.textColor = .secondaryLabelColor
-            exifStack.addArrangedSubview(none)
-        }
-        for e in entries {
-            let l = NSTextField(labelWithString: e.label)
-            l.font = .systemFont(ofSize: 11)
-            l.textColor = .secondaryLabelColor
-            exifStack.addArrangedSubview(l)
-            if let link = e.link {
-                // 拍摄地点：点击在「地图」里打开
-                let b = NSButton(title: e.value + "  ↗", target: self, action: #selector(openExifLink(_:)))
-                b.isBordered = false
-                b.font = .systemFont(ofSize: 12)
-                b.contentTintColor = .linkColor
-                b.alignment = .left
-                b.toolTip = L10n.t("exif.openMaps", "在「地图」中打开")
-                b.identifier = NSUserInterfaceItemIdentifier(link.absoluteString)
-                b.setAccessibilityLabel(e.label)
-                exifStack.addArrangedSubview(b)
-                continue
-            }
-            let v = NSTextField(labelWithString: e.value)
-            v.font = .systemFont(ofSize: 12)
-            v.textColor = .labelColor
-            v.maximumNumberOfLines = 2
-            v.lineBreakMode = .byWordWrapping
-            v.setAccessibilityLabel(e.label)
-            v.preferredMaxLayoutWidth = 260
-            exifStack.addArrangedSubview(v)
-        }
-    }
-
-    @objc private func openExifLink(_ sender: NSButton) {
-        if let s = sender.identifier?.rawValue, let url = URL(string: s) { NSWorkspace.shared.open(url) }
     }
 
     /// 只改选中态，不 reloadData（整条重建会让所有可见格子重新取缩略图）。
@@ -2009,6 +1948,12 @@ final class ViewerViewController: NSViewController {
         if !exifPanel.isHidden { updateExifPanel() }
     }
 
+    /// 照片信息在「常用」和「全部」之间切换；面板关着就先打开
+    @objc func toggleInfoLevel(_ sender: Any?) {
+        InfoLevel.current = InfoLevel.current == .all ? .common : .all
+        if exifPanel.isHidden { toggleInfoPanel(nil) }
+    }
+
     @objc func toggleFilmstrip(_ sender: Any?) {
         // 看视频时自己按了 T：以用户为准，离开视频时不再自动放回来
         filmstripHiddenForVideo = false
@@ -2051,6 +1996,7 @@ final class ViewerViewController: NSViewController {
         case .exportAs: exportAs(nil)
         case .saveRotation: saveRotation(nil)
         case .straighten: straighten(nil)
+        case .infoLevel: toggleInfoLevel(nil)
         case .cleanup: if folder.count > 0 { toggleCleanup(nil) }
         case .batchConvert: batchConvert(nil)
         case .batchRename: batchRename(nil)
@@ -2158,6 +2104,7 @@ final class ViewerViewController: NSViewController {
         case #selector(straighten(_:)): return .straighten
         case #selector(toggleSlideshow(_:)): return .slideshow
         case #selector(toggleInfoPanel(_:)): return .info
+        case #selector(toggleInfoLevel(_:)): return .infoLevel
         case #selector(toggleFilmstrip(_:)): return .filmstrip
         case #selector(exportAs(_:)): return .exportAs
         case #selector(exportToFolder(_:)): return .exportFolder
@@ -2273,7 +2220,7 @@ final class ViewerViewController: NSViewController {
     /// 只分析停下来以后屏幕上的清晰图（预览；放大后已经换成原图就用原图），草图、动图、对比、清理、放映时都不分析
     private func startLiveTextIfSettled() {
         guard let liveText, TextRecognition.autoAnalyze, !currentIsVideo, liveTextGen != generation, shown == .sharp, !rapidPaging,
-              mainViewerActive, cleanup == nil, slideshowTimer == nil, !imageView.isAnimated,
+              mainViewerActive, cleanup == nil, slideshowTimer == nil, !imageView.isAnimated, !isStraightening,
               let image = textSourceImage() else { return }
         liveTextGen = generation
         liveText.analyze(image)
@@ -3944,14 +3891,14 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 导出
 
-    /// 后台把当前图（已含旋转）编码写入目标位置，完成后回主线程提示
-    private func runExport(sourceURL: URL, turns: Int, destURL: URL, uti: String, quality: Double,
-                           currentBytes: Int64, completion: @escaping (String) -> Void) {
+    /// 后台把当前图按视图上看到的样子（90° 旋转、拉直、裁剪）编码写入目标位置，完成后回主线程提示
+    func runExport(sourceURL: URL, turns: Int, degrees: Double = 0, crop: Straighten.CropSpec? = nil, destURL: URL, uti: String, quality: Double,
+                   currentBytes: Int64, completion: @escaping (String) -> Void) {
         isProcessing = true
         flash(L10n.t("msg.exporting", "导出中…"), seconds: 3600)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let image = ImageLoader.decodedFull(url: sourceURL)
-                .flatMap { ImageLoader.rotated($0, quarterTurns: turns) }
+                .flatMap { Straighten.applied(to: $0, turns: turns, degrees: degrees, crop: crop) }
             var result: String
             if let image, let bytes = ImageExporter.write(image, to: destURL, uti: uti, quality: quality) {
                 let fmt = { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) }
@@ -3970,6 +3917,8 @@ final class ViewerViewController: NSViewController {
     /// ⌘S：导出压缩副本（保存面板交给用户选择位置、文件名、格式与质量）
     @objc func exportAs(_ sender: Any?) {
         guard let item = folder.current, !Video.isVideo(item.url), !isProcessing, let window = view.window else { return }
+        // 正在裁剪：先按现在的框定下来，导出的就是看到的样子
+        if isStraightening { finishStraighten(apply: true) }
         let panel = NSSavePanel()
         panel.title = L10n.t("exp.title", "导出压缩图片")
         panel.message = L10n.t("exp.message", "选择保存位置、文件名与格式")
@@ -4022,7 +3971,8 @@ final class ViewerViewController: NSViewController {
             guard resp == .OK, let url = panel.url else { return }
             let f = Self.exportFormats[self.exportFormatPopup?.indexOfSelectedItem ?? 0]
             let currentBytes = ((try? FileManager.default.attributesOfItem(atPath: item.url.path))?[.size] as? Int64) ?? 0
-            self.runExport(sourceURL: item.url, turns: self.imageView.rotationTurns, destURL: url,
+            self.runExport(sourceURL: item.url, turns: self.imageView.rotationTurns, degrees: self.imageView.fineDegrees,
+                           crop: self.imageView.cropSpec, destURL: url,
                            uti: f.uti.identifier, quality: self.exportQualitySlider?.doubleValue ?? 85,
                            currentBytes: currentBytes) { msg in
                 self.flash(msg, seconds: 4)
@@ -4062,7 +4012,8 @@ final class ViewerViewController: NSViewController {
         exportEstimateWork?.cancel()
         exportEstimateGeneration += 1
         let gen = exportEstimateGeneration
-        let key = "\(item.url.path)#\(imageView.rotationTurns)#\(f.uti.identifier)#\(Int(slider.doubleValue))"
+        let degrees = imageView.fineDegrees, crop = imageView.cropSpec
+        let key = "\(item.url.path)#\(imageView.rotationTurns)#\(degrees)#\(crop.map { "\($0.crop)" } ?? "-")#\(f.uti.identifier)#\(Int(slider.doubleValue))"
         let fmt = { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) }
         if let cached = exportEstimateCache[key] {
             label.stringValue = L10n.f("exp.estimate", "预计大小： %@", fmt(cached))
@@ -4074,7 +4025,7 @@ final class ViewerViewController: NSViewController {
         let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("flipic-estimate.\(f.ext)")
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.exportEstimateGeneration == gen else { return }
-            let image = loader.fullImage(for: item.url).flatMap { ImageLoader.rotated($0, quarterTurns: turns) }
+            let image = loader.fullImage(for: item.url).flatMap { Straighten.applied(to: $0, turns: turns, degrees: degrees, crop: crop) }
             var bytes: Int64?
             if let image { bytes = ImageExporter.write(image, to: tmp, uti: f.uti.identifier, quality: slider.doubleValue) }
             DispatchQueue.main.async { [weak self] in
@@ -4106,6 +4057,13 @@ final class ViewerViewController: NSViewController {
         rotationBar.onDone = { [weak self] in self?.finishStraighten(apply: true) }
         rotationBar.onRevert = { [weak self] in self?.imageView.resetRotation() }
         rotationBar.onSave = { [weak self] in self?.saveRotation(nil) }
+        rotationBar.onAspect = { [weak self] a in self?.imageView.setCropAspect(a, swapped: false) }
+        rotationBar.onSwap = { [weak self] in
+            guard let v = self?.imageView else { return }
+            v.setCropAspect(v.cropAspect, swapped: !v.cropAspectSwapped)
+        }
+        imageView.onCropChange = { [weak self] in self?.syncCropBar() }
+        imageView.onCropApply = { [weak self] in self?.finishStraighten(apply: true) }
         let previous = imageView.onRotate
         imageView.onRotate = { [weak self] in
             previous?()
@@ -4114,11 +4072,35 @@ final class ViewerViewController: NSViewController {
         }
     }
 
-    var isStraightening: Bool { straightenStartDegrees != nil }
+    var isStraightening: Bool { imageView.isCropping }
 
-    /// 已经定好保存方式（不是每次询问），转了就自动保存
+    /// 裁剪条上的比例、互换按钮和输出尺寸跟着裁剪框走
+    private func syncCropBar() {
+        guard isStraightening else { return }
+        rotationBar.setAspect(imageView.cropAspect, swapped: imageView.cropAspectSwapped)
+        rotationBar.setOutputSize(imageView.pixelSize)
+        rotationBar.setDegrees(imageView.fineDegrees)
+    }
+
+    /// 裁剪时照片和手柄让开底部那条（窗口大小变了、缩略图栏开关后也要重算）
+    func updateCropInset(layout: Bool = true) {
+        guard isStraightening else { return }
+        if layout { view.layoutSubtreeIfNeeded() }
+        // 看图视图是翻转坐标：条的上沿到视图底边的距离
+        let bar = imageView.convert(rotationBar.bounds, from: rotationBar)
+        imageView.cropBottomInset = max(0, imageView.bounds.maxY - bar.minY)
+    }
+
+    override func viewDidLayout() {
+        super.viewDidLayout()
+        updateCropInset(layout: false)
+    }
+
+    /// 已经定好保存方式（不是每次询问），转了就自动保存。
+    /// 裁剪过、又定的是覆盖原图的不算：裁掉的像素找不回来，不能不问就覆盖，留着底部那条等用户点「保存…」
     private var autoSavesRotation: Bool {
         Straighten.saveTarget != .ask && cleanup == nil && !imageView.isAnimated
+            && !(Straighten.saveTarget == .overwrite && imageView.cropSpec != nil)
             && (rotationAutoSaveFailed == nil || rotationAutoSaveFailed != folder.current?.url)
     }
 
@@ -4149,28 +4131,32 @@ final class ViewerViewController: NSViewController {
         rotationBar.showPending(pending)
     }
 
-    /// ⇧R：拉直。滑块或 ← → 调角度，画面实时裁成正矩形，回车完成、Esc 取消
+    /// ⇧R：裁剪与拉直。拖裁剪框的手柄、选比例，滑块或 ← → 调角度；回车（或在框里双击）完成、Esc 取消
     @objc func straighten(_ sender: Any?) {
         guard folder.current != nil, cleanup == nil, !isStraightening else { return }
         guard !currentIsVideo, imageView.canStraighten else {
-            flash(L10n.t("msg.straightenUnavailable", "视频和动图不能拉直"))
+            flash(L10n.t("msg.straightenUnavailable", "视频和动图不能裁剪或拉直"))
             return
         }
-        straightenStartDegrees = imageView.fineDegrees
-        imageView.beginStraighten()
+        rotationAutoSave?.cancel()
+        rotationAutoSave = nil
+        liveText?.reset()
+        imageView.beginCrop()
+        guard isStraightening else { return }
         rotationBar.showStraighten(degrees: imageView.fineDegrees)
+        syncCropBar()
+        updateCropInset()
     }
 
-    private func nudgeStraighten(to d: Double) {
+    func nudgeStraighten(to d: Double) {
         let v = max(-Straighten.maxDegrees, min(Straighten.maxDegrees, (d * 10).rounded() / 10))
         imageView.setStraighten(degrees: v)
         rotationBar.setDegrees(v)
     }
 
     func finishStraighten(apply: Bool) {
-        guard let start = straightenStartDegrees else { return }
-        straightenStartDegrees = nil
-        imageView.endStraighten(degrees: apply ? imageView.fineDegrees : start)
+        guard isStraightening else { return }
+        imageView.endCrop(apply: apply)
         updateRotationBar()
     }
 
@@ -4205,7 +4191,7 @@ final class ViewerViewController: NSViewController {
               folder.current != nil, let window = view.window, window.attachedSheet == nil else { return false }
         rotationPromptOpen = true
         let a = NSAlert()
-        a.messageText = L10n.t("rot.unsaved.title", "这张照片的旋转还没保存")
+        a.messageText = L10n.t("rot.unsaved.title", "这张照片的修改还没保存")
         a.informativeText = L10n.t("rot.unsaved.info", "不保存的话，离开后就恢复原样。")
         a.addButton(withTitle: L10n.t("rot.save", "保存…"))
         a.addButton(withTitle: L10n.t("rot.discard", "不保存"))
@@ -4232,7 +4218,8 @@ final class ViewerViewController: NSViewController {
         return true
     }
 
-    /// ⌘⌥S：保存旋转。按设置覆盖原图或另存一份（每次询问时弹框，可勾「以后都这样保存」）；RAW 等只能另存成 JPEG
+    /// ⌘⌥S：保存修改（旋转、拉直、裁剪）。按设置覆盖原图或另存一份（每次询问时弹框，可勾「以后都这样保存」）；RAW 等只能另存成 JPEG。
+    /// 裁剪过的照片，设置是「覆盖原图」也照样弹框问一次
     @objc func saveRotation(_ sender: Any?) { saveRotation(then: nil) }
 
     func saveRotation(then: (() -> Void)?) {
@@ -4244,32 +4231,37 @@ final class ViewerViewController: NSViewController {
         }
         let turns = ((imageView.rotationTurns % 4) + 4) % 4
         let degrees = imageView.fineDegrees
-        guard turns != 0 || degrees != 0 else {
-            flash(L10n.t("msg.rotNone", "当前没有待保存的旋转"))
+        let crop = imageView.cropSpec
+        guard turns != 0 || degrees != 0 || crop != nil else {
+            flash(L10n.t("msg.rotNone", "当前没有待保存的修改"))
             return
         }
         let url = item.url
         let go: (Bool) -> Void = { [weak self] overwrite in
-            self?.performRotationSave(url: url, turns: turns, degrees: degrees, overwrite: overwrite, then: then)
+            self?.performRotationSave(url: url, turns: turns, degrees: degrees, crop: crop, overwrite: overwrite, then: then)
         }
-        guard Straighten.canOverwrite(url, degrees: degrees) else { go(false); return }
-        switch Straighten.saveTarget {
+        guard Straighten.canOverwrite(url, degrees: degrees, cropped: crop != nil) else { go(false); return }
+        // 裁剪过的不会不问就覆盖原图：记住的是「覆盖原图」时，这一次照样问（「另存一份」不动原图，照记住的办）
+        let remembered = Straighten.saveTarget
+        let cropNeedsAsking = crop != nil && remembered == .overwrite
+        switch cropNeedsAsking ? .ask : remembered {
         case .overwrite: go(true)
         case .copy: go(false)
         case .ask:
             guard let window = view.window else { return }
             let a = NSAlert()
-            a.messageText = L10n.t("rot.ask.title", "保存旋转")
+            a.messageText = L10n.t("rot.ask.title", "保存修改")
             var info = L10n.f("rot.ask.info", "覆盖原图会直接改这个文件；另存一份会在同一个文件夹里新建「%@」，原图不动。",
-                              Straighten.copyURL(for: url, ext: url.pathExtension).lastPathComponent)
-            if degrees != 0 {
-                info += "\n\n" + L10n.t("rot.ask.reencode", "拉直过的照片要重新编码，会用高画质保存，拍摄信息保留。")
+                              Straighten.copyURL(for: url, ext: url.pathExtension, cropped: crop != nil).lastPathComponent)
+            if degrees != 0 || crop != nil {
+                info += "\n\n" + L10n.t("rot.ask.reencode", "裁剪或拉直过的照片要重新编码，会用高画质保存，拍摄信息保留。")
             }
             a.informativeText = info
             a.addButton(withTitle: L10n.t("rot.overwrite", "覆盖原图"))
             a.addButton(withTitle: L10n.t("rot.copy", "另存一份"))
             a.addButton(withTitle: L10n.t("rot.bar.cancel", "取消"))
-            a.showsSuppressionButton = true
+            // 已经记住「覆盖原图」、只是因为裁剪才问的这一次：不再给「以后都这样」，勾了也不会让裁剪不问
+            a.showsSuppressionButton = !cropNeedsAsking
             a.suppressionButton?.title = L10n.t("rot.ask.remember", "以后都这样保存，不再询问")
             a.beginSheetModal(for: window) { r in
                 guard r == .alertFirstButtonReturn || r == .alertSecondButtonReturn else { return }
@@ -4283,20 +4275,20 @@ final class ViewerViewController: NSViewController {
         }
     }
 
-    private func performRotationSave(url: URL, turns: Int, degrees: Double, overwrite: Bool, then: (() -> Void)?) {
+    private func performRotationSave(url: URL, turns: Int, degrees: Double, crop: Straighten.CropSpec?, overwrite: Bool, then: (() -> Void)?) {
         isProcessing = true
-        flash(L10n.t("msg.rotSaving", "保存旋转中…"), seconds: 3600)
+        flash(L10n.t("msg.rotSaving", "保存中…"), seconds: 3600)
         let srcIsRaw = CleanupUnit.isRaw(url)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let out = Straighten.save(url: url, quarterTurns: turns, degrees: degrees, overwrite: overwrite)
+            let out = Straighten.save(url: url, quarterTurns: turns, degrees: degrees, crop: crop, overwrite: overwrite)
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.isProcessing = false
-                if CommandLine.arguments.contains("--straightentest") {
+                if CommandLine.arguments.contains("--straightentest") || CommandLine.arguments.contains("--croptest") {
                     NSLog("STRAIGHTEN saved overwrite=%d result=%@ out=%@", overwrite ? 1 : 0, "\(out.result)", out.url?.lastPathComponent ?? "-")
                 }
                 guard out.result != .failed, let saved = out.url else {
-                    self.flash(L10n.f("msg.rotFailed", "保存旋转失败： %@", " "), seconds: 3)
+                    self.flash(L10n.f("msg.rotFailed", "保存失败： %@", " "), seconds: 3)
                     self.rotationAutoSaveFailed = url
                     self.updateRotationBar()
                     return
@@ -4305,7 +4297,8 @@ final class ViewerViewController: NSViewController {
                 let asJPEG = srcIsRaw && saved.pathExtension.lowercased() == "jpg"
                 if overwrite && saved == url {
                     self.flash(out.result == .lossless ? L10n.t("msg.rotSaved", "已保存旋转（无损）")
-                               : L10n.t("msg.rotSavedReencoded", "已保存旋转（该格式重新编码）"), seconds: 3)
+                               : (degrees != 0 || crop != nil ? L10n.t("msg.editSaved", "已保存（高画质重新编码）")
+                                  : L10n.t("msg.rotSavedReencoded", "已保存旋转（该格式重新编码）")), seconds: 3)
                     self.rotationJustSaved = url
                     self.loader.evict(url: url)
                     self.showImage(resetToFit: false)
@@ -5498,7 +5491,7 @@ final class ViewerViewController: NSViewController {
         }
         at(0.8) {
             NSLog("STRAIGHTEN 1 live: bar=%@ deg=%.1f grid=%d px=%@", self.rotationBar.debugRow, self.imageView.fineDegrees,
-                  self.imageView.showsStraightenGrid ? 1 : 0, NSStringFromSize(self.imageView.pixelSize))
+                  self.imageView.isCropping ? 1 : 0, NSStringFromSize(self.imageView.pixelSize))
             self.captureWindow(to: "\(outDir)/1-straighten-live.png", raw: true)
             self.finishStraighten(apply: true)
         }
@@ -7308,6 +7301,8 @@ extension ViewerViewController: NSMenuItemValidation {
         }
         if menuItem.action == #selector(setSortKey(_:)) {
             menuItem.state = menuItem.tag == folder.sortKey.rawValue ? .on : .off
+        } else if menuItem.action == #selector(toggleInfoLevel(_:)) {
+            menuItem.state = InfoLevel.current == .all ? .on : .off
         } else if menuItem.action == #selector(toggleEscCloses(_:)) {
             menuItem.state = Self.escCloses ? .on : .off
         } else if menuItem.action == #selector(toggleFadeTransition(_:)) {

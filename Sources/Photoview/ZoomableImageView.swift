@@ -52,10 +52,28 @@ final class ZoomableImageView: NSView {
     private var quarterTurns = 0
     /// 拉直的角度（顺时针为正，±45°），在 90° 旋转之后再转；转完居中裁成同比例的正矩形
     private(set) var fineDegrees: Double = 0
-    /// 拉直时拖滑块用的小图（已转好 90°），每动一下只在它上面重算，松手再用原图算一遍
-    private var straightenSource: CGImage?
-    /// 拉直时叠在照片上的网格，方便对齐地平线
-    private let gridLayer = CAShapeLayer()
+    /// 没保存的手动裁剪框（CropGeometry 的坐标，原图像素）；nil = 没裁过，拉直时自动取同比例的最大框
+    private(set) var crop: CropGeometry.Crop?
+    /// 裁剪时选的比例和横竖互换，再进裁剪时还在
+    private(set) var cropAspect = CropGeometry.Aspect.original
+    private(set) var cropAspectSwapped = false
+    /// 裁剪与拉直进行中：盖在照片上的裁剪框（非 nil 就是在这个模式里）
+    private var cropOverlay: CropOverlayView?
+    /// 用户想要的框（上次拖出来或选比例定下的）；角度变了从它重新放进照片，角度调回来框也回来
+    private var cropWanted = CropGeometry.Crop(center: .zero, size: .zero)
+    /// 框是「这个中心、这个比例能放下的最大」，角度变了跟着变大变小；手动拖过就不再自动变大
+    private var cropGrows = true
+    /// 现在画在屏幕上的框
+    private var cropNow = CropGeometry.Crop(center: .zero, size: .zero)
+    /// 进裁剪前的状态，取消时回到这里
+    private var cropEntry: (turns: Int, degrees: Double, crop: CropGeometry.Crop?, aspect: CropGeometry.Aspect, swapped: Bool)?
+    private var fineGridHide: DispatchWorkItem?
+    /// 框、比例或角度变了（底部那条跟着更新尺寸和比例）
+    var onCropChange: (() -> Void)?
+    /// 在框里双击 = 完成
+    var onCropApply: (() -> Void)?
+    /// 底部被裁剪条挡住的高度：裁剪时照片和手柄让开它
+    var cropBottomInset: CGFloat = 0 { didSet { if oldValue != cropBottomInset, isCropping { layoutCrop() } } }
     private var logicalSize: CGSize = .zero   // 原图（已校正方向、未旋转）像素尺寸
     private var detailRequested = false
     /// 正在显示快速连翻时的低清草图：清晰预览马上就来，这时不按草图的分辨率去要原图
@@ -79,19 +97,6 @@ final class ZoomableImageView: NSView {
         layer?.addSublayer(backdropLayer)
         layer?.addSublayer(imageLayer)
         imageLayer.isHidden = true
-        gridLayer.fillColor = nil
-        gridLayer.strokeColor = NSColor.white.withAlphaComponent(0.22).cgColor
-        gridLayer.lineWidth = 0.5
-        gridLayer.isHidden = true
-        thirdsLayer.fillColor = nil
-        thirdsLayer.strokeColor = NSColor.white.withAlphaComponent(0.6).cgColor
-        thirdsLayer.lineWidth = 1
-        thirdsLayer.shadowColor = NSColor.black.cgColor
-        thirdsLayer.shadowOpacity = 0.5
-        thirdsLayer.shadowRadius = 1
-        thirdsLayer.shadowOffset = .zero
-        gridLayer.addSublayer(thirdsLayer)
-        layer?.addSublayer(gridLayer)
         NotificationCenter.default.addObserver(self, selector: #selector(settingsDidChange(_:)),
                                                name: SettingsWindowController.didChange, object: nil)
         imageLayer.magnificationFilter = .trilinear
@@ -114,20 +119,26 @@ final class ZoomableImageView: NSView {
     /// 当前显示内容的原图像素尺寸（含视图旋转）
     var pixelSize: CGSize { image == nil ? .zero : contentSize }
 
-    private var contentSize: CGSize {
-        let q = quarterTurns % 2 == 0 ? logicalSize : CGSize(width: logicalSize.height, height: logicalSize.width)
-        guard fineDegrees != 0 else { return q }
-        let k = Straighten.cropScale(width: q.width, height: q.height, degrees: fineDegrees)
-        return CGSize(width: (q.width * k).rounded(.down), height: (q.height * k).rounded(.down))
+    /// 转好 90° 的原图尺寸
+    private var turnedSize: CGSize {
+        quarterTurns % 2 == 0 ? logicalSize : CGSize(width: logicalSize.height, height: logicalSize.width)
     }
 
-    /// 有没有转过还没保存（90° 旋转或拉直）
-    var hasPendingRotation: Bool { quarterTurns != 0 || fineDegrees != 0 }
+    /// 输出（保存后）的像素尺寸；裁剪进行中是按当前的框算的
+    private var contentSize: CGSize {
+        Straighten.outputSize(turned: turnedSize, degrees: fineDegrees, crop: isCropping ? cropForOutput : crop)
+    }
 
-    /// 原图按当前的 90° 旋转和拉直角度变成要显示的图
+    /// 有没有改过还没保存（90° 旋转、拉直或裁剪）
+    var hasPendingRotation: Bool { quarterTurns != 0 || fineDegrees != 0 || crop != nil }
+
+    /// 原图按当前的 90° 旋转、拉直角度和裁剪框变成要显示的图。裁剪进行中显示整张（只转好 90°），角度交给图层去转
     private func displayed(from src: CGImage) -> CGImage {
-        guard fineDegrees != 0 else { return ImageLoader.rotated(src, quarterTurns: quarterTurns) }
-        return Straighten.render(src, quarterTurns: quarterTurns, degrees: fineDegrees) ?? ImageLoader.rotated(src, quarterTurns: quarterTurns)
+        let turned = ImageLoader.rotated(src, quarterTurns: quarterTurns)
+        guard !isCropping, fineDegrees != 0 || crop != nil else { return turned }
+        // 裁剪框按原图像素记，src 可能是缩小的预览
+        let k = turnedSize.width > 0 ? CGFloat(turned.width) / turnedSize.width : 1
+        return Straighten.render(src, quarterTurns: quarterTurns, degrees: fineDegrees, crop: crop?.scaled(by: k)) ?? turned
     }
 
     /// 当前显示图的旋转状态（导出时保持所见即所得）
@@ -154,8 +165,10 @@ final class ZoomableImageView: NSView {
         if isNew {
             quarterTurns = 0
             fineDegrees = 0
-            straightenSource = nil
-            showsStraightenGrid = false
+            crop = nil
+            cropAspect = .original
+            cropAspectSwapped = false
+            removeCropOverlay()
             detailRequested = false
         }
         let displayed = newSrc.flatMap { self.displayed(from: $0) }
@@ -444,20 +457,30 @@ final class ZoomableImageView: NSView {
         }
         guard baseImage != nil else { return }
         quarterTurns = ((quarterTurns + turns) % 4 + 4) % 4
-        if straightenSource != nil, let baseImage { straightenSource = Self.straightenPreview(baseImage, quarterTurns: quarterTurns) }
+        // 裁剪框跟着照片一起转，框住的还是同一块画面；固定比例也跟着横竖互换
+        crop = crop.map { CropGeometry.turned($0, clockwise: turns) }
+        if turns % 2 != 0, cropAspect.swappable, cropAspect != .original { cropAspectSwapped.toggle() }
+        if isCropping {
+            cropWanted = CropGeometry.turned(cropWanted, clockwise: turns)
+            cropNow = CropGeometry.turned(cropNow, clockwise: turns)
+        }
         image = baseImage.flatMap { displayed(from: $0) }
         imageLayer.contents = image
         refreshBackdrop()
-        fit(animate: true)
+        fit(animate: !isCropping)
+        if isCropping { refitCrop() }
         onRotate?()
     }
 
-    /// 撤掉没保存的旋转和拉直，回到原图
+    /// 撤掉没保存的旋转、拉直和裁剪，回到原图
     func resetRotation() {
         guard hasPendingRotation, !animationActive, let baseImage else { return }
+        removeCropOverlay()
         quarterTurns = 0
         fineDegrees = 0
-        straightenSource = nil
+        crop = nil
+        cropAspect = .original
+        cropAspectSwapped = false
         image = displayed(from: baseImage)
         imageLayer.contents = image
         refreshBackdrop()
@@ -465,91 +488,175 @@ final class ZoomableImageView: NSView {
         onRotate?()
     }
 
-    // MARK: - 拉直
+    // MARK: - 裁剪与拉直
 
     var canStraighten: Bool { baseImage != nil && !animationActive }
+    var isCropping: Bool { cropOverlay != nil }
 
-    /// 进入拉直：显示网格，准备拖滑块用的小图
-    func beginStraighten() {
-        guard let baseImage, !animationActive else { return }
-        straightenSource = Self.straightenPreview(baseImage, quarterTurns: quarterTurns)
-        showsStraightenGrid = true
-        fit(animate: true)
+    /// 现在的框就是「没手动裁」的默认框（居中、原比例、最大）：保存和显示都走原来的拉直路径
+    private var cropIsAutomatic: Bool {
+        cropGrows && cropAspect == .original && !cropAspectSwapped && cropWanted.center == .zero
     }
 
-    /// 拖滑块时：在小图上转 + 裁，画面框保持同样的比例，网格跟着
-    func setStraighten(degrees: Double) {
-        guard let straightenSource else { return }
-        fineDegrees = max(-Straighten.maxDegrees, min(Straighten.maxDegrees, degrees))
-        let preview = Straighten.render(straightenSource, degrees: fineDegrees) ?? straightenSource
-        image = preview
+    /// 按现在的框出图时用的裁剪框；nil = 不用手动裁（默认框，或者没拉直而且框住了整张）
+    private var cropForOutput: CropGeometry.Crop? {
+        if cropIsAutomatic { return nil }
+        let q = turnedSize
+        if fineDegrees == 0, CropGeometry.pixelRect(cropNow, image: q, degrees: 0) == CGRect(origin: .zero, size: q) { return nil }
+        return cropNow
+    }
+
+    /// 保存时用：手动裁剪框和它所在的尺寸
+    var cropSpec: Straighten.CropSpec? { crop.map { Straighten.CropSpec(crop: $0, space: turnedSize) } }
+
+    /// 进入裁剪与拉直：照片整张缩进窗口（四周留出手柄的位置），上面盖裁剪框。
+    /// 之前有没保存的裁剪框和角度就接着调
+    func beginCrop() {
+        guard let baseImage, !animationActive, cropOverlay == nil else { return }
+        cropEntry = (quarterTurns, fineDegrees, crop, cropAspect, cropAspectSwapped)
+        if let crop {
+            cropWanted = crop
+            cropGrows = false
+        } else {
+            cropWanted = CropGeometry.Crop(center: .zero, size: turnedSize)
+            cropGrows = true
+        }
+        let overlay = CropOverlayView()
+        overlay.frame = bounds
+        overlay.autoresizingMask = [.width, .height]
+        overlay.onChange = { [weak self] c in
+            guard let self else { return }
+            self.cropWanted = c
+            self.cropNow = c
+            self.cropGrows = false
+            self.onCropChange?()
+        }
+        overlay.onApply = { [weak self] in self?.onCropApply?() }
+        addSubview(overlay)
+        cropOverlay = overlay
+        image = displayed(from: baseImage)
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        imageLayer.contents = preview
+        imageLayer.contents = ImageLoader.surface(for: image) ?? image
+        imageLayer.allowsEdgeAntialiasing = true
         CATransaction.commit()
-        fit()
+        mode = .fit
+        refitCrop()
     }
 
-    /// 结束拉直：degrees 是最终角度（取消就传进来之前的角度），用原图重算一遍
-    func endStraighten(degrees: Double) {
-        straightenSource = nil
-        showsStraightenGrid = false
+    /// 拖滑块或按 ← →：照片在框下面转，框按需要缩小 / 变大，始终留在照片里
+    func setStraighten(degrees: Double) {
+        guard isCropping else { return }
         fineDegrees = max(-Straighten.maxDegrees, min(Straighten.maxDegrees, degrees))
+        cropOverlay?.showsFineGrid = true
+        fineGridHide?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.cropOverlay?.showsFineGrid = false }
+        fineGridHide = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2, execute: work)
+        refitCrop()
+    }
+
+    /// 选比例：以现在的框为中心，换成这个比例能放下的最大框。自由比例不动框
+    func setCropAspect(_ aspect: CropGeometry.Aspect, swapped: Bool) {
+        guard isCropping else { return }
+        cropAspect = aspect
+        cropAspectSwapped = swapped && aspect.swappable
+        if let r = aspect.ratio(image: turnedSize, swapped: cropAspectSwapped) {
+            cropWanted = CropGeometry.Crop(center: cropNow.center, size: CGSize(width: r, height: 1))
+            cropGrows = true
+        } else {
+            cropWanted = cropNow
+        }
+        refitCrop()
+    }
+
+    /// 结束裁剪与拉直：apply = false 回到进来之前的样子。之后显示裁好的图，和拉直一样算「改了还没保存」
+    func endCrop(apply: Bool) {
+        guard isCropping else { return }
+        if apply {
+            crop = cropForOutput
+            if crop == nil, cropIsAutomatic || fineDegrees == 0 {
+                cropAspect = .original
+                cropAspectSwapped = false
+            }
+        } else if let e = cropEntry {
+            quarterTurns = e.turns
+            fineDegrees = e.degrees
+            crop = e.crop
+            cropAspect = e.aspect
+            cropAspectSwapped = e.swapped
+        }
+        removeCropOverlay()
         guard let baseImage else { return }
         image = displayed(from: baseImage)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         imageLayer.contents = ImageLoader.surface(for: image) ?? image
+        CATransaction.commit()
         refreshBackdrop()
         fit()
         onRotate?()
     }
 
-    private static func straightenPreview(_ src: CGImage, quarterTurns: Int) -> CGImage {
-        let rotated = ImageLoader.rotated(src, quarterTurns: quarterTurns)
-        let longSide = CGFloat(max(rotated.width, rotated.height))
-        let target: CGFloat = 1800
-        guard longSide > target else { return rotated }
-        let k = target / longSide
-        let w = max(1, Int(CGFloat(rotated.width) * k)), h = max(1, Int(CGFloat(rotated.height) * k))
-        guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
-                                  space: CGColorSpace(name: CGColorSpace.sRGB)!,
-                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return rotated }
-        ctx.interpolationQuality = .high
-        ctx.draw(rotated, in: CGRect(x: 0, y: 0, width: w, height: h))
-        return ctx.makeImage() ?? rotated
-    }
-
-    private(set) var showsStraightenGrid = false {
-        didSet {
-            gridLayer.isHidden = !showsStraightenGrid
-            if showsStraightenGrid { layoutGrid() }
-        }
-    }
-
-    /// 网格：三等分线亮一点，再细分成 9×9 的淡线
-    private func layoutGrid() {
-        guard showsStraightenGrid else { return }
-        let f = imageLayer.frame
-        let path = CGMutablePath()
-        for i in 1..<9 where i % 3 != 0 {
-            let x = f.minX + f.width * CGFloat(i) / 9, y = f.minY + f.height * CGFloat(i) / 9
-            path.move(to: CGPoint(x: x, y: f.minY)); path.addLine(to: CGPoint(x: x, y: f.maxY))
-            path.move(to: CGPoint(x: f.minX, y: y)); path.addLine(to: CGPoint(x: f.maxX, y: y))
-        }
-        let thirds = CGMutablePath()
-        for i in 1...2 {
-            let x = f.minX + f.width * CGFloat(i) / 3, y = f.minY + f.height * CGFloat(i) / 3
-            thirds.move(to: CGPoint(x: x, y: f.minY)); thirds.addLine(to: CGPoint(x: x, y: f.maxY))
-            thirds.move(to: CGPoint(x: f.minX, y: y)); thirds.addLine(to: CGPoint(x: f.maxX, y: y))
-        }
-        thirds.addRect(f)
+    private func removeCropOverlay() {
+        guard let overlay = cropOverlay else { return }
+        fineGridHide?.cancel()
+        fineGridHide = nil
+        overlay.removeFromSuperview()
+        cropOverlay = nil
+        cropEntry = nil
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        gridLayer.frame = bounds
-        gridLayer.path = path
-        thirdsLayer.path = thirds
+        imageLayer.setAffineTransform(.identity)
+        imageLayer.allowsEdgeAntialiasing = false
         CATransaction.commit()
     }
-    private let thirdsLayer = CAShapeLayer()
+
+    /// 角度、比例或照片方向变了：从用户想要的框重新放进照片，再重画
+    private func refitCrop() {
+        guard isCropping else { return }
+        cropNow = CropGeometry.fitted(cropWanted, image: turnedSize, degrees: fineDegrees, grow: cropGrows)
+        layoutCrop()
+        onCropChange?()
+    }
+
+    /// 裁剪时的布局：转过的整张照片（连四个角）缩进窗口，四周留边给手柄，底部让开裁剪条。
+    /// 这个模式下不缩放、不平移
+    private func layoutCrop() {
+        guard let overlay = cropOverlay, image != nil else { return }
+        let q = turnedSize
+        guard q.width > 0, q.height > 0 else { return }
+        let t = abs(fineDegrees) * .pi / 180
+        let c = CGFloat(cos(t)), s = CGFloat(sin(t))
+        let margin: CGFloat = 30
+        let avail = CGRect(x: margin, y: margin, width: max(40, bounds.width - 2 * margin),
+                           height: max(40, bounds.height - 2 * margin - cropBottomInset))
+        scale = min(avail.width / (q.width * c + q.height * s), avail.height / (q.width * s + q.height * c), 4)
+        let center = CGPoint(x: avail.midX.rounded(), y: avail.midY.rounded())
+        origin = CGPoint(x: center.x - q.width * scale / 2, y: center.y - q.height * scale / 2)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        imageLayer.setAffineTransform(.identity)
+        imageLayer.frame = CGRect(origin: origin, size: CGSize(width: q.width * scale, height: q.height * scale))
+        // 视图是翻转坐标（y 朝下），正角度就是顺时针
+        imageLayer.setAffineTransform(CGAffineTransform(rotationAngle: CGFloat(fineDegrees * .pi / 180)))
+        CATransaction.commit()
+        overlay.imageSize = q
+        overlay.degrees = fineDegrees
+        overlay.scale = scale
+        overlay.imageCenter = center
+        overlay.lockedAspect = cropAspect.ratio(image: q, swapped: cropAspectSwapped)
+        if !overlay.isDragging { overlay.crop = cropNow }
+        overlay.refresh()
+        onImageFrameChange?()
+        onZoomChange?(scale)
+    }
+
+    /// 测试用
+    var debugCropOverlay: CropOverlayView? { cropOverlay }
+    var debugCropNow: CropGeometry.Crop { cropNow }
+    var debugTurnedSize: CGSize { turnedSize }
+    var debugImageTransform: CGAffineTransform { imageLayer.affineTransform() }
 
     // MARK: - 缩放
 
@@ -560,6 +667,7 @@ final class ZoomableImageView: NSView {
     }
 
     func fit(animate: Bool = false) {
+        if isCropping { mode = .fit; layoutCrop(); return }
         mode = .fit
         scale = min(fitScale, 4)
         centerOrigin()
@@ -622,7 +730,7 @@ final class ZoomableImageView: NSView {
 
     /// 以照片上的某一点（归一化，左上原点）为中心放大到 100%（照片本身比窗口小时放到 200%）
     func zoomActual(centeredOn p: CGPoint, animated: Bool = true) {
-        guard image != nil, contentSize.width > 0 else { return }
+        guard image != nil, contentSize.width > 0, !isCropping else { return }
         let c = contentSize
         mode = .free
         scale = fitScale >= 0.999 ? 2 : 1
@@ -631,7 +739,7 @@ final class ZoomableImageView: NSView {
     }
 
     func toggleFitActual(at point: CGPoint?) {
-        guard image != nil else { return }
+        guard image != nil, !isCropping else { return }
         if mode == .fit {
             let target: CGFloat = fitScale >= 0.999 ? 2 : 1
             zoom(to: target, anchor: point ?? CGPoint(x: bounds.midX, y: bounds.midY), animated: true)
@@ -651,7 +759,7 @@ final class ZoomableImageView: NSView {
     private var minScale: CGFloat { min(fitScale, 1) / 8 }
 
     private func zoom(to target: CGFloat, anchor p: CGPoint, animated: Bool = false, clamping: Bool = true) {
-        guard image != nil, contentSize.width > 0 else { return }
+        guard image != nil, contentSize.width > 0, !isCropping else { return }
         // 捏合过程中放开钳制（回弹手感），其余路径钳制在 [适应窗口/8, 12倍]
         let s = clamping ? min(max(target, minScale), maxScale) : target
         let imgPoint = CGPoint(x: (p.x - origin.x) / scale, y: (p.y - origin.y) / scale)
@@ -662,6 +770,7 @@ final class ZoomableImageView: NSView {
     }
 
     private func apply(animated: Bool = false) {
+        if isCropping { layoutCrop(); return }
         let c = contentSize
         guard let image, c.width > 0 else { return }
         let w = c.width * scale
@@ -680,7 +789,6 @@ final class ZoomableImageView: NSView {
         }
         imageLayer.frame = CGRect(origin: origin, size: CGSize(width: w, height: h))
         CATransaction.commit()
-        layoutGrid()
         onImageFrameChange?()
         onZoomChange?(scale)
         if !applyingViewState { onViewChange?(viewState, animated) }
@@ -704,6 +812,7 @@ final class ZoomableImageView: NSView {
         CATransaction.setDisableActions(true)
         backdropLayer.frame = bounds
         CATransaction.commit()
+        if isCropping { lastLayoutSize = bounds.size; layoutCrop(); return }
         if mode == .fit {
             scale = min(fitScale, 4)
             centerOrigin()
@@ -731,6 +840,7 @@ final class ZoomableImageView: NSView {
 
     /// 触控板捏合：magnification 是相对上一事件的增量，(1 + delta) 乘当前缩放即严格跟手
     override func magnify(with event: NSEvent) {
+        if isCropping { return }
         let phase = event.phase
         if phase == .ended || phase == .cancelled {
             isPinching = false
@@ -779,6 +889,8 @@ final class ZoomableImageView: NSView {
 
     override func scrollWheel(with event: NSEvent) {
         onActivity?()
+        // 裁剪时不缩放、不平移、不翻页
+        if isCropping { return }
         // 捏合进行中忽略夹带的滚动事件；捏合刚结束的短暂惯性也忽略，避免跳变
         if isPinching { return }
         if !event.momentumPhase.isEmpty, Date().timeIntervalSince(pinchEndTime) < 0.35 { return }
@@ -967,7 +1079,7 @@ final class ZoomableImageView: NSView {
 
     @objc private func doubleClicked(_ recognizer: NSClickGestureRecognizer) {
         let p = recognizer.location(in: self)
-        if ignoresDoubleClick?(p) == true { return }
+        if isCropping || ignoresDoubleClick?(p) == true { return }
         toggleFitActual(at: p)
     }
 
@@ -1000,7 +1112,7 @@ final class ZoomableImageView: NSView {
 
     /// 照搬别的格子的缩放和位置，不再回传
     func applyViewState(_ s: ViewState, animated: Bool = false) {
-        guard image != nil, contentSize.width > 0 else { return }
+        guard image != nil, contentSize.width > 0, !isCropping else { return }
         applyingViewState = true
         defer { applyingViewState = false }
         if s.fit {

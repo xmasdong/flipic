@@ -142,9 +142,11 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 | Double-click | Fit to window / 100% |
 | 1–5 | Rate one to five stars; same number again clears |
 | I | Photo info panel (Esc also closes it) |
+| ⇧I | Switch photo info between Essentials and All; captions stored in the file (IPTC Description) are shown at the top and can be translated on-device (macOS 15+) |
 | Esc | Back to fit; with Esc Closes Window on in Settings, closes the window when fitted |
 | T | Thumbnail strip |
 | R / L | Rotate right / left |
+| ⇧R | Crop & Straighten |
 | S | Slideshow |
 | Return | Rename |
 | ⌘S | Export a compressed copy |

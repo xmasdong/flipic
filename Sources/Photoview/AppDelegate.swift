@@ -299,6 +299,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // --exifdump <文件...>：打印照片信息面板会显示的各项（诊断用）
             for path in CommandLine.arguments[(i + 1)...] where !path.hasPrefix("-") && !path.hasPrefix("(") {
                 print("== " + (path as NSString).lastPathComponent)
+                // 底部信息条用的摘要：拍摄时间要和面板里的一致
+                print("  [summary date] \(ExifReader.summary(url: URL(fileURLWithPath: path)).date ?? "-")")
                 for e in ExifReader.read(url: URL(fileURLWithPath: path)) {
                     print("  \(e.label): \(e.value)" + (e.link != nil ? "  [link]" : ""))
                 }
@@ -950,6 +952,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runPickedNavTest(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--infopaneltest"), i + 2 < CommandLine.arguments.count {
+            // --infopaneltest <截图文件夹> <照片文件夹>：每张照片的信息面板在「常用」「全部」两级各截一张（诊断用）
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runInfoShot(outDir: outDir, folder: folder)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--translationtest"), i + 2 < CommandLine.arguments.count {
+            // --translationtest <截图文件夹> <照片文件夹>：照片说明的翻译从按钮到译文走一遍（诊断用）
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runTranslationTest(outDir: outDir, folder: folder)
+            }
+        } else if CommandLine.arguments.contains("--cropgeomtest") {
+            // --cropgeomtest：裁剪框几何的纯计算检查，不开窗口，打完日志就退出
+            CropSelfTest.runGeometry()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { NSApp.terminate(nil) }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--croptest"), i + 2 < CommandLine.arguments.count {
+            // --croptest <输出文件夹> <照片文件夹>：裁剪与拉直从界面到存盘走一遍（会改动照片文件夹里的文件）
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runCropTest(outDir: outDir, folder: folder)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--straightentest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runStraightenTest(outDir: outDir, folder: folder) }
@@ -1255,6 +1279,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.rotateCCW(_:)): .rotateCCW,
         #selector(ViewerViewController.straighten(_:)): .straighten,
         #selector(ViewerViewController.toggleInfoPanel(_:)): .info,
+        #selector(ViewerViewController.toggleInfoLevel(_:)): .infoLevel,
         #selector(ViewerViewController.toggleFilmstrip(_:)): .filmstrip,
         #selector(ViewerViewController.toggleSlideshow(_:)): .slideshow,
         #selector(ViewerViewController.revealInFinder(_:)): .reveal,
@@ -1477,7 +1502,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.share", "分享…"), #selector(ViewerViewController.shareCurrent(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.rename", "重命名…"), #selector(ViewerViewController.renameCurrent(_:)))
-            item(m, L10n.t("menu.saveRotation", "保存旋转"), #selector(ViewerViewController.saveRotation(_:)))
+            item(m, L10n.t("menu.saveRotation", "保存修改"), #selector(ViewerViewController.saveRotation(_:)))
             item(m, L10n.t("menu.trash", "移到废纸篓"), #selector(ViewerViewController.trashCurrent(_:)))
             item(m, L10n.t("menu.restoreTrash", "放回刚才删掉的照片"), #selector(ViewerViewController.restoreLastTrash(_:)))
             item(m, L10n.t("menu.revealTrash", "在 Finder 中显示刚才删掉的照片"), #selector(ViewerViewController.revealLastTrash(_:)))
@@ -1501,9 +1526,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             item(m, L10n.t("menu.rotateCCW", "向左旋转 90°"), #selector(ViewerViewController.rotateCCW(_:)))
             item(m, L10n.t("menu.rotateCW", "向右旋转 90°"), #selector(ViewerViewController.rotateCW(_:)))
-            item(m, L10n.t("menu.straighten", "拉直…"), #selector(ViewerViewController.straighten(_:)))
+            item(m, L10n.t("menu.straighten", "裁剪与拉直…"), #selector(ViewerViewController.straighten(_:)))
             m.addItem(.separator())
             item(m, L10n.t("menu.info", "照片信息"), #selector(ViewerViewController.toggleInfoPanel(_:)))
+            item(m, L10n.t("menu.infoLevel", "显示全部照片信息"), #selector(ViewerViewController.toggleInfoLevel(_:)))
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
             item(m, L10n.t("menu.toolbar", "工具条"), #selector(ViewerViewController.toggleToolbar(_:)))
             m.addItem(.separator())

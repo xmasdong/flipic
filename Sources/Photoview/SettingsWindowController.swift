@@ -599,7 +599,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     private let transparencyCheck = NSButton(checkboxWithTitle: L10n.t("set.transparencyGrid", "透明的地方显示棋盘格"), target: nil, action: nil)
     private let liveText = NSButton(checkboxWithTitle: L10n.t("set.liveText", "自动识别图中文字"), target: nil, action: nil)
     private let rotSavePopup = NSPopUpButton()
-    private let rotRemind = WrapCheckbox(title: L10n.t("set.rotRemind", "翻到别的照片时，提醒没保存的旋转"))
+    private let rotRemind = WrapCheckbox(title: L10n.t("set.rotRemind", "翻到别的照片时，提醒没保存的修改"))
+    private let autoTranslate = WrapCheckbox(title: L10n.t("set.autoTranslate", "自动翻译照片说明"))
 
     override func loadView() {
         for sec in ViewerViewController.slideshowIntervals {
@@ -669,8 +670,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
             [label(L10n.t("set.backdrop", "背景：")), backdropRow],
             [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
-            [label(L10n.t("set.rotSave", "保存旋转：")), rotRow],
-            spacerRow(note(L10n.t("set.rotSaveNote", "选「每次询问」时，旋转（R / L）和拉直（⇧R）先只改显示，按 ⌘⌥S 或底部的「保存…」才写进文件；选覆盖原图或另存一份，转完会自动保存。RAW 转 90° 也是无损的，拉直过的 RAW 只能另存成 JPEG。"))),
+            [label(L10n.t("set.rotSave", "保存修改：")), rotRow],
+            spacerRow(note(L10n.t("set.rotSaveNote", "选「每次询问」时，旋转（R / L）、裁剪和拉直（⇧R）先只改显示，按 ⌘⌥S 或底部的「保存…」才写进文件；选覆盖原图或另存一份，改完会自动保存。裁剪过的照片不会不问就覆盖原图，保存时仍会问一次。RAW 转 90° 是无损的，裁剪或拉直过的 RAW 只能另存成 JPEG。"))),
             [label(L10n.t("set.recents", "最近打开：")), recentsCheck],
             spacerRow(note(L10n.t("set.recentsNote", "关掉后，开始页和「文件 › 最近打开」都不再列出文件夹，也不再记录。开会投屏前可以关掉。已有的记录不会删除。"))),
             [label(L10n.t("set.hdr", "HDR：")), hdr],
@@ -680,6 +681,14 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
             [label(L10n.t("set.slideFadeLabel", "幻灯片渐变：")), slideFadeRow],
         ]
+        // 系统没有翻译框架（macOS 15 之前）时整行不出现
+        if CaptionTranslation.isAvailable {
+            autoTranslate.target = self; autoTranslate.action = #selector(autoTranslateChanged)
+            rows.insert(contentsOf: [
+                [label(L10n.t("set.caption", "照片说明：")), autoTranslate],
+                spacerRow(note(L10n.t("set.autoTranslateNote", "用系统自带的翻译在这台 Mac 上完成，译成界面语言，排在原文下面。只在翻译语言已经下载时自动翻译；还没下载的，点说明下面的「翻译」，系统会问要不要下载。"))),
+            ], at: rows.firstIndex { ($0.first as? NSTextField)?.stringValue == L10n.t("set.recents", "最近打开：") } ?? rows.count)
+        }
         // 系统不支持实况文本时整行不出现
         if TextRecognition.liveTextSupported {
             rows.insert(contentsOf: [
@@ -725,7 +734,10 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             rotSavePopup.select(item)
         }
         rotRemind.state = Straighten.remindUnsaved ? .on : .off
+        autoTranslate.state = CaptionTranslation.autoTranslate ? .on : .off
     }
+
+    @objc private func autoTranslateChanged() { CaptionTranslation.autoTranslate = autoTranslate.state == .on }
 
     @objc private func rotSaveChanged() {
         Straighten.saveTarget = Straighten.Target(rawValue: rotSavePopup.selectedItem?.representedObject as? String ?? "") ?? .ask

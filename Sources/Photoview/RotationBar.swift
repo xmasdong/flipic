@@ -1,7 +1,8 @@
 import AppKit
 
 /// 看图界面底部的旋转条，两种状态：
-/// 拉直中：滑块 + 角度 + 归零 / 取消 / 完成；转过还没保存：提示 + 还原 / 保存…
+/// 裁剪与拉直中：上面一行比例 + 横竖互换 + 输出尺寸，下面一行滑块 + 角度 + 归零 / 取消 / 完成；
+/// 改过还没保存：提示 + 还原 / 保存…
 final class RotationBar: NSVisualEffectView {
     var onDegrees: ((Double) -> Void)?
     var onReset: (() -> Void)?
@@ -9,11 +10,24 @@ final class RotationBar: NSVisualEffectView {
     var onDone: (() -> Void)?
     var onRevert: (() -> Void)?
     var onSave: (() -> Void)?
+    /// 选了比例 / 点了横竖互换
+    var onAspect: ((CropGeometry.Aspect) -> Void)?
+    var onSwap: (() -> Void)?
 
     private let slider = NSSlider(value: 0, minValue: -Straighten.maxDegrees, maxValue: Straighten.maxDegrees, target: nil, action: nil)
     private let valueLabel = NSTextField(labelWithString: "0.0°")
     private var straightenRow: NSStackView!
+    private var cropRow: NSStackView!
     private var pendingRow: NSStackView!
+    private let aspectControl = NSSegmentedControl()
+    private let swapButton = NSButton()
+    private let sizeLabel = NSTextField(labelWithString: "")
+    /// 各个比例的写法；选中的那个横竖互换后写成反过来的（4:5 → 5:4）
+    private static let aspectTitles: [(CropGeometry.Aspect, String, String)] = [
+        (.original, L10n.t("crop.original", "原比例"), L10n.t("crop.original", "原比例")),
+        (.free, L10n.t("crop.free", "自由"), L10n.t("crop.free", "自由")),
+        (.square, "1:1", "1:1"), (.r4x5, "4:5", "5:4"), (.r3x2, "3:2", "2:3"), (.r16x9, "16:9", "9:16"),
+    ]
 
     init() {
         super.init(frame: .zero)
@@ -48,21 +62,51 @@ final class RotationBar: NSVisualEffectView {
         straightenRow = NSStackView(views: [title, slider, valueLabel, hint, reset, cancel, done])
         straightenRow.setCustomSpacing(16, after: hint)
 
-        let pendingTitle = Self.label(L10n.t("rot.bar.pending", "旋转还没保存"), bold: false)
+        let aspectTitle = Self.label(L10n.t("rot.bar.aspect", "比例"), bold: true)
+        aspectControl.segmentCount = Self.aspectTitles.count
+        aspectControl.trackingMode = .selectOne
+        aspectControl.segmentStyle = .rounded
+        aspectControl.segmentDistribution = .fit
+        for (i, t) in Self.aspectTitles.enumerated() { aspectControl.setLabel(t.1, forSegment: i) }
+        aspectControl.selectedSegment = 0
+        aspectControl.target = self
+        aspectControl.action = #selector(aspectChanged)
+        swapButton.bezelStyle = .rounded
+        swapButton.image = NSImage(systemSymbolName: "rectangle.portrait.rotate", accessibilityDescription: nil)
+            ?? NSImage(systemSymbolName: "arrow.triangle.2.circlepath", accessibilityDescription: nil)
+        swapButton.imagePosition = .imageOnly
+        swapButton.title = ""
+        swapButton.toolTip = L10n.t("crop.swap", "横竖互换")
+        swapButton.setAccessibilityLabel(L10n.t("crop.swap", "横竖互换"))
+        swapButton.target = self
+        swapButton.action = #selector(swapClicked)
+        sizeLabel.font = .monospacedDigitSystemFont(ofSize: 12, weight: .medium)
+        sizeLabel.textColor = .secondaryLabelColor
+        sizeLabel.alignment = .right
+        sizeLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let gap = NSView()
+        gap.translatesAutoresizingMaskIntoConstraints = false
+        gap.setContentHuggingPriority(.init(1), for: .horizontal)
+        gap.setContentCompressionResistancePriority(.init(1), for: .horizontal)
+        cropRow = NSStackView(views: [aspectTitle, aspectControl, swapButton, gap, sizeLabel])
+
+        let pendingTitle = Self.label(L10n.t("rot.bar.pending", "修改还没保存"), bold: false)
         let revert = Self.button(L10n.t("rot.bar.revert", "还原"), #selector(revertClicked), self)
         let save = Self.button(L10n.t("rot.save", "保存…"), #selector(saveClicked), self)
         save.bezelColor = .controlAccentColor
         pendingRow = NSStackView(views: [pendingTitle, revert, save])
         pendingRow.setCustomSpacing(16, after: pendingTitle)
 
-        for row in [straightenRow!, pendingRow!] {
+        for row in [straightenRow!, cropRow!, pendingRow!] {
             row.orientation = .horizontal
             row.alignment = .centerY
             row.spacing = 8
         }
-        // 两行放进同一个竖排的 stack：隐藏的那行不占位置，条的宽度跟着当前这行走
-        let outer = NSStackView(views: [straightenRow, pendingRow])
+        // 几行放进同一个竖排的 stack：隐藏的行不占位置，条的宽度跟着当前最宽的那行走
+        let outer = NSStackView(views: [cropRow, straightenRow, pendingRow])
         outer.orientation = .vertical
+        outer.alignment = .width
+        outer.spacing = 8
         outer.detachesHiddenViews = true
         outer.translatesAutoresizingMaskIntoConstraints = false
         addSubview(outer)
@@ -96,13 +140,15 @@ final class RotationBar: NSVisualEffectView {
     func showStraighten(degrees: Double) {
         setDegrees(degrees)
         straightenRow.isHidden = false
+        cropRow.isHidden = false
         pendingRow.isHidden = true
         isHidden = false
     }
 
-    /// pending = true 显示「旋转还没保存」，否则整条收起
+    /// pending = true 显示「修改还没保存」，否则整条收起
     func showPending(_ pending: Bool) {
         straightenRow.isHidden = true
+        cropRow.isHidden = true
         pendingRow.isHidden = false
         isHidden = !pending
     }
@@ -110,6 +156,40 @@ final class RotationBar: NSVisualEffectView {
     func setDegrees(_ d: Double) {
         slider.doubleValue = d
         valueLabel.stringValue = String(format: "%.1f°", d)
+    }
+
+    /// 选中的比例；swapped 时把它写成反过来的，互换按钮只在换了有区别的比例上能点
+    func setAspect(_ aspect: CropGeometry.Aspect, swapped: Bool) {
+        for (i, t) in Self.aspectTitles.enumerated() {
+            aspectControl.setLabel(t.0 == aspect && swapped ? t.2 : t.1, forSegment: i)
+            if t.0 == aspect { aspectControl.selectedSegment = i }
+        }
+        swapButton.isEnabled = aspect.swappable
+    }
+
+    /// 输出的像素尺寸，比如 4000 × 5000
+    func setOutputSize(_ size: CGSize) {
+        sizeLabel.stringValue = size.width > 0 ? "\(Int(size.width)) × \(Int(size.height))" : ""
+    }
+
+    @objc private func aspectChanged() {
+        let i = aspectControl.selectedSegment
+        guard Self.aspectTitles.indices.contains(i) else { return }
+        onAspect?(Self.aspectTitles[i].0)
+    }
+
+    @objc private func swapClicked() { onSwap?() }
+
+    /// 测试用：像点了比例那一格一样
+    func debugSelectAspect(_ aspect: CropGeometry.Aspect) {
+        guard let i = Self.aspectTitles.firstIndex(where: { $0.0 == aspect }) else { return }
+        aspectControl.selectedSegment = i
+        aspectChanged()
+    }
+
+    var debugCrop: String {
+        let i = aspectControl.selectedSegment
+        return "aspect=\(i >= 0 ? aspectControl.label(forSegment: i) ?? "-" : "-") swap=\(swapButton.isEnabled ? 1 : 0) size=\(sizeLabel.stringValue)"
     }
 
     @objc private func sliderMoved() {
