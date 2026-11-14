@@ -22,6 +22,7 @@
 "menu.info" = "照片資訊";
 "menu.filmstrip" = "縮圖列";
 "menu.slideshow" = "幻燈片播放";
+"menu.slideshowStop" = "停止幻燈片播放";
 "menu.fullscreen" = "進入全螢幕";
 "menu.go" = "前往";
 "menu.prev" = "上一張";
@@ -499,6 +500,7 @@ Return  重新命名目前圖片
 "tip.unpin" = "取消置頂";
 "tip.share" = "分享";
 "menu.share" = "分享…";
+"menu.copyImage" = "拷貝圖片";
 "menu.pin" = "視窗置頂";
 "msg.pinned" = "視窗已置頂，會浮在其他軟體上面";
 "msg.unpinned" = "已取消置頂";
@@ -881,6 +883,9 @@ Return  重新命名目前圖片
 "exif.sec.image" = "影像";
 "exif.sec.place" = "地點";
 "exif.sec.file" = "檔案";
+"info.histogram" = "直方圖";
+"info.clipShadows" = "暗部溢出";
+"info.clipHighlights" = "亮部溢出";
 "exif.title" = "標題";
 "exif.keywords" = "關鍵字";
 "exif.category" = "類別";

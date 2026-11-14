@@ -22,6 +22,7 @@
 "menu.info" = "写真の情報";
 "menu.filmstrip" = "サムネイルバー";
 "menu.slideshow" = "スライドショー";
+"menu.slideshowStop" = "スライドショーを停止";
 "menu.fullscreen" = "フルスクリーンにする";
 "menu.go" = "移動";
 "menu.prev" = "前へ";
@@ -499,6 +500,7 @@ Return  表示中の画像を名称変更
 "tip.unpin" = "手前に表示をやめる";
 "tip.share" = "共有";
 "menu.share" = "共有…";
+"menu.copyImage" = "画像をコピー";
 "menu.pin" = "ウインドウを常に手前に表示";
 "msg.pinned" = "ウインドウをほかのアプリより手前に表示します";
 "msg.unpinned" = "手前に表示をやめました";
@@ -876,6 +878,9 @@ Return  表示中の画像を名称変更
 "exif.sec.image" = "画像";
 "exif.sec.place" = "場所";
 "exif.sec.file" = "ファイル";
+"info.histogram" = "ヒストグラム";
+"info.clipShadows" = "シャドウの黒つぶれ";
+"info.clipHighlights" = "ハイライトの白とび";
 "exif.title" = "タイトル";
 "exif.keywords" = "キーワード";
 "exif.category" = "カテゴリ";

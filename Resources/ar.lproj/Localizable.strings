@@ -22,6 +22,7 @@
 "menu.info" = "معلومات الصورة";
 "menu.filmstrip" = "شريط المصغرات";
 "menu.slideshow" = "عرض الشرائح";
+"menu.slideshowStop" = "إيقاف عرض الشرائح";
 "menu.fullscreen" = "ملء الشاشة";
 "menu.go" = "الانتقال";
 "menu.prev" = "السابقة";
@@ -499,6 +500,7 @@ Return  إعادة تسمية الصورة الحالية
 "tip.unpin" = "إيقاف الإبقاء في المقدمة";
 "tip.share" = "مشاركة";
 "menu.share" = "مشاركة…";
+"menu.copyImage" = "نسخ الصورة";
 "menu.pin" = "إبقاء النافذة في المقدمة";
 "msg.pinned" = "تبقى النافذة فوق التطبيقات الأخرى";
 "msg.unpinned" = "لم تعد النافذة في المقدمة";
@@ -876,6 +878,9 @@ Return  إعادة تسمية الصورة الحالية
 "exif.sec.image" = "الصورة";
 "exif.sec.place" = "المكان";
 "exif.sec.file" = "الملف";
+"info.histogram" = "المدرج التكراري";
+"info.clipShadows" = "قص في الظلال";
+"info.clipHighlights" = "قص في الإضاءات";
 "exif.title" = "العنوان";
 "exif.keywords" = "الكلمات المفتاحية";
 "exif.category" = "الفئة";

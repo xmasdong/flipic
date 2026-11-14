@@ -22,6 +22,7 @@
 "menu.info" = "Сведения о фото";
 "menu.filmstrip" = "Панель миниатюр";
 "menu.slideshow" = "Слайд-шоу";
+"menu.slideshowStop" = "Остановить слайд-шоу";
 "menu.fullscreen" = "Полноэкранный режим";
 "menu.go" = "Переход";
 "menu.prev" = "Предыдущее";
@@ -499,6 +500,7 @@ Return  Переименовать текущее изображение
 "tip.unpin" = "Не держать поверх";
 "tip.share" = "Поделиться";
 "menu.share" = "Поделиться…";
+"menu.copyImage" = "Скопировать изображение";
 "menu.pin" = "Окно поверх других";
 "msg.pinned" = "Окно остаётся поверх других приложений";
 "msg.unpinned" = "Окно больше не поверх";
@@ -876,6 +878,9 @@ Return  Переименовать текущее изображение
 "exif.sec.image" = "Изображение";
 "exif.sec.place" = "Место";
 "exif.sec.file" = "Файл";
+"info.histogram" = "Гистограмма";
+"info.clipShadows" = "Потеря деталей в тенях";
+"info.clipHighlights" = "Потеря деталей в светах";
 "exif.title" = "Заголовок";
 "exif.keywords" = "Ключевые слова";
 "exif.category" = "Категория";

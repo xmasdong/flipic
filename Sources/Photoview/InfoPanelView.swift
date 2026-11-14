@@ -58,6 +58,10 @@ final class InfoPanelView: NSVisualEffectView {
     /// 每换一段说明加一：晚回来的结果对不上号就丢掉，译文不会排到别的照片下面
     private var translationToken = 0
 
+    /// 直方图：一直是这一个视图，每次重排放回原位；换了照片先清掉，后台算完再填
+    private let histogramView = HistogramView(width: InfoPanelView.contentWidth)
+    private var histogramTicket: HistogramLoader.Ticket?
+
     private final class FlippedView: NSView {
         override var isFlipped: Bool { true }
     }
@@ -149,7 +153,26 @@ final class InfoPanelView: NSVisualEffectView {
         self.isVideo = isVideo
         shownURL = url
         syncTranslation()
+        loadHistogram(url, sameFile: sameFile)
         rebuild(keepScroll: sameFile)
+    }
+
+    /// 面板开着、排到这张照片时才算。翻走了就取消：连翻时排着队的不再解码，晚回来的结果也不会填到别的照片上。
+    /// 同一张再排一遍（改了评分、裁剪旋转存了盘）时旧的先留着，文件变了算完会换掉
+    private func loadHistogram(_ url: URL, sameFile: Bool) {
+        histogramTicket?.cancel()
+        histogramTicket = nil
+        guard !isVideo else { histogramView.histogram = nil; return }
+        if !sameFile {
+            histogramView.histogram = HistogramLoader.peek(url)
+            histogramView.isHidden = false
+        }
+        histogramTicket = HistogramLoader.load(url) { [weak self] h in
+            guard let self, self.shownURL == url else { return }
+            self.histogramView.histogram = h
+            // 解不了的文件没有直方图，把空框收掉
+            self.histogramView.isHidden = h == nil
+        }
     }
 
     /// 换了一张、新的信息还没读出来：先清空，不留着上一张的字
@@ -160,6 +183,9 @@ final class InfoPanelView: NSVisualEffectView {
         self.isVideo = isVideo
         shownURL = nil
         captionExpanded = false
+        histogramTicket?.cancel()
+        histogramTicket = nil
+        histogramView.histogram = nil
         syncTranslation()
         rebuild()
     }
@@ -193,6 +219,7 @@ final class InfoPanelView: NSVisualEffectView {
     private func buildCommon() {
         let hasCaption = addCaptionBlock(showBoilerplate: false)
         addRating()
+        addHistogram()
         if info.common.isEmpty && !hasCaption {
             let none = NSTextField(labelWithString: L10n.t("ui.noExif", "此文件没有 EXIF 信息"))
             none.font = .systemFont(ofSize: 12)
@@ -216,8 +243,15 @@ final class InfoPanelView: NSVisualEffectView {
                 addPair(label: L10n.t("menu.rating", "评分"), value: v)
             }
         }
+        // 直方图排在「拍摄」那组参数的上面；没有拍摄参数的文件（截图、扫描件）自己成一组，排在各组前面
+        let shooting = info.sections.contains { $0.isShooting }
+        if !shooting, !isVideo {
+            addSectionHeader(L10n.t("info.histogram", "直方图"))
+            addHistogram()
+        }
         for s in info.sections {
             addSectionHeader(s.title)
+            if s.isShooting { addHistogram() }
             s.rows.forEach(addPairRow)
         }
         if stack.arrangedSubviews.isEmpty {
@@ -449,6 +483,13 @@ final class InfoPanelView: NSVisualEffectView {
         stack.addArrangedSubview(v)
     }
 
+    /// 直方图占满面板宽度，和下面的参数隔开一点。视频没有
+    private func addHistogram() {
+        guard !isVideo else { return }
+        stack.addArrangedSubview(histogramView)
+        stack.setCustomSpacing(10, after: histogramView)
+    }
+
     /// 「全部」里每组上面的小标题；除了第一组，上面加一条细线
     private func addSectionHeader(_ title: String) {
         if let last = stack.arrangedSubviews.last {
@@ -600,6 +641,9 @@ final class InfoPanelView: NSVisualEffectView {
         walk(stack)
         return out.joined(separator: " | ")
     }
+
+    /// 面板里排着的直方图（没排、没算出来是 nil），自测用
+    var debugHistogram: Histogram? { histogramView.superview != nil && !histogramView.isHidden ? histogramView.histogram : nil }
 
     var debugOverflow: (content: CGFloat, visible: CGFloat) { (document.frame.height, scroll.contentView.bounds.height) }
 

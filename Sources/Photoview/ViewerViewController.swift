@@ -2260,12 +2260,28 @@ final class ViewerViewController: NSViewController {
             liveText?.copySelection()
             return
         }
+        copyPhotos()
+    }
+
+    /// 右键菜单「复制图片」：和 ⌘C 拷贝照片是同一件事，只是照片上选中了文字时也照样拷贝照片
+    @objc func copyImage(_ sender: Any?) {
+        copyPhotos()
+    }
+
+    /// 把照片文件（多选时是选中的那些）放到剪贴板。pb 只有自测才换成别的，免得动用户的剪贴板。
+    /// 只拷一张照片时第一项另外带上图片数据（对方来要才解码），能粘贴到要像素的软件里；
+    /// 访达认文件地址，粘贴仍是复制文件。多选、视频只放文件地址；藏起来的同名 RAW / JPG 照旧跟在后面
+    func copyPhotos(to pb: NSPasteboard = .general) {
         let picked = actionURLs
         guard cleanup == nil, !picked.isEmpty else { return }
         let files = folder.withHiddenPartners(picked)
-        let pb = NSPasteboard.general
         pb.clearContents()
-        pb.writeObjects(files.map { $0 as NSURL })
+        if picked.count == 1, !Video.isVideo(picked[0]) {
+            let first: NSPasteboardWriting = PhotoPasteboardProvider(url: picked[0]).makeItem()
+            pb.writeObjects([first] + files.dropFirst().map { $0 as NSURL })
+        } else {
+            pb.writeObjects(files.map { $0 as NSURL })
+        }
         flash(L10n.f("msg.copiedPhotos", "已拷贝 %d 张照片，可以到访达里粘贴", picked.count), seconds: 2)
     }
 
@@ -2295,10 +2311,32 @@ final class ViewerViewController: NSViewController {
 
     /// 放映中暂停：计时器停掉但仍在放映状态（全屏、缩略图栏自动隐藏），可以翻页、打星，再点一下继续
     private var slideshowPaused = false
-    var slideshowActive: Bool { slideshowTimer != nil || slideshowPaused }
+    /// 右键菜单开着时计时器先停下，不然照片在菜单底下换掉，「复制图片」「移到废纸篓」落到别的照片上；菜单关了接着放
+    private(set) var slideshowHeldByMenu = false
+    var slideshowActive: Bool { slideshowTimer != nil || slideshowPaused || slideshowHeldByMenu }
+
+    @objc private func contextMenuDidBeginTracking(_ note: Notification) {
+        guard slideshowTimer != nil else { return }
+        slideshowTimer?.invalidate()
+        slideshowTimer = nil
+        slideshowHeldByMenu = true
+    }
+
+    /// 菜单关掉在前、菜单项的动作在后：选的是「停止幻灯片放映」时这里先接着放，随后动作把它停掉。
+    /// 用户自己暂停的不归这里管，菜单关了仍是暂停
+    @objc private func contextMenuDidEndTracking(_ note: Notification) {
+        guard slideshowHeldByMenu else { return }
+        slideshowHeldByMenu = false
+        scheduleSlideshowTimer()
+    }
+
+    /// 自测用：暂停 / 继续、停止各发生过几次。测试窗口开在用户的桌面上，次数对不上说明有别的输入掺进来了
+    private(set) var debugPauseToggles = 0
+    private(set) var debugSlideshowStops = 0
 
     private func toggleSlideshowPause() {
         guard slideshowActive else { return }
+        debugPauseToggles += 1
         if slideshowPaused {
             slideshowPaused = false
             scheduleSlideshowTimer()
@@ -2306,6 +2344,8 @@ final class ViewerViewController: NSViewController {
         } else {
             slideshowTimer?.invalidate()
             slideshowTimer = nil
+            // 单击后半秒内又点开了右键菜单：算用户暂停的，菜单关了不接着放
+            slideshowHeldByMenu = false
             slideshowPaused = true
             flash(L10n.t("msg.slidePaused", "已暂停 · 点一下继续"), seconds: 2.5)
         }
@@ -2409,9 +2449,11 @@ final class ViewerViewController: NSViewController {
 
     func stopSlideshow() {
         guard slideshowActive else { return }
+        debugSlideshowStops += 1
         slideshowTimer?.invalidate()
         slideshowTimer = nil
         slideshowPaused = false
+        slideshowHeldByMenu = false
         updateSlideshowButton()
         setFilmstripFloating(false)
         flash(L10n.t("msg.slideshowOff", "已停止幻灯片放映"))
@@ -2609,6 +2651,9 @@ final class ViewerViewController: NSViewController {
         openWith.submenu = sub
         menu.addItem(openWith)
         menu.addItem(.separator())
+        // 标题跟着放映状态换，见 validateMenuItem
+        add(L10n.t("menu.slideshow", "幻灯片放映"), #selector(toggleSlideshow(_:)))
+        menu.addItem(.separator())
         let rating = NSMenuItem(title: L10n.t("menu.rating", "评分"), action: nil, keyEquivalent: "")
         let ratingMenu = buildRatingMenu()
         for it in ratingMenu.items { it.target = self }
@@ -2617,11 +2662,15 @@ final class ViewerViewController: NSViewController {
         add(markMenuTitle, #selector(toggleMark(_:)))
         add(L10n.t("menu.markedOnly", "只看已标记"), #selector(toggleMarkedOnly(_:)))
         add(L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(exportToFolder(_:)))
+        add(L10n.t("menu.copyImage", "复制图片"), #selector(copyImage(_:)))
         add(L10n.t("menu.share", "分享…"), #selector(shareCurrent(_:)))
         if TextRecognition.isAvailable { add(L10n.t("menu.copyText", "复制图中全部文字"), #selector(copyAllText(_:))) }
         menu.addItem(.separator())
         add(L10n.t("menu.reveal", "在 Finder 中显示"), #selector(revealInFinder(_:)))
         add(L10n.t("menu.trash", "移到废纸篓"), #selector(trashCurrent(_:)))
+        // 只盯这一个菜单的开和关（子菜单不单独通知）；不用 delegate，「打开方式」子菜单的 delegate 不受影响
+        NotificationCenter.default.addObserver(self, selector: #selector(contextMenuDidBeginTracking(_:)), name: NSMenu.didBeginTrackingNotification, object: menu)
+        NotificationCenter.default.addObserver(self, selector: #selector(contextMenuDidEndTracking(_:)), name: NSMenu.didEndTrackingNotification, object: menu)
         return menu
     }
 
@@ -6702,6 +6751,11 @@ final class ViewerViewController: NSViewController {
         func state(_ tag: String) {
             NSLog("PAUSE %@ active=%d paused=%d key=%d appActive=%d front=%@ index=%d scale=%@", tag, slideshowActive ? 1 : 0, slideshowPaused ? 1 : 0,
                   w.isKeyWindow ? 1 : 0, NSApp.isActive ? 1 : 0, NSWorkspace.shared.frontmostApplication?.localizedName ?? "-", folder.index, imageView.fitDiagnostics)
+            // 右键菜单里的放映项：放映中（含暂停）应是「停止」
+            if let it = imageView.menu?.items.first(where: { $0.action == #selector(toggleSlideshow(_:)) }) {
+                let enabled = validateMenuItem(it)
+                NSLog("PAUSE %@ context item title=%@ enabled=%d", tag, it.title, enabled ? 1 : 0)
+            }
         }
         var t = 0.0
         var idx = 0
@@ -6724,11 +6778,57 @@ final class ViewerViewController: NSViewController {
             mouse(.leftMouseUp, NSPoint(x: center.x + 80, y: center.y + 40), clicks: 1)
         }
         at(wait + 0.1) { state("6-drag (expect still playing)") }
-        at(0.2) {
-            self.stopSlideshow()
-            if let savedInterval { d.set(savedInterval, forKey: "slideshowInterval") } else { d.removeObject(forKey: "slideshowInterval") }
-            if w.styleMask.contains(.fullScreen) { w.toggleFullScreen(nil) }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { NSApp.terminate(nil) }
+        // 右键菜单开着的时候不换图：真的弹出菜单，开 3.2 秒（间隔 2 秒，不停的话至少换一张）再关掉。
+        // 程序不在前台时，用户在别处点一下菜单就被系统收掉了：开的时间不够就不算这一步，不当成失败
+        var menuHeldFully = false
+        func popUp(seconds: Double) {
+            guard let menu = self.imageView.menu,
+                  let e = NSEvent.mouseEvent(with: .rightMouseDown, location: center, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                             windowNumber: w.windowNumber, context: nil, eventNumber: 0, clickCount: 1, pressure: 1) else { return }
+            let before = self.folder.index
+            var during = ""
+            let probe = Timer(timeInterval: seconds - 0.2, repeats: false) { _ in
+                during = "held=\(self.slideshowHeldByMenu ? 1 : 0) timerRunning=\(self.slideshowTimer != nil ? 1 : 0) indexSame=\(self.folder.index == before ? 1 : 0)"
+            }
+            let close = Timer(timeInterval: seconds, repeats: false) { _ in menu.cancelTracking() }
+            RunLoop.main.add(probe, forMode: .common)
+            RunLoop.main.add(close, forMode: .common)
+            let t0 = Date()
+            NSMenu.popUpContextMenu(menu, with: e, for: self.imageView)
+            let open = Date().timeIntervalSince(t0)
+            probe.invalidate()
+            close.invalidate()
+            menuHeldFully = open >= seconds - 0.1
+            if !menuHeldFully {
+                NSLog("PAUSE menu dismissed early after %.1fs (wanted %.1fs; another app took the click), step skipped", open, seconds)
+                return
+            }
+            NSLog("PAUSE menu open %.1fs: while open %@ | after close held=%d timerRunning=%d paused=%d indexSame=%d", open, during,
+                  self.slideshowHeldByMenu ? 1 : 0, self.slideshowTimer != nil ? 1 : 0, self.slideshowPaused ? 1 : 0, self.folder.index == before ? 1 : 0)
+        }
+        // 到这里应该正好暂停过 2 次（第 1、3 步），还没停过；后面每一步都核对次数
+        func counts(_ toggles: Int) -> String {
+            let ok = self.debugPauseToggles == toggles && self.debugSlideshowStops == 0
+            return "toggles=\(self.debugPauseToggles) stops=\(self.debugSlideshowStops) (expect \(toggles), 0)" + (ok ? "" : " — outside input, result not valid")
+        }
+        at(0.3) { idx = self.folder.index; popUp(seconds: 3.2) }
+        at(3.2 + 2.6) {
+            if menuHeldFully { NSLog("PAUSE 7-after menu closed: advanced=%d (expect 1) %@", self.folder.index != idx ? 1 : 0, counts(2)) }
+        }
+        at(0.1) { click() }
+        at(wait + 0.6) { state("8-paused by user before menu"); idx = self.folder.index; popUp(seconds: 1.0) }
+        at(1.0 + 2.6) {
+            if menuHeldFully {
+                state("9-menu closed after user pause (expect paused, same photo)")
+                NSLog("PAUSE 9 indexSame=%d %@", self.folder.index == idx ? 1 : 0, counts(3))
+            }
+            // 收尾接在这一步后面排，不单独定时：后台时定时会晚到，两步挨得近可能前后颠倒
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                self.stopSlideshow()
+                if let savedInterval { d.set(savedInterval, forKey: "slideshowInterval") } else { d.removeObject(forKey: "slideshowInterval") }
+                if w.styleMask.contains(.fullScreen) { w.toggleFullScreen(nil) }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { NSApp.terminate(nil) }
+            }
         }
     }
 
@@ -7353,6 +7453,13 @@ extension ViewerViewController: NSMenuItemValidation {
             return folder.current != nil
         } else if menuItem.action == #selector(copy(_:)) {
             return liveText?.hasTextSelection == true || (cleanup == nil && folder.current != nil)
+        } else if menuItem.action == #selector(copyImage(_:)) {
+            return folder.current != nil
+        } else if menuItem.action == #selector(toggleSlideshow(_:)) {
+            // 右键菜单里的那一项放映中改叫「停止」；主菜单里的标题不变
+            if menuItem.menu === imageView.menu {
+                menuItem.title = slideshowActive ? L10n.t("menu.slideshowStop", "停止幻灯片放映") : L10n.t("menu.slideshow", "幻灯片放映")
+            }
         } else if menuItem.action == #selector(copyAllText(_:)) {
             return folder.current != nil && imageView.debugHasImage && mainViewerActive
         }

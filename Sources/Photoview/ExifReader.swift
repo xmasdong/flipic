@@ -15,6 +15,8 @@ struct ExifEntry {
 struct InfoSection {
     let title: String
     var rows: [ExifEntry]
+    /// 拍摄参数那一组：面板把直方图排在它的各行上面
+    var isShooting = false
 }
 
 /// 照片信息面板的内容。标题和说明在两级里都排在最上面；「常用」接 common，「全部」接 captionRows 和 sections
@@ -287,7 +289,7 @@ enum ExifReader {
 
         info.sections = [
             InfoSection(title: L10n.t("exif.sec.rights", "署名与版权"), rows: rights),
-            InfoSection(title: L10n.t("exif.sec.shooting", "拍摄"), rows: shooting),
+            InfoSection(title: L10n.t("exif.sec.shooting", "拍摄"), rows: shooting, isShooting: true),
             InfoSection(title: L10n.t("exif.sec.image", "图像"), rows: image),
             InfoSection(title: L10n.t("exif.sec.place", "地点"), rows: [location(props, altitude: false), altitude(props), place].compactMap { $0 }),
             InfoSection(title: L10n.t("exif.sec.file", "文件"), rows: fileRows),

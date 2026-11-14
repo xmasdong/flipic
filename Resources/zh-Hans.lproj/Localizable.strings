@@ -24,6 +24,7 @@
 "menu.info" = "照片信息";
 "menu.filmstrip" = "缩略图栏";
 "menu.slideshow" = "幻灯片放映";
+"menu.slideshowStop" = "停止幻灯片放映";
 "menu.fullscreen" = "进入全屏";
 
 "menu.go" = "前往";
@@ -511,6 +512,7 @@ Esc  先关掉右上角的照片信息
 "tip.unpin" = "取消置顶";
 "tip.share" = "分享";
 "menu.share" = "分享…";
+"menu.copyImage" = "复制图片";
 "menu.pin" = "窗口置顶";
 "msg.pinned" = "窗口已置顶，会浮在其他软件上面";
 "msg.unpinned" = "已取消置顶";
@@ -893,6 +895,9 @@ Esc  先关掉右上角的照片信息
 "exif.sec.image" = "图像";
 "exif.sec.place" = "地点";
 "exif.sec.file" = "文件";
+"info.histogram" = "直方图";
+"info.clipShadows" = "暗部溢出";
+"info.clipHighlights" = "高光溢出";
 "exif.title" = "标题";
 "exif.keywords" = "关键词";
 "exif.category" = "类别";

@@ -34,6 +34,7 @@ extension ViewerViewController {
             for (i, name) in names.enumerated() {
                 queue.append((0.2, { self.goTo(i); InfoLevel.current = .common }))
                 queue.append((1.0, {
+                    NSLog("INFOSHOT hist %@ %@", name, self.exifPanel.debugHistogram?.debugSummary ?? "none")
                     log("\(name) common")
                     shot("\(name)-common")
                     if self.exifPanel.debugText.contains(L10n.t("info.expand", "展开")) { self.exifPanel.debugToggleCaption() }
@@ -128,6 +129,45 @@ extension ViewerViewController {
                     NSLog("INFOSHOT focus 2 after → responder=%@ index %d → %d", responder(), before, self.folder.index)
                 }
             }))
+            // 拷贝单张照片：剪贴板第一项除了文件地址还答应给图片数据（TIFF），来要的时候才解码。
+            // 挑带方向的（文件名里有 orient）、大图（copytest）和 RAW 各测一遍：拷贝用了多久、要 TIFF 用了多久（解码、编码各多少）、解出来多大、四个角是什么颜色
+            for (i, name) in names.enumerated() where name.contains("orient") || name.contains("copytest") || CleanupUnit.isRaw(self.folder.items[i].url) {
+                queue.append((0.3, { self.goTo(i) }))
+                queue.append((0.8, {
+                    let pb = NSPasteboard.withUniqueName()
+                    let t0 = CFAbsoluteTimeGetCurrent()
+                    self.copyPhotos(to: pb)
+                    let copyMs = (CFAbsoluteTimeGetCurrent() - t0) * 1000
+                    let provider = PhotoPasteboardProvider.debugLast
+                    let items = pb.pasteboardItems ?? []
+                    NSLog("INFOSHOT copyimg %@ copy=%.1fms items=%d item0 types=%@ decodes after copy=%d", name, copyMs, items.count,
+                          items.first?.types.map(\.rawValue).joined(separator: ",") ?? "-", provider?.debugDecodes ?? -1)
+                    let t1 = CFAbsoluteTimeGetCurrent()
+                    let tiff = items.first?.data(forType: .tiff)
+                    let tiffMs = (CFAbsoluteTimeGetCurrent() - t1) * 1000
+                    var decoded = "undecodable"
+                    if let tiff, let src = CGImageSourceCreateWithData(tiff as CFData, nil), let img = CGImageSourceCreateImageAtIndex(src, 0, nil),
+                       let ctx = CGContext(data: nil, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                           bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) {
+                        func corner(_ x: Int, _ y: Int) -> String {
+                            guard let c = img.cropping(to: CGRect(x: x, y: y, width: 8, height: 8)), let d = ctx.data else { return "?" }
+                            ctx.draw(c, in: CGRect(x: 0, y: 0, width: 1, height: 1))
+                            let p = d.bindMemory(to: UInt8.self, capacity: 4)
+                            return "(\(p[0]),\(p[1]),\(p[2]))"
+                        }
+                        let w = img.width, h = img.height
+                        decoded = "\(w)x\(h) type=\(CGImageSourceGetType(src) as String? ?? "-") corners TL=\(corner(4, 4)) TR=\(corner(w - 12, 4)) BL=\(corner(4, h - 12)) BR=\(corner(w - 12, h - 12))"
+                    }
+                    let shown = self.loader.info(for: self.folder.items[i].url)?.pixelSize ?? .zero
+                    NSLog("INFOSHOT copyimg %@ tiff request=%.0fms (source=%@ decode=%.0fms encode=%.0fms) bytes=%d %@ | viewer size=%.0fx%.0f | decodes=%d",
+                          name, tiffMs, provider?.debugSource ?? "-", provider?.debugDecodeMs ?? 0, provider?.debugEncodeMs ?? 0, tiff?.count ?? 0, decoded,
+                          shown.width, shown.height, provider?.debugDecodes ?? -1)
+                    pb.releaseGlobally()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        NSLog("INFOSHOT copyimg %@ after release live providers=%d", name, PhotoPasteboardProvider.debugLiveCount)
+                    }
+                }))
+            }
             // 快速连翻：每 40 毫秒翻一张，翻之前看面板里是不是别的照片的字
             var stale = 0, samples = 0
             for round in 0..<3 {
@@ -145,7 +185,33 @@ extension ViewerViewController {
                 let shown = self.exifPanel.shownURL?.lastPathComponent ?? "nil", cur = self.folder.current?.url.lastPathComponent ?? "nil"
                 NSLog("INFOSHOT flip samples=%d other-photo-text=%d (应为上一张还没换完的瞬间) final shown=%@ current=%@ match=%d", samples, stale, shown, cur, shown == cur ? 1 : 0)
                 log("after-flip")
+                NSLog("INFOSHOT hist after-flip shown=%d", self.exifPanel.debugHistogram != nil ? 1 : 0)
+                // 右键菜单：放映项、复制图片的位置和可用状态；复制图片往剪贴板放了什么（用单独的剪贴板，不动用户的）
+                if let menu = self.imageView.menu {
+                    let rows = menu.items.map { it -> String in
+                        if it.isSeparatorItem { return "—" }
+                        let on = it.action == nil || self.validateMenuItem(it)
+                        return it.title + (on ? "" : "(off)")
+                    }
+                    NSLog("INFOSHOT context menu: %@", rows.joined(separator: " | "))
+                }
+                let pb = NSPasteboard.withUniqueName()
+                self.copyPhotos(to: pb)
+                for item in pb.pasteboardItems ?? [] {
+                    NSLog("INFOSHOT copy item types=%@ url=%@", item.types.map(\.rawValue).joined(separator: ","), item.string(forType: .fileURL) ?? "-")
+                }
+                NSLog("INFOSHOT copy items=%d", pb.pasteboardItems?.count ?? 0)
+                pb.releaseGlobally()
                 InfoLevel.current = savedLevel
+                // COPYQUIT=1：留一个还没兑现的图片数据在（单独的）剪贴板上，正常退出，看系统退出时会不会来要
+                if ProcessInfo.processInfo.environment["COPYQUIT"] != nil {
+                    PhotoPasteboardProvider.debugLog = true
+                    let pending = NSPasteboard.withUniqueName()
+                    self.copyPhotos(to: pending)
+                    NSLog("INFOSHOT copyquit promise left on %@ live providers=%d, terminating", pending.name.rawValue, PhotoPasteboardProvider.debugLiveCount)
+                    NSApp.terminate(nil)
+                    return
+                }
                 NSLog("INFOSHOT done")
                 exit(0)
             }))

@@ -24,6 +24,7 @@
 "menu.info" = "Photo Info";
 "menu.filmstrip" = "Thumbnail Strip";
 "menu.slideshow" = "Slideshow";
+"menu.slideshowStop" = "Stop Slideshow";
 "menu.fullscreen" = "Enter Full Screen";
 
 "menu.go" = "Go";
@@ -511,6 +512,7 @@ Drop a folder or image to open";
 "tip.unpin" = "Stop keeping on top";
 "tip.share" = "Share";
 "menu.share" = "Share…";
+"menu.copyImage" = "Copy Image";
 "menu.pin" = "Keep Window on Top";
 "msg.pinned" = "Window stays on top of other apps";
 "msg.unpinned" = "No longer on top";
@@ -888,6 +890,9 @@ Drop a folder or image to open";
 "exif.sec.image" = "Image";
 "exif.sec.place" = "Place";
 "exif.sec.file" = "File";
+"info.histogram" = "Histogram";
+"info.clipShadows" = "Shadows clipped";
+"info.clipHighlights" = "Highlights clipped";
 "exif.title" = "Title";
 "exif.keywords" = "Keywords";
 "exif.category" = "Category";
