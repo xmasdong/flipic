@@ -86,12 +86,13 @@ enum ShortcutAction: String, CaseIterable {
     case pinWindow, share, playLive, zoomEye, workbench
     case copyText
     case searchContent
+    case preset1, preset2, preset3, preset4, preset5, preset6, preset7, preset8, preset9
 
     /// Pro 功能；开源版里没有，不在快捷键设置里列出
     /// 快捷键页里 Pro 功能名后面的标
     static var proSuffix: String { " (Pro)" }
 
-    var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair, .zoomEye, .workbench, .searchContent].contains(self) }
+    var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair, .zoomEye, .workbench, .searchContent].contains(self) || presetNumber != nil }
 
     var isAvailable: Bool {
         if self == .copyText { return TextRecognition.isAvailable }
@@ -101,6 +102,22 @@ enum ShortcutAction: String, CaseIterable {
         #else
         return !isPro
         #endif
+    }
+
+    /// 导出预设快捷键对应的预设序号（1–9）
+    var presetNumber: Int? {
+        switch self {
+        case .preset1: return 1
+        case .preset2: return 2
+        case .preset3: return 3
+        case .preset4: return 4
+        case .preset5: return 5
+        case .preset6: return 6
+        case .preset7: return 7
+        case .preset8: return 8
+        case .preset9: return 9
+        default: return nil
+        }
     }
 
     /// 评分快捷键对应的星数
@@ -149,6 +166,7 @@ enum ShortcutAction: String, CaseIterable {
         case .prev, .next, .first, .last, .zoomIn, .zoomOut, .zoomAtPointer, .actualSize, .peek, .zoomEye: return .browse
         case .fullscreen, .info, .infoLevel, .filmstrip, .slideshow, .rotateCW, .rotateCCW, .straighten: return .view
         case .rename, .trash, .edit, .reveal, .exportAs, .exportFolder, .saveRotation, .share: return .file
+        case .preset1, .preset2, .preset3, .preset4, .preset5, .preset6, .preset7, .preset8, .preset9: return .file
         case .pinWindow, .playLive: return .view
         case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench, .copyText: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
@@ -209,6 +227,15 @@ enum ShortcutAction: String, CaseIterable {
         case .workbench: return L10n.t("menu.workbench", "工作台") + ShortcutAction.proSuffix
         case .copyText: return L10n.t("menu.copyText", "复制图中全部文字")
         case .searchContent: return plain(L10n.t("menu.searchContent", "按内容查找…")) + ShortcutAction.proSuffix
+        case .preset1, .preset2, .preset3, .preset4, .preset5, .preset6, .preset7, .preset8, .preset9:
+            let n = presetNumber ?? 0
+            #if FLIPIC_PRO
+            // 预设有名字时带上名字：「按预设导出：新闻社」
+            if let p = ExportPresetStore.shared.presets.indices.contains(n - 1) ? ExportPresetStore.shared.presets[n - 1] : nil, !p.name.isEmpty {
+                return L10n.f("sc.a.presetNamed", "按预设导出：%@", p.name) + ShortcutAction.proSuffix
+            }
+            #endif
+            return L10n.f("sc.a.preset", "按第 %d 个预设导出", n) + ShortcutAction.proSuffix
         }
     }
 
@@ -270,6 +297,16 @@ enum ShortcutAction: String, CaseIterable {
         case .workbench: return KeyCombo(keyCode: 11, mods: [.command, .option], chars: "b")   // ⇧⌘B 已是批量重命名
         case .copyText: return KeyCombo(keyCode: 8, mods: [.command, .option], chars: "c")   // ⇧⌘C 已是批量转换
         case .searchContent: return KeyCombo(keyCode: 3, mods: .command, chars: "f")
+        // ⌥1–⌥9 是常用文件夹，⌥⌘1–⌥⌘9 是第 1–9 个导出预设（⌘1 是实际大小，⌘2–⌘9 没人占，但和 ⌥ 配成一组好记）
+        case .preset1: return KeyCombo(keyCode: 18, mods: [.command, .option], chars: "1")
+        case .preset2: return KeyCombo(keyCode: 19, mods: [.command, .option], chars: "2")
+        case .preset3: return KeyCombo(keyCode: 20, mods: [.command, .option], chars: "3")
+        case .preset4: return KeyCombo(keyCode: 21, mods: [.command, .option], chars: "4")
+        case .preset5: return KeyCombo(keyCode: 23, mods: [.command, .option], chars: "5")
+        case .preset6: return KeyCombo(keyCode: 22, mods: [.command, .option], chars: "6")
+        case .preset7: return KeyCombo(keyCode: 26, mods: [.command, .option], chars: "7")
+        case .preset8: return KeyCombo(keyCode: 28, mods: [.command, .option], chars: "8")
+        case .preset9: return KeyCombo(keyCode: 25, mods: [.command, .option], chars: "9")
         }
     }
 }

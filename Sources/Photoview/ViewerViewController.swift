@@ -1382,7 +1382,8 @@ final class ViewerViewController: NSViewController {
         if !draft { BenchProbe.sharpShown() }
         if !draft { scheduleLiveText() }
         #if FLIPIC_PRO
-        if isNew { restoreZoomAfterPaging() }
+        // 贴合预览里窗口随照片变形，放大倍数是相对旧窗口算的，搬到新窗口上会一次比一次小；预览中翻页一律回到适应窗口
+        if isNew { if peekSaved == nil { restoreZoomAfterPaging() } else { pendingPageZoom = nil } }
         #endif
         if isNew, peekSaved != nil { wrapWindowToImage(keepingCurrent: Self.peekKeepsPosition) }
         if isNew, peekOnFirstImage {
@@ -2025,6 +2026,8 @@ final class ViewerViewController: NSViewController {
         case .splitByRating: splitByRating(nil)
         case .switchPair: switchPairMember(nil)
         case .searchContent: searchContent(nil)
+        case .preset1, .preset2, .preset3, .preset4, .preset5, .preset6, .preset7, .preset8, .preset9:
+            if let n = action.presetNumber { runPreset(index: n - 1) }
         #endif
         default: break
         }
@@ -3877,7 +3880,7 @@ final class ViewerViewController: NSViewController {
     // MARK: - 批量转换格式
 
     /// 要转换的照片：缩略图栏里多选了就是选中的，否则是当前显示的这些（已按标记、星级、颜色筛选）；视频不算
-    private func batchTargets() -> (urls: [URL], picked: Bool) {
+    func batchTargets() -> (urls: [URL], picked: Bool) {
         let picked = stripPicked
         let urls = (picked.isEmpty ? folder.items.map(\.url) : picked).filter { !Video.isVideo($0) }
         return (urls, !picked.isEmpty)
@@ -3926,7 +3929,7 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 后台逐张转换，窗口上挂一个带进度和「取消」的 sheet；转完弹出小结
-    private func convertAll(_ urls: [URL], settings: BatchConvert.Settings) {
+    func convertAll(_ urls: [URL], settings: BatchConvert.Settings, summaryNote: String? = nil) {
         guard let window = view.window else { return }
         isProcessing = true
         let progress = NSAlert()
@@ -3955,7 +3958,7 @@ final class ViewerViewController: NSViewController {
                 self.isProcessing = false
                 let done = NSAlert()
                 done.messageText = sum.cancelled ? L10n.t("bc.cancelledTitle", "转换已取消") : L10n.t("bc.doneTitle", "转换完成")
-                done.informativeText = BatchConvert.message(sum, limit: settings.options.maxBytes)
+                done.informativeText = BatchConvert.message(sum, limit: settings.options.maxBytes) + (summaryNote.map { "\n" + $0 } ?? "")
                 done.addButton(withTitle: L10n.t("bc.ok", "好"))
                 if let first = sum.outputs.first { done.addButton(withTitle: L10n.t("bc.reveal", "在访达中显示")); _ = first }
                 done.beginSheetModal(for: window) { resp in
@@ -7570,6 +7573,8 @@ extension ViewerViewController: NSMenuItemValidation {
         } else if menuItem.action == #selector(sendToSlot(_:)) {
             menuItem.title = SendTo.menuTitle(menuItem.tag)
             return folder.current != nil && !isProcessing
+        } else if menuItem.action == #selector(runPresetMenu(_:)) {
+            return folder.totalCount > 0 && !isProcessing && cleanup == nil
         } else if menuItem.action == #selector(toggleSendToMoves(_:)) {
             menuItem.state = SendTo.moves ? .on : .off
         } else if menuItem.action == #selector(splitByRating(_:)) {

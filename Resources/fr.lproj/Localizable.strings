@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Enregistrement…";
 "msg.rotHint" = "Vue pivotée · ⌘⌥S pour enregistrer dans le fichier";
 "about.body" = "■ À PROPOS
-Une visionneuse d'images native pour macOS : ouverture instantanée, navigation fluide entre dossiers, zoom gestuel et EXIF en un coup d'œil. Les photos sont traitées sur votre Mac : aucune collecte de données, aucun compte. L’app ne se connecte que pour vérifier les mises à jour, télécharger le modèle de reconnaissance, activer Pro ou envoyer un avis que vous avez écrit.
+Une visionneuse d'images native pour macOS : ouverture instantanée, navigation fluide entre dossiers, zoom gestuel et EXIF en un coup d'œil. Les photos sont traitées sur votre Mac : aucune collecte de données personnelles, aucun compte. L’app ne se connecte que pour vérifier les mises à jour, télécharger le modèle de reconnaissance, activer Pro ou envoyer un avis que vous avez écrit.
 
 ■ UTILISATION
 Déposez un dossier ou une image dans la fenêtre pour parcourir ; ou clic droit sur une image dans le Finder → Ouvrir avec Flipic.
@@ -293,7 +293,7 @@ Déposez un dossier ou une image pour ouvrir";
 "set.update" = "Mises à jour :";
 "set.autoUpdate" = "Rechercher automatiquement (une fois par jour)";
 "set.checkNow" = "Vérifier maintenant";
-"set.updateNote" = "Par défaut, Flipic ne se connecte pas à Internet. Si cette option est activée, il interroge le site au plus une fois par jour, uniquement pour le dernier numéro de version, sans envoyer de données.";
+"set.updateNote" = "Une vérification par jour par défaut. Seuls sont envoyés : la version de l’app, l’ancienneté de l’installation (l’une de trois tranches : moins de 7 jours, 7 à 29 jours, 30 jours ou plus) et l’état d’activation de Pro. Rien qui permette de vous identifier.";
 "set.hdr" = "HDR :";
 "set.hdrCheck" = "Afficher les hautes lumières HDR";
 "set.hdrNote" = "Les photos HDR de l’iPhone et d’autres appareils affichent des hautes lumières plus vives que le blanc normal, comme dans Aperçu. Elles utilisent deux fois plus de mémoire.";
@@ -1000,3 +1000,69 @@ Déposez un dossier ou une image pour ouvrir";
 "msg.markReadOnly" = "Cette carte est en lecture seule : la marque déjà présente ne peut pas être retirée";
 "rating.readOnly" = "Cette carte est en lecture seule : la note n’a pas été enregistrée";
 "tag.readOnly" = "Cette carte est en lecture seule : l’étiquette de couleur n’a pas été enregistrée";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "Exporter avec un préréglage";
+"pro.f.presets" = "Préréglages d’export";
+"pro.list.presets" = "Préréglages d’export : exportez un lot en une étape avec le format, le grand côté, le poids et les noms de fichier demandés par un média";
+"pro.presets" = "Préréglages d’export :";
+"pro.presetsNote" = "Enregistrez le format, le grand côté, le poids, les noms de fichier et la destination sous forme de préréglage. Appuyez sur ⌥⌘1–⌥⌘9, ou utilisez Fichier › Exporter avec un préréglage, pour exporter les photos sélectionnées en une étape.";
+"sc.a.preset" = "Exporter avec le préréglage %d";
+"sc.a.presetNamed" = "Exporter avec le préréglage : %@";
+"preset.title" = "Préréglages d’export";
+"preset.intro" = "Enregistrez vos réglages d’export habituels sous forme de préréglages et exportez un lot de photos en une étape. %d préréglages au maximum, dans Fichier › Exporter avec un préréglage.";
+"preset.add" = "Ajouter";
+"preset.duplicate" = "Dupliquer";
+"preset.delete" = "Supprimer";
+"preset.up" = "Monter";
+"preset.down" = "Descendre";
+"preset.done" = "OK";
+"preset.empty" = "Aucun préréglage. Cliquez sur Ajouter pour en créer un.";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "%d préréglages au maximum";
+"preset.newName" = "Préréglage %d";
+"preset.copyName" = "%@ copie";
+"preset.deleteConfirm" = "Supprimer le préréglage « %@ » ?";
+"preset.deleteInfo" = "Seul le préréglage est supprimé. Les photos déjà exportées ne sont pas touchées.";
+"preset.name" = "Nom :";
+"preset.namePlaceholder" = "p. ex. Agence";
+"preset.format" = "Format :";
+"preset.options" = "Options :";
+"preset.saveTo" = "Enregistrer dans :";
+"preset.fileName" = "Nom du fichier :";
+"preset.example" = "Exemple :";
+"preset.exampleTip" = "Pour une photo nommée « %@ », 1re sortie";
+"preset.dest.ask" = "Choisir un dossier à chaque fois";
+"preset.dest.subfolder" = "Sous-dossier à côté des originaux";
+"preset.dest.fixed" = "Un dossier fixe";
+"preset.dest.askNote" = "Le nombre de photos vous est indiqué, puis un dossier vous est demandé.";
+"preset.dest.subfolderNote" = "Créé dans le dossier des originaux. Si elles sont sur une carte mémoire ou un disque en lecture seule, un dossier vous est demandé et rien n’est écrit sur la carte.";
+"preset.dest.fixedNote" = "L’export démarre dès que vous lancez le préréglage, avec la progression dans la fenêtre. Sans dossier choisi, il vous sera demandé à l’export.";
+"preset.templatePlaceholder" = "Vide = garder le nom d’origine";
+"preset.tokens" = "{name} nom d’origine, {date} date de prise de vue, {time} heure de prise de vue, {seq} numéro. Les fichiers existants ne sont jamais écrasés ; 2, 3… est ajouté.";
+"preset.choosePrompt" = "Utiliser comme destination";
+"preset.chooseMessage" = "Les photos exportées avec « %@ » sont placées dans ce dossier";
+"preset.manage" = "Gérer les préréglages…";
+"preset.menuEmpty" = "Aucun préréglage";
+"preset.ask.prompt" = "Exporter ici";
+"preset.none" = "Il n’y a pas de préréglage %d";
+"preset.unavailableNote" = "Le dossier de ce préréglage est introuvable ou protégé en écriture. Choisissez-en un autre.";
+"preset.defaultSubfolder" = "Export";
+"preset.notWritableNote" = "Le dossier des originaux est protégé en écriture. Choisissez un dossier.";
+"preset.set.picked" = "les %d photos sélectionnées";
+"preset.set.marked" = "les %d photos marquées";
+"preset.set.shown" = "les %d photos affichées";
+"preset.ask.messageSet" = "Exporter %2$@ avec le préréglage « %1$@ ».";
+"preset.summaryNoteSet" = "Préréglage « %1$@ » : %2$@ exportées, enregistrées dans %3$@";
+"preset.confirm.title" = "Exporter avec le préréglage « %@ » ?";
+"preset.confirm.where" = "Enregistrer dans : %@";
+"preset.confirm.export" = "Exporter";
+"preset.saveAs" = "Enregistrer comme préréglage…";
+"preset.saveAs.title" = "Enregistrer comme préréglage";
+"preset.saveAs.info" = "Donnez un nom à ce préréglage. Le format, la qualité et les options sont enregistrés tels qu’ils sont maintenant.";
+"preset.saveAs.save" = "Enregistrer";
+"preset.saveAs.fullTitle" = "Vous avez déjà %d préréglages";
+"preset.saveAs.fullInfo" = "Supprimez-en un dans Gérer les préréglages, puis enregistrez le nouveau.";
+"preset.saveAs.doneTitle" = "Enregistré comme préréglage « %@ »";
+"preset.saveAs.doneInfoKey" = "Raccourci %@. À utiliser depuis Fichier › Exporter avec un préréglage, où se trouve aussi Gérer les préréglages.";
+"preset.saveAs.doneInfo" = "À utiliser depuis Fichier › Exporter avec un préréglage, où se trouve aussi Gérer les préréglages.";

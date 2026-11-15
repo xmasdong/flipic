@@ -102,7 +102,7 @@
 "msg.rotSaving" = "儲存中…";
 "msg.rotHint" = "已旋轉檢視 · ⌘⌥S 可儲存到檔案";
 "about.body" = "■ 簡介
-macOS 原生看圖器：秒開大圖、順暢翻頁、手勢縮放、EXIF 隨手看。照片只在本機處理，不收集資料，不用註冊帳號。只在檢查更新、下載辨識模型、啟用 Pro 或你送出回饋時連網。
+macOS 原生看圖器：秒開大圖、順暢翻頁、手勢縮放、EXIF 隨手看。照片只在本機處理，不收集個人資料，不用註冊帳號。只在檢查更新、下載辨識模型、啟用 Pro 或你送出回饋時連網。
 
 ■ 使用方式
 把資料夾或圖片拖進視窗即可瀏覽；也可以在 Finder 裡右鍵圖片選擇用 Flipic 開啟。
@@ -293,7 +293,7 @@ Return  重新命名目前圖片
 "set.update" = "更新：";
 "set.autoUpdate" = "自動檢查更新（每天一次）";
 "set.checkNow" = "現在檢查";
-"set.updateNote" = "Flipic 預設不連網。開啟後每天最多檢查一次，只向官網請求最新版本號，不傳送任何資料。";
+"set.updateNote" = "預設每天自動檢查一次。每次只傳送：軟體版本號、安裝了多久（不到 7 天、7–29 天、30 天或以上三檔之一）、Pro 是否已啟用。不含任何能識別你的資訊。";
 "set.hdr" = "HDR：";
 "set.hdrCheck" = "顯示 HDR 照片的高光";
 "set.hdrNote" = "iPhone 等拍攝的 HDR 照片，亮部會比一般白色更亮，和系統「預覽程式」看到的一樣。HDR 照片佔用的記憶體是一般照片的兩倍。";
@@ -1005,3 +1005,69 @@ Return  重新命名目前圖片
 "msg.markReadOnly" = "這張記憶卡是唯讀的，原來打的標記無法取消";
 "rating.readOnly" = "這張記憶卡是唯讀的，評分沒有寫入";
 "tag.readOnly" = "這張記憶卡是唯讀的，顏色標籤沒有寫入";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "依預設匯出";
+"pro.f.presets" = "匯出預設";
+"pro.list.presets" = "匯出預設：依媒體要求的格式、長邊、大小和檔名，一步匯出一批照片";
+"pro.presets" = "匯出預設：";
+"pro.presetsNote" = "把格式、長邊、檔案大小、檔名和儲存位置存成預設，按 ⌥⌘1–⌥⌘9 或在「檔案 › 依預設匯出」裡一步匯出選取的照片。";
+"sc.a.preset" = "依第 %d 個預設匯出";
+"sc.a.presetNamed" = "依預設匯出：%@";
+"preset.title" = "匯出預設";
+"preset.intro" = "把常用的匯出方式存成預設，一步匯出一批照片。最多 %d 個，在「檔案 › 依預設匯出」裡使用。";
+"preset.add" = "新增";
+"preset.duplicate" = "複製";
+"preset.delete" = "刪除";
+"preset.up" = "上移";
+"preset.down" = "下移";
+"preset.done" = "完成";
+"preset.empty" = "還沒有預設。點「新增」建立一個。";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "最多 %d 個預設";
+"preset.newName" = "預設 %d";
+"preset.copyName" = "%@ 拷貝";
+"preset.deleteConfirm" = "刪除預設「%@」？";
+"preset.deleteInfo" = "只會刪除這個預設，不影響已經匯出的照片。";
+"preset.name" = "名稱：";
+"preset.namePlaceholder" = "例如 新聞社";
+"preset.format" = "格式：";
+"preset.options" = "選項：";
+"preset.saveTo" = "儲存到：";
+"preset.fileName" = "檔名：";
+"preset.example" = "範例：";
+"preset.exampleTip" = "以「%@」這張照片為例，第 1 個輸出";
+"preset.dest.ask" = "每次匯出時選資料夾";
+"preset.dest.subfolder" = "原照片旁邊的子資料夾";
+"preset.dest.fixed" = "固定的資料夾";
+"preset.dest.askNote" = "匯出前會先告訴你張數，再選資料夾。";
+"preset.dest.subfolderNote" = "建在原照片所在的資料夾裡。照片在記憶卡或唯讀的磁碟上時，會改為讓你選資料夾，不往卡裡寫入。";
+"preset.dest.fixedNote" = "選好後一按就直接匯出，視窗上顯示進度。沒選資料夾時，匯出時會讓你選。";
+"preset.templatePlaceholder" = "留空 = 保持原名";
+"preset.tokens" = "{name} 原檔名，{date} 拍攝日期，{time} 拍攝時間，{seq} 序號。同名檔案不會被覆蓋，會自動加 2、3。";
+"preset.choosePrompt" = "設為儲存位置";
+"preset.chooseMessage" = "預設「%@」匯出的照片放在這個資料夾裡";
+"preset.manage" = "管理預設…";
+"preset.menuEmpty" = "還沒有預設";
+"preset.ask.prompt" = "匯出到這裡";
+"preset.none" = "沒有第 %d 個預設";
+"preset.unavailableNote" = "預設裡的資料夾找不到，或者不能寫入，請重新選一個。";
+"preset.defaultSubfolder" = "匯出";
+"preset.notWritableNote" = "原照片所在的資料夾不能寫入，請選一個資料夾。";
+"preset.set.picked" = "選取的 %d 張照片";
+"preset.set.marked" = "已標記的 %d 張照片";
+"preset.set.shown" = "目前顯示的全部 %d 張照片";
+"preset.ask.messageSet" = "依預設「%1$@」匯出%2$@。";
+"preset.summaryNoteSet" = "預設「%1$@」，匯出的是%2$@，儲存在 %3$@";
+"preset.confirm.title" = "依預設「%@」匯出？";
+"preset.confirm.where" = "儲存到：%@";
+"preset.confirm.export" = "匯出";
+"preset.saveAs" = "存為預設…";
+"preset.saveAs.title" = "存為預設";
+"preset.saveAs.info" = "幫這個預設取個名字。格式、品質和選項會依目前的設定儲存。";
+"preset.saveAs.save" = "存為預設";
+"preset.saveAs.fullTitle" = "已經有 %d 個預設了";
+"preset.saveAs.fullInfo" = "請先在「管理預設」裡刪掉一個，再存新的。";
+"preset.saveAs.doneTitle" = "已存為預設「%@」";
+"preset.saveAs.doneInfoKey" = "快速鍵 %@。在「檔案 › 依預設匯出」裡使用，管理預設也在那裡。";
+"preset.saveAs.doneInfo" = "在「檔案 › 依預設匯出」裡使用，管理預設也在那裡。";

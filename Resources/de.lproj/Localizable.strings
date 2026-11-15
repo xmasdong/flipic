@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Wird gesichert…";
 "msg.rotHint" = "Ansicht gedreht · ⌘⌥S zum Sichern in der Datei";
 "about.body" = "■ ÜBER
-Ein nativer macOS-Bildbetrachter: sofortiges Öffnen, flüssige Ordner-Navigation, Gesten-Zoom und EXIF auf einen Blick. Fotos werden nur auf Ihrem Mac verarbeitet, ohne Datenerfassung und ohne Konto. Online geht die App nur, um nach Updates zu suchen, das Erkennungsmodell zu laden, Pro zu aktivieren oder Ihr Feedback zu senden.
+Ein nativer macOS-Bildbetrachter: sofortiges Öffnen, flüssige Ordner-Navigation, Gesten-Zoom und EXIF auf einen Blick. Fotos werden nur auf Ihrem Mac verarbeitet, ohne Erfassung persönlicher Daten und ohne Konto. Online geht die App nur, um nach Updates zu suchen, das Erkennungsmodell zu laden, Pro zu aktivieren oder Ihr Feedback zu senden.
 
 ■ BENUTZUNG
 Ordner oder Bild in dieses Fenster ziehen zum Ansehen; oder im Finder Rechtsklick → Mit Flipic öffnen.
@@ -293,7 +293,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.update" = "Updates:";
 "set.autoUpdate" = "Automatisch nach Updates suchen (einmal täglich)";
 "set.checkNow" = "Jetzt prüfen";
-"set.updateNote" = "Flipic geht standardmäßig nicht online. Ist dies aktiv, fragt es höchstens einmal am Tag nur die neueste Versionsnummer von der Website ab und sendet keine Daten.";
+"set.updateNote" = "Standardmäßig einmal täglich. Gesendet werden nur die App-Version, wie lange die Installation her ist (eine von drei Stufen: unter 7 Tage, 7–29 Tage, 30 Tage oder mehr) und ob Pro aktiviert ist. Nichts, was dich identifiziert.";
 "set.hdr" = "HDR:";
 "set.hdrCheck" = "HDR-Lichter anzeigen";
 "set.hdrNote" = "HDR-Fotos vom iPhone und anderen Kameras zeigen Lichter heller als normales Weiß, wie in Vorschau. HDR-Fotos brauchen doppelt so viel Speicher.";
@@ -1000,3 +1000,69 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "msg.markReadOnly" = "Diese Karte ist schreibgeschützt; die vorhandene Markierung lässt sich nicht entfernen";
 "rating.readOnly" = "Diese Karte ist schreibgeschützt; die Bewertung wurde nicht gespeichert";
 "tag.readOnly" = "Diese Karte ist schreibgeschützt; das Farbetikett wurde nicht gespeichert";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "Mit Preset exportieren";
+"pro.f.presets" = "Export-Presets";
+"pro.list.presets" = "Export-Presets: Stapel in einem Schritt exportieren, mit Format, langer Kante, Dateigröße und Dateinamen, die ein Medium verlangt";
+"pro.presets" = "Export-Presets:";
+"pro.presetsNote" = "Speichere Format, lange Kante, Dateigröße, Dateinamen und Zielort als Preset. Mit ⌥⌘1–⌥⌘9 oder über Ablage › Mit Preset exportieren werden die ausgewählten Fotos in einem Schritt exportiert.";
+"sc.a.preset" = "Mit Preset %d exportieren";
+"sc.a.presetNamed" = "Mit Preset exportieren: %@";
+"preset.title" = "Export-Presets";
+"preset.intro" = "Speichere deine üblichen Exporteinstellungen als Presets und exportiere einen Stapel Fotos in einem Schritt. Bis zu %d Presets, unter Ablage › Mit Preset exportieren.";
+"preset.add" = "Hinzufügen";
+"preset.duplicate" = "Duplizieren";
+"preset.delete" = "Löschen";
+"preset.up" = "Nach oben";
+"preset.down" = "Nach unten";
+"preset.done" = "Fertig";
+"preset.empty" = "Noch keine Presets. Mit „Hinzufügen“ legst du eines an.";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "Höchstens %d Presets";
+"preset.newName" = "Preset %d";
+"preset.copyName" = "%@ Kopie";
+"preset.deleteConfirm" = "Preset „%@“ löschen?";
+"preset.deleteInfo" = "Nur das Preset wird gelöscht. Bereits exportierte Fotos bleiben unberührt.";
+"preset.name" = "Name:";
+"preset.namePlaceholder" = "z. B. Agentur";
+"preset.format" = "Format:";
+"preset.options" = "Optionen:";
+"preset.saveTo" = "Speichern in:";
+"preset.fileName" = "Dateiname:";
+"preset.example" = "Beispiel:";
+"preset.exampleTip" = "Für ein Foto namens „%@“, 1. Ausgabe";
+"preset.dest.ask" = "Jedes Mal einen Ordner wählen";
+"preset.dest.subfolder" = "Unterordner neben den Originalen";
+"preset.dest.fixed" = "Fester Ordner";
+"preset.dest.askNote" = "Du erfährst vorher, wie viele Fotos es sind, und wählst dann einen Ordner.";
+"preset.dest.subfolderNote" = "Wird in dem Ordner der Originale angelegt. Liegen sie auf einer Speicherkarte oder einem schreibgeschützten Volume, wählst du stattdessen einen Ordner; auf die Karte wird nichts geschrieben.";
+"preset.dest.fixedNote" = "Der Export startet sofort, der Fortschritt erscheint im Fenster. Ist kein Ordner gewählt, wirst du beim Export gefragt.";
+"preset.templatePlaceholder" = "Leer = Originalnamen behalten";
+"preset.tokens" = "{name} Originalname, {date} Aufnahmedatum, {time} Aufnahmezeit, {seq} Nummer. Vorhandene Dateien werden nie überschrieben; es wird 2, 3 … angehängt.";
+"preset.choosePrompt" = "Als Ziel verwenden";
+"preset.chooseMessage" = "Mit „%@“ exportierte Fotos kommen in diesen Ordner";
+"preset.manage" = "Presets verwalten …";
+"preset.menuEmpty" = "Noch keine Presets";
+"preset.ask.prompt" = "Hierher exportieren";
+"preset.none" = "Es gibt kein Preset %d";
+"preset.unavailableNote" = "Der Ordner dieses Presets wurde nicht gefunden oder ist nicht beschreibbar. Bitte wähle einen anderen.";
+"preset.defaultSubfolder" = "Export";
+"preset.notWritableNote" = "In den Ordner der Originale kann nicht geschrieben werden. Bitte wähle einen Ordner.";
+"preset.set.picked" = "die %d ausgewählten Fotos";
+"preset.set.marked" = "die %d markierten Fotos";
+"preset.set.shown" = "alle %d angezeigten Fotos";
+"preset.ask.messageSet" = "%2$@ mit dem Preset „%1$@“ exportieren.";
+"preset.summaryNoteSet" = "Preset „%1$@“, exportiert: %2$@, gespeichert in %3$@";
+"preset.confirm.title" = "Mit dem Preset „%@“ exportieren?";
+"preset.confirm.where" = "Speichern in: %@";
+"preset.confirm.export" = "Exportieren";
+"preset.saveAs" = "Als Preset sichern …";
+"preset.saveAs.title" = "Als Preset sichern";
+"preset.saveAs.info" = "Gib diesem Preset einen Namen. Format, Qualität und Optionen werden so gespeichert, wie sie jetzt sind.";
+"preset.saveAs.save" = "Sichern";
+"preset.saveAs.fullTitle" = "Du hast schon %d Presets";
+"preset.saveAs.fullInfo" = "Lösche zuerst eines unter „Presets verwalten“ und sichere dann das neue.";
+"preset.saveAs.doneTitle" = "Als Preset „%@“ gesichert";
+"preset.saveAs.doneInfoKey" = "Kurzbefehl %@. Zu finden unter Ablage › Mit Preset exportieren, dort auch „Presets verwalten“.";
+"preset.saveAs.doneInfo" = "Zu finden unter Ablage › Mit Preset exportieren, dort auch „Presets verwalten“.";

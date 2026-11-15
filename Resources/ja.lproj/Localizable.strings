@@ -102,7 +102,7 @@
 "msg.rotSaving" = "保存中…";
 "msg.rotHint" = "表示を回転しました · ⌘⌥S でファイルに保存";
 "about.body" = "■ 概要
-ネイティブ macOS 画像ビューア：即時表示、軽快なフォルダナビゲーション、ジェスチャーズーム、EXIF をひと目で確認。写真はすべて Mac 上で処理し、データ収集もアカウントもありません。ネットワークを使うのは、アップデートの確認、認識モデルのダウンロード、Pro の有効化、フィードバックの送信時だけです。
+ネイティブ macOS 画像ビューア：即時表示、軽快なフォルダナビゲーション、ジェスチャーズーム、EXIF をひと目で確認。写真はすべて Mac 上で処理し、個人データの収集もアカウントもありません。ネットワークを使うのは、アップデートの確認、認識モデルのダウンロード、Pro の有効化、フィードバックの送信時だけです。
 
 ■ 使い方
 フォルダか画像をこのウインドウにドラッグして閲覧。Finder で画像を右クリックして Flipic で開くこともできます。
@@ -293,7 +293,7 @@ Return  表示中の画像を名称変更
 "set.update" = "アップデート：";
 "set.autoUpdate" = "自動的に確認（1 日 1 回）";
 "set.checkNow" = "今すぐ確認";
-"set.updateNote" = "Flipic は通常ネットに接続しません。オンにすると 1 日 1 回まで、Web サイトに最新バージョン番号だけを問い合わせます。データは送信しません。";
+"set.updateNote" = "既定では 1 日 1 回自動で確認します。送るのは、アプリのバージョン、インストールからの期間（7 日未満、7～29 日、30 日以上の 3 区分のいずれか）、Pro が有効かどうかだけです。あなたを特定できる情報は含まれません。";
 "set.hdr" = "HDR：";
 "set.hdrCheck" = "HDR 写真のハイライトを表示";
 "set.hdrNote" = "iPhone などで撮った HDR 写真は、明るい部分が通常の白より明るく表示されます（プレビューと同じ）。HDR 写真は通常の写真の 2 倍のメモリを使います。";
@@ -1000,3 +1000,69 @@ Return  表示中の画像を名称変更
 "msg.markReadOnly" = "このカードは読み取り専用のため、すでに付いているマークは外せません";
 "rating.readOnly" = "このカードは読み取り専用のため、評価は保存されませんでした";
 "tag.readOnly" = "このカードは読み取り専用のため、カラータグは保存されませんでした";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "プリセットで書き出す";
+"pro.f.presets" = "書き出しプリセット";
+"pro.list.presets" = "書き出しプリセット：媒体の指定どおりの形式・長辺・サイズ・ファイル名で、ワンステップで一括書き出し";
+"pro.presets" = "書き出しプリセット：";
+"pro.presetsNote" = "形式、長辺、ファイルサイズ、ファイル名、保存先をプリセットとして保存します。⌥⌘1–⌥⌘9、または「ファイル › プリセットで書き出す」で、選択した写真をワンステップで書き出せます。";
+"sc.a.preset" = "プリセット %d で書き出す";
+"sc.a.presetNamed" = "プリセットで書き出す：%@";
+"preset.title" = "書き出しプリセット";
+"preset.intro" = "よく使う書き出し設定をプリセットに保存して、まとめて書き出します。最大 %d 個。「ファイル › プリセットで書き出す」から使えます。";
+"preset.add" = "追加";
+"preset.duplicate" = "複製";
+"preset.delete" = "削除";
+"preset.up" = "上へ";
+"preset.down" = "下へ";
+"preset.done" = "完了";
+"preset.empty" = "プリセットはまだありません。「追加」で作成します。";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "プリセットは最大 %d 個です";
+"preset.newName" = "プリセット %d";
+"preset.copyName" = "%@ のコピー";
+"preset.deleteConfirm" = "プリセット「%@」を削除しますか？";
+"preset.deleteInfo" = "プリセットだけを削除します。書き出し済みの写真には影響しません。";
+"preset.name" = "名前：";
+"preset.namePlaceholder" = "例：通信社";
+"preset.format" = "形式：";
+"preset.options" = "オプション：";
+"preset.saveTo" = "保存先：";
+"preset.fileName" = "ファイル名：";
+"preset.example" = "例：";
+"preset.exampleTip" = "「%@」という写真の、1 番目の出力";
+"preset.dest.ask" = "書き出すたびにフォルダを選ぶ";
+"preset.dest.subfolder" = "元の写真の隣のサブフォルダ";
+"preset.dest.fixed" = "固定のフォルダ";
+"preset.dest.askNote" = "書き出す前に枚数をお知らせし、フォルダを選びます。";
+"preset.dest.subfolderNote" = "元の写真があるフォルダの中に作ります。メモリーカードや読み取り専用のディスクにある場合は、フォルダを選ぶ形に切り替わり、カードには書き込みません。";
+"preset.dest.fixedNote" = "実行するとすぐに書き出し、ウインドウに進行状況を表示します。フォルダが未選択の場合は、書き出すときに選びます。";
+"preset.templatePlaceholder" = "空欄 = 元の名前のまま";
+"preset.tokens" = "{name} 元の名前、{date} 撮影日、{time} 撮影時刻、{seq} 連番。同名のファイルは上書きされず、2、3…が付きます。";
+"preset.choosePrompt" = "保存先にする";
+"preset.chooseMessage" = "プリセット「%@」で書き出した写真をこのフォルダに入れます";
+"preset.manage" = "プリセットを管理…";
+"preset.menuEmpty" = "プリセットはまだありません";
+"preset.ask.prompt" = "ここに書き出す";
+"preset.none" = "%d 番のプリセットはありません";
+"preset.unavailableNote" = "プリセットのフォルダが見つからないか、書き込めません。別のフォルダを選んでください。";
+"preset.defaultSubfolder" = "書き出し";
+"preset.notWritableNote" = "元の写真があるフォルダには書き込めません。フォルダを選んでください。";
+"preset.set.picked" = "選択中の %d 枚の写真";
+"preset.set.marked" = "マークした %d 枚の写真";
+"preset.set.shown" = "表示中のすべての写真（%d 枚）";
+"preset.ask.messageSet" = "プリセット「%1$@」で%2$@を書き出します。";
+"preset.summaryNoteSet" = "プリセット「%1$@」、書き出したのは%2$@、保存先：%3$@";
+"preset.confirm.title" = "プリセット「%@」で書き出しますか？";
+"preset.confirm.where" = "保存先：%@";
+"preset.confirm.export" = "書き出す";
+"preset.saveAs" = "プリセットとして保存…";
+"preset.saveAs.title" = "プリセットとして保存";
+"preset.saveAs.info" = "このプリセットの名前を付けてください。形式、品質、オプションは今の設定のまま保存されます。";
+"preset.saveAs.save" = "保存";
+"preset.saveAs.fullTitle" = "プリセットはすでに %d 個あります";
+"preset.saveAs.fullInfo" = "「プリセットを管理」で 1 つ削除してから、新しいプリセットを保存してください。";
+"preset.saveAs.doneTitle" = "プリセット「%@」として保存しました";
+"preset.saveAs.doneInfoKey" = "ショートカットは %@ です。「ファイル › プリセットで書き出す」から使え、プリセットの管理もそこにあります。";
+"preset.saveAs.doneInfo" = "「ファイル › プリセットで書き出す」から使え、プリセットの管理もそこにあります。";

@@ -94,6 +94,27 @@ async function countHit(env, kind, request) {
   ).bind(day, kind, country, clientOf(request.headers.get("user-agent") || "")).run();
 }
 
+// App 每天自动检查更新一次，请求带 a（安装时长区间）和 p（是否已激活 Pro）。
+// 只认白名单里的值、只数 App 的自动检查（手动检查带 m=1）；其余一概不记，也不存原始查询串
+const AGE_BUCKETS = new Set(["0-6", "7-29", "30+"]);
+
+async function countActive(env, request, url) {
+  if (!env.STATS) return;
+  const params = url.searchParams;
+  if (params.has("m")) return;
+  const age = params.get("a");
+  const pro = params.get("p");
+  if (!AGE_BUCKETS.has(age) || (pro !== "0" && pro !== "1")) return;
+  const client = clientOf(request.headers.get("user-agent") || "");
+  if (!client.startsWith("app ")) return;
+  const day = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+  const country = String(request.cf?.country || "").slice(0, 2);
+  await env.STATS.prepare(
+    "INSERT INTO active (day, age, pro, client, country, n) VALUES (?, ?, ?, ?, ?, 1) " +
+    "ON CONFLICT (day, age, pro, client, country) DO UPDATE SET n = n + 1",
+  ).bind(day, age, Number(pro), client, country).run();
+}
+
 // 一次下载只数一次：浏览器续传、分段下载会发好几个 Range 请求，只认不带 Range 或从 0 开始的那个
 function isDownloadStart(request, response) {
   if (request.method !== "GET") return false;
@@ -122,6 +143,7 @@ export default {
       const kind = url.pathname === "/download/Flipic.dmg" ? "download" : url.pathname === "/version.json" ? "version" : "";
       if (kind === "download" ? isDownloadStart(request, response) : kind && request.method === "GET" && response.status === 200) {
         ctx.waitUntil(countHit(env, kind, request).catch(() => {}));
+        if (kind === "version") ctx.waitUntil(countActive(env, request, url).catch(() => {}));
       }
       return response;
     }

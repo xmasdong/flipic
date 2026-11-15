@@ -113,7 +113,7 @@
 "msg.rotSaving" = "Saving…";
 "msg.rotHint" = "View rotated · press ⌘⌥S to save to file";
 "about.body" = "■ ABOUT
-A native macOS image viewer: instant opening, buttery folder navigation, gesture zoom and EXIF at a glance. Photos are processed on your Mac; no data collection, no accounts. It only goes online to check for updates, download the recognition model, activate Pro, or send feedback you write.
+A native macOS image viewer: instant opening, buttery folder navigation, gesture zoom and EXIF at a glance. Photos are processed on your Mac; no personal data collection, no accounts. It only goes online to check for updates, download the recognition model, activate Pro, or send feedback you write.
 
 ■ HOW TO USE
 Drop a folder or image into the window to browse; or right-click an image in Finder and open it with Flipic.
@@ -305,7 +305,7 @@ Drop a folder or image to open";
 "set.update" = "Updates:";
 "set.autoUpdate" = "Check for updates automatically (once a day)";
 "set.checkNow" = "Check Now";
-"set.updateNote" = "Flipic doesn’t go online by default. When this is on, it checks at most once a day, asking the website only for the latest version number and sending no data.";
+"set.updateNote" = "Checks once a day by default. Each check sends only the app version, how long ago it was installed (one of three ranges: under 7 days, 7–29 days, 30 days or more) and whether Pro is activated. Nothing that identifies you.";
 "set.hdr" = "HDR:";
 "set.hdrCheck" = "Show HDR highlights";
 "set.hdrNote" = "HDR photos from iPhone and other cameras show highlights brighter than regular white, as in Preview. HDR photos use twice the memory of regular ones.";
@@ -1012,3 +1012,69 @@ Drop a folder or image to open";
 "msg.markReadOnly" = "This card is read-only, so the mark that was already on it can’t be removed";
 "rating.readOnly" = "This card is read-only, so the rating was not saved";
 "tag.readOnly" = "This card is read-only, so the color tag was not saved";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "Export with Preset";
+"pro.f.presets" = "Export Presets";
+"pro.list.presets" = "Export Presets: batch-export in one step with the format, long edge, file size and file names an outlet asks for";
+"pro.presets" = "Export Presets:";
+"pro.presetsNote" = "Save the format, long edge, file size, file names and destination as a preset. Press ⌥⌘1–⌥⌘9, or use File › Export with Preset, to export the selected photos in one step.";
+"sc.a.preset" = "Export with preset %d";
+"sc.a.presetNamed" = "Export with preset: %@";
+"preset.title" = "Export Presets";
+"preset.intro" = "Save your usual export settings as presets and export a batch of photos in one step. Up to %d presets, in File › Export with Preset.";
+"preset.add" = "Add";
+"preset.duplicate" = "Duplicate";
+"preset.delete" = "Delete";
+"preset.up" = "Move Up";
+"preset.down" = "Move Down";
+"preset.done" = "Done";
+"preset.empty" = "No presets yet. Click Add to create one.";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "Up to %d presets";
+"preset.newName" = "Preset %d";
+"preset.copyName" = "%@ copy";
+"preset.deleteConfirm" = "Delete the preset “%@”?";
+"preset.deleteInfo" = "Only the preset is deleted. Photos you already exported are not affected.";
+"preset.name" = "Name:";
+"preset.namePlaceholder" = "e.g. Wire service";
+"preset.format" = "Format:";
+"preset.options" = "Options:";
+"preset.saveTo" = "Save to:";
+"preset.fileName" = "File name:";
+"preset.example" = "Example:";
+"preset.exampleTip" = "For a photo named “%@”, the 1st output";
+"preset.dest.ask" = "Choose a folder each time";
+"preset.dest.subfolder" = "Subfolder next to the originals";
+"preset.dest.fixed" = "A fixed folder";
+"preset.dest.askNote" = "You’ll be told how many photos, then asked for a folder.";
+"preset.dest.subfolderNote" = "Created in the folder the originals are in. If they are on a memory card or read-only disk, you’re asked for a folder instead and nothing is written to the card.";
+"preset.dest.fixedNote" = "Starts exporting as soon as you run it, with progress in the window. If no folder is chosen, you’ll be asked when you export.";
+"preset.templatePlaceholder" = "Empty = keep the original name";
+"preset.tokens" = "{name} original name, {date} capture date, {time} capture time, {seq} number. Existing files are never overwritten; 2, 3… is added.";
+"preset.choosePrompt" = "Use as Destination";
+"preset.chooseMessage" = "Photos exported with “%@” go in this folder";
+"preset.manage" = "Manage Presets…";
+"preset.menuEmpty" = "No presets yet";
+"preset.ask.prompt" = "Export Here";
+"preset.none" = "There is no preset %d";
+"preset.unavailableNote" = "The folder in this preset can’t be found or written to. Please choose another.";
+"preset.defaultSubfolder" = "Export";
+"preset.notWritableNote" = "The folder the originals are in can’t be written to. Please choose a folder.";
+"preset.set.picked" = "the %d selected photos";
+"preset.set.marked" = "the %d marked photos";
+"preset.set.shown" = "all %d photos shown";
+"preset.ask.messageSet" = "Export %2$@ with the preset “%1$@”.";
+"preset.summaryNoteSet" = "Preset “%1$@”, exported %2$@, saved in %3$@";
+"preset.confirm.title" = "Export with the preset “%@”?";
+"preset.confirm.where" = "Save to: %@";
+"preset.confirm.export" = "Export";
+"preset.saveAs" = "Save as Preset…";
+"preset.saveAs.title" = "Save as Preset";
+"preset.saveAs.info" = "Name this preset. The format, quality and options are saved as they are now.";
+"preset.saveAs.save" = "Save as Preset";
+"preset.saveAs.fullTitle" = "You already have %d presets";
+"preset.saveAs.fullInfo" = "Delete one in Manage Presets first, then save the new one.";
+"preset.saveAs.doneTitle" = "Saved as the preset “%@”";
+"preset.saveAs.doneInfoKey" = "Shortcut %@. Use it from File › Export with Preset, where Manage Presets is too.";
+"preset.saveAs.doneInfo" = "Use it from File › Export with Preset, where Manage Presets is too.";

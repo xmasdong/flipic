@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Salvando…";
 "msg.rotHint" = "Visualização girada · ⌘⌥S para salvar no arquivo";
 "about.body" = "■ SOBRE
-Um visualizador de imagens nativo para macOS: abertura instantânea, navegação fluida por pastas, zoom por gestos e EXIF num relance. As fotos são processadas no seu Mac: sem coleta de dados, sem contas. Só se conecta para verificar atualizações, baixar o modelo de reconhecimento, ativar o Pro ou enviar o feedback que você escrever.
+Um visualizador de imagens nativo para macOS: abertura instantânea, navegação fluida por pastas, zoom por gestos e EXIF num relance. As fotos são processadas no seu Mac: sem coleta de dados pessoais, sem contas. Só se conecta para verificar atualizações, baixar o modelo de reconhecimento, ativar o Pro ou enviar o feedback que você escrever.
 
 ■ COMO USAR
 Arraste uma pasta ou imagem para esta janela para navegar; ou clique direito numa imagem no Finder e abra com o Flipic.
@@ -293,7 +293,7 @@ Arraste uma pasta ou imagem para abrir";
 "set.update" = "Atualizações:";
 "set.autoUpdate" = "Procurar automaticamente (uma vez por dia)";
 "set.checkNow" = "Verificar agora";
-"set.updateNote" = "Por padrão o Flipic não se conecta à internet. Com esta opção, ele verifica no máximo uma vez por dia, pedindo ao site só o número da versão mais recente, sem enviar dados.";
+"set.updateNote" = "Por padrão, uma verificação por dia. Só são enviados a versão do app, há quanto tempo foi instalado (uma de três faixas: menos de 7 dias, 7–29 dias, 30 dias ou mais) e se o Pro está ativado. Nada que identifique você.";
 "set.hdr" = "HDR:";
 "set.hdrCheck" = "Mostrar realces HDR";
 "set.hdrNote" = "Fotos HDR do iPhone e de outras câmeras mostram realces mais claros que o branco normal, como no Pré-Visualização. Usam o dobro de memória.";
@@ -1000,3 +1000,69 @@ Arraste uma pasta ou imagem para abrir";
 "msg.markReadOnly" = "Este cartão é somente leitura; a marca que já estava nele não pode ser removida";
 "rating.readOnly" = "Este cartão é somente leitura; a classificação não foi salva";
 "tag.readOnly" = "Este cartão é somente leitura; a etiqueta de cor não foi salva";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "Exportar com predefinição";
+"pro.f.presets" = "Predefinições de exportação";
+"pro.list.presets" = "Predefinições de exportação: exporte um lote em uma etapa com o formato, o lado maior, o tamanho e os nomes que um veículo pede";
+"pro.presets" = "Predefinições de exportação:";
+"pro.presetsNote" = "Salve formato, lado maior, tamanho do arquivo, nomes e destino como uma predefinição. Pressione ⌥⌘1–⌥⌘9, ou use Arquivo › Exportar com predefinição, para exportar as fotos selecionadas em uma etapa.";
+"sc.a.preset" = "Exportar com a predefinição %d";
+"sc.a.presetNamed" = "Exportar com predefinição: %@";
+"preset.title" = "Predefinições de exportação";
+"preset.intro" = "Salve suas configurações de exportação habituais como predefinições e exporte um lote de fotos em uma etapa. Até %d predefinições, em Arquivo › Exportar com predefinição.";
+"preset.add" = "Adicionar";
+"preset.duplicate" = "Duplicar";
+"preset.delete" = "Excluir";
+"preset.up" = "Subir";
+"preset.down" = "Descer";
+"preset.done" = "Concluído";
+"preset.empty" = "Nenhuma predefinição ainda. Clique em Adicionar para criar uma.";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "No máximo %d predefinições";
+"preset.newName" = "Predefinição %d";
+"preset.copyName" = "%@ cópia";
+"preset.deleteConfirm" = "Excluir a predefinição “%@”?";
+"preset.deleteInfo" = "Apenas a predefinição é excluída. As fotos já exportadas não são afetadas.";
+"preset.name" = "Nome:";
+"preset.namePlaceholder" = "ex.: Agência";
+"preset.format" = "Formato:";
+"preset.options" = "Opções:";
+"preset.saveTo" = "Salvar em:";
+"preset.fileName" = "Nome do arquivo:";
+"preset.example" = "Exemplo:";
+"preset.exampleTip" = "Para uma foto chamada “%@”, 1ª saída";
+"preset.dest.ask" = "Escolher uma pasta a cada vez";
+"preset.dest.subfolder" = "Subpasta ao lado dos originais";
+"preset.dest.fixed" = "Uma pasta fixa";
+"preset.dest.askNote" = "Você é avisado de quantas fotos são e depois escolhe uma pasta.";
+"preset.dest.subfolderNote" = "Criada na pasta dos originais. Se estiverem em um cartão de memória ou disco somente leitura, você escolhe uma pasta e nada é gravado no cartão.";
+"preset.dest.fixedNote" = "A exportação começa assim que você executa, com o progresso na janela. Se nenhuma pasta foi escolhida, você será perguntado ao exportar.";
+"preset.templatePlaceholder" = "Vazio = manter o nome original";
+"preset.tokens" = "{name} nome original, {date} data da captura, {time} hora da captura, {seq} número. Arquivos existentes nunca são sobrescritos; é acrescentado 2, 3…";
+"preset.choosePrompt" = "Usar como destino";
+"preset.chooseMessage" = "As fotos exportadas com “%@” ficam nesta pasta";
+"preset.manage" = "Gerenciar predefinições…";
+"preset.menuEmpty" = "Nenhuma predefinição ainda";
+"preset.ask.prompt" = "Exportar aqui";
+"preset.none" = "Não existe a predefinição %d";
+"preset.unavailableNote" = "A pasta desta predefinição não foi encontrada ou não pode ser gravada. Escolha outra.";
+"preset.defaultSubfolder" = "Exportação";
+"preset.notWritableNote" = "Não é possível gravar na pasta dos originais. Escolha uma pasta.";
+"preset.set.picked" = "as %d fotos selecionadas";
+"preset.set.marked" = "as %d fotos marcadas";
+"preset.set.shown" = "todas as %d fotos exibidas";
+"preset.ask.messageSet" = "Exportar %2$@ com a predefinição “%1$@”.";
+"preset.summaryNoteSet" = "Predefinição “%1$@”, exportadas %2$@, salvas em %3$@";
+"preset.confirm.title" = "Exportar com a predefinição “%@”?";
+"preset.confirm.where" = "Salvar em: %@";
+"preset.confirm.export" = "Exportar";
+"preset.saveAs" = "Salvar como predefinição…";
+"preset.saveAs.title" = "Salvar como predefinição";
+"preset.saveAs.info" = "Dê um nome a esta predefinição. Formato, qualidade e opções são salvos como estão agora.";
+"preset.saveAs.save" = "Salvar";
+"preset.saveAs.fullTitle" = "Você já tem %d predefinições";
+"preset.saveAs.fullInfo" = "Exclua uma em Gerenciar predefinições e salve a nova.";
+"preset.saveAs.doneTitle" = "Salvo como a predefinição “%@”";
+"preset.saveAs.doneInfoKey" = "Atalho %@. Use em Arquivo › Exportar com predefinição, onde também fica Gerenciar predefinições.";
+"preset.saveAs.doneInfo" = "Use em Arquivo › Exportar com predefinição, onde também fica Gerenciar predefinições.";

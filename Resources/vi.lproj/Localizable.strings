@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Đang lưu…";
 "msg.rotHint" = "Đã xoay khung xem · ⌘⌥S để lưu vào tệp";
 "about.body" = "■ GIỚI THIỆU
-Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Ảnh chỉ được xử lý trên máy Mac của bạn, không thu thập dữ liệu, không cần tài khoản. Ứng dụng chỉ kết nối mạng khi kiểm tra cập nhật, tải mô hình nhận dạng, kích hoạt Pro hoặc gửi góp ý bạn viết.
+Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Ảnh chỉ được xử lý trên máy Mac của bạn, không thu thập dữ liệu cá nhân, không cần tài khoản. Ứng dụng chỉ kết nối mạng khi kiểm tra cập nhật, tải mô hình nhận dạng, kích hoạt Pro hoặc gửi góp ý bạn viết.
 
 ■ CÁCH DÙNG
 Kéo thư mục hoặc ảnh vào cửa sổ để duyệt; hoặc nhấp phải ảnh trong Finder và mở bằng Flipic.
@@ -293,7 +293,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.update" = "Cập nhật:";
 "set.autoUpdate" = "Tự động kiểm tra (mỗi ngày một lần)";
 "set.checkNow" = "Kiểm tra ngay";
-"set.updateNote" = "Mặc định Flipic không kết nối mạng. Khi bật, mỗi ngày nó chỉ hỏi trang web số phiên bản mới nhất tối đa một lần và không gửi dữ liệu nào.";
+"set.updateNote" = "Mặc định kiểm tra mỗi ngày một lần. Mỗi lần chỉ gửi: phiên bản ứng dụng, đã cài được bao lâu (một trong ba khoảng: dưới 7 ngày, 7–29 ngày, từ 30 ngày trở lên) và Pro đã được kích hoạt hay chưa. Không có gì để nhận ra bạn.";
 "set.hdr" = "HDR:";
 "set.hdrCheck" = "Hiển thị vùng sáng HDR";
 "set.hdrNote" = "Ảnh HDR từ iPhone và máy ảnh khác sẽ có vùng sáng sáng hơn màu trắng thường, giống trong Xem trước. Ảnh HDR dùng gấp đôi bộ nhớ.";
@@ -1000,3 +1000,69 @@ Kéo thư mục hoặc ảnh vào để mở";
 "msg.markReadOnly" = "Thẻ này chỉ đọc nên không bỏ được dấu đã có";
 "rating.readOnly" = "Thẻ này chỉ đọc nên chưa lưu được xếp hạng";
 "tag.readOnly" = "Thẻ này chỉ đọc nên chưa lưu được thẻ màu";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "Xuất theo cài đặt sẵn";
+"pro.f.presets" = "Cài đặt sẵn xuất ảnh";
+"pro.list.presets" = "Cài đặt sẵn xuất ảnh: xuất cả loạt chỉ trong một bước với định dạng, cạnh dài, dung lượng và tên tệp mà toà soạn yêu cầu";
+"pro.presets" = "Cài đặt sẵn xuất ảnh:";
+"pro.presetsNote" = "Lưu định dạng, cạnh dài, dung lượng tệp, tên tệp và nơi lưu thành một cài đặt sẵn. Nhấn ⌥⌘1–⌥⌘9 hoặc dùng Tệp › Xuất theo cài đặt sẵn để xuất các ảnh đã chọn chỉ trong một bước.";
+"sc.a.preset" = "Xuất theo cài đặt sẵn %d";
+"sc.a.presetNamed" = "Xuất theo cài đặt sẵn: %@";
+"preset.title" = "Cài đặt sẵn xuất ảnh";
+"preset.intro" = "Lưu các thiết lập xuất ảnh hay dùng thành cài đặt sẵn và xuất cả loạt ảnh chỉ trong một bước. Tối đa %d cài đặt, dùng trong Tệp › Xuất theo cài đặt sẵn.";
+"preset.add" = "Thêm";
+"preset.duplicate" = "Nhân bản";
+"preset.delete" = "Xoá";
+"preset.up" = "Lên";
+"preset.down" = "Xuống";
+"preset.done" = "Xong";
+"preset.empty" = "Chưa có cài đặt sẵn. Bấm Thêm để tạo.";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "Tối đa %d cài đặt sẵn";
+"preset.newName" = "Cài đặt sẵn %d";
+"preset.copyName" = "%@ bản sao";
+"preset.deleteConfirm" = "Xoá cài đặt sẵn “%@”?";
+"preset.deleteInfo" = "Chỉ xoá cài đặt sẵn. Những ảnh đã xuất không bị ảnh hưởng.";
+"preset.name" = "Tên:";
+"preset.namePlaceholder" = "vd. Hãng tin";
+"preset.format" = "Định dạng:";
+"preset.options" = "Tuỳ chọn:";
+"preset.saveTo" = "Lưu vào:";
+"preset.fileName" = "Tên tệp:";
+"preset.example" = "Ví dụ:";
+"preset.exampleTip" = "Với ảnh tên “%@”, tệp xuất thứ 1";
+"preset.dest.ask" = "Chọn thư mục mỗi lần";
+"preset.dest.subfolder" = "Thư mục con cạnh ảnh gốc";
+"preset.dest.fixed" = "Một thư mục cố định";
+"preset.dest.askNote" = "Bạn sẽ được cho biết số ảnh, rồi chọn thư mục.";
+"preset.dest.subfolderNote" = "Tạo trong thư mục chứa ảnh gốc. Nếu ảnh nằm trên thẻ nhớ hoặc ổ đĩa chỉ đọc, bạn sẽ được yêu cầu chọn thư mục và không có gì được ghi lên thẻ.";
+"preset.dest.fixedNote" = "Bắt đầu xuất ngay khi chạy, tiến độ hiện trong cửa sổ. Nếu chưa chọn thư mục, bạn sẽ được hỏi khi xuất.";
+"preset.templatePlaceholder" = "Để trống = giữ tên gốc";
+"preset.tokens" = "{name} tên gốc, {date} ngày chụp, {time} giờ chụp, {seq} số thứ tự. Tệp đã có không bao giờ bị ghi đè; sẽ thêm 2, 3…";
+"preset.choosePrompt" = "Dùng làm nơi lưu";
+"preset.chooseMessage" = "Ảnh xuất bằng “%@” sẽ được đặt trong thư mục này";
+"preset.manage" = "Quản lý cài đặt sẵn…";
+"preset.menuEmpty" = "Chưa có cài đặt sẵn";
+"preset.ask.prompt" = "Xuất vào đây";
+"preset.none" = "Không có cài đặt sẵn %d";
+"preset.unavailableNote" = "Không tìm thấy thư mục của cài đặt sẵn này hoặc không ghi được. Hãy chọn thư mục khác.";
+"preset.defaultSubfolder" = "Xuất";
+"preset.notWritableNote" = "Không ghi được vào thư mục chứa ảnh gốc. Hãy chọn một thư mục.";
+"preset.set.picked" = "%d ảnh đã chọn";
+"preset.set.marked" = "%d ảnh đã đánh dấu";
+"preset.set.shown" = "tất cả %d ảnh đang hiển thị";
+"preset.ask.messageSet" = "Xuất %2$@ theo cài đặt sẵn “%1$@”.";
+"preset.summaryNoteSet" = "Cài đặt sẵn “%1$@”, đã xuất: %2$@, lưu tại %3$@";
+"preset.confirm.title" = "Xuất theo cài đặt sẵn “%@”?";
+"preset.confirm.where" = "Lưu vào: %@";
+"preset.confirm.export" = "Xuất";
+"preset.saveAs" = "Lưu thành cài đặt sẵn…";
+"preset.saveAs.title" = "Lưu thành cài đặt sẵn";
+"preset.saveAs.info" = "Đặt tên cho cài đặt sẵn này. Định dạng, chất lượng và tuỳ chọn được lưu đúng như hiện tại.";
+"preset.saveAs.save" = "Lưu";
+"preset.saveAs.fullTitle" = "Bạn đã có %d cài đặt sẵn";
+"preset.saveAs.fullInfo" = "Hãy xoá một cái trong Quản lý cài đặt sẵn rồi lưu cái mới.";
+"preset.saveAs.doneTitle" = "Đã lưu thành cài đặt sẵn “%@”";
+"preset.saveAs.doneInfoKey" = "Phím tắt %@. Dùng trong Tệp › Xuất theo cài đặt sẵn, nơi cũng có Quản lý cài đặt sẵn.";
+"preset.saveAs.doneInfo" = "Dùng trong Tệp › Xuất theo cài đặt sẵn, nơi cũng có Quản lý cài đặt sẵn.";

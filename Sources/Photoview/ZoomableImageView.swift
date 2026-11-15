@@ -1154,6 +1154,8 @@ final class ZoomableImageView: NSView {
     var debugHasImage: Bool { image != nil }
     var debugContentsAnimating: Bool { imageLayer.animation(forKey: "fade") != nil }
     func debugToggle(at p: CGPoint) { toggleFitActual(at: p) }
+    var debugScale: CGFloat { scale }
+    func zoom(toFitMultiple m: CGFloat) { zoom(to: min(fitScale, 4) * m, anchor: CGPoint(x: bounds.midX, y: bounds.midY), animated: true) }
     func debugImagePoint(_ p: CGPoint) -> CGPoint {
         CGPoint(x: (p.x - origin.x) / scale, y: (p.y - origin.y) / scale)
     }

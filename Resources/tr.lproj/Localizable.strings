@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Kaydediliyor…";
 "msg.rotHint" = "Görünüm döndürüldü · ⌘⌥S ile dosyaya kaydedin";
 "about.body" = "■ HAKKINDA
-macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Fotoğraflar yalnızca Mac'inizde işlenir; veri toplama yok, hesap yok. Yalnızca güncellemeleri denetlemek, tanıma modelini indirmek, Pro'yu etkinleştirmek veya yazdığınız geri bildirimi göndermek için internete bağlanır.
+macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Fotoğraflar yalnızca Mac'inizde işlenir; kişisel veri toplama yok, hesap yok. Yalnızca güncellemeleri denetlemek, tanıma modelini indirmek, Pro'yu etkinleştirmek veya yazdığınız geri bildirimi göndermek için internete bağlanır.
 
 ■ KULLANIM
 Gezinmek için bir klasörü veya resmi bu pencereye sürükleyin; ya da Finder'da bir resme sağ tıklayıp Flipic ile açın.
@@ -293,7 +293,7 @@ Açmak için klasör veya resim sürükleyin";
 "set.update" = "Güncellemeler:";
 "set.autoUpdate" = "Otomatik denetle (günde bir kez)";
 "set.checkNow" = "Şimdi denetle";
-"set.updateNote" = "Flipic varsayılan olarak internete bağlanmaz. Açıksa en fazla günde bir kez, siteden yalnızca en son sürüm numarasını ister ve hiçbir veri göndermez.";
+"set.updateNote" = "Varsayılan olarak günde bir kez denetler. Yalnızca uygulama sürümü, kurulumun ne kadar önce yapıldığı (üç aralıktan biri: 7 günden az, 7–29 gün, 30 gün veya daha fazla) ve Pro’nun etkin olup olmadığı gönderilir. Sizi tanımlayan hiçbir şey yok.";
 "set.hdr" = "HDR:";
 "set.hdrCheck" = "HDR parlak alanlarını göster";
 "set.hdrNote" = "iPhone ve diğer kameraların HDR fotoğraflarında parlak alanlar normal beyazdan daha parlak görünür (Önizleme'deki gibi). HDR fotoğraflar iki kat bellek kullanır.";
@@ -1000,3 +1000,69 @@ Açmak için klasör veya resim sürükleyin";
 "msg.markReadOnly" = "Bu kart salt okunur; üzerindeki mevcut işaret kaldırılamaz";
 "rating.readOnly" = "Bu kart salt okunur; puan kaydedilmedi";
 "tag.readOnly" = "Bu kart salt okunur; renk etiketi kaydedilmedi";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "Ön ayarla dışa aktar";
+"pro.f.presets" = "Dışa aktarma ön ayarları";
+"pro.list.presets" = "Dışa aktarma ön ayarları: bir yayının istediği biçim, uzun kenar, dosya boyutu ve dosya adlarıyla toplu dışa aktarımı tek adımda yapın";
+"pro.presets" = "Dışa aktarma ön ayarları:";
+"pro.presetsNote" = "Biçimi, uzun kenarı, dosya boyutunu, dosya adlarını ve kayıt yerini ön ayar olarak kaydedin. Seçili fotoğrafları tek adımda dışa aktarmak için ⌥⌘1–⌥⌘9 tuşlarına basın veya Dosya › Ön ayarla dışa aktar’ı kullanın.";
+"sc.a.preset" = "%d. ön ayarla dışa aktar";
+"sc.a.presetNamed" = "Ön ayarla dışa aktar: %@";
+"preset.title" = "Dışa aktarma ön ayarları";
+"preset.intro" = "Sık kullandığınız dışa aktarma ayarlarını ön ayar olarak kaydedin ve bir grup fotoğrafı tek adımda dışa aktarın. En fazla %d ön ayar; Dosya › Ön ayarla dışa aktar’da kullanılır.";
+"preset.add" = "Ekle";
+"preset.duplicate" = "Çoğalt";
+"preset.delete" = "Sil";
+"preset.up" = "Yukarı";
+"preset.down" = "Aşağı";
+"preset.done" = "Bitti";
+"preset.empty" = "Henüz ön ayar yok. Oluşturmak için Ekle’ye tıklayın.";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "En fazla %d ön ayar";
+"preset.newName" = "Ön ayar %d";
+"preset.copyName" = "%@ kopyası";
+"preset.deleteConfirm" = "“%@” ön ayarı silinsin mi?";
+"preset.deleteInfo" = "Yalnızca ön ayar silinir. Daha önce dışa aktardığınız fotoğraflar etkilenmez.";
+"preset.name" = "Ad:";
+"preset.namePlaceholder" = "örn. Ajans";
+"preset.format" = "Biçim:";
+"preset.options" = "Seçenekler:";
+"preset.saveTo" = "Kaydedilecek yer:";
+"preset.fileName" = "Dosya adı:";
+"preset.example" = "Örnek:";
+"preset.exampleTip" = "“%@” adlı fotoğraf için 1. çıktı";
+"preset.dest.ask" = "Her seferinde klasör seç";
+"preset.dest.subfolder" = "Orijinallerin yanında alt klasör";
+"preset.dest.fixed" = "Sabit bir klasör";
+"preset.dest.askNote" = "Önce kaç fotoğraf olduğu söylenir, sonra klasör sorulur.";
+"preset.dest.subfolderNote" = "Orijinallerin bulunduğu klasörde oluşturulur. Hafıza kartında veya salt okunur bir diskteyse bunun yerine klasör seçmeniz istenir ve karta hiçbir şey yazılmaz.";
+"preset.dest.fixedNote" = "Çalıştırır çalıştırmaz dışa aktarma başlar, ilerleme pencerede görünür. Klasör seçilmediyse dışa aktarırken sorulur.";
+"preset.templatePlaceholder" = "Boş = özgün adı koru";
+"preset.tokens" = "{name} özgün ad, {date} çekim tarihi, {time} çekim saati, {seq} sıra numarası. Var olan dosyaların üzerine yazılmaz; 2, 3… eklenir.";
+"preset.choosePrompt" = "Kayıt yeri olarak kullan";
+"preset.chooseMessage" = "“%@” ile dışa aktarılan fotoğraflar bu klasöre konur";
+"preset.manage" = "Ön ayarları yönet…";
+"preset.menuEmpty" = "Henüz ön ayar yok";
+"preset.ask.prompt" = "Buraya aktar";
+"preset.none" = "%d. ön ayar yok";
+"preset.unavailableNote" = "Bu ön ayardaki klasör bulunamadı veya yazılamıyor. Lütfen başka bir klasör seçin.";
+"preset.defaultSubfolder" = "Dışa aktarım";
+"preset.notWritableNote" = "Orijinallerin bulunduğu klasöre yazılamıyor. Lütfen bir klasör seçin.";
+"preset.set.picked" = "seçili %d fotoğraf";
+"preset.set.marked" = "işaretli %d fotoğraf";
+"preset.set.shown" = "gösterilen tüm %d fotoğraf";
+"preset.ask.messageSet" = "“%1$@” ön ayarıyla %2$@ dışa aktarılır.";
+"preset.summaryNoteSet" = "Ön ayar “%1$@”, dışa aktarılan: %2$@, kaydedildiği yer: %3$@";
+"preset.confirm.title" = "“%@” ön ayarıyla dışa aktarılsın mı?";
+"preset.confirm.where" = "Kaydedilecek yer: %@";
+"preset.confirm.export" = "Dışa aktar";
+"preset.saveAs" = "Ön ayar olarak kaydet…";
+"preset.saveAs.title" = "Ön ayar olarak kaydet";
+"preset.saveAs.info" = "Bu ön ayara bir ad verin. Biçim, kalite ve seçenekler şu anki haliyle kaydedilir.";
+"preset.saveAs.save" = "Kaydet";
+"preset.saveAs.fullTitle" = "Zaten %d ön ayarınız var";
+"preset.saveAs.fullInfo" = "Önce Ön Ayarları Yönet’ten birini silin, sonra yenisini kaydedin.";
+"preset.saveAs.doneTitle" = "“%@” ön ayarı olarak kaydedildi";
+"preset.saveAs.doneInfoKey" = "Kısayol %@. Dosya › Ön ayarla dışa aktar’dan kullanın; Ön Ayarları Yönet de orada.";
+"preset.saveAs.doneInfo" = "Dosya › Ön ayarla dışa aktar’dan kullanın; Ön Ayarları Yönet de orada.";

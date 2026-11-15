@@ -10,6 +10,10 @@ enum BatchConvert {
         var quality: Double
         var options: ExportOptions
         var outDir: URL
+        /// 已经是目标格式、也没有需要改的照片：false = 跳过（批量转换），true = 原样存一份（导出预设：要交的每张都得在文件夹里）
+        var alwaysWrite = false
+        /// 输出文件名（不含扩展名）：参数是原文件和这是第几个输出（从 1 数）；nil = 用原文件名
+        var outputName: ((URL, Int) -> String)?
     }
 
     struct Summary {
@@ -100,13 +104,30 @@ enum BatchConvert {
         for (i, url) in urls.enumerated() {
             if isCancelled() { sum.cancelled = true; break }
             autoreleasepool {
-                guard needsWork(url, settings: s) else { sum.skipped += 1; return }
+                let work = needsWork(url, settings: s)
+                guard work || s.alwaysWrite else { sum.skipped += 1; return }
+                let base = s.outputName?(url, sum.converted + 1) ?? url.deletingPathExtension().lastPathComponent
+                if !work {
+                    // 没有什么要改的：原样存一份，不重新压缩
+                    guard let dest = claim(s.outDir, base: base, ext: s.ext) else {
+                        sum.failed += 1; sum.failedNames.append(url.lastPathComponent)
+                        return
+                    }
+                    do { try Data(contentsOf: url, options: .mappedIfSafe).write(to: dest, options: .atomic) } catch {
+                        try? FileManager.default.removeItem(at: dest)
+                        sum.failed += 1; sum.failedNames.append(url.lastPathComponent)
+                        return
+                    }
+                    sum.converted += 1
+                    sum.outputs.append(dest)
+                    return
+                }
                 guard let img = ImageLoader.decodedFull(url: url),
                       let out = ImageExporter.encode(img, source: url, uti: s.uti, quality: s.quality, options: s.options, cancelled: isCancelled) else {
                     if isCancelled() { sum.cancelled = true } else { sum.failed += 1; sum.failedNames.append(url.lastPathComponent) }
                     return
                 }
-                guard let dest = claim(s.outDir, base: url.deletingPathExtension().lastPathComponent, ext: s.ext) else {
+                guard let dest = claim(s.outDir, base: base, ext: s.ext) else {
                     sum.failed += 1; sum.failedNames.append(url.lastPathComponent)
                     return
                 }

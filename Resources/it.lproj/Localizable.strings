@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Salvataggio…";
 "msg.rotHint" = "Vista ruotata · ⌘⌥S per salvare nel file";
 "about.body" = "■ INFORMAZIONI
-Un visualizzatore di immagini nativo per macOS: apertura immediata, navigazione fluida tra cartelle, zoom a gesti ed EXIF a colpo d'occhio. Le foto vengono elaborate sul tuo Mac: nessuna raccolta dati, nessun account. Si connette solo per controllare gli aggiornamenti, scaricare il modello di riconoscimento, attivare Pro o inviare il feedback che scrivi.
+Un visualizzatore di immagini nativo per macOS: apertura immediata, navigazione fluida tra cartelle, zoom a gesti ed EXIF a colpo d'occhio. Le foto vengono elaborate sul tuo Mac: nessuna raccolta di dati personali, nessun account. Si connette solo per controllare gli aggiornamenti, scaricare il modello di riconoscimento, attivare Pro o inviare il feedback che scrivi.
 
 ■ UTILIZZO
 Trascina una cartella o un'immagine nella finestra per sfogliare; oppure clic destro su un'immagine nel Finder e apri con Flipic.
@@ -293,7 +293,7 @@ Trascina una cartella o un'immagine per aprire";
 "set.update" = "Aggiornamenti:";
 "set.autoUpdate" = "Controlla automaticamente (una volta al giorno)";
 "set.checkNow" = "Controlla ora";
-"set.updateNote" = "Flipic di norma non si collega a internet. Se attivi questa opzione, controlla al massimo una volta al giorno chiedendo al sito solo il numero dell’ultima versione, senza inviare dati.";
+"set.updateNote" = "Per impostazione predefinita, un controllo al giorno. Vengono inviati solo la versione dell’app, da quanto tempo è installata (una di tre fasce: meno di 7 giorni, 7–29 giorni, 30 giorni o più) e se Pro è attivato. Nulla che ti identifichi.";
 "set.hdr" = "HDR:";
 "set.hdrCheck" = "Mostra le alte luci HDR";
 "set.hdrNote" = "Le foto HDR di iPhone e altre fotocamere mostrano alte luci più luminose del bianco normale, come in Anteprima. Usano il doppio della memoria.";
@@ -1000,3 +1000,69 @@ Trascina una cartella o un'immagine per aprire";
 "msg.markReadOnly" = "Questa scheda è di sola lettura: il contrassegno già presente non può essere rimosso";
 "rating.readOnly" = "Questa scheda è di sola lettura: la valutazione non è stata salvata";
 "tag.readOnly" = "Questa scheda è di sola lettura: l’etichetta colore non è stata salvata";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "Esporta con preset";
+"pro.f.presets" = "Preset di esportazione";
+"pro.list.presets" = "Preset di esportazione: esporta un gruppo in un solo passaggio con formato, lato lungo, dimensione e nomi file richiesti da una testata";
+"pro.presets" = "Preset di esportazione:";
+"pro.presetsNote" = "Salva formato, lato lungo, dimensione del file, nomi file e destinazione come preset. Premi ⌥⌘1–⌥⌘9, oppure usa File › Esporta con preset, per esportare le foto selezionate in un solo passaggio.";
+"sc.a.preset" = "Esporta con il preset %d";
+"sc.a.presetNamed" = "Esporta con preset: %@";
+"preset.title" = "Preset di esportazione";
+"preset.intro" = "Salva le tue impostazioni di esportazione abituali come preset ed esporta un gruppo di foto in un solo passaggio. Fino a %d preset, in File › Esporta con preset.";
+"preset.add" = "Aggiungi";
+"preset.duplicate" = "Duplica";
+"preset.delete" = "Elimina";
+"preset.up" = "Su";
+"preset.down" = "Giù";
+"preset.done" = "Fine";
+"preset.empty" = "Nessun preset. Fai clic su Aggiungi per crearne uno.";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "Fino a %d preset";
+"preset.newName" = "Preset %d";
+"preset.copyName" = "%@ copia";
+"preset.deleteConfirm" = "Eliminare il preset “%@”?";
+"preset.deleteInfo" = "Viene eliminato solo il preset. Le foto già esportate non cambiano.";
+"preset.name" = "Nome:";
+"preset.namePlaceholder" = "es. Agenzia";
+"preset.format" = "Formato:";
+"preset.options" = "Opzioni:";
+"preset.saveTo" = "Salva in:";
+"preset.fileName" = "Nome file:";
+"preset.example" = "Esempio:";
+"preset.exampleTip" = "Per una foto chiamata “%@”, 1ª uscita";
+"preset.dest.ask" = "Scegli una cartella ogni volta";
+"preset.dest.subfolder" = "Sottocartella accanto agli originali";
+"preset.dest.fixed" = "Una cartella fissa";
+"preset.dest.askNote" = "Ti viene detto quante foto sono, poi ti viene chiesta una cartella.";
+"preset.dest.subfolderNote" = "Viene creata nella cartella degli originali. Se sono su una scheda di memoria o su un disco di sola lettura, ti viene chiesta una cartella e sulla scheda non si scrive nulla.";
+"preset.dest.fixedNote" = "L’esportazione parte subito, con l’avanzamento nella finestra. Se non hai scelto una cartella, ti verrà chiesta durante l’esportazione.";
+"preset.templatePlaceholder" = "Vuoto = mantieni il nome originale";
+"preset.tokens" = "{name} nome originale, {date} data di scatto, {time} ora di scatto, {seq} numero. I file esistenti non vengono mai sovrascritti; si aggiunge 2, 3…";
+"preset.choosePrompt" = "Usa come destinazione";
+"preset.chooseMessage" = "Le foto esportate con “%@” vanno in questa cartella";
+"preset.manage" = "Gestisci preset…";
+"preset.menuEmpty" = "Nessun preset";
+"preset.ask.prompt" = "Esporta qui";
+"preset.none" = "Non esiste il preset %d";
+"preset.unavailableNote" = "La cartella di questo preset non è stata trovata o non è scrivibile. Sceglierne un’altra.";
+"preset.defaultSubfolder" = "Esportazione";
+"preset.notWritableNote" = "Non è possibile scrivere nella cartella degli originali. Scegli una cartella.";
+"preset.set.picked" = "le %d foto selezionate";
+"preset.set.marked" = "le %d foto contrassegnate";
+"preset.set.shown" = "tutte le %d foto mostrate";
+"preset.ask.messageSet" = "Esporta %2$@ con il preset “%1$@”.";
+"preset.summaryNoteSet" = "Preset “%1$@”, esportate %2$@, salvate in %3$@";
+"preset.confirm.title" = "Esportare con il preset “%@”?";
+"preset.confirm.where" = "Salva in: %@";
+"preset.confirm.export" = "Esporta";
+"preset.saveAs" = "Salva come preset…";
+"preset.saveAs.title" = "Salva come preset";
+"preset.saveAs.info" = "Dai un nome a questo preset. Formato, qualità e opzioni vengono salvati come sono ora.";
+"preset.saveAs.save" = "Salva";
+"preset.saveAs.fullTitle" = "Hai già %d preset";
+"preset.saveAs.fullInfo" = "Elimina prima un preset in Gestisci preset, poi salva quello nuovo.";
+"preset.saveAs.doneTitle" = "Salvato come preset “%@”";
+"preset.saveAs.doneInfoKey" = "Scorciatoia %@. Si usa da File › Esporta con preset, dove c’è anche Gestisci preset.";
+"preset.saveAs.doneInfo" = "Si usa da File › Esporta con preset, dove c’è anche Gestisci preset.";

@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Guardando…";
 "msg.rotHint" = "Vista girada · ⌘⌥S para guardar en el archivo";
 "about.body" = "■ ACERCA DE
-Un visor de imágenes nativo para macOS: apertura instantánea, navegación fluida por carpetas, zoom por gestos y EXIF de un vistazo. Las fotos se procesan en tu Mac: sin recopilación de datos ni cuentas. Solo se conecta para buscar actualizaciones, descargar el modelo de reconocimiento, activar Pro o enviar los comentarios que escribas.
+Un visor de imágenes nativo para macOS: apertura instantánea, navegación fluida por carpetas, zoom por gestos y EXIF de un vistazo. Las fotos se procesan en tu Mac: sin recopilación de datos personales ni cuentas. Solo se conecta para buscar actualizaciones, descargar el modelo de reconocimiento, activar Pro o enviar los comentarios que escribas.
 
 ■ USO
 Arrastra una carpeta o imagen a esta ventana para verla; o clic derecho sobre una imagen en el Finder y abrir con Flipic.
@@ -293,7 +293,7 @@ Arrastra una carpeta o imagen para abrir";
 "set.update" = "Actualizaciones:";
 "set.autoUpdate" = "Buscar actualizaciones automáticamente (una vez al día)";
 "set.checkNow" = "Comprobar ahora";
-"set.updateNote" = "Flipic no se conecta a internet por omisión. Si lo activas, comprueba como mucho una vez al día y solo pide al sitio el número de la última versión, sin enviar datos.";
+"set.updateNote" = "Por omisión, una comprobación al día. Solo se envía la versión de la app, cuánto hace que se instaló (uno de tres tramos: menos de 7 días, 7–29 días, 30 días o más) y si Pro está activado. Nada que te identifique.";
 "set.hdr" = "HDR:";
 "set.hdrCheck" = "Mostrar luces HDR";
 "set.hdrNote" = "Las fotos HDR del iPhone y otras cámaras muestran luces más brillantes que el blanco normal, como en Vista Previa. Usan el doble de memoria.";
@@ -1000,3 +1000,69 @@ Arrastra una carpeta o imagen para abrir";
 "msg.markReadOnly" = "Esta tarjeta es de solo lectura; no se puede quitar la marca que ya tenía";
 "rating.readOnly" = "Esta tarjeta es de solo lectura; la valoración no se guardó";
 "tag.readOnly" = "Esta tarjeta es de solo lectura; la etiqueta de color no se guardó";
+
+/* 导出预设 / Export Presets */
+"menu.presets" = "Exportar con preajuste";
+"pro.f.presets" = "Preajustes de exportación";
+"pro.list.presets" = "Preajustes de exportación: exporta un lote en un solo paso con el formato, el lado largo, el tamaño y los nombres que pide un medio";
+"pro.presets" = "Preajustes de exportación:";
+"pro.presetsNote" = "Guarda el formato, el lado largo, el tamaño del archivo, los nombres y el destino como preajuste. Pulsa ⌥⌘1–⌥⌘9, o usa Archivo › Exportar con preajuste, para exportar las fotos seleccionadas en un solo paso.";
+"sc.a.preset" = "Exportar con el preajuste %d";
+"sc.a.presetNamed" = "Exportar con preajuste: %@";
+"preset.title" = "Preajustes de exportación";
+"preset.intro" = "Guarda tus ajustes de exportación habituales como preajustes y exporta un lote de fotos en un solo paso. Hasta %d preajustes, en Archivo › Exportar con preajuste.";
+"preset.add" = "Añadir";
+"preset.duplicate" = "Duplicar";
+"preset.delete" = "Eliminar";
+"preset.up" = "Subir";
+"preset.down" = "Bajar";
+"preset.done" = "Hecho";
+"preset.empty" = "Aún no hay preajustes. Pulsa Añadir para crear uno.";
+"preset.count" = "%1$d / %2$d";
+"preset.full" = "Hasta %d preajustes";
+"preset.newName" = "Preajuste %d";
+"preset.copyName" = "%@ copia";
+"preset.deleteConfirm" = "¿Eliminar el preajuste «%@»?";
+"preset.deleteInfo" = "Solo se elimina el preajuste. Las fotos ya exportadas no se ven afectadas.";
+"preset.name" = "Nombre:";
+"preset.namePlaceholder" = "p. ej. Agencia";
+"preset.format" = "Formato:";
+"preset.options" = "Opciones:";
+"preset.saveTo" = "Guardar en:";
+"preset.fileName" = "Nombre del archivo:";
+"preset.example" = "Ejemplo:";
+"preset.exampleTip" = "Para una foto llamada «%@», 1.ª salida";
+"preset.dest.ask" = "Elegir una carpeta cada vez";
+"preset.dest.subfolder" = "Subcarpeta junto a los originales";
+"preset.dest.fixed" = "Una carpeta fija";
+"preset.dest.askNote" = "Se te dirá cuántas fotos son y luego se te pedirá una carpeta.";
+"preset.dest.subfolderNote" = "Se crea en la carpeta de los originales. Si están en una tarjeta de memoria o en un disco de solo lectura, se te pide una carpeta y no se escribe nada en la tarjeta.";
+"preset.dest.fixedNote" = "La exportación empieza en cuanto lo ejecutas, con el progreso en la ventana. Si no hay carpeta elegida, se te preguntará al exportar.";
+"preset.templatePlaceholder" = "Vacío = conservar el nombre original";
+"preset.tokens" = "{name} nombre original, {date} fecha de captura, {time} hora de captura, {seq} número. Los archivos existentes nunca se sobrescriben; se añade 2, 3…";
+"preset.choosePrompt" = "Usar como destino";
+"preset.chooseMessage" = "Las fotos exportadas con «%@» se guardan en esta carpeta";
+"preset.manage" = "Gestionar preajustes…";
+"preset.menuEmpty" = "Aún no hay preajustes";
+"preset.ask.prompt" = "Exportar aquí";
+"preset.none" = "No hay preajuste %d";
+"preset.unavailableNote" = "La carpeta de este preajuste no se encuentra o no se puede escribir en ella. Elige otra.";
+"preset.defaultSubfolder" = "Exportación";
+"preset.notWritableNote" = "No se puede escribir en la carpeta de los originales. Elige una carpeta.";
+"preset.set.picked" = "las %d fotos seleccionadas";
+"preset.set.marked" = "las %d fotos marcadas";
+"preset.set.shown" = "las %d fotos mostradas";
+"preset.ask.messageSet" = "Exportar %2$@ con el preajuste «%1$@».";
+"preset.summaryNoteSet" = "Preajuste «%1$@», exportadas %2$@, guardadas en %3$@";
+"preset.confirm.title" = "¿Exportar con el preajuste «%@»?";
+"preset.confirm.where" = "Guardar en: %@";
+"preset.confirm.export" = "Exportar";
+"preset.saveAs" = "Guardar como preajuste…";
+"preset.saveAs.title" = "Guardar como preajuste";
+"preset.saveAs.info" = "Ponle nombre a este preajuste. El formato, la calidad y las opciones se guardan como están ahora.";
+"preset.saveAs.save" = "Guardar";
+"preset.saveAs.fullTitle" = "Ya tienes %d preajustes";
+"preset.saveAs.fullInfo" = "Elimina uno en Gestionar preajustes y guarda el nuevo.";
+"preset.saveAs.doneTitle" = "Guardado como preajuste «%@»";
+"preset.saveAs.doneInfoKey" = "Atajo %@. Úsalo desde Archivo › Exportar con preajuste, donde también está Gestionar preajustes.";
+"preset.saveAs.doneInfo" = "Úsalo desde Archivo › Exportar con preajuste, donde también está Gestionar preajustes.";

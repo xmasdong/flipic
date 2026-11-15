@@ -125,6 +125,12 @@ final class ExportAccessory {
         stack.alignment = .leading
         stack.spacing = 10
         stack.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 6, right: 0)
+        #if FLIPIC_PRO
+        let presetButton = NSButton(title: L10n.t("preset.saveAs", "存为预设…"), target: nil, action: nil)
+        presetButton.controlSize = .small
+        presetButton.bezelStyle = .rounded
+        stack.addArrangedSubview(presetButton)
+        #endif
         let width: CGFloat = 320
         for v in [popup, q, sep, estimateLabel] { v.translatesAutoresizingMaskIntoConstraints = false; v.widthAnchor.constraint(equalToConstant: width).isActive = true }
         estimateLabel.preferredMaxLayoutWidth = width
@@ -136,6 +142,10 @@ final class ExportAccessory {
         slider.action = #selector(sliderMoved(_:))
         popup.target = self
         popup.action = #selector(popupMoved(_:))
+        #if FLIPIC_PRO
+        presetButton.target = self
+        presetButton.action = #selector(saveAsPreset(_:))
+        #endif
         self.onChange = onChange
         options.onChange = { [weak self] in self?.onChange?() }
     }
@@ -146,6 +156,14 @@ final class ExportAccessory {
         onChange?()
     }
     @objc private func popupMoved(_ s: NSPopUpButton) { onChange?() }
+
+    #if FLIPIC_PRO
+    /// 「存为预设…」：按现在的格式、质量和选项建一个预设，保存位置是「每次问」
+    @objc private func saveAsPreset(_ sender: NSButton) {
+        PresetSaveAs.run(from: sender, format: popup.titleOfSelectedItem ?? "JPEG", quality: slider.integerValue,
+                         options: options.options, destination: PresetDestination(kind: .ask))
+    }
+    #endif
 }
 
 /// 批量转换对话框的附件：格式、质量、导出选项、保存位置
@@ -160,7 +178,7 @@ final class BatchAccessory: NSObject {
     private(set) var outDir: URL
     /// 为 true 表示默认位置因为原来的盘是存储卡或只读的而改了
     private(set) var redirected: Bool
-    private var userChose = false
+    private(set) var userChose = false
     private let source: URL
 
     init(source: URL, formatIndex: Int, quality: Double) {
@@ -203,6 +221,12 @@ final class BatchAccessory: NSObject {
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 10
+        #if FLIPIC_PRO
+        let presetButton = NSButton(title: L10n.t("preset.saveAs", "存为预设…"), target: self, action: #selector(saveAsPreset(_:)))
+        presetButton.controlSize = .small
+        presetButton.bezelStyle = .rounded
+        stack.addArrangedSubview(presetButton)
+        #endif
         let width: CGFloat = 340
         for v in [popup, q, sep1, sep2, pathRow, noteLabel] { v.translatesAutoresizingMaskIntoConstraints = false; v.widthAnchor.constraint(equalToConstant: width).isActive = true }
         noteLabel.preferredMaxLayoutWidth = width
@@ -230,6 +254,23 @@ final class BatchAccessory: NSObject {
         note += " " + L10n.t("bc.sameNote", "已经是这个格式的照片，没设限制时会跳过。")
         noteLabel.stringValue = note
     }
+
+    #if FLIPIC_PRO
+    /// 现在的输出位置对应的预设保存位置：默认的「原照片旁的 Converted-…」是子文件夹，自己选的是固定文件夹，存储卡改放「图片」的是每次问
+    var presetDestination: PresetDestination {
+        if userChose { return PresetDestination(kind: .fixed, path: outDir.path) }
+        if redirected { return PresetDestination(kind: .ask) }
+        return PresetDestination(kind: .subfolder, subfolder: outDir.lastPathComponent)
+    }
+
+    @objc private func saveAsPreset(_ sender: NSButton) {
+        PresetSaveAs.run(from: sender, format: BatchConvert.formats[max(0, min(formatIndex, 2))].name, quality: Int(slider.doubleValue),
+                         options: options.options, destination: presetDestination)
+    }
+    #endif
+
+    /// 自测用：当作用户在选择面板里选了这个文件夹
+    func debugChoose(_ url: URL) { outDir = url; userChose = true; refresh() }
 
     @objc private func sliderMoved(_ s: NSSlider) { qualityLabel.stringValue = L10n.f("bc.quality", "质量 %d", Int(s.doubleValue)) }
 

@@ -597,6 +597,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--presettest"), i + 1 < CommandLine.arguments.count {
+            // --presettest <工作文件夹> [RAW 文件夹]：导出预设的存取、改名模板、批量导出、存储卡回退、管理窗口和菜单，最后一行 PRESETTEST checks=N failures=M
+            let outDir = CommandLine.arguments[i + 1]
+            let raw = i + 2 < CommandLine.arguments.count && !CommandLine.arguments[i + 2].hasPrefix("-") ? CommandLine.arguments[i + 2] : nil
+            // 定时器回调里跑（不是主队列的块里）：测试里要转运行循环等后台线程回到主队列，在主队列的块里转，回来的块不会执行
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runPresetTest(outDir: outDir, rawDir: raw)
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--protest"), i + 3 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
             let folder = CommandLine.arguments[i + 2]
@@ -971,6 +981,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runTagTest(outDir: outDir, photos: photos)
             }
+        } else if CommandLine.arguments.contains("--updatestattest") {
+            UpdateStatSelfTest.run()   // 检查更新请求的区间、Pro 标记和默认开启的自测，最后一行 UPDATESTAT
         } else if let i = CommandLine.arguments.firstIndex(of: "--exportopttest"), i + 1 < CommandLine.arguments.count {
             // --exportopttest <工作文件夹> [RAW 文件]：导出选项（元数据、长边、大小限制、sRGB、批量转换）的自测，最后一行 EXPORTTEST summary
             let outDir = CommandLine.arguments[i + 1]
@@ -1128,6 +1140,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                     self?.windowController?.runCleanupTest(outDir: outDir)
+                }
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--peekpagingtest"), i + 1 < CommandLine.arguments.count {
+            // --peekpagingtest <工作文件夹>：贴合预览里横竖图来回翻页，窗口和照片尺寸不能越翻越小，最后一行 PEEKTEST checks=N failures=M
+            let work = CommandLine.arguments[i + 1]
+            let realFolder: String? = i + 2 < CommandLine.arguments.count ? CommandLine.arguments[i + 2] : nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                if let realFolder {
+                    self?.windowController?.open(URL(fileURLWithPath: realFolder + "/hebei-S3.jpg"))
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                        (self?.windowController?.contentViewController as? ViewerViewController)?.runPeekPagingRealTest(workDir: work)
+                    }
+                    return
+                }
+                ViewerViewController.makePeekPagingPhotos(workDir: work)
+                self?.windowController?.open(URL(fileURLWithPath: work + "/photos/01-land.jpg"))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runPeekPagingTest(workDir: work)
                 }
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--peektest"), i + 2 < CommandLine.arguments.count {
@@ -1524,6 +1554,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             sendItem.submenu = sendMenu
             m.addItem(sendItem)
             proItems.append(sendItem)
+            // 导出预设：子菜单由 PresetMenu 随预设和快捷键的改动重建
+            let presetItem = NSMenuItem(title: L10n.t("menu.presets", "按预设导出"), action: nil, keyEquivalent: "")
+            presetItem.submenu = PresetMenu.shared.menu
+            m.addItem(presetItem)
+            proItems.append(presetItem)
             #endif
             item(m, L10n.t("menu.share", "分享…"), #selector(ViewerViewController.shareCurrent(_:)))
             m.addItem(.separator())

@@ -492,7 +492,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.trash", "删除：")), trashLocal],
             spacerRow(note(L10n.t("set.trashNote", "打开后，外置盘（U 盘、移动硬盘）上的照片删除时先复制到本机废纸篓再删原文件，所有删除都在一处查看和清空。代价是要多复制一份，几百张 RAW 会慢一些，也会临时占本机空间；复制不成时仍然退回该盘自己的废纸篓。关掉后和访达一样，进该盘自己的废纸篓。"))),
             [label(L10n.t("set.update", "更新：")), updateRow],
-            spacerRow(note(L10n.t("set.updateNote", "Flipic 默认不联网。打开后每天最多查一次，只向官网请求最新版本号，不发送任何数据。"))),
+            spacerRow(note(L10n.t("set.updateNote", "默认每天自动检查一次。每次只发送：软件版本号、安装了多久（不到 7 天、7–29 天、30 天或以上三档之一）、Pro 是否已激活。不含任何能识别你的信息。"))),
         ])
         // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 后期软件 7 说明 8 外观 9 说明 10 后台 11 删除 12 说明 13 更新 14 说明
         for r in [1, 4, 7, 9, 12, 14] { g.row(at: r).topPadding = -4 }
