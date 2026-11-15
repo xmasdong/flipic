@@ -80,6 +80,7 @@ enum ShortcutAction: String, CaseIterable {
     case rename, trash, edit, reveal, exportAs, exportFolder, saveRotation
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
+    case tagRed, tagYellow, tagGreen, tagBlue
     case mark, markedOnly, compare, compare4, comparePane, compareSync
     case beforeAfter, splitByRating, switchPair
     case pinWindow, share, playLive, zoomEye, workbench
@@ -115,6 +116,17 @@ enum ShortcutAction: String, CaseIterable {
         }
     }
 
+    /// 颜色标签快捷键对应的颜色（Lightroom 的习惯：6 红 7 黄 8 绿 9 蓝）
+    var tagColor: TagColor? {
+        switch self {
+        case .tagRed: return .red
+        case .tagYellow: return .yellow
+        case .tagGreen: return .green
+        case .tagBlue: return .blue
+        default: return nil
+        }
+    }
+
     enum Group: CaseIterable {
         case global, browse, rating, pick, view, file, tools
         var title: String {
@@ -140,7 +152,7 @@ enum ShortcutAction: String, CaseIterable {
         case .pinWindow, .playLive: return .view
         case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench, .copyText: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
-        case .mark, .markedOnly, .searchContent, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating, .switchPair: return .pick
+        case .tagRed, .tagYellow, .tagGreen, .tagBlue, .mark, .markedOnly, .searchContent, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating, .switchPair: return .pick
         }
     }
 
@@ -180,6 +192,7 @@ enum ShortcutAction: String, CaseIterable {
         case .wallpaper: return L10n.t("menu.wallpaper", "设为桌面壁纸")
         case .rate0: return L10n.t("rating.none", "未评分")
         case .rate1, .rate2, .rate3, .rate4, .rate5: return Rating.stars(stars ?? 0)
+        case .tagRed, .tagYellow, .tagGreen, .tagBlue: return L10n.f("sc.a.tag", "颜色标签：%@", tagColor?.title ?? "")
         case .mark: return L10n.t("sc.a.mark", "标记 / 取消标记")
         case .markedOnly: return L10n.t("menu.markedOnly", "只看已标记")
         case .compare: return L10n.t("menu.compare2", "并排对比 2 张")
@@ -237,6 +250,10 @@ enum ShortcutAction: String, CaseIterable {
         case .rate4: return KeyCombo(keyCode: 21, chars: "4")
         case .rate5: return KeyCombo(keyCode: 23, chars: "5")
         case .rate0: return nil
+        case .tagRed: return KeyCombo(keyCode: 22, chars: "6")
+        case .tagYellow: return KeyCombo(keyCode: 26, chars: "7")
+        case .tagGreen: return KeyCombo(keyCode: 28, chars: "8")
+        case .tagBlue: return KeyCombo(keyCode: 25, chars: "9")
         case .mark: return KeyCombo(keyCode: 35, chars: "p")
         case .markedOnly: return KeyCombo(keyCode: 35, mods: .shift, chars: "p")
         case .compare: return KeyCombo(keyCode: 8, chars: "c")

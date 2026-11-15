@@ -557,6 +557,7 @@ final class ImageLoader {
 
     func evict(url: URL) {
         Video.forget(url)
+        EmbeddedPreview.forget(url)
         previewCache.remove(url)
         fullCache.remove(url)
         thumbCache.remove(url)

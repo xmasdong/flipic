@@ -216,16 +216,7 @@ enum Straighten {
         guard let dest = CGImageDestinationCreateWithURL(tmp as CFURL, (type ?? srcType as String) as CFString, 1, nil) else { return .failed }
         // 连同文件里原样的 XMP / IPTC 一起带过去（只按属性字典写会丢图库自定义的 XMP、IPTC 的拍摄日期等）；
         // 方向和像素尺寸改成新的。读不出元数据的格式退回只写属性字典
-        if let meta = CGImageSourceCopyMetadataAtIndex(src, 0, nil), let fixed = CGImageMetadataCreateMutableCopy(meta) {
-            CGImageMetadataSetValueMatchingImageProperty(fixed, kCGImagePropertyTIFFDictionary, kCGImagePropertyTIFFOrientation, 1 as CFNumber)
-            CGImageMetadataSetValueMatchingImageProperty(fixed, kCGImagePropertyExifDictionary, kCGImagePropertyExifPixelXDimension, rendered.width as CFNumber)
-            CGImageMetadataSetValueMatchingImageProperty(fixed, kCGImagePropertyExifDictionary, kCGImagePropertyExifPixelYDimension, rendered.height as CFNumber)
-            // 老式 IPTC 的创建日期：系统写文件时是从 XMP 的 photoshop:DateCreated 换算出来的，那里写得不标准（28 Jan 2016）
-            // 就换算不了，整项丢掉。认得出来的先改成标准写法，日期就能留下
-            let datePath = "photoshop:DateCreated" as CFString
-            if let raw = CGImageMetadataCopyStringValueWithPath(fixed, nil, datePath) as String?, let iso = ExifReader.normalizedXMPDate(raw) {
-                CGImageMetadataSetValueWithPath(fixed, nil, datePath, iso as CFString)
-            }
+        if let fixed = ImageExporter.fixedMetadata(from: src, width: rendered.width, height: rendered.height) {
             let options: [String: Any] = [kCGImageDestinationLossyCompressionQuality as String: 0.95, kCGImagePropertyOrientation as String: 1]
             CGImageDestinationAddImageAndMetadata(dest, rendered, fixed, options as CFDictionary)
         } else {

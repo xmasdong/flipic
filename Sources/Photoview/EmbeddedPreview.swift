@@ -23,6 +23,9 @@ enum EmbeddedPreview {
         return found
     }
 
+    /// 文件改过（比如无损转了方向）后丢掉缓存的结果
+    static func forget(_ url: URL) { cache.removeObject(forKey: url as NSURL) }
+
     /// 解出内嵌 JPEG，按 RAW 记录的方向转正；maxPixel 给出时最长边不超过它
     static func image(_ url: URL, maxPixel: CGFloat? = nil) -> CGImage? {
         guard let f = locate(url),
@@ -56,10 +59,13 @@ enum EmbeddedPreview {
         guard let data = try? Data(contentsOf: url, options: .alwaysMapped), data.count > 16 else { return nil }
         // RAW 自己的方向（TIFF 类 RAW 的 IFD0、CR3 的 CMT1）：ImageIO 解不了像素时通常还读得出元数据
         var rawOrientation: Int?
-        if let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
+        if !RawOrientation.forceUnrecognised,
+           let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
            let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] {
             rawOrientation = props[kCGImagePropertyOrientation as String] as? Int
         }
+        // 系统不认识这台相机时 ImageIO 读不出方向：改读文件自己的方向标记（无损转向写的就是它）
+        if rawOrientation == nil { rawOrientation = RawOrientation.fileOrientation(url) }
         return data.withUnsafeBytes { raw -> Found? in
             guard let base = raw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return nil }
             let n = raw.count

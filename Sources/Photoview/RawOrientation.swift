@@ -11,19 +11,59 @@ enum RawOrientation {
 
     private static let cycle = [1: 6, 6: 3, 3: 8, 8: 1]
 
-    /// 这个文件能不能无损转（格式对、系统认识、找得到方向标记、方向不是镜像）
+    /// 自测专用：为 true 时 systemOrientation 一律返回 nil，模拟系统不认识这台相机。只由 --rawrotatetest 设置
+    nonisolated(unsafe) static var forceUnrecognised = false
+
+    /// 这个文件能不能无损转（格式对、找得到方向标记、方向不是镜像）。
+    /// 系统认识就用系统读到的方向；系统不认识（新相机、旧系统）就读文件自己的方向标记，所有标记必须一致
     static func canRotate(_ url: URL) -> Bool {
         guard extensions.contains(url.pathExtension.lowercased()),
-              let current = systemOrientation(url), cycle[current] != nil,
+              let (current, _) = currentOrientation(url), cycle[current] != nil,
               let h = try? FileHandle(forReadingFrom: url) else { return false }
         defer { try? h.close() }
         return !(orientationSpots(h).isEmpty)
     }
 
+    /// 当前方向和它的来源（true = 系统读到的）。系统不认识时读文件里所有标记，不一致或没有则 nil
+    private static func currentOrientation(_ url: URL) -> (Int, Bool)? {
+        if let o = systemOrientation(url) { return (o, true) }
+        if let o = fileOrientation(url) { return (o, false) }
+        return nil
+    }
+
+    /// 文件里所有方向标记的共同值（0 当 1）；没有标记或各处不一致返回 nil
+    static func fileOrientation(_ url: URL) -> Int? {
+        guard extensions.contains(url.pathExtension.lowercased()),
+              let h = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? h.close() }
+        return spotValues(h, orientationSpots(h))
+    }
+
+    /// 自测用：方向标记在文件里的字节位置
+    static func spotOffsets(_ url: URL) -> [UInt64] {
+        guard let h = try? FileHandle(forReadingFrom: url) else { return [] }
+        defer { try? h.close() }
+        return orientationSpots(h).map(\.offset)
+    }
+
+    private static func spotValues(_ h: FileHandle, _ spots: [Spot]) -> Int? {
+        guard !spots.isEmpty else { return nil }
+        var common: Int?
+        for s in spots {
+            h.seek(toFileOffset: s.offset)
+            guard let d = try? h.read(upToCount: 2), d.count == 2 else { return nil }
+            let raw = s.littleEndian ? Int(d[d.startIndex]) | Int(d[d.startIndex + 1]) << 8 : Int(d[d.startIndex]) << 8 | Int(d[d.startIndex + 1])
+            let v = raw == 0 ? 1 : raw
+            if let c = common, c != v { return nil }
+            common = v
+        }
+        return common
+    }
+
     /// 转 turns 个 90°（顺时针）后写到 out。out 可以等于 url（覆盖原图）。成功返回 true
     static func write(url: URL, clockwiseTurns turns: Int, to out: URL) -> Bool {
         let turns = ((turns % 4) + 4) % 4
-        guard let current = systemOrientation(url), cycle[current] != nil else { return false }
+        guard let (current, fromSystem) = currentOrientation(url), cycle[current] != nil else { return false }
         var o = current
         for _ in 0..<turns { o = cycle[o]! }
         let fm = FileManager.default
@@ -40,8 +80,23 @@ enum RawOrientation {
         }
         try? h.synchronize()
         try? h.close()
-        // 用系统重新读：方向要等于算出来的值
-        guard systemOrientation(tmp) == o else { return fail() }
+        if fromSystem {
+            // 用系统重新读：方向要等于算出来的值
+            guard systemOrientation(tmp) == o else { return fail() }
+        } else {
+            // 系统读不了：重新打开解析，每处标记都要等于新值，文件大小不变；系统若还给出方向，也要等于新值
+            guard let h2 = try? FileHandle(forReadingFrom: tmp) else { return fail() }
+            let again = spotValues(h2, orientationSpots(h2))
+            try? h2.close()
+            let sizeBefore = (try? fm.attributesOfItem(atPath: url.path)[.size] as? UInt64) ?? nil
+            let sizeAfter = (try? fm.attributesOfItem(atPath: tmp.path)[.size] as? UInt64) ?? nil
+            guard again == o, sizeBefore != nil, sizeBefore == sizeAfter else { return fail() }
+            if let src = CGImageSourceCreateWithURL(tmp as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
+               let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any],
+               let io = props[kCGImagePropertyOrientation as String] as? Int {
+                guard (io == 0 ? 1 : io) == o else { return fail() }
+            }
+        }
         do {
             if fm.fileExists(atPath: out.path) { _ = try fm.replaceItemAt(out, withItemAt: tmp) }
             else { try fm.moveItem(at: tmp, to: out) }
@@ -49,8 +104,9 @@ enum RawOrientation {
         } catch { return fail() }
     }
 
-    /// 系统读到的方向；系统不认识这种 RAW（读不出尺寸）时为 nil：不认识的新相机只能看内嵌预览，改了也确认不了，不碰
+    /// 系统读到的方向；系统不认识这种 RAW（读不出尺寸）时为 nil，改读文件自己的方向标记
     private static func systemOrientation(_ url: URL) -> Int? {
+        if forceUnrecognised { return nil }
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
               let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any],
               (props[kCGImagePropertyPixelWidth as String] as? Int ?? 0) > 0 else { return nil }

@@ -80,6 +80,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             TrashSelfTest.run(folder: URL(fileURLWithPath: CommandLine.arguments[i + 1]))
             return
         }
+        // 打开文件夹耗时：--listbench <文件夹>
+        if let i = CommandLine.arguments.firstIndex(of: "--listbench"), i + 1 < CommandLine.arguments.count {
+            TagSelfTest.listBench(folder: URL(fileURLWithPath: CommandLine.arguments[i + 1]))
+        }
         // 上次删掉的照片（可能是退出或升级前删的）如果还在废纸篓里，读回来，菜单里的「放回」「显示」照样可用
         ViewerViewController.lastTrash = TrashLedger.load()
         // 废纸篓浏览窗口截图：--trashbrowseshot <png>
@@ -958,6 +962,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runInfoShot(outDir: outDir, folder: folder)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--rawrotatetest"), i + 2 < CommandLine.arguments.count {
+            // --rawrotatetest <工作文件夹> <RAW 文件夹>：RAW 无损转向（系统认识 / 不认识两条路径），最后一行 RAWROTATE checks=N failures=M
+            RawRotateSelfTest.run(workDir: CommandLine.arguments[i + 1], rawDir: CommandLine.arguments[i + 2])
+        } else if let i = CommandLine.arguments.firstIndex(of: "--tagtest"), i + 2 < CommandLine.arguments.count {
+            // --tagtest <工作文件夹> <照片文件夹>：访达颜色标签、复制文件名的自测，打 TAGTEST 行，最后一行是汇总
+            let outDir = CommandLine.arguments[i + 1], photos = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runTagTest(outDir: outDir, photos: photos)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--exportopttest"), i + 1 < CommandLine.arguments.count {
+            // --exportopttest <工作文件夹> [RAW 文件]：导出选项（元数据、长边、大小限制、sRGB、批量转换）的自测，最后一行 EXPORTTEST summary
+            let outDir = CommandLine.arguments[i + 1]
+            let raw = i + 2 < CommandLine.arguments.count && !CommandLine.arguments[i + 2].hasPrefix("-") ? CommandLine.arguments[i + 2] : nil
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runExportOptionsTest(outDir: outDir, raw: raw)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--cardmarktest"), i + 1 < CommandLine.arguments.count {
+            // --cardmarktest <工作文件夹>：存储卡标记不写卡的自测（用 hdiutil 磁盘映像），最后一行 CARDTEST summary
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runCardMarkTest(outDir: outDir)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--translationtest"), i + 2 < CommandLine.arguments.count {
             // --translationtest <截图文件夹> <照片文件夹>：照片说明的翻译从按钮到译文走一遍（诊断用）
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
@@ -1514,6 +1540,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             item(m, L10n.t("menu.cut", "剪切"), #selector(NSText.cut(_:)), "x")
             item(m, L10n.t("menu.copy", "拷贝"), #selector(NSText.copy(_:)), "c")
+            item(m, L10n.t("menu.copyNames", "拷贝文件名"), #selector(ViewerViewController.copyFileNames(_:)))
+            item(m, L10n.t("menu.copyMarkedNames", "拷贝已标记照片的文件名"), #selector(ViewerViewController.copyMarkedFileNames(_:)))
             item(m, L10n.t("menu.paste", "粘贴"), #selector(NSText.paste(_:)), "v")
             item(m, L10n.t("menu.selectAll", "全选"), #selector(NSText.selectAll(_:)), "a")
         }
@@ -1558,6 +1586,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(ratingMenu, L10n.t("rating.none", "未评分"), #selector(ViewerViewController.setRatingMenu(_:))).tag = 0
             ratingItem.submenu = ratingMenu
             m.addItem(ratingItem)
+            let tagsItem = NSMenuItem(title: L10n.t("menu.tags", "颜色标签"), action: nil, keyEquivalent: "")
+            tagsItem.submenu = ViewerViewController.buildTagMenu()
+            m.addItem(tagsItem)
             item(m, L10n.t("menu.mark", "标记这张"), #selector(ViewerViewController.toggleMark(_:)))
             m.addItem(.separator())
             let filterItem = NSMenuItem(title: L10n.t("menu.ratingFilter", "只看星级"), action: nil, keyEquivalent: "")
@@ -1570,6 +1601,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             filterItem.submenu = filterMenu
             m.addItem(filterItem)
+            let tagFilterItem = NSMenuItem(title: L10n.t("menu.tagFilter", "只看颜色标签"), action: nil, keyEquivalent: "")
+            tagFilterItem.submenu = ViewerViewController.buildTagFilterMenu()
+            m.addItem(tagFilterItem)
             item(m, L10n.t("menu.markedOnly", "只看已标记"), #selector(ViewerViewController.toggleMarkedOnly(_:)))
             #if FLIPIC_PRO
             item(m, L10n.t("menu.searchContent", "按内容查找…"), #selector(ViewerViewController.searchContent(_:)))

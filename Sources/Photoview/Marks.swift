@@ -14,13 +14,32 @@ enum Marks {
         tagNames?.contains(tagName) ?? false
     }
 
+    /// 单个文件有没有标记：访达标签，或者（在存储卡上时）这台电脑记着的标记
     static func isMarked(_ url: URL) -> Bool {
-        isMarked(tagNames: (try? url.resourceValues(forKeys: [.tagNamesKey]))?.tagNames)
+        isMarked(tagNames: (try? url.resourceValues(forKeys: [.tagNamesKey]))?.tagNames) || CardMarks.isStoreMarked(url)
     }
 
-    /// 加上或去掉标签，保留文件原有的其他标签；成功返回 true
+    enum Result { case ok, readOnly, failed }
+
+    /// 加上或去掉标记；成功返回 true
     @discardableResult
-    static func set(_ on: Bool, for url: URL) -> Bool {
+    static func set(_ on: Bool, for url: URL) -> Bool { setResult(on, for: url) == .ok }
+
+    /// 同 set，失败时说明是不是因为卷只读。
+    /// 存储卡（Volumes.keepsMarksOffVolume）上标记记在这台电脑里，不往卡里写；卡上老版本打的访达标签照样认，
+    /// 取消这种标记要改卡上的文件：可写就去掉标签，只读就做不到
+    static func setResult(_ on: Bool, for url: URL) -> Result {
+        guard let vol = CardMarks.appSideVolume(for: url) else { return setTag(on, for: url) ? .ok : .failed }
+        CardMarks.set(on, for: url)
+        if !on, isMarked(tagNames: (try? url.resourceValues(forKeys: [.tagNamesKey]))?.tagNames) {
+            if vol.readOnly { return .readOnly }
+            return setTag(false, for: url) ? .ok : .failed
+        }
+        return .ok
+    }
+
+    /// 加上或去掉访达标签，保留文件原有的其他标签；成功返回 true
+    private static func setTag(_ on: Bool, for url: URL) -> Bool {
         var tags = readTags(url)
         // 标签存成「名称\n颜色序号」，没有颜色时只有名称
         tags.removeAll { $0 == tagName || $0.hasPrefix(tagName + "\n") }
@@ -32,7 +51,8 @@ enum Marks {
     /// resourceValues 会缓存，写完要用新的 URL 对象读回来确认
     private static func fresh(_ url: URL) -> URL { URL(fileURLWithPath: url.path) }
 
-    private static func readTags(_ url: URL) -> [String] {
+    /// 颜色标签（Tags.swift）读写同一个属性，所以不是 private
+    static func readTags(_ url: URL) -> [String] {
         let size = getxattr(url.path, attr, nil, 0, 0, 0)
         guard size > 0 else { return [] }
         var data = Data(count: size)
@@ -42,7 +62,7 @@ enum Marks {
         return list
     }
 
-    private static func writeTags(_ tags: [String], to url: URL) -> Bool {
+    static func writeTags(_ tags: [String], to url: URL) -> Bool {
         if tags.isEmpty {
             let r = removexattr(url.path, attr, 0)
             return r == 0 || errno == ENOATTR

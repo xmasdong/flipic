@@ -93,18 +93,14 @@ final class ViewerViewController: NSViewController {
     private var generation = 0
     private var slideshowTimer: Timer?
     var isProcessing = false
-    private var qualityLabel: NSTextField?
     private var flashItem: DispatchWorkItem?
     private var isFlashing = false
     private var exportEstimateWork: DispatchWorkItem?
     private var exportEstimateGeneration = 0
-    private var exportEstimateCache: [String: Int64] = [:]
-    private var exportFormatPopup: NSPopUpButton?
-    private var exportQualitySlider: NSSlider?
-    private var exportQualityLabel: NSTextField?
-    private var exportEstimateLabel: NSTextField?
-    private weak var exportSavePanel: NSSavePanel?
-    private var batchQualitySlider: NSSlider?
+    private var exportEstimateCache: [String: (bytes: Int64, quality: Int, edge: Int, met: Bool)] = [:]
+    var exportAccessory: ExportAccessory?
+    var exportEstimateLabel: NSTextField? { exportAccessory?.estimateLabel }
+    weak var exportSavePanel: NSSavePanel?
     private var aboutWindowController: NSWindowController?
 
     private static let exportFormats: [(name: String, uti: UTType, ext: String)] = [
@@ -1707,9 +1703,10 @@ final class ViewerViewController: NSViewController {
         }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let info = ExifReader.info(url: url)
+            let tags = FinderTags.listing(of: url)
             DispatchQueue.main.async {
                 guard let self, self.generation == gen, !self.exifPanel.isHidden, self.folder.current?.url == url else { return }
-                self.exifPanel.show(info, url: url, rating: self.currentRating, isVideo: self.currentIsVideo)
+                self.exifPanel.show(info, url: url, rating: self.currentRating, tags: tags, isVideo: self.currentIsVideo)
             }
         }
     }
@@ -1743,7 +1740,7 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 多选时是选中的那些，否则是当前这张
-    private var actionURLs: [URL] {
+    var actionURLs: [URL] {
         let picked = stripPicked
         if !picked.isEmpty { return picked }
         return folder.current.map { [$0.url] } ?? []
@@ -2006,6 +2003,8 @@ final class ViewerViewController: NSViewController {
             let stars = action.stars ?? 0
             let same = stars > 0 && !actionURLs.isEmpty && actionURLs.allSatisfy { ratingCache[$0] == stars }
             setRating(same ? 0 : stars)
+        case .tagRed, .tagYellow, .tagGreen, .tagBlue:
+            if let c = action.tagColor { toggleTagColor(c) }
         case .mark: toggleMark(nil)
         case .markedOnly: toggleMarkedOnly(nil)
         case .compare: toggleCompare(nil)
@@ -2174,7 +2173,11 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - HUD 临时提示
 
+    /// 自测用：最近一次 flash 的文字
+    var debugLastFlash = ""
+
     func flash(_ msg: String, seconds: Double = 2) {
+        debugLastFlash = msg
         isFlashing = true
         hudNameLabel.stringValue = msg
         hudDimsLabel.isHidden = true
@@ -2659,6 +2662,11 @@ final class ViewerViewController: NSViewController {
         for it in ratingMenu.items { it.target = self }
         rating.submenu = ratingMenu
         menu.addItem(rating)
+        let tags = NSMenuItem(title: L10n.t("menu.tags", "颜色标签"), action: nil, keyEquivalent: "")
+        let tagMenu = Self.buildTagMenu()
+        for it in tagMenu.items { it.target = self }
+        tags.submenu = tagMenu
+        menu.addItem(tags)
         add(markMenuTitle, #selector(toggleMark(_:)))
         add(L10n.t("menu.markedOnly", "只看已标记"), #selector(toggleMarkedOnly(_:)))
         add(L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(exportToFolder(_:)))
@@ -2726,7 +2734,10 @@ final class ViewerViewController: NSViewController {
                     self?.folder.setRating(nil, url: t)
                 }
                 self?.updateRatingLabel()
-                self?.flash(L10n.f("rating.failed", "评分没能写入：%@", failed.map(\.lastPathComponent).joined(separator: "、")), seconds: 4)
+                // 卡锁了写保护或是只读的盘：直说原因，不用笼统的「没能写入」
+                self?.flash(failed.contains { Volumes.info(for: $0)?.readOnly == true }
+                            ? L10n.t("rating.readOnly", "这张卡是只读的，评分没有写入")
+                            : L10n.f("rating.failed", "评分没能写入：%@", failed.map(\.lastPathComponent).joined(separator: "、")), seconds: 4)
             }
         }
     }
@@ -2780,6 +2791,7 @@ final class ViewerViewController: NSViewController {
         ])
         view.addSubview(ratingBadge)
         buildMarkBadge()
+        buildTagBadge()
         buildMarkedOnlyPill()
     }
 
@@ -2796,6 +2808,7 @@ final class ViewerViewController: NSViewController {
         markBadge.isHidden = !(folder.current?.marked ?? false) || peekSaved != nil || cleanup != nil || compareView != nil
         if compareView != nil { refreshCompareInfo() }
         markBadgeBottom.constant = ratingBadgeOffset(controls: false)
+        updateTagBadge()
         ratingLabel.stringValue = Rating.stars(r)
         ratingLabel.isHidden = r == 0 || badge
     }
@@ -2853,6 +2866,54 @@ final class ViewerViewController: NSViewController {
         ])
     }
 
+    /// 左下角、标记旁边的颜色标签圆点：当前这张有访达颜色标签时显示；没有标记时贴着左边，有标记时排在它右边
+    private let tagBadge = NSVisualEffectView()
+    private let tagBadgeDots = TagDotsView()
+    private var tagBadgeAfterMark: NSLayoutConstraint!
+    private var tagBadgeAtEdge: NSLayoutConstraint!
+
+    private func buildTagBadge() {
+        tagBadge.material = .hudWindow
+        tagBadge.blendingMode = .withinWindow
+        tagBadge.state = .active
+        tagBadge.wantsLayer = true
+        tagBadge.layer?.cornerRadius = 8
+        tagBadge.layer?.masksToBounds = true
+        tagBadge.translatesAutoresizingMaskIntoConstraints = false
+        tagBadge.isHidden = true
+        tagBadgeDots.diameter = 11
+        tagBadgeDots.step = 15
+        tagBadgeDots.translatesAutoresizingMaskIntoConstraints = false
+        tagBadge.addSubview(tagBadgeDots)
+        view.addSubview(tagBadge)
+        tagBadgeAfterMark = tagBadge.leadingAnchor.constraint(equalTo: markBadge.trailingAnchor, constant: 8)
+        tagBadgeAtEdge = tagBadge.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 14)
+        NSLayoutConstraint.activate([
+            tagBadgeDots.leadingAnchor.constraint(equalTo: tagBadge.leadingAnchor, constant: 8),
+            tagBadgeDots.trailingAnchor.constraint(equalTo: tagBadge.trailingAnchor, constant: -8),
+            tagBadgeDots.centerYAnchor.constraint(equalTo: tagBadge.centerYAnchor),
+            tagBadge.topAnchor.constraint(equalTo: markBadge.topAnchor),
+            tagBadge.bottomAnchor.constraint(equalTo: markBadge.bottomAnchor),
+            tagBadgeAtEdge,
+        ])
+    }
+
+    private func updateTagBadge() {
+        let colors = folder.current?.tagColors.colors ?? []
+        tagBadgeDots.colors = colors
+        tagBadge.isHidden = colors.isEmpty || peekSaved != nil || cleanup != nil || compareView != nil
+        tagBadge.toolTip = colors.map(\.title).joined(separator: "、")
+        // 两个约束同一时刻只开一个；先关后开，免得中途互相顶着
+        tagBadgeAfterMark.isActive = false
+        tagBadgeAtEdge.isActive = false
+        (markBadge.isHidden ? tagBadgeAtEdge : tagBadgeAfterMark).isActive = true
+    }
+
+    /// 自测用：左下角颜色标签圆点、提示条文字、顶部筛选条
+    var debugTagBadge: (hidden: Bool, colors: [TagColor]) { (tagBadge.isHidden, tagBadgeDots.colors) }
+    var debugFlashText: String { hudNameLabel.stringValue }
+    var debugFilterPill: (hidden: Bool, text: String) { (markedOnlyPill.isHidden, markedOnlyLabel.stringValue) }
+
     static func markMenuTitle(_ marked: Bool) -> String {
         marked ? L10n.t("menu.unmark", "取消标记") : L10n.t("menu.mark", "标记这张")
     }
@@ -2880,16 +2941,26 @@ final class ViewerViewController: NSViewController {
         for t in targets { folder.setMarked(on, url: t) }
         refreshMarks()
         let count = folder.markedCount
-        flash(on ? L10n.f("msg.marked", "已标记 · 共 %d 张", count) : L10n.f("msg.unmarked", "已取消标记 · 共 %d 张", count),
-              seconds: 1.2)
+        // 在存储卡上标记：记在这台电脑里、不写卡。这次运行里第一次标时说一声，以后不再说
+        let onCard = on && !CardMarks.noticeShown && targets.first.map { CardMarks.usesAppSide($0) } == true
+        if onCard {
+            CardMarks.noticeShown = true
+            flash(L10n.f("msg.markedCard", "已标记 · 共 %d 张。标记记在这台电脑上，没有写进存储卡", count), seconds: 3.5)
+        } else {
+            flash(on ? L10n.f("msg.marked", "已标记 · 共 %d 张", count) : L10n.f("msg.unmarked", "已取消标记 · 共 %d 张", count),
+                  seconds: 1.2)
+        }
         ratingQueue.async { [weak self] in
-            let failed = targets.filter { !Marks.set(on, for: $0) }
+            let results = targets.map { ($0, Marks.setResult(on, for: $0)) }
+            let failed = results.filter { $0.1 != .ok }.map(\.0)
             guard !failed.isEmpty else { return }
+            let readOnly = results.contains { $0.1 == .readOnly }
             DispatchQueue.main.async {
                 guard let self else { return }
                 for t in failed { self.folder.setMarked(!on, url: t) }
                 self.refreshMarks()
-                self.flash(L10n.f("msg.markFailed", "标记没能写入：%@", failed.map(\.lastPathComponent).joined(separator: "、")), seconds: 4)
+                self.flash(readOnly ? L10n.t("msg.markReadOnly", "这张卡是只读的，原来打的标记没法取消")
+                           : L10n.f("msg.markFailed", "标记没能写入：%@", failed.map(\.lastPathComponent).joined(separator: "、")), seconds: 4)
             }
         }
     }
@@ -2909,7 +2980,7 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 筛选条件变了：重建缩略图栏、显示符合条件的那张，顶部计数跟着变
-    private func filterDidChange() {
+    func filterDidChange() {
         prefetchedURLs.removeAll()
         filmstrip.collectionView.reloadData()
         filmstrip.scrollTo(index: folder.index)
@@ -3027,12 +3098,21 @@ final class ViewerViewController: NSViewController {
         if case .content = folder.filter { markedOnlyPill.isHidden = true }
         #endif
         switch folder.filter {
+        case .colorTag(let c):
+            markedOnlyPillIcon.isHidden = false
+            markedOnlyPillIcon.image = NSImage(systemSymbolName: "circle.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: 11, weight: .regular))
+            markedOnlyPillIcon.contentTintColor = c.color
+            markedOnlyLabel.stringValue = L10n.f("ui.tagPill", "只看「%1$@」标签 · %2$d / %3$d", c.title, folder.matchingCount, folder.totalCount)
         case .minRating(let n):
             markedOnlyPillIcon.isHidden = true
             markedOnlyLabel.stringValue = L10n.f("ui.ratingPill", "只看%1$@及以上 · %2$d / %3$d",
                                                  String(repeating: "★", count: n), folder.matchingCount, folder.totalCount)
         default:
             markedOnlyPillIcon.isHidden = false
+            markedOnlyPillIcon.image = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: 12, weight: .semibold))
+            markedOnlyPillIcon.contentTintColor = Self.markColor
             markedOnlyLabel.stringValue = L10n.f("ui.markedOnlyPill", "只看已标记 · %1$d / %2$d",
                                                  folder.markedCount, folder.totalCount)
         }
@@ -3093,6 +3173,7 @@ final class ViewerViewController: NSViewController {
     private func exportSummary(count: Int) -> String {
         switch folder.filter {
         case .marked: return L10n.f("exp.f.summaryMarked", "导出当前显示的 %d 张照片（已标记的）", count)
+        case .colorTag(let c): return L10n.f("exp.f.summaryTag", "导出当前显示的 %1$d 张照片（「%2$@」标签）", count, c.title)
         case .minRating(let n): return L10n.f("exp.f.summaryRating", "导出当前显示的 %1$d 张照片（%2$@及以上）", count, String(repeating: "★", count: n))
         case nil: return L10n.f("exp.f.summaryAll", "导出当前显示的 %d 张照片（整个文件夹）", count)
         #if FLIPIC_PRO
@@ -3160,8 +3241,14 @@ final class ViewerViewController: NSViewController {
             }
             for f in g.files {
                 let dest = target.appendingPathComponent(name).appendingPathExtension(f.pathExtension)
+                // 存储卡上的标记记在这台电脑里、不在文件上：要在复制或移动之前看，之后给新位置的文件打上正常的标记
+                let cardMarked = urls.contains(f) && CardMarks.isStoreMarked(f)
                 do {
                     if move { try fm.moveItem(at: f, to: dest) } else { try fm.copyItem(at: f, to: dest) }
+                    if cardMarked {
+                        Marks.set(true, for: dest)
+                        if move { CardMarks.set(false, for: f) }
+                    }
                     if urls.contains(f) { done.insert(f) }
                 } catch {
                     if urls.contains(f) { failed += 1 }
@@ -3789,91 +3876,93 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 批量转换格式
 
-    @objc private func qualityChanged(_ sender: NSSlider) {
-        qualityLabel?.stringValue = L10n.f("bc.quality", "质量 %d", Int(sender.doubleValue))
+    /// 要转换的照片：缩略图栏里多选了就是选中的，否则是当前显示的这些（已按标记、星级、颜色筛选）；视频不算
+    private func batchTargets() -> (urls: [URL], picked: Bool) {
+        let picked = stripPicked
+        let urls = (picked.isEmpty ? folder.items.map(\.url) : picked).filter { !Video.isVideo($0) }
+        return (urls, !picked.isEmpty)
     }
 
-    @objc private func batchFormatChanged(_ sender: NSPopUpButton) {
-        batchQualitySlider?.isEnabled = sender.indexOfSelectedItem != 1   // PNG 无损，质量滑杆禁用
-    }
-
-    private func buildBatchAlert() -> (NSAlert, NSPopUpButton, NSSlider) {
+    private func buildBatchAlert(source: URL, count: Int, picked: Bool) -> (NSAlert, BatchAccessory) {
         let alert = NSAlert()
         alert.messageText = L10n.t("bc.title", "批量转换格式")
-        alert.informativeText = L10n.f("bc.info", "将当前文件夹 %d 张图片转换后存入子文件夹 Converted-*（同名不同扩展名）。", folder.count)
-        let popup = NSPopUpButton(frame: NSRect(x: 0, y: 54, width: 240, height: 26))
-        popup.addItems(withTitles: ["JPEG", "PNG", "HEIC"])
-        popup.target = self
-        popup.action = #selector(batchFormatChanged(_:))
-        let slider = NSSlider(value: 85, minValue: 40, maxValue: 100, target: self,
-                              action: #selector(qualityChanged(_:)))
-        batchQualitySlider = slider
-        slider.frame = NSRect(x: 0, y: 26, width: 240, height: 24)
-        let label = NSTextField(labelWithString: L10n.f("bc.quality", "质量 %d", 85))
-        label.font = .systemFont(ofSize: 11)
-        label.frame = NSRect(x: 0, y: 4, width: 240, height: 18)
-        qualityLabel = label
-        let box = NSView(frame: NSRect(x: 0, y: 0, width: 240, height: 84))
-        box.addSubview(popup)
-        box.addSubview(slider)
-        box.addSubview(label)
-        alert.accessoryView = box
+        alert.informativeText = picked ? L10n.f("bc.info.picked", "将转换选中的 %d 张照片。", count)
+            : L10n.f("bc.info.shown", "将转换当前显示的 %d 张照片。", count)
+        let d = UserDefaults.standard
+        let acc = BatchAccessory(source: source, formatIndex: d.integer(forKey: "batch.format"),
+                                 quality: d.object(forKey: "batch.quality") as? Double ?? 85)
+        alert.accessoryView = acc.view
         alert.addButton(withTitle: L10n.t("bc.start", "开始转换"))
         alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
-        return (alert, popup, slider)
+        return (alert, acc)
     }
 
     @objc func batchConvert(_ sender: Any?) {
         guard !folder.items.isEmpty, !isProcessing else { return }
-        let (alert, popup, slider) = buildBatchAlert()
+        let (urls, picked) = batchTargets()
+        guard let first = urls.first else { return }
+        let (alert, acc) = buildBatchAlert(source: first, count: urls.count, picked: picked)
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        convertAll(popup.indexOfSelectedItem, quality: slider.doubleValue)
+        let settings = acc.settings
+        ExportOptions.saved = settings.options
+        UserDefaults.standard.set(acc.formatIndex, forKey: "batch.format")
+        UserDefaults.standard.set(settings.quality, forKey: "batch.quality")
+        convertAll(urls, settings: settings)
+    }
+
+    /// 自测用：和菜单里一样地组出批量转换对话框，不弹出
+    func debugBatchAlert() -> (NSAlert, BatchAccessory) {
+        let (urls, picked) = batchTargets()
+        return buildBatchAlert(source: urls[0], count: urls.count, picked: picked)
     }
 
     /// --shot 模式专用：以 sheet 弹出批量转换对话框（本进程渲染，可真实截取）
     private var shotBatchAlert: NSAlert?
     func presentBatchSheetForShot() {
-        guard let window = view.window else { return }
-        let (alert, _, _) = buildBatchAlert()
+        guard let window = view.window, let first = folder.items.first?.url else { return }
+        let (alert, _) = buildBatchAlert(source: first, count: folder.items.count, picked: false)
         shotBatchAlert = alert
         alert.beginSheetModal(for: window) { _ in }
     }
 
-    private func convertAll(_ index: Int, quality: Double) {
-        guard let current = folder.current else { return }
-        let table = [("public.jpeg", "jpg"), ("public.png", "png"), ("public.heic", "heic")]
-        let (uti, ext) = table[index]
-        let srcItems = folder.items.filter { !Video.isVideo($0.url) }
-        let outDir = current.url.deletingLastPathComponent().appendingPathComponent("Converted-\(ext)")
-        try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
+    /// 后台逐张转换，窗口上挂一个带进度和「取消」的 sheet；转完弹出小结
+    private func convertAll(_ urls: [URL], settings: BatchConvert.Settings) {
+        guard let window = view.window else { return }
         isProcessing = true
-        flash("转换中 0/\(srcItems.count)", seconds: 3600)
+        let progress = NSAlert()
+        progress.messageText = L10n.f("bc.progress", "正在转换 %1$d / %2$d", 0, urls.count)
+        progress.informativeText = " "
+        let bar = NSProgressIndicator(frame: NSRect(x: 0, y: 0, width: 300, height: 14))
+        bar.isIndeterminate = false
+        bar.minValue = 0
+        bar.maxValue = Double(urls.count)
+        progress.accessoryView = bar
+        progress.addButton(withTitle: L10n.t("alert.cancel", "取消"))
+        let cancelled = AtomicFlag()
+        var finished = false
+        progress.beginSheetModal(for: window) { _ in if !finished { cancelled.set() } }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            var ok = 0, fail = 0
-            for (i, item) in srcItems.enumerated() {
-                autoreleasepool {
-                    guard item.url.pathExtension.lowercased() != ext,
-                          let img = ImageLoader.decodedFull(url: item.url) else {
-                        fail += 1
-                        return
-                    }
-                    let outURL = outDir.appendingPathComponent(
-                        item.url.deletingPathExtension().lastPathComponent + "." + ext)
-                    guard let dest = CGImageDestinationCreateWithURL(outURL as CFURL, uti as CFString, 1, nil) else {
-                        fail += 1
-                        return
-                    }
-                    CGImageDestinationAddImage(dest, img,
-                                               [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
-                    if CGImageDestinationFinalize(dest) { ok += 1 } else { fail += 1 }
-                }
-                DispatchQueue.main.async { [weak self] in
-                    self?.flash(L10n.f("msg.converting", "转换中 %1$d/%2$d", i + 1, srcItems.count), seconds: 3600)
+            let sum = BatchConvert.run(urls, settings: settings, isCancelled: { cancelled.isSet }) { done in
+                DispatchQueue.main.async {
+                    bar.doubleValue = Double(done)
+                    progress.messageText = L10n.f("bc.progress", "正在转换 %1$d / %2$d", done, urls.count)
                 }
             }
-            DispatchQueue.main.async { [weak self] in
-                self?.isProcessing = false
-                self?.flash(L10n.f("msg.convertDone", "转换完成：成功 %1$d，失败 %2$d，输出在 Converted-%3$@/", ok, fail, ext), seconds: 4)
+            DispatchQueue.main.async {
+                finished = true
+                window.endSheet(progress.window)
+                guard let self else { return }
+                self.isProcessing = false
+                let done = NSAlert()
+                done.messageText = sum.cancelled ? L10n.t("bc.cancelledTitle", "转换已取消") : L10n.t("bc.doneTitle", "转换完成")
+                done.informativeText = BatchConvert.message(sum, limit: settings.options.maxBytes)
+                done.addButton(withTitle: L10n.t("bc.ok", "好"))
+                if let first = sum.outputs.first { done.addButton(withTitle: L10n.t("bc.reveal", "在访达中显示")); _ = first }
+                done.beginSheetModal(for: window) { resp in
+                    if resp == .alertSecondButtonReturn, let first = sum.outputs.first {
+                        NSWorkspace.shared.activateFileViewerSelecting([first])
+                    }
+                }
             }
         }
     }
@@ -3926,6 +4015,7 @@ final class ViewerViewController: NSViewController {
         }
         do {
             try fm.moveItem(at: item.url, to: folderURL.appendingPathComponent(candidate))
+            CardMarks.rename(from: item.url, to: folderURL.appendingPathComponent(candidate))
             Self.renameCompanions(of: item.url, to: folderURL.appendingPathComponent(candidate))
         } catch {
             flash(L10n.f("msg.renameFailed", "重命名失败： %@", error.localizedDescription))
@@ -3940,19 +4030,26 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 导出
 
-    /// 后台把当前图按视图上看到的样子（90° 旋转、拉直、裁剪）编码写入目标位置，完成后回主线程提示
+    /// 后台把当前图按视图上看到的样子（90° 旋转、拉直、裁剪）编码写入目标位置，完成后回主线程提示。
+    /// quality 是 40–100 的滑杆值（旧调用给的 0–1 也认）；options 默认用上次记下的
     func runExport(sourceURL: URL, turns: Int, degrees: Double = 0, crop: Straighten.CropSpec? = nil, destURL: URL, uti: String, quality: Double,
-                   currentBytes: Int64, completion: @escaping (String) -> Void) {
+                   options: ExportOptions = .saved, currentBytes: Int64, completion: @escaping (String) -> Void) {
         isProcessing = true
         flash(L10n.t("msg.exporting", "导出中…"), seconds: 3600)
+        let q = quality <= 1 ? quality * 100 : quality
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let image = ImageLoader.decodedFull(url: sourceURL)
                 .flatMap { Straighten.applied(to: $0, turns: turns, degrees: degrees, crop: crop) }
             var result: String
-            if let image, let bytes = ImageExporter.write(image, to: destURL, uti: uti, quality: quality) {
+            if let image, let out = ImageExporter.export(image, source: sourceURL, to: destURL, uti: uti, quality: q, options: options) {
                 let fmt = { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) }
+                let bytes = Int64(out.data.count)
                 result = L10n.f("msg.exported", "已导出 %1$@：%2$@ → %3$@",
                                 destURL.lastPathComponent, fmt(currentBytes), fmt(bytes))
+                if !out.limitMet, let limit = options.maxBytes {
+                    result = L10n.f("msg.exportedOver", "已导出 %1$@：%2$@，没能压到 %3$@ 以内，这已经是最小的了",
+                                    destURL.lastPathComponent, fmt(bytes), fmt(limit))
+                }
             } else {
                 result = L10n.f("msg.exportFailed", "导出失败： %@", destURL.lastPathComponent)
             }
@@ -3974,55 +4071,37 @@ final class ViewerViewController: NSViewController {
         panel.directoryURL = item.url.deletingLastPathComponent()
         panel.nameFieldStringValue = item.url.deletingPathExtension().lastPathComponent + "-compressed.jpg"
 
-        let popup = NSPopUpButton(frame: NSRect(x: 0, y: 62, width: 280, height: 26))
-        popup.addItems(withTitles: Self.exportFormats.map { $0.name })
-        popup.target = self
-        popup.action = #selector(exportFormatChanged(_:))
-
-        let qualityLabel = NSTextField(labelWithString: L10n.f("exp.quality", "质量 %d", 85))
-        qualityLabel.font = .systemFont(ofSize: 12)
-        qualityLabel.frame = NSRect(x: 0, y: 38, width: 90, height: 18)
-        let slider = NSSlider(value: 85, minValue: 40, maxValue: 100, target: self, action: #selector(exportQualityChanged(_:)))
-        slider.isContinuous = true
-        slider.frame = NSRect(x: 92, y: 34, width: 188, height: 24)
-
-        let estimateLabel = NSTextField(labelWithString: L10n.f("exp.estimating", "预计大小：计算中…"))
-        estimateLabel.font = .systemFont(ofSize: 12)
-        estimateLabel.textColor = .secondaryLabelColor
-        estimateLabel.frame = NSRect(x: 0, y: 8, width: 280, height: 18)
-
-        let box = NSView(frame: NSRect(x: 0, y: 0, width: 280, height: 92))
-        box.addSubview(popup)
-        box.addSubview(qualityLabel)
-        box.addSubview(slider)
-        box.addSubview(estimateLabel)
-        panel.accessoryView = box
-
-        exportFormatPopup = popup
-        exportQualitySlider = slider
-        exportQualityLabel = qualityLabel
-        exportEstimateLabel = estimateLabel
+        let d = UserDefaults.standard
+        let acc = ExportAccessory(formats: Self.exportFormats.map { $0.name }, formatIndex: d.integer(forKey: "export.format"),
+                                  quality: d.object(forKey: "export.quality") as? Double ?? 85) { [weak self] in
+            self?.syncExportOptions()
+            self?.scheduleExportEstimate()
+        }
+        panel.accessoryView = acc.view
+        panel.nameFieldStringValue = item.url.deletingPathExtension().lastPathComponent + "-compressed.jpg"
+        exportAccessory = acc
         exportSavePanel = panel
 
-        syncExportFormat()
+        syncExportOptions()
         scheduleExportEstimate()
 
         panel.beginSheetModal(for: window) { [weak self] resp in
             guard let self else { return }
             defer {
-                self.exportFormatPopup = nil
-                self.exportQualitySlider = nil
-                self.exportQualityLabel = nil
-                self.exportEstimateLabel = nil
+                self.exportAccessory = nil
                 self.exportSavePanel = nil
                 self.exportEstimateWork?.cancel()
             }
-            guard resp == .OK, let url = panel.url else { return }
-            let f = Self.exportFormats[self.exportFormatPopup?.indexOfSelectedItem ?? 0]
+            guard resp == .OK, let url = panel.url, let acc = self.exportAccessory else { return }
+            let f = Self.exportFormats[acc.popup.indexOfSelectedItem]
+            let options = acc.options.options
+            ExportOptions.saved = options
+            UserDefaults.standard.set(acc.popup.indexOfSelectedItem, forKey: "export.format")
+            UserDefaults.standard.set(acc.slider.doubleValue, forKey: "export.quality")
             let currentBytes = ((try? FileManager.default.attributesOfItem(atPath: item.url.path))?[.size] as? Int64) ?? 0
             self.runExport(sourceURL: item.url, turns: self.imageView.rotationTurns, degrees: self.imageView.fineDegrees,
                            crop: self.imageView.cropSpec, destURL: url,
-                           uti: f.uti.identifier, quality: self.exportQualitySlider?.doubleValue ?? 85,
+                           uti: f.uti.identifier, quality: acc.slider.doubleValue, options: options,
                            currentBytes: currentBytes) { msg in
                 self.flash(msg, seconds: 4)
             }
@@ -4031,64 +4110,72 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 导出面板：格式联动 + 大小预估
 
-    private func syncExportFormat() {
-        guard let popup = exportFormatPopup,
-              let panel = exportSavePanel,
-              Self.exportFormats.indices.contains(popup.indexOfSelectedItem) else { return }
-        let f = Self.exportFormats[popup.indexOfSelectedItem]
-        panel.allowedContentTypes = [f.uti]
-        let base = (panel.nameFieldStringValue as NSString).deletingPathExtension
-        panel.nameFieldStringValue = base + "." + f.ext
-        exportQualitySlider?.isEnabled = f.uti != .png
+    /// 格式变了：保存面板的扩展名、质量滑杆、「文件不超过」跟着变
+    private func syncExportOptions() {
+        guard let acc = exportAccessory, let panel = exportSavePanel,
+              Self.exportFormats.indices.contains(acc.popup.indexOfSelectedItem) else { return }
+        let f = Self.exportFormats[acc.popup.indexOfSelectedItem]
+        if panel.allowedContentTypes != [f.uti] {
+            panel.allowedContentTypes = [f.uti]
+            let base = (panel.nameFieldStringValue as NSString).deletingPathExtension
+            panel.nameFieldStringValue = base + "." + f.ext
+        }
+        acc.slider.isEnabled = f.uti != .png
+        acc.options.isPNG = f.uti == .png
     }
 
-    @objc private func exportFormatChanged(_ sender: NSPopUpButton) {
-        syncExportFormat()
-        scheduleExportEstimate()
-    }
-
-    @objc private func exportQualityChanged(_ sender: NSSlider) {
-        exportQualityLabel?.stringValue = L10n.f("exp.quality", "质量 %d", Int(sender.doubleValue))
-        scheduleExportEstimate()
-    }
-
-    /// 防抖 0.3s 后在后台真实编码一次，给出预估文件大小（带缓存）
+    /// 防抖 0.3s 后在后台真实编码一次（按现在的全部选项），给出预估文件大小（带缓存）
     private func scheduleExportEstimate() {
-        guard let popup = exportFormatPopup, let slider = exportQualitySlider,
-              let label = exportEstimateLabel, let item = folder.current,
-              Self.exportFormats.indices.contains(popup.indexOfSelectedItem) else { return }
-        let f = Self.exportFormats[popup.indexOfSelectedItem]
+        guard let acc = exportAccessory, let item = folder.current,
+              Self.exportFormats.indices.contains(acc.popup.indexOfSelectedItem) else { return }
+        let label = acc.estimateLabel
+        let f = Self.exportFormats[acc.popup.indexOfSelectedItem]
+        let options = acc.options.options
+        let quality = acc.slider.doubleValue
         exportEstimateWork?.cancel()
         exportEstimateGeneration += 1
         let gen = exportEstimateGeneration
         let degrees = imageView.fineDegrees, crop = imageView.cropSpec
-        let key = "\(item.url.path)#\(imageView.rotationTurns)#\(degrees)#\(crop.map { "\($0.crop)" } ?? "-")#\(f.uti.identifier)#\(Int(slider.doubleValue))"
+        let key = "\(item.url.path)#\(imageView.rotationTurns)#\(degrees)#\(crop.map { "\($0.crop)" } ?? "-")#\(f.uti.identifier)#\(Int(quality))#\(options)"
         let fmt = { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) }
+        func show(_ r: (bytes: Int64, quality: Int, edge: Int, met: Bool)) {
+            if let limit = options.maxBytes, ImageExporter.isLossy(f.uti.identifier), !r.met {
+                label.stringValue = L10n.f("exp.estimateOver", "预计大小： %1$@，仍超过 %2$@ 的限制", fmt(r.bytes), fmt(limit))
+            } else if options.maxBytes != nil, ImageExporter.isLossy(f.uti.identifier), r.quality < Int(quality) || options.maxLongEdge != nil {
+                label.stringValue = L10n.f("exp.estimateTuned", "预计大小： %1$@（质量 %2$d，长边 %3$d 像素）", fmt(r.bytes), r.quality, r.edge)
+            } else {
+                label.stringValue = L10n.f("exp.estimate", "预计大小： %@", fmt(r.bytes))
+            }
+        }
         if let cached = exportEstimateCache[key] {
-            label.stringValue = L10n.f("exp.estimate", "预计大小： %@", fmt(cached))
+            show(cached)
             return
         }
         label.stringValue = L10n.f("exp.estimating", "预计大小：计算中…")
         let turns = imageView.rotationTurns
         let loader = self.loader
-        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent("flipic-estimate.\(f.ext)")
         let work = DispatchWorkItem { [weak self] in
             guard let self, self.exportEstimateGeneration == gen else { return }
-            let image = loader.fullImage(for: item.url).flatMap { Straighten.applied(to: $0, turns: turns, degrees: degrees, crop: crop) }
-            var bytes: Int64?
-            if let image { bytes = ImageExporter.write(image, to: tmp, uti: f.uti.identifier, quality: slider.doubleValue) }
+            // 要限制大小或长边时必须用全分辨率；否则用看图缓存的那张
+            let full = options.maxBytes != nil || options.maxLongEdge != nil ? ImageLoader.decodedFull(url: item.url) : loader.fullImage(for: item.url)
+            let image = full.flatMap { Straighten.applied(to: $0, turns: turns, degrees: degrees, crop: crop) }
+            var result: (bytes: Int64, quality: Int, edge: Int, met: Bool)?
+            if let image, let out = ImageExporter.encode(image, source: item.url, uti: f.uti.identifier, quality: quality, options: options,
+                                                         cancelled: { self.exportEstimateGeneration != gen }) {
+                result = (Int64(out.data.count), out.quality, max(out.width, out.height), out.limitMet)
+            }
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.exportEstimateGeneration == gen else { return }
-                if let bytes {
-                    self.exportEstimateCache[key] = bytes
-                    self.exportEstimateLabel?.stringValue = L10n.f("exp.estimate", "预计大小： %@", fmt(bytes))
+                if let result {
+                    self.exportEstimateCache[key] = result
+                    show(result)
                 } else {
                     self.exportEstimateLabel?.stringValue = L10n.f("exp.estimate", "预计大小： %@", "--")
                 }
             }
         }
         exportEstimateWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.3, execute: work)
     }
 
     // MARK: - 旋转、拉直与保存
@@ -7247,6 +7334,7 @@ extension ViewerViewController: NSCollectionViewDataSource, NSCollectionViewDele
         guard idx < folder.count else { return item }
         let url = folder.items[idx].url
         item.setMarked(folder.items[idx].marked)
+        item.setTagColors(folder.items[idx].tagColors)
         let isVideo = Video.isVideo(url)
         item.setDuration(isVideo ? Video.cachedMeta(url)?.duration : nil)
         if let cached = loader.cachedThumb(for: url) {
@@ -7445,6 +7533,18 @@ extension ViewerViewController: NSMenuItemValidation {
             return folder.current != nil && cleanup == nil
         } else if menuItem.action == #selector(toggleToolbar(_:)) {
             menuItem.state = Self.showToolbar ? .on : .off
+        } else if menuItem.action == #selector(setTagColorMenu(_:)) {
+            return validateTagColorItem(menuItem)
+        } else if menuItem.action == #selector(clearTagColors(_:)) {
+            return folder.current != nil && cleanup == nil
+        } else if menuItem.action == #selector(setTagFilter(_:)) {
+            let current = { if case .colorTag(let c) = folder.filter { return c.index }; return folder.filter == nil ? 0 : -1 }()
+            menuItem.state = menuItem.tag == current ? .on : .off
+            return folder.totalCount > 0
+        } else if menuItem.action == #selector(copyFileNames(_:)) {
+            return folder.current != nil && cleanup == nil
+        } else if menuItem.action == #selector(copyMarkedFileNames(_:)) {
+            return folder.markedCount > 0 && cleanup == nil
         } else if menuItem.action == #selector(toggleMark(_:)) {
             menuItem.title = markMenuTitle
             return folder.current != nil

@@ -200,6 +200,30 @@ final class FilmstripItem: NSCollectionViewItem {
     /// 没标记过的格子不创建勾的视图
     private var hasMarkIcon = false
 
+    /// 左上角的颜色标签圆点（右上角是标记勾、右下角是视频时长，三处互不重叠）；没有颜色标签的格子不创建
+    private lazy var tagDots: TagDotsView = {
+        let d = TagDotsView()
+        d.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(d)
+        NSLayoutConstraint.activate([
+            d.topAnchor.constraint(equalTo: view.topAnchor, constant: 4),
+            d.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 4),
+        ])
+        return d
+    }()
+    private var hasTagDots = false
+
+    func setTagColors(_ set: TagColorSet) {
+        guard !set.isEmpty || hasTagDots else { return }
+        hasTagDots = true
+        // 缩略图小的时候点也小，七个点叠在一起也放得进 48 点宽的格子
+        let size = FilmstripView.thumbSize
+        tagDots.diameter = size <= 48 ? 6 : (size <= 64 ? 7 : 9)
+        tagDots.step = tagDots.diameter * 0.62
+        tagDots.colors = set.colors
+        tagDots.isHidden = set.isEmpty
+    }
+
     /// 视频格子右下角的时长；照片的格子不创建
     private lazy var durationLabel: NSTextField = {
         let l = NSTextField(labelWithString: "")
@@ -315,4 +339,29 @@ final class FilmstripScrollBar: NSView {
 
     override func mouseEntered(with event: NSEvent) { hovering = true; needsDisplay = true }
     override func mouseExited(with event: NSEvent) { hovering = false; needsDisplay = true }
+}
+
+/// 颜色标签的圆点：几种颜色几个点，像访达那样互相叠一点。每个点外面压一圈半透明的深边，白底、黑底的照片上都分得清
+final class TagDotsView: NSView {
+    var colors: [TagColor] = [] { didSet { needsDisplay = true; invalidateIntrinsicContentSize() } }
+    var diameter: CGFloat = 7 { didSet { needsDisplay = true; invalidateIntrinsicContentSize() } }
+    /// 相邻两个点圆心的距离；比直径小就是叠着
+    var step: CGFloat = 5 { didSet { needsDisplay = true; invalidateIntrinsicContentSize() } }
+    private let ring: CGFloat = 1
+
+    override var isFlipped: Bool { true }
+    override var intrinsicContentSize: NSSize {
+        guard !colors.isEmpty else { return .zero }
+        return NSSize(width: diameter + step * CGFloat(colors.count - 1) + ring * 2, height: diameter + ring * 2)
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        for (i, c) in colors.enumerated().reversed() {
+            let r = NSRect(x: ring + step * CGFloat(i), y: ring, width: diameter, height: diameter)
+            NSColor.black.withAlphaComponent(0.6).setFill()
+            NSBezierPath(ovalIn: r.insetBy(dx: -ring, dy: -ring)).fill()
+            c.color.setFill()
+            NSBezierPath(ovalIn: r).fill()
+        }
+    }
 }

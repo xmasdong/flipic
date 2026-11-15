@@ -13,12 +13,16 @@ struct ImageItem {
     var marked = false
     /// 星级；nil 表示还没读过
     var rating: Int?
+    /// 访达颜色标签（红橙黄绿蓝紫灰），和挑片标记、星级各管各的
+    var tagColors = TagColorSet()
 }
 
 /// 「只看」筛选：已标记，或某个星级以上
 enum PhotoFilter: Equatable {
     case marked
     case minRating(Int)
+    /// 带某种访达颜色标签
+    case colorTag(TagColor)
     #if FLIPIC_PRO
     /// Pro：按内容查找的结果，列表按分数从高到低排
     case content(ContentMatch)
@@ -28,6 +32,7 @@ enum PhotoFilter: Equatable {
         switch self {
         case .marked: return item.marked
         case .minRating(let n): return (item.rating ?? 0) >= n
+        case .colorTag(let c): return item.tagColors.contains(c)
         #if FLIPIC_PRO
         case .content(let m): return m.scores[item.url] != nil
         #endif
@@ -112,6 +117,14 @@ final class FolderModel {
 
     func setMarked(_ on: Bool, url: URL) { update(url) { $0.marked = on } }
     func setRating(_ rating: Int?, url: URL) { update(url) { $0.rating = rating } }
+    func setTagColors(_ colors: TagColorSet, url: URL) { update(url) { $0.tagColors = colors } }
+    /// 这些文件现在各有哪几种颜色标签（一次扫整个列表）
+    func tagColors(for urls: [URL]) -> [URL: TagColorSet] {
+        let want = Set(urls)
+        var map: [URL: TagColorSet] = [:]
+        for item in allItems where want.contains(item.url) { map[item.url] = item.tagColors }
+        return map
+    }
 
     /// 移动走的文件从列表里拿掉；当前这张被拿掉时停在原位置的下一张
     func remove(urls: Set<URL>) {
@@ -216,7 +229,9 @@ final class FolderModel {
         if let target, !urls.contains(target) { urls.append(target) }
         urls = Video.dropLiveCompanions(urls)
 
-        items = urls.map(Self.makeItem)
+        // 存储卡上的标记记在这台电脑里（CardMarks），列目录时一并并进来；访达标签照常读
+        let card = CardMarks.markedNames(inFolder: folderURL)
+        items = urls.map { Self.makeItem($0, card: card) }
         unfiltered = nil
         filter = nil
         hidden = []
@@ -231,11 +246,12 @@ final class FolderModel {
         ImageLoader.isSupportedExtension(name) || (Video.enabled && Video.isVideoName(name))
     }
 
-    private static func makeItem(_ u: URL) -> ImageItem {
+    private static func makeItem(_ u: URL, card: Set<String>? = nil) -> ImageItem {
         let v = try? u.resourceValues(forKeys: Set(resourceKeys))
         return ImageItem(url: u, pixelSize: nil, modified: v?.contentModificationDate,
                          created: v?.creationDate, fileSize: v?.fileSize ?? 0,
-                         marked: Marks.isMarked(tagNames: v?.tagNames))
+                         marked: Marks.isMarked(tagNames: v?.tagNames) || (card?.contains(CardMarks.normalized(u.lastPathComponent)) ?? false),
+                         tagColors: FinderTags.colors(fromTagNames: v?.tagNames))
     }
 
     /// 和磁盘对一遍：别处新放进来的照片按当前排序插进列表，当前这张不动。
@@ -253,7 +269,8 @@ final class FolderModel {
         if removing, !missing.isEmpty { remove(urls: missing) }
         if !added.isEmpty {
             let cur = current?.url
-            rebuild(allItems + added.map(Self.makeItem), keeping: cur)
+            let card = CardMarks.markedNames(inFolder: folderURL)
+            rebuild(allItems + added.map { Self.makeItem($0, card: card) }, keeping: cur)
             resort(keeping: cur ?? current?.url)
         }
         return (added, missing)
@@ -363,7 +380,8 @@ final class FolderModel {
         update(old) { item in
             item = ImageItem(url: item.url.deletingLastPathComponent().appendingPathComponent(newName),
                              pixelSize: item.pixelSize, modified: item.modified, created: item.created,
-                             fileSize: item.fileSize, captureDate: item.captureDate, marked: item.marked, rating: item.rating)
+                             fileSize: item.fileSize, captureDate: item.captureDate, marked: item.marked, rating: item.rating,
+                             tagColors: item.tagColors)
         }
     }
 

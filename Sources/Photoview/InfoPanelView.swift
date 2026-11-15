@@ -37,6 +37,8 @@ final class InfoPanelView: NSVisualEffectView {
 
     private var info = PhotoInfo()
     private var rating = 0
+    /// 访达标签：颜色标签带颜色，自己建的只有名字
+    private var tags: [(name: String, color: TagColor?)] = []
     private var isVideo = false
     private var captionExpanded = false
     /// 面板里现在排的是哪个文件的信息；nil 是空的
@@ -145,11 +147,12 @@ final class InfoPanelView: NSVisualEffectView {
 
     // MARK: - 内容
 
-    func show(_ info: PhotoInfo, url: URL, rating: Int, isVideo: Bool) {
+    func show(_ info: PhotoInfo, url: URL, rating: Int, tags: [(name: String, color: TagColor?)] = [], isVideo: Bool) {
         let sameFile = shownURL == url
         if !sameFile { captionExpanded = false }
         self.info = info
         self.rating = rating
+        self.tags = tags
         self.isVideo = isVideo
         shownURL = url
         syncTranslation()
@@ -180,6 +183,7 @@ final class InfoPanelView: NSVisualEffectView {
         guard shownURL != nil else { return }
         info = PhotoInfo()
         rating = 0
+        tags = []
         self.isVideo = isVideo
         shownURL = nil
         captionExpanded = false
@@ -219,6 +223,7 @@ final class InfoPanelView: NSVisualEffectView {
     private func buildCommon() {
         let hasCaption = addCaptionBlock(showBoilerplate: false)
         addRating()
+        addTags()
         addHistogram()
         if info.common.isEmpty && !hasCaption {
             let none = NSTextField(labelWithString: L10n.t("ui.noExif", "此文件没有 EXIF 信息"))
@@ -232,7 +237,7 @@ final class InfoPanelView: NSVisualEffectView {
     private func buildAll() {
         measureLabelColumn()
         let hasCaptionText = info.title != nil || info.caption != nil
-        if hasCaptionText || !info.captionRows.isEmpty || rating > 0 {
+        if hasCaptionText || !info.captionRows.isEmpty || rating > 0 || !tags.isEmpty {
             addSectionHeader(L10n.t("exif.sec.caption", "说明"))
             addCaptionBlock(showBoilerplate: true)
             info.captionRows.forEach(addPairRow)
@@ -241,6 +246,9 @@ final class InfoPanelView: NSVisualEffectView {
                 v.font = .systemFont(ofSize: 12)
                 v.textColor = NSColor(calibratedRed: 1.0, green: 0.8, blue: 0.25, alpha: 1)
                 addPair(label: L10n.t("menu.rating", "评分"), value: v)
+            }
+            if !tags.isEmpty {
+                addPair(label: L10n.t("info.tags", "标签"), value: tagsField(width: valueColumn))
             }
         }
         // 直方图排在「拍摄」那组参数的上面；没有拍摄参数的文件（截图、扫描件）自己成一组，排在各组前面
@@ -483,6 +491,36 @@ final class InfoPanelView: NSVisualEffectView {
         stack.addArrangedSubview(v)
     }
 
+    /// 「常用」里的标签：和评分一样，小标题在上、内容在下
+    private func addTags() {
+        guard !tags.isEmpty else { return }
+        let l = NSTextField(labelWithString: L10n.t("info.tags", "标签"))
+        l.font = .systemFont(ofSize: 11)
+        l.textColor = .secondaryLabelColor
+        stack.addArrangedSubview(l)
+        stack.addArrangedSubview(tagsField(width: Self.contentWidth))
+    }
+
+    /// 颜色标签前面一个同色的圆点，自己建的标签只写名字；一行放不下就折行
+    private func tagsField(width: CGFloat) -> NSTextField {
+        let font = NSFont.systemFont(ofSize: 12)
+        let out = NSMutableAttributedString()
+        for (i, t) in tags.enumerated() {
+            if i > 0 { out.append(NSAttributedString(string: "   ", attributes: [.font: font])) }
+            if let c = t.color {
+                out.append(NSAttributedString(string: "\u{25CF} ", attributes: [.font: font, .foregroundColor: c.color]))
+            }
+            out.append(NSAttributedString(string: t.name, attributes: [.font: font, .foregroundColor: NSColor.labelColor]))
+        }
+        let v = NSTextField(wrappingLabelWithString: "")
+        v.attributedStringValue = out
+        v.isSelectable = false
+        v.preferredMaxLayoutWidth = width
+        v.translatesAutoresizingMaskIntoConstraints = false
+        v.widthAnchor.constraint(equalToConstant: width).isActive = true
+        return v
+    }
+
     /// 直方图占满面板宽度，和下面的参数隔开一点。视频没有
     private func addHistogram() {
         guard !isVideo else { return }
@@ -549,6 +587,7 @@ final class InfoPanelView: NSVisualEffectView {
     private func measureLabelColumn() {
         var labels = info.captionRows.map(\.label) + info.sections.flatMap { $0.rows.map(\.label) }
         if rating > 0 { labels.append(L10n.t("menu.rating", "评分")) }
+        if !tags.isEmpty { labels.append(L10n.t("info.tags", "标签")) }
         let font = NSFont.systemFont(ofSize: 11)
         func width(_ s: String) -> CGFloat { ceil((s as NSString).size(withAttributes: [.font: font]).width) + 2 }
         let widest = labels.map(width).max() ?? 0
