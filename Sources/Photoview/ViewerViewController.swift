@@ -4228,10 +4228,17 @@ final class ViewerViewController: NSViewController {
             UserDefaults.standard.set(acc.popup.indexOfSelectedItem, forKey: "export.format")
             UserDefaults.standard.set(acc.slider.doubleValue, forKey: "export.quality")
             let currentBytes = ((try? FileManager.default.attributesOfItem(atPath: item.url.path))?[.size] as? Int64) ?? 0
+            // 保存面板「标签」一栏里选的标签：文件是我们自己写的，系统不会代劳，导出完补上
+            let tags = panel.tagNames ?? []
+            let before = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
             self.runExport(sourceURL: item.url, turns: self.imageView.rotationTurns, degrees: self.imageView.fineDegrees,
                            crop: self.imageView.cropSpec, destURL: url,
                            uti: f.uti.identifier, quality: acc.slider.doubleValue, options: options,
                            currentBytes: currentBytes) { msg in
+                let after = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
+                if !tags.isEmpty, let after, after != before {
+                    try? (url as NSURL).setResourceValue(tags, forKey: .tagNamesKey)
+                }
                 self.flash(msg, seconds: 4)
             }
         }

@@ -213,7 +213,8 @@ final class ExportAccessory {
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 10
-        stack.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 6, right: 0)
+        // 新系统上附件区贴着保存面板的左右边，自己留出和面板上半部分一样的边距
+        stack.edgeInsets = NSEdgeInsets(top: 8, left: 20, bottom: 6, right: 20)
         #if FLIPIC_PRO
         let presetButton = NSButton(title: L10n.t("preset.saveAs", "存为预设…"), target: nil, action: nil)
         presetButton.controlSize = .small
