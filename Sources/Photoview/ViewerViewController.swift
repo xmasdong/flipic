@@ -53,6 +53,11 @@ final class ViewerViewController: NSViewController {
     var pendingPageZoom: ZoomableImageView.ViewState?
     /// 按内容查找的搜索框和这个文件夹的索引（Pro）
     var contentSearch: ContentSearchUI?
+    /// 胶片滤镜：显示这一环、面板、徽标、工具条按钮（Pro）
+    lazy var filmDisplay = FilmDisplay(viewer: self)
+    let filmUI = FilmUIRefs()
+    /// 贴合预览（空格）中，包括刚进入还没返回的那一刻
+    var isPeekingNow: Bool { peekSaved != nil }
     #endif
     private var fileNameLeading: NSLayoutConstraint!
     private var slideshowButton: NSButton?
@@ -112,7 +117,7 @@ final class ViewerViewController: NSViewController {
     ]
     private var warmupGeneration = 0
     var prefetchedURLs = Set<URL>()
-    private var lastNavDirection = 1
+    var lastNavDirection = 1
     private var fullRequested = false
     private var folderGeneration = 0
     /// 别的软件（Photoshop 等）存了文件夹里的照片，自动换成新的
@@ -253,6 +258,9 @@ final class ViewerViewController: NSViewController {
             return self.handleStraightenKey(event) || self.handleVideoKey(event)
         }
         imageView.onCommand = { [weak self] action in self?.perform(action) }
+        #if FLIPIC_PRO
+        imageView.onKeyUp = { [weak self] event in self?.filmKeyUp(event) ?? false }
+        #endif
         imageView.onSingleClick = { [weak self] in self?.toggleSlideshowPause() }
         imageView.onFirstFrame = { [weak self] size in
             self?.folder.setCurrentPixelSize(size)
@@ -272,6 +280,8 @@ final class ViewerViewController: NSViewController {
                 return
             }
             #if FLIPIC_PRO
+            // 胶片面板开着时，Esc 先关它
+            if self.closeFilmPanelOnEscape() { return }
             // 按内容查找的搜索框开着时，Esc 先清除并关掉它（照片信息面板开着时先关面板）
             if self.exifPanel.isHidden, self.closeContentSearchOnEscape() { return }
             #endif
@@ -334,6 +344,9 @@ final class ViewerViewController: NSViewController {
         buildToolbar()
         buildArrows()
         buildRatingBadge()
+        #if FLIPIC_PRO
+        buildFilmUI()
+        #endif
         ratingBadgeBottom = ratingBadge.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: ratingBadgeOffset(controls: false))
         refreshShortcutTips()
 
@@ -475,6 +488,9 @@ final class ViewerViewController: NSViewController {
         filmstrip.isHidden = true
         ratingBadge.isHidden = true
         markBadge.isHidden = true
+        #if FLIPIC_PRO
+        updateFilmVisibility()
+        #endif
         filmstripHeight.constant = 0
         window.minSize = NSSize(width: 160, height: 120)
         imageView.fit()
@@ -545,6 +561,14 @@ final class ViewerViewController: NSViewController {
         stack.edgeInsets = NSEdgeInsets(top: 3, left: 4, bottom: 3, right: 4)
         stack.translatesAutoresizingMaskIntoConstraints = false
         #if FLIPIC_PRO
+        // 胶片滤镜：放在最左边，开着时按钮高亮
+        let filmTip = L10n.t("film.title", "胶片滤镜")
+        let (filmContainer, filmButton) = iconButton(symbol: "film", tip: Shortcuts.tooltip(filmTip, .filmPanel),
+                                                     action: #selector(toggleFilmPanel(_:)),
+                                                     size: NSSize(width: 32, height: 28), cornerRadius: 7, tint: .labelColor)
+        shortcutTips.append((filmButton, filmTip, .filmPanel))
+        filmUI.button = filmButton
+        stack.addArrangedSubview(filmContainer)
         // 工作台原来只在「窗口」菜单和 ⌥⌘B 里，放到信息按钮左边
         if WorkbenchFeature.isEnabled {
             let tip = L10n.t("menu.workbench", "工作台")
@@ -981,6 +1005,10 @@ final class ViewerViewController: NSViewController {
         draftQueue.cancelAllOperations()
         thumbQueue.cancelAllOperations()
         endRapidPaging()
+        #if FLIPIC_PRO
+        filmDisplay.reset()
+        filmUI.panel?.forgetThumbs()
+        #endif
         folderGeneration += 1
         var isDir: ObjCBool = false
         FileManager.default.fileExists(atPath: url.path, isDirectory: &isDir)
@@ -1133,7 +1161,7 @@ final class ViewerViewController: NSViewController {
     }
 
     /// 主看图界面在用（不在并排对比、修图前后对比里）
-    private var mainViewerActive: Bool {
+    var mainViewerActive: Bool {
         #if FLIPIC_PRO
         if beforeAfter != nil { return false }
         #endif
@@ -1345,6 +1373,9 @@ final class ViewerViewController: NSViewController {
         let changed = folder.takeModifiedOutside()
         guard !changed.isEmpty else { return }
         for u in changed { loader.evict(url: u) }
+        #if FLIPIC_PRO
+        for u in changed { FilmCache.shared.invalidate(path: u.standardizedFileURL.path) }
+        #endif
         prefetchedURLs.subtract(changed)
         let rows = changed.compactMap { u in folder.items.firstIndex { $0.url == u } }
         filmstrip.collectionView.reloadItems(at: Set(rows.map { IndexPath(item: $0, section: 0) }))
@@ -1388,6 +1419,15 @@ final class ViewerViewController: NSViewController {
     }
 
     private func adopt(_ image: CGImage, logicalSize: CGSize, resetToFit: Bool, isNew: Bool, draft: Bool = false) {
+        #if FLIPIC_PRO
+        // 胶片滤镜开着：套过的图才上屏（缓存、当场渲、或后台渲完再上），见 FilmDisplay
+        if filmDisplay.intercept(image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew, draft: draft) { return }
+        #endif
+        adoptDisplay(image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew, draft: draft)
+    }
+
+    /// 要显示的图（套没套胶片都一样）上屏：逻辑尺寸、缩放、预览窗口、信息都在这里跟上
+    func adoptDisplay(_ image: CGImage, logicalSize: CGSize, resetToFit: Bool, isNew: Bool, draft: Bool = false) {
         folder.setCurrentPixelSize(logicalSize)
         imageView.set(image: image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew, draft: draft)
         if isNew { BenchProbe.adopted() } else if !draft { BenchProbe.fullWidth = image.width }
@@ -1649,9 +1689,15 @@ final class ViewerViewController: NSViewController {
         for url in order where url != current {
             prefetchedURLs.insert(url)
             if loader.cachedPreview(for: url, maxPixel: fitPx) != nil { continue }
+            #if FLIPIC_PRO
+            let film = filmDisplay.prefilmJob()
+            #endif
             let op = BlockOperation {
                 _ = loader.info(for: url)
                 _ = loader.preview(for: url, maxPixel: fitPx)
+                #if FLIPIC_PRO
+                film?(url)
+                #endif
             }
             if let after { op.addDependency(after) }
             prefetchQueue.addOperation(op)
@@ -2043,6 +2089,11 @@ final class ViewerViewController: NSViewController {
             zoomToEye(nil)
             #endif
         #if FLIPIC_PRO
+        case .filmPanel: toggleFilmPanel(nil)
+        case .filmToggle: toggleFilm(nil)
+        case .filmPrev: stepFilm(-1)
+        case .filmNext: stepFilm(1)
+        case .filmHold: beginFilmHold()
         case .beforeAfter: toggleBeforeAfter(nil)
         case .splitByRating: splitByRating(nil)
         case .switchPair: switchPairMember(nil)
@@ -2823,7 +2874,7 @@ final class ViewerViewController: NSViewController {
     private let ratingBadge = NSVisualEffectView()
     private var ratingBadgeBottom: NSLayoutConstraint!
 
-    private func ratingBadgeOffset(controls: Bool) -> CGFloat {
+    func ratingBadgeOffset(controls: Bool) -> CGFloat {
         if controls && Self.showToolbar { return -(8 + max(toolbarView.fittingSize.height, 44) + 8) }
         // 放映时缩略图栏隐藏了，星级落到屏幕底部
         return filmstripFloating ? filmstripHeight.constant - 14 : -14
@@ -2880,6 +2931,9 @@ final class ViewerViewController: NSViewController {
         if compareView != nil { refreshCompareInfo() }
         markBadgeBottom.constant = ratingBadgeOffset(controls: false)
         updateTagBadge()
+        #if FLIPIC_PRO
+        updateFilmVisibility()
+        #endif
         ratingLabel.stringValue = Rating.stars(r)
         ratingLabel.isHidden = r == 0 || badge
     }
@@ -4557,7 +4611,14 @@ final class ViewerViewController: NSViewController {
         }
         guard folder.current?.url == url else { return }
         let target = previewPixelTarget
-        guard let newSize, imageView.adoptSavedEdit(logicalSize: newSize, minPixel: 0) else {
+        #if FLIPIC_PRO
+        // 胶片开着时屏幕上是套过的图，不能拿它当新文件的底图：从文件重新载入，套的是新文件的像素
+        FilmCache.shared.invalidate(path: url.standardizedFileURL.path)
+        let filmOn = FilmState.shared.enabled
+        #else
+        let filmOn = false
+        #endif
+        guard let newSize, !filmOn, imageView.adoptSavedEdit(logicalSize: newSize, minPixel: 0) else {
             showImage(resetToFit: false)
             return
         }
@@ -7696,6 +7757,7 @@ extension ViewerViewController: NSMenuItemValidation {
             return folder.current != nil && imageView.debugHasImage && mainViewerActive
         }
         #if FLIPIC_PRO
+        if let r = validateFilmMenuItem(menuItem) { return r }
         if menuItem.action == #selector(toggleBeforeAfter(_:)) {
             menuItem.state = beforeAfter != nil ? .on : .off
             return folder.current != nil

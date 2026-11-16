@@ -10,6 +10,12 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
     private let sizeCheck = NSButton(checkboxWithTitle: L10n.t("exp.maxSize", "文件不超过"), target: nil, action: nil)
     private let sizeField = NSTextField(string: "")
     private let srgb = NSButton(checkboxWithTitle: L10n.t("exp.srgb", "转换为 sRGB"), target: nil, action: nil)
+    #if FLIPIC_PRO
+    /// 胶片：无 + 十款（Pro）。effectToken 是现在选的那段文字，换款以外的参数（强度等）沿用传进来的
+    private let filmPopup = NSPopUpButton(frame: .zero)
+    private var effectToken: String?
+    private var filmIndex = 0
+    #endif
 
     init(options o: ExportOptions) {
         super.init(frame: .zero)
@@ -47,6 +53,19 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         for r in [longRow, sizeRow] { r.spacing = 6; r.alignment = .centerY }
         for v in [keepMeta, gpsRow, longRow, sizeRow, srgb] { addArrangedSubview(v) }
         setCustomSpacing(10, after: gpsRow)
+        #if FLIPIC_PRO
+        filmPopup.addItems(withTitles: FilmExportUI.titles)
+        effectToken = o.effect
+        filmIndex = FilmExportUI.index(for: o.effect)
+        filmPopup.selectItem(at: filmIndex)
+        filmPopup.target = self
+        filmPopup.action = #selector(filmChanged(_:))
+        let filmRow = NSStackView(views: [unit(FilmExportUI.label), filmPopup])
+        filmRow.spacing = 8
+        filmRow.alignment = .centerY
+        addArrangedSubview(filmRow)
+        setCustomSpacing(10, after: srgb)
+        #endif
         sync()
     }
 
@@ -72,8 +91,30 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
             o.maxBytes = Int64(mb * 1_048_576)
         }
         o.toSRGB = srgb.state == .on
+        #if FLIPIC_PRO
+        o.effect = FilmExportUI.token(forIndex: filmPopup.indexOfSelectedItem, initial: effectToken)
+        #endif
         return o
     }
+
+    #if FLIPIC_PRO
+    @objc private func filmChanged(_ sender: NSPopUpButton) {
+        let i = sender.indexOfSelectedItem
+        if FilmExportUI.allowed(index: i, in: window) {
+            filmIndex = i
+        } else {
+            sender.selectItem(at: filmIndex)
+        }
+        changed(sender)
+    }
+
+    /// 自测用：选胶片菜单的第 i 项（0 = 无），走和点选一样的流程
+    func debugSelectFilm(_ i: Int) {
+        filmPopup.selectItem(at: i)
+        filmChanged(filmPopup)
+    }
+    var debugFilmPopup: NSPopUpButton { filmPopup }
+    #endif
 
     @objc private func changed(_ sender: Any?) {
         sync()
@@ -113,7 +154,11 @@ final class ExportAccessory {
         estimateLabel.font = .systemFont(ofSize: 12)
         estimateLabel.textColor = .secondaryLabelColor
         estimateLabel.maximumNumberOfLines = 2
-        options = ExportOptionsView(options: .saved)
+        var initial = ExportOptions.saved
+        #if FLIPIC_PRO
+        initial.effect = FilmEffect.defaultToken   // 现在开着哪一款，默认就导出带哪一款；没开就是无
+        #endif
+        options = ExportOptionsView(options: initial)
         let q = NSStackView(views: [qualityLabel, slider])
         q.spacing = 8
         qualityLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -188,7 +233,11 @@ final class BatchAccessory: NSObject {
         qualityLabel = NSTextField(labelWithString: L10n.f("bc.quality", "质量 %d", Int(quality)))
         qualityLabel.font = .systemFont(ofSize: 12)
         slider = NSSlider(value: quality, minValue: 40, maxValue: 100, target: nil, action: nil)
-        options = ExportOptionsView(options: .saved)
+        var initial = ExportOptions.saved
+        #if FLIPIC_PRO
+        initial.effect = FilmEffect.defaultToken
+        #endif
+        options = ExportOptionsView(options: initial)
         let d = BatchConvert.defaultOutputFolder(for: source, ext: BatchConvert.formats[max(0, min(formatIndex, 2))].ext)
         outDir = d.url
         redirected = d.redirected

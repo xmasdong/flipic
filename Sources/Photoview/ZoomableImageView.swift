@@ -159,11 +159,15 @@ final class ZoomableImageView: NSView {
                       center.x - bounds.midX, center.y - bounds.midY)
     }
 
+    /// 测试用：每次换图都先通知一下（图、是不是换了新照片）
+    var debugOnSet: ((CGImage?, Bool) -> Void)?
+
     /// resetToFit 时重置为适应窗口；isNew 标记换了新图（重置旋转角度）。
     /// logicalSize 是原图尺寸，newSrc 可以是它的降采样版本；不传则按 newSrc 本身尺寸。
     /// draft：低清草图，随后会被同一张的清晰图（isNew = false）原位替换
     func set(image newSrc: CGImage?, logicalSize size: CGSize? = nil, resetToFit: Bool, isNew: Bool, draft: Bool = false) {
         stopAnimation()
+        debugOnSet?(newSrc, isNew)
         showingDraft = draft
         if isNew {
             quarterTurns = 0
@@ -395,6 +399,9 @@ final class ZoomableImageView: NSView {
     }
 
     var debugImage: CGImage? { image }
+    /// 未旋转的底图和它是不是草图（胶片滤镜在开关时用它当原图）
+    var unrotatedImage: CGImage? { baseImage }
+    var isShowingDraft: Bool { showingDraft }
     var debugEDR: Bool {
         if #available(macOS 14, *) { return imageLayer.wantsExtendedDynamicRangeContent }
         return false
@@ -1211,7 +1218,11 @@ final class ZoomableImageView: NSView {
     /// 按住超过这么久才算「按住看一眼」，松手还原；短按照旧是切换
     static let springHoldSeconds: CFTimeInterval = 0.3
 
+    /// 松开某个键时先问上层：按住才生效的操作（比如胶片滤镜的「按住看原图」）在这里收尾，返回 true 表示已处理
+    var onKeyUp: ((NSEvent) -> Bool)?
+
     override func keyUp(with event: NSEvent) {
+        if onKeyUp?(event) == true { return }
         if let held = heldZoomKey, held.code == event.keyCode {
             heldZoomKey = nil
             if CACurrentMediaTime() - held.at >= Self.springHoldSeconds, mode != .fit {

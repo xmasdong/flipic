@@ -86,13 +86,14 @@ enum ShortcutAction: String, CaseIterable {
     case pinWindow, share, playLive, zoomEye, workbench
     case copyText
     case searchContent
+    case filmPanel, filmToggle, filmPrev, filmNext, filmHold
     case preset1, preset2, preset3, preset4, preset5, preset6, preset7, preset8, preset9
 
     /// Pro 功能；开源版里没有，不在快捷键设置里列出
     /// 快捷键页里 Pro 功能名后面的标
     static var proSuffix: String { " (Pro)" }
 
-    var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair, .zoomEye, .workbench, .searchContent].contains(self) || presetNumber != nil }
+    var isPro: Bool { [.beforeAfter, .splitByRating, .switchPair, .zoomEye, .workbench, .searchContent, .filmPanel, .filmToggle, .filmPrev, .filmNext, .filmHold].contains(self) || presetNumber != nil }
 
     var isAvailable: Bool {
         if self == .copyText { return TextRecognition.isAvailable }
@@ -167,7 +168,7 @@ enum ShortcutAction: String, CaseIterable {
         case .fullscreen, .info, .infoLevel, .filmstrip, .slideshow, .rotateCW, .rotateCCW, .straighten: return .view
         case .rename, .trash, .edit, .reveal, .exportAs, .exportFolder, .saveRotation, .share: return .file
         case .preset1, .preset2, .preset3, .preset4, .preset5, .preset6, .preset7, .preset8, .preset9: return .file
-        case .pinWindow, .playLive: return .view
+        case .pinWindow, .playLive, .filmPanel, .filmToggle, .filmPrev, .filmNext, .filmHold: return .view
         case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench, .copyText: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
         case .tagRed, .tagYellow, .tagGreen, .tagBlue, .mark, .markedOnly, .searchContent, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating, .switchPair: return .pick
@@ -227,6 +228,11 @@ enum ShortcutAction: String, CaseIterable {
         case .workbench: return L10n.t("menu.workbench", "工作台") + ShortcutAction.proSuffix
         case .copyText: return L10n.t("menu.copyText", "复制图中全部文字")
         case .searchContent: return plain(L10n.t("menu.searchContent", "按内容查找…")) + ShortcutAction.proSuffix
+        case .filmPanel: return L10n.t("sc.a.filmPanel", "胶片滤镜面板") + ShortcutAction.proSuffix
+        case .filmToggle: return L10n.t("sc.a.filmToggle", "开 / 关胶片滤镜（用上次的那一款）") + ShortcutAction.proSuffix
+        case .filmPrev: return L10n.t("sc.a.filmPrev", "上一款胶片滤镜") + ShortcutAction.proSuffix
+        case .filmNext: return L10n.t("sc.a.filmNext", "下一款胶片滤镜") + ShortcutAction.proSuffix
+        case .filmHold: return L10n.t("sc.a.filmHold", "按住看原图（胶片滤镜开着时）") + ShortcutAction.proSuffix
         case .preset1, .preset2, .preset3, .preset4, .preset5, .preset6, .preset7, .preset8, .preset9:
             let n = presetNumber ?? 0
             #if FLIPIC_PRO
@@ -297,6 +303,12 @@ enum ShortcutAction: String, CaseIterable {
         case .workbench: return KeyCombo(keyCode: 11, mods: [.command, .option], chars: "b")   // ⇧⌘B 已是批量重命名
         case .copyText: return KeyCombo(keyCode: 8, mods: [.command, .option], chars: "c")   // ⇧⌘C 已是批量转换
         case .searchContent: return KeyCombo(keyCode: 3, mods: .command, chars: "f")
+        // F 已是全屏；⇧F 开面板，G 开关，逗号 / 句号换上一款 / 下一款（和 ← → 同一排），反斜杠按住看原图。这些键都没人占
+        case .filmPanel: return KeyCombo(keyCode: 3, mods: .shift, chars: "f")
+        case .filmToggle: return KeyCombo(keyCode: 5, chars: "g")
+        case .filmPrev: return KeyCombo(keyCode: 43, chars: ",")
+        case .filmNext: return KeyCombo(keyCode: 47, chars: ".")
+        case .filmHold: return KeyCombo(keyCode: 42, chars: "\\")
         // ⌥1–⌥9 是常用文件夹，⌥⌘1–⌥⌘9 是第 1–9 个导出预设（⌘1 是实际大小，⌘2–⌘9 没人占，但和 ⌥ 配成一组好记）
         case .preset1: return KeyCombo(keyCode: 18, mods: [.command, .option], chars: "1")
         case .preset2: return KeyCombo(keyCode: 19, mods: [.command, .option], chars: "2")

@@ -55,6 +55,7 @@ enum BatchConvert {
 
     /// 已经是目标格式的文件，按现在的选项转一遍会有变化吗：没设任何限制就原样不动（重新压缩只会掉画质）
     static func needsWork(_ url: URL, settings s: Settings) -> Bool {
+        if s.options.effect != nil { return true }
         guard isSameFormat(url, ext: s.ext) else { return true }
         let o = s.options
         if !o.keepMetadata { return true }

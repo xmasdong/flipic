@@ -384,9 +384,10 @@ final class ImageLoader {
         return transparentImages.contains(img)
     }
 
-    static func displayReady(_ src: CGImage) -> CGImage {
+    /// transparent：这张图本身带不带透明，不给就按像素格式判断（处理过的图像素格式总带 alpha 通道，要由调用方说明）
+    static func displayReady(_ src: CGImage, transparent: Bool? = nil) -> CGImage {
         let out = makeDisplayReady(src)
-        if hasAlphaChannel(src) {
+        if transparent ?? hasAlphaChannel(src) {
             surfacesLock.lock(); transparentImages.add(out); surfacesLock.unlock()
         }
         return out

@@ -342,6 +342,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         License.install()
         Pairs.install()
         BurstEyes.install()
+        FilmEffect.install()
         NotificationCenter.default.addObserver(forName: License.didChange, object: nil, queue: .main) { _ in Pairs.install(); BurstEyes.install() }
         #endif
         newViewerWindow()
@@ -597,6 +598,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        #if FLIPIC_PRO
+        if let i = CommandLine.arguments.firstIndex(of: "--filmtest"), i + 1 < CommandLine.arguments.count {
+            // --filmtest <工作文件夹> [RAW 文件夹] [--ui-only]：胶片滤镜的自测，最后一行 FILMTEST checks=N failures=M
+            let outDir = CommandLine.arguments[i + 1]
+            let raw = i + 2 < CommandLine.arguments.count && !CommandLine.arguments[i + 2].hasPrefix("-") ? CommandLine.arguments[i + 2] : nil
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runFilmTest(outDir: outDir, rawDir: raw)
+            }
+            return
+        }
+        #endif
         if let i = CommandLine.arguments.firstIndex(of: "--presettest"), i + 1 < CommandLine.arguments.count {
             // --presettest <工作文件夹> [RAW 文件夹]：导出预设的存取、改名模板、批量导出、存储卡回退、管理窗口和菜单，最后一行 PRESETTEST checks=N failures=M
             let outDir = CommandLine.arguments[i + 1]
@@ -1399,6 +1411,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.zoomToEye(_:)): .zoomEye,
         #selector(AppDelegate.showWorkbench(_:)): .workbench,
         #selector(ViewerViewController.searchContent(_:)): .searchContent,
+        #selector(ViewerViewController.toggleFilmPanel(_:)): .filmPanel,
+        #selector(ViewerViewController.toggleFilm(_:)): .filmToggle,
+        #selector(ViewerViewController.filmPrevious(_:)): .filmPrev,
+        #selector(ViewerViewController.filmNext(_:)): .filmNext,
     ]
     #endif
 
@@ -1643,6 +1659,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             sortItem.submenu = sortMenu
             m.addItem(sortItem)
             m.addItem(.separator())
+            #if FLIPIC_PRO
+            let filmItem = NSMenuItem(title: L10n.t("film.menu", "胶片滤镜"), action: nil, keyEquivalent: "")
+            let filmMenu = NSMenu(title: filmItem.title)
+            item(filmMenu, L10n.t("film.menu.panel", "胶片面板"), #selector(ViewerViewController.toggleFilmPanel(_:)))
+            item(filmMenu, L10n.t("film.menu.toggle", "开 / 关胶片滤镜"), #selector(ViewerViewController.toggleFilm(_:)))
+            item(filmMenu, L10n.t("film.menu.prev", "上一款"), #selector(ViewerViewController.filmPrevious(_:)))
+            item(filmMenu, L10n.t("film.menu.next", "下一款"), #selector(ViewerViewController.filmNext(_:)))
+            filmMenu.addItem(.separator())
+            item(filmMenu, L10n.t("film.menu.saveCopy", "另存一份…"), #selector(ViewerViewController.filmSaveCopy(_:)))
+            filmItem.submenu = filmMenu
+            m.addItem(filmItem)
+            proItems.append(filmItem)
+            m.addItem(.separator())
+            #endif
             item(m, L10n.t("menu.playLive", "播放实况照片"), #selector(ViewerViewController.playLivePhoto(_:)))
             item(m, L10n.t("menu.slideshow", "幻灯片放映"), #selector(ViewerViewController.toggleSlideshow(_:)))
             item(m, L10n.t("menu.fullscreen", "进入全屏"), #selector(NSWindow.toggleFullScreen(_:)), "f", [.control, .command])

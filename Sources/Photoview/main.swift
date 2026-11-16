@@ -9,5 +9,6 @@ setenv("CI_SURFACE_CACHE_CAPACITY",
 let app = NSApplication.shared
 let appDelegate = AppDelegate()
 app.delegate = appDelegate
-app.setActivationPolicy(.regular)
+QuietTest.installIfNeeded()
+app.setActivationPolicy(QuietTest.on ? .accessory : .regular)
 app.run()

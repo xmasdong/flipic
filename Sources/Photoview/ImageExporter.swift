@@ -15,6 +15,8 @@ struct ExportOptions: Equatable {
     var maxBytes: Int64?
     /// 像素转成 sRGB 并标上 sRGB 描述文件；关着时保持原来的色彩空间并如实标出
     var toSRGB = false
+    /// 出图前对像素再处理一遍（由 Pro 装上的 ExportEffect 认得）：不透明的一段文字，nil = 不处理。不记在偏好设置里
+    var effect: String?
 
     private static let d = UserDefaults.standard
 
@@ -42,6 +44,12 @@ struct ExportOptions: Equatable {
     /// 勾着但填的数字没记下来时，输入框里显示的初始值
     static var savedLongEdge: Int { d.integer(forKey: "export.longEdge") > 0 ? d.integer(forKey: "export.longEdge") : 2048 }
     static var savedSizeMB: Double { d.double(forKey: "export.sizeMB") > 0 ? d.double(forKey: "export.sizeMB") : 2 }
+}
+
+/// 导出前对像素的额外处理：Pro 在启动时装上一个函数，参数是图、导出选项里的 effect 文字、原文件；返回处理后的图（尺寸不变），
+/// 失败返回 nil（按没处理）。没装（开源版）就什么都不做
+enum ExportEffect {
+    static var apply: ((CGImage, String, URL?) -> CGImage?)?
 }
 
 enum ImageExporter {
@@ -74,9 +82,19 @@ enum ImageExporter {
     /// source 是原文件，用来带元数据；cancelled 在耗时的编码之间检查
     static func encode(_ image: CGImage, source: URL?, uti: String, quality: Double, options: ExportOptions,
                        cancelled: () -> Bool = { false }) -> Outcome? {
+        // 有 effect 时先缩小、再处理、最后才转 sRGB：处理在原来的色域里做，颗粒的粗细也跟着最终的像素尺寸走
+        let hasEffect = options.effect != nil
         var base = image
-        if options.toSRGB, let s = converted(base) { base = s }
+        if !hasEffect, options.toSRGB, let s = converted(base) { base = s }
         if let edge = options.maxLongEdge, edge < max(base.width, base.height), let s = scaled(base, longEdge: edge) { base = s }
+        let plain = base
+        func styled(_ img: CGImage) -> CGImage {
+            guard let token = options.effect else { return img }
+            var out = ExportEffect.apply?(img, token, source) ?? img
+            if options.toSRGB, let s = converted(out) { out = s }
+            return out
+        }
+        base = styled(plain)
         let meta = options.keepMetadata ? source.flatMap { carriedMetadata(for: $0, width: base.width, height: base.height, options: options) } : nil
         // 元数据在缩小后要重写像素尺寸，所以每个尺寸各取一次
         func data(_ img: CGImage, _ q: Int) -> Data? {
@@ -126,8 +144,8 @@ enum ImageExporter {
             }
             let edge = Int((baseLong * factor).rounded())
             if edge < 200 { break }
-            guard let s = scaled(base, longEdge: edge) else { break }
-            current = s
+            guard let s = scaled(plain, longEdge: edge) else { break }
+            current = styled(s)
         }
         return smallest
     }
