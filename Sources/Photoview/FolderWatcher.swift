@@ -6,6 +6,8 @@ final class FolderWatcher {
     private var stream: FSEventStreamRef?
     private var watching: URL?
     private let onChange: () -> Void
+    /// 一批变化全是自己写的时回调（只带真正的照片文件，临时文件不算）
+    var onOwnWrites: (([URL]) -> Void)?
 
     init(onChange: @escaping () -> Void) { self.onChange = onChange }
 
@@ -15,13 +17,22 @@ final class FolderWatcher {
         guard let folder else { return }
         var ctx = FSEventStreamContext(version: 0, info: Unmanaged.passUnretained(self).toOpaque(),
                                        retain: nil, release: nil, copyDescription: nil)
-        let callback: FSEventStreamCallback = { _, info, _, _, _, _ in
+        let callback: FSEventStreamCallback = { _, info, count, eventPaths, _, _ in
             guard let info else { return }
-            Unmanaged<FolderWatcher>.fromOpaque(info).takeUnretainedValue().onChange()
+            // 这一批变化全是 Flipic 自己写的（保存裁剪时的临时文件、换上去的新文件）：不用再扫一遍文件夹。
+            // 几千张照片的文件夹里，扫一遍要卡主线程一百多毫秒，一次保存会触发两次
+            let watcher = Unmanaged<FolderWatcher>.fromOpaque(info).takeUnretainedValue()
+            // 文件夹里记的修改时间和大小还是要跟上（之后别的软件把文件改回老样子才认得出来），只更新这几个文件
+            if count > 0, let paths = unsafeBitCast(eventPaths, to: NSArray.self) as? [String], let own = FolderWatcher.ownWriteURLs(paths) {
+                if !own.isEmpty { watcher.onOwnWrites?(own) }
+                return
+            }
+            watcher.onChange()
         }
         guard let s = FSEventStreamCreate(nil, callback, &ctx, [folder.path] as CFArray,
                                           FSEventStreamEventId(kFSEventStreamEventIdSinceNow), 0.3,
-                                          FSEventStreamCreateFlags(kFSEventStreamCreateFlagNoDefer)) else { return }
+                                          FSEventStreamCreateFlags(kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagUseCFTypes
+                                                                   | kFSEventStreamCreateFlagFileEvents)) else { return }
         FSEventStreamSetDispatchQueue(s, .main)
         FSEventStreamStart(s)
         stream = s
@@ -61,6 +72,24 @@ final class FolderWatcher {
     static func noteOwnWrite(_ url: URL) {
         guard let s = stamp(of: url) else { return }
         lock.lock(); ownWrites[url.standardizedFileURL] = s; lock.unlock()
+    }
+
+    /// 保存裁剪、拉直时先写的临时文件（Straighten.tempURL）
+    static let tempPrefix = ".flipic-rotate-"
+
+    /// 这批文件事件都是自己造成的（临时文件，或者已经记下的自己写的文件，修改时间和大小对得上）时，
+    /// 返回其中真正的照片文件；有别的变化就返回 nil
+    static func ownWriteURLs(_ paths: [String]) -> [URL]? {
+        guard !paths.isEmpty else { return nil }
+        var files: [URL] = []
+        for p in paths {
+            // replaceItemAt 还会再造一个叫 ".<临时文件名>-xxxx" 的中转文件，所以是「包含」不是「开头」
+            if (p as NSString).lastPathComponent.contains(tempPrefix) { continue }
+            let url = URL(fileURLWithPath: p)
+            guard let s = stamp(of: url), isOwnWrite(url, s) else { return nil }
+            if !files.contains(url) { files.append(url) }
+        }
+        return files
     }
 
     static func isOwnWrite(_ url: URL, _ s: Stamp) -> Bool {

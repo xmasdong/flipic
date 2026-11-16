@@ -21,6 +21,10 @@ final class ViewerViewController: NSViewController {
     private var rotationAutoSaveFailed: URL?
     /// 刚覆盖保存、还在重新载入的文件：视图里的旋转状态要等载入完才清掉，这期间别再存一次
     private var rotationJustSaved: URL?
+    /// 正在后台写盘的保存对应的照片；非 nil 时翻页要等它写完，也不开始新的编辑
+    private var savingURL: URL?
+    /// 保存写盘期间用户想翻页：等写完再翻（只留最后一个想做的）
+    private var afterSave: (() -> Void)?
     private let hudStack = NSStackView()
     private let hudNameLabel = NSTextField(labelWithString: "")
     private let hudDimsLabel = NSTextField(labelWithString: "")
@@ -112,7 +116,11 @@ final class ViewerViewController: NSViewController {
     private var fullRequested = false
     private var folderGeneration = 0
     /// 别的软件（Photoshop 等）存了文件夹里的照片，自动换成新的
-    private lazy var folderWatcher = FolderWatcher { [weak self] in self?.folderDidChange() }
+    private lazy var folderWatcher: FolderWatcher = {
+        let w = FolderWatcher { [weak self] in self?.folderDidChange() }
+        w.onOwnWrites = { [weak self] urls in self?.folder.noteOwnWrites(urls) }
+        return w
+    }()
     /// 翻到视频时的播放器和底部控制条
     private(set) lazy var video = VideoPlayback(imageView: imageView)
     /// 翻到视频时自动收起了缩略图栏
@@ -164,6 +172,8 @@ final class ViewerViewController: NSViewController {
     /// 当前照片屏幕上已经是什么：还没换过来 / 胶片条缩略图 / 草图 / 清晰图（预览或原图），只升不降
     private enum Shown: Int { case none, thumb, draft, sharp }
     private var shown = Shown.none
+    /// 测试用：屏幕上已经是清晰图
+    var debugShownSharp: Bool { shown == .sharp }
     private var shownResetToFit = false
     /// 快速连翻：翻页比清晰预览解得还快时只出草图，停下来再解清晰图，再按浏览方向预取邻居
     private var rapidPaging = false
@@ -1021,6 +1031,7 @@ final class ViewerViewController: NSViewController {
         let gen = generation
         fullRequested = false
         shown = .none
+        Straighten.releaseWarm()
         shownResetToFit = resetToFit
         let fast = fastStep
         fastStep = false
@@ -2316,10 +2327,12 @@ final class ViewerViewController: NSViewController {
 
     // 转完底部会一直显示「旋转还没保存」和保存按钮（RotationBar），不再只闪一下提示
     @objc func rotateCW(_ sender: Any?) {
+        guard savingURL == nil else { return }
         imageView.rotate(clockwise: 1)
     }
 
     @objc func rotateCCW(_ sender: Any?) {
+        guard savingURL == nil else { return }
         imageView.rotate(clockwise: -1)
     }
 
@@ -4303,6 +4316,7 @@ final class ViewerViewController: NSViewController {
         rotationAutoSave?.cancel()
         rotationAutoSave = nil
         let pending = imageView.hasPendingRotation && cleanup == nil
+        if !imageView.hasPendingRotation { Straighten.releaseWarm() }
         if pending && rotationJustSaved != nil && rotationJustSaved == folder.current?.url {
             rotationBar.showPending(false)
             return
@@ -4327,7 +4341,7 @@ final class ViewerViewController: NSViewController {
 
     /// ⇧R：裁剪与拉直。拖裁剪框的手柄、选比例，滑块或 ← → 调角度；回车（或在框里双击）完成、Esc 取消
     @objc func straighten(_ sender: Any?) {
-        guard folder.current != nil, cleanup == nil, !isStraightening else { return }
+        guard folder.current != nil, cleanup == nil, !isStraightening, savingURL == nil else { return }
         guard !currentIsVideo, imageView.canStraighten else {
             flash(L10n.t("msg.straightenUnavailable", "视频和动图不能裁剪或拉直"))
             return
@@ -4352,6 +4366,10 @@ final class ViewerViewController: NSViewController {
         guard isStraightening else { return }
         imageView.endCrop(apply: apply)
         updateRotationBar()
+        // 裁剪、拉直完成：保存要把整张照片解开再编码，趁用户点保存、看对话框的时候先在后台解好
+        if apply, imageView.fineDegrees != 0 || imageView.cropSpec != nil, let url = folder.current?.url, cleanup == nil {
+            Straighten.prewarm(url)
+        }
     }
 
     /// 拉直时的按键：← → 微调（⇧ 每次 1°），回车完成，Esc 取消；其余不带 ⌘ 的键吞掉，免得翻页、打星
@@ -4373,6 +4391,11 @@ final class ViewerViewController: NSViewController {
     /// 翻到别的照片前，这张还有没保存的旋转：问一次。返回 true 表示先拦下来，proceed 在用户选完后接着走
     private func holdForUnsavedRotation(_ proceed: @escaping () -> Void) -> Bool {
         if isStraightening { finishStraighten(apply: true) }
+        // 这张正在写盘：不再问「没保存」，写完再翻
+        if let saving = savingURL, saving == folder.current?.url {
+            afterSave = proceed
+            return true
+        }
         if let saved = rotationJustSaved, saved == folder.current?.url { return false }
         // 自动保存模式：还没到点的那次保存马上做，存完再翻
         if imageView.hasPendingRotation, autoSavesRotation, folder.current != nil, !isProcessing {
@@ -4469,16 +4492,30 @@ final class ViewerViewController: NSViewController {
         }
     }
 
-    private func performRotationSave(url: URL, turns: Int, degrees: Double, crop: Straighten.CropSpec?, overwrite: Bool, then: (() -> Void)?) {
+    /// 写盘在后台线程（解码、渲染、编码、临时文件换原图），主线程不卡；写的时候屏幕上已经是裁好的样子，
+    /// 底部只有一行「保存中…」。写完直接把屏幕上这张图当成新文件的内容，不再重新载入，
+    /// 清晰度不够的话再在后台解一张清晰预览原位换上。写的过程中翻页要等写完，退出也等（见 AppDelegate）
+    func performRotationSave(url: URL, turns: Int, degrees: Double, crop: Straighten.CropSpec?, overwrite: Bool, then: (() -> Void)?) {
+        if CommandLine.arguments.contains("--cropspeedtest") { NSLog("STRAIGHTEN save begin url=%@ turns=%d deg=%f crop=%@", url.lastPathComponent, turns, degrees, "\(String(describing: crop))") }
         isProcessing = true
+        savingURL = url
+        afterSave = nil
+        Straighten.profile?("at.1saveStart", 0)
         flash(L10n.t("msg.rotSaving", "保存中…"), seconds: 3600)
         let srcIsRaw = CleanupUnit.isRaw(url)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            Straighten.profile?("at.2bgStart", 0)
             let out = Straighten.save(url: url, quarterTurns: turns, degrees: degrees, crop: crop, overwrite: overwrite)
+            Straighten.profile?("file.done", 0)
             DispatchQueue.main.async {
                 guard let self else { return }
+                Straighten.profile?("at.3mainCb", 0)
+                defer { Straighten.profile?("at.4mainDone", 0) }
                 self.isProcessing = false
-                if CommandLine.arguments.contains("--straightentest") || CommandLine.arguments.contains("--croptest") {
+                self.savingURL = nil
+                let queued = self.afterSave
+                self.afterSave = nil
+                if CommandLine.arguments.contains("--straightentest") || CommandLine.arguments.contains("--croptest") || CommandLine.arguments.contains("--cropspeedtest") {
                     NSLog("STRAIGHTEN saved overwrite=%d result=%@ out=%@", overwrite ? 1 : 0, "\(out.result)", out.url?.lastPathComponent ?? "-")
                 }
                 guard out.result != .failed, let saved = out.url else {
@@ -4495,7 +4532,7 @@ final class ViewerViewController: NSViewController {
                                   : L10n.t("msg.rotSavedReencoded", "已保存旋转（该格式重新编码）")), seconds: 3)
                     self.rotationJustSaved = url
                     self.loader.evict(url: url)
-                    self.showImage(resetToFit: false)
+                    self.finishOverwrite(url: url, newSize: out.pixelSize)
                 } else {
                     // 原图不动：视图回到原样，新文件由文件夹监视加进列表
                     self.imageView.resetRotation()
@@ -4507,8 +4544,38 @@ final class ViewerViewController: NSViewController {
                 self.rotationAutoSave = nil
                 self.rotationBar.showPending(false)
                 then?()
+                queued?()
             }
         }
+    }
+
+    /// 覆盖原图写完以后让界面跟上：重新编码的（裁剪、拉直）直接用屏幕上的图，其余走原来的重新载入。缩略图栏里这一格也换成新的
+    private func finishOverwrite(url: URL, newSize: CGSize?) {
+        prefetchedURLs.remove(url)
+        if let row = folder.items.firstIndex(where: { $0.url == url }) {
+            filmstrip.collectionView.reloadItems(at: [IndexPath(item: row, section: 0)])
+        }
+        guard folder.current?.url == url else { return }
+        let target = previewPixelTarget
+        guard let newSize, imageView.adoptSavedEdit(logicalSize: newSize, minPixel: 0) else {
+            showImage(resetToFit: false)
+            return
+        }
+        generation += 1
+        decodeQueue.cancelAllOperations()
+        folder.setCurrentPixelSize(newSize)
+        let sharpEnough = CGFloat(max(imageView.pixelSizeOfDisplayedImage.width, imageView.pixelSizeOfDisplayedImage.height))
+            >= min(max(newSize.width, newSize.height), target) * 0.85
+        if sharpEnough {
+            shown = .sharp
+            fullRequested = false
+        } else {
+            // 先用屏幕上这张，清晰预览解好了原位换（和翻页时草图换清晰图是同一条路）
+            shown = .draft
+            fullRequested = false
+            _ = enqueueSharp(url: url, gen: generation)
+        }
+        updateHUD(); updateExifPanel(); scheduleLiveText(restart: true)
     }
 
     // MARK: - 关于窗口（简介 / 使用方式 / 快捷键，多语言）

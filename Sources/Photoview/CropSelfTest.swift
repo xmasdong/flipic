@@ -1,6 +1,7 @@
 import AppKit
 import ImageIO
 import UniformTypeIdentifiers
+import CryptoKit
 
 /// 裁剪与拉直的自测。
 /// --cropgeomtest：只算几何（CropGeometry），不开窗口；
@@ -289,6 +290,30 @@ enum CropSelfTest {
         return "DateCreated=\(iptc?["DateCreated"] ?? "nil") TimeCreated=\(iptc?["TimeCreated"] ?? "nil") xmp=\(xmp ?? "nil")"
     }
 
+    static func digest(_ url: URL) -> String {
+        guard let data = try? Data(contentsOf: url, options: .mappedIfSafe) else { return "unreadable" }
+        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// exiftool 读出来的全部标签（没装就是 nil）：去掉文件本身的和换算出来的那几组
+    static func exifDump(_ url: URL) -> [String]? {
+        let tool = ["/opt/homebrew/bin/exiftool", "/usr/local/bin/exiftool"].first { FileManager.default.isExecutableFile(atPath: $0) }
+        guard let tool else { return nil }
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: tool)
+        p.arguments = ["-a", "-G1", "-s", url.path]
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        p.standardError = FileHandle.nullDevice
+        guard (try? p.run()) != nil else { return nil }
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        p.waitUntilExit()
+        let skip = ["[System]", "[ExifTool]", "[File]", "[JFIF]", "[Composite]", "[QuickTime]"]
+        return String(decoding: data, as: UTF8.self).split(separator: "\n").map(String.init)
+            .filter { l in !skip.contains { l.hasPrefix($0) } && !l.contains("XMPToolkit") && !l.contains("IPTCDigest") && !l.contains("ICC_Profile") }
+            .sorted()
+    }
+
     static func meta(_ url: URL) -> String {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
               let p = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] else { return "\(url.lastPathComponent)=missing" }
@@ -316,6 +341,24 @@ extension ViewerViewController {
         CropSelfTest.write(grid, to: dir.appendingPathComponent("over.jpg"), type: .jpeg)
         CropSelfTest.write(grid, to: dir.appendingPathComponent("orient6.jpg"), type: .jpeg, orientation: 6)
         CropSelfTest.write(grid, to: dir.appendingPathComponent("grid.heic"), type: .heic)
+        CropSelfTest.write(grid, to: dir.appendingPathComponent("portrait.jpg"), type: .jpeg, orientation: 6)
+        // 记住的比例放在临时的偏好设置里，不碰真实的；结束时删掉
+        let suiteName = "com.xmasdong.croptest.\(ProcessInfo.processInfo.processIdentifier)"
+        let suite = UserDefaults(suiteName: suiteName)!
+        suite.removePersistentDomain(forName: suiteName)
+        let savedMemory = CropMemory.defaults
+        CropMemory.defaults = suite
+        // 慢一点的保存（5400 万像素），用来测写盘期间翻页、退出
+        let bigW = 9000, bigH = 6000
+        if let ctx = CGContext(data: nil, width: bigW, height: bigH, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                               bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) {
+            ctx.interpolationQuality = .none
+            ctx.draw(grid, in: CGRect(x: 0, y: 0, width: bigW, height: bigH))
+            if let big = ctx.makeImage() { CropSelfTest.write(big, to: dir.appendingPathComponent("big.jpg"), type: .jpeg) }
+        }
+        // RAW 原文件的指纹：整个测试跑完不能变
+        let rawURL = dir.appendingPathComponent("cam.ARW")
+        let rawBefore = fm.fileExists(atPath: rawURL.path) ? CropSelfTest.digest(rawURL) : nil
         // 评分和标记：覆盖保存以后还在不在
         Rating.write(4, to: dir.appendingPathComponent("over.jpg"))
         Marks.set(true, for: dir.appendingPathComponent("over.jpg"))
@@ -398,6 +441,7 @@ extension ViewerViewController {
                 }
             }
         }
+        func enter() { CropMemory.forget(); self.straighten(nil) }
         let cropSuffix = L10n.t("rot.cropSuffix", "-裁剪")
         let inside = { CropSelfTest.cornersInside(self.imageView.debugCropNow, image: self.imageView.debugTurnedSize, degrees: self.imageView.fineDegrees) }
 
@@ -428,7 +472,7 @@ extension ViewerViewController {
         var wantCrop: CropGeometry.Crop?
         for c in cases {
             at(1.0) {
-                self.straighten(nil)
+                enter()
                 expect(self.isStraightening && self.rotationBar.debugRow == "straighten", "\(c.name): mode entered, bar=\(self.rotationBar.debugRow) \(overlay?.debugLayers ?? "-") barWidth=\(Int(self.rotationBar.fittingSize.width)) viewWidth=\(Int(self.view.bounds.width))")
                 self.rotationBar.debugSelectAspect(c.aspect)
             }
@@ -471,7 +515,7 @@ extension ViewerViewController {
 
         // ---- 2. 横竖互换、⇧ 保持比例、Esc 取消、还原
         at(1.0) {
-            self.straighten(nil)
+            enter()
             self.rotationBar.debugSelectAspect(.r4x5)
             self.rotationBar.onSwap?()
             expect(px() == CGSize(width: 2500, height: 2000), "swap 4:5 → 5:4: \(sizeText(px())) | \(self.rotationBar.debugCrop)")
@@ -493,7 +537,7 @@ extension ViewerViewController {
             expect(!self.isStraightening && !self.imageView.hasPendingRotation && px() == CGSize(width: 3000, height: 2000) && self.rotationBar.debugRow == "hidden",
                    "Esc: back to entry state \(sizeText(px())) bar=\(self.rotationBar.debugRow)")
             // 拖到照片外面很远：框贴边停住
-            self.straighten(nil)
+            enter()
             self.rotationBar.debugSelectAspect(.free)
             drag(.topLeft, dx: 200, dy: 150)
             drag(.topLeft, dx: -900, dy: -900)
@@ -507,7 +551,7 @@ extension ViewerViewController {
         // ---- 3. 裁剪 + 拉直 7.3° + 4:5，双击完成，再按 R；再进去接着调；另存一份
         var comboCrop: CropGeometry.Crop?
         at(0.6) {
-            self.straighten(nil)
+            enter()
             self.rotationBar.debugSelectAspect(.r4x5)
             self.rotationBar.onDegrees?(7.3)
             expect(abs(self.imageView.fineDegrees - 7.3) < 1e-9 && inside(), "angle 7.3 with 4:5: rect inside, size \(sizeText(px()))")
@@ -558,7 +602,7 @@ extension ViewerViewController {
             expect(self.imageView.crop == turned && px() == CGSize(width: want.height, height: want.width), "R keeps the crop on the same content: \(sizeText(px()))")
             shot("pending-after-R")
             // 再进去：框、角度、比例都还在
-            self.straighten(nil)
+            enter()
             expect(self.imageView.debugCropNow == turned && abs(self.imageView.fineDegrees - 7.3) < 1e-9 && self.rotationBar.debugCrop.contains("aspect=5:4"),
                    "re-enter restores rect, angle and ratio | \(self.rotationBar.debugCrop)")
             shot("reenter")
@@ -588,7 +632,7 @@ extension ViewerViewController {
             go("grid.jpg")
         }
         at(1.0) {
-            self.straighten(nil)
+            enter()
             self.rotationBar.debugSelectAspect(.square)
             self.rotationBar.onDegrees?(-4)
             key(36, "\r")
@@ -600,7 +644,7 @@ extension ViewerViewController {
             expect(!self.imageView.hasPendingRotation && self.imageView.crop == nil && self.imageView.fineDegrees == 0 && self.imageView.rotationTurns == 0
                    && px() == CGSize(width: 3000, height: 2000) && self.rotationBar.debugRow == "hidden", "Revert clears crop, angle and quarter turns")
             // 只拉直、不动框：走原来的路径（没有手动裁剪框），和 1.0.30 一样
-            self.straighten(nil)
+            enter()
             self.rotationBar.onDegrees?(5)
             let k = Straighten.cropScale(width: 3000, height: 2000, degrees: 5)
             let old = CGSize(width: (3000 * k).rounded(.down), height: (2000 * k).rounded(.down))
@@ -623,7 +667,7 @@ extension ViewerViewController {
         // ---- 5. 翻到别的照片时提醒；覆盖原图（评分、标记还在）
         at(0.6) { go("over.jpg") }
         at(1.0) {
-            self.straighten(nil)
+            enter()
             self.rotationBar.debugSelectAspect(.r16x9)
             drag(.bottomRight, dx: -90, dy: -90)
             key(36, "\r")
@@ -676,7 +720,7 @@ extension ViewerViewController {
         at(0.6) { go("orient6.jpg") }
         at(1.0) {
             expect(px() == CGSize(width: 2000, height: 3000), "orient6 shown as \(sizeText(px()))")
-            self.straighten(nil)
+            enter()
             self.rotationBar.debugSelectAspect(.square)
             expect(px() == CGSize(width: 2000, height: 2000), "orient6 1:1 \(sizeText(px()))")
             drag(.topRight, dx: -50, dy: 50)
@@ -702,7 +746,7 @@ extension ViewerViewController {
         // ---- 7. HEIC
         at(0.6) { go("grid.heic") }
         at(1.5) {
-            self.straighten(nil)
+            enter()
             self.rotationBar.debugSelectAspect(.r3x2)
             self.rotationBar.onDegrees?(-3.5)
             drag(.bottomLeft, dx: 80, dy: -40)
@@ -724,7 +768,7 @@ extension ViewerViewController {
         for name in ["img208.jpg", "exif.jpg", "sony.heic"] where has(name) {
             at(0.6) { go(name) }
             at(1.2) {
-                self.straighten(nil)
+                enter()
                 self.rotationBar.debugSelectAspect(.r4x5)
                 drag(.top, dx: 0, dy: 30)
                 key(36, "\r")
@@ -750,7 +794,7 @@ extension ViewerViewController {
             at(3.0) {
                 let a = try? fm.attributesOfItem(atPath: dir.appendingPathComponent("cam.ARW").path)
                 rawBefore = (a?[.size], a?[.modificationDate])
-                self.straighten(nil)
+                enter()
                 self.rotationBar.debugSelectAspect(.square)
                 self.rotationBar.onDegrees?(2)
                 key(36, "\r")
@@ -785,7 +829,7 @@ extension ViewerViewController {
             at(1.0) {
                 self.imageView.resetRotation()
                 if turns != 0 { self.imageView.rotate(clockwise: turns) }
-                self.straighten(nil)
+                enter()
                 if label != "angle-only" { self.rotationBar.debugSelectAspect(.r16x9) }
                 self.rotationBar.onDegrees?(degrees)
                 if label != "angle-only" { drag(.topLeft, dx: 60, dy: 40) }
@@ -813,7 +857,7 @@ extension ViewerViewController {
         at(1.2) {
             Straighten.saveTarget = .overwrite
             bytesBefore = (try? fm.attributesOfItem(atPath: dir.appendingPathComponent("grid.heic").path))?[.modificationDate]
-            self.straighten(nil)
+            enter()
             self.rotationBar.debugSelectAspect(.square)
             key(36, "\r")
             want = px()
@@ -870,6 +914,181 @@ extension ViewerViewController {
             Straighten.saveTarget = .ask
         }
 
+        // ---- 13. 记住上次的比例（完成时的，Esc 不算）；横竖按「相对这张照片是否转过」
+        // grid.jpg 横 3000×2000，portrait.jpg 竖 2000×3000
+        at(0.6) { CropMemory.forget(); go("grid.jpg") }
+        at(1.2) {
+            self.straighten(nil)
+            expect(self.imageView.cropAspect == .original && px() == CGSize(width: 3000, height: 2000), "memory: nothing remembered → original default \(sizeText(px()))")
+            self.rotationBar.debugSelectAspect(.r4x5)
+            key(36, "\r")
+        }
+        at(0.4) {
+            expect(CropMemory.aspect == .r4x5 && CropMemory.againstPhoto, "memory: Return stores 4:5, portrait frame cut from a landscape photo (against=\(CropMemory.againstPhoto))")
+            self.rotationBar.onRevert?()
+        }
+        at(0.4) {
+            self.straighten(nil)
+            expect(self.imageView.cropAspect == .r4x5 && !self.imageView.cropAspectSwapped && px() == CGSize(width: 1600, height: 2000)
+                   && self.rotationBar.debugCrop.contains("aspect=4:5"), "memory: next entry starts 4:5 \(sizeText(px())) | \(self.rotationBar.debugCrop)")
+            shot("memory-start-4x5")
+            self.rotationBar.debugSelectAspect(.r3x2)
+            key(53, "\u{1B}")
+        }
+        at(0.4) {
+            expect(CropMemory.aspect == .r4x5 && !self.imageView.hasPendingRotation, "memory: Esc leaves the remembered 4:5 alone")
+            // 重新打开同一份偏好设置（相当于下次启动）：还是 4:5
+            CropMemory.defaults.synchronize()
+            CropMemory.defaults = UserDefaults(suiteName: suiteName)!
+            expect(CropMemory.aspect == .r4x5 && CropMemory.againstPhoto, "memory: survives re-opening the preferences (next launch)")
+            go("portrait.jpg")
+        }
+        at(1.2) {
+            // 上次是竖框裁横照片（和照片相反）：这张是竖照片，框就横过来，还是 4:5 的比例
+            self.straighten(nil)
+            expect(px() == CGSize(width: 2000, height: 3000) || self.imageView.cropAspect == .r4x5, "memory: portrait photo opened")
+            expect(self.imageView.cropAspect == .r4x5 && self.imageView.cropAspectSwapped && px() == CGSize(width: 2000, height: 1600),
+                   "memory: against-photo 4:5 on a portrait photo starts as 5:4 \(sizeText(px())) | \(self.rotationBar.debugCrop)")
+            key(53, "\u{1B}")
+        }
+        at(0.5) { go("grid.jpg") }
+        at(1.2) {
+            // 16:9 横框裁横照片（跟着照片）；下一张竖照片就从 9:16 开始
+            self.straighten(nil)
+            self.rotationBar.debugSelectAspect(.r16x9)
+            key(36, "\r")
+        }
+        at(0.4) {
+            expect(CropMemory.aspect == .r16x9 && !CropMemory.againstPhoto, "memory: 16:9 landscape on landscape is not against the photo")
+            self.rotationBar.onRevert?()
+            go("portrait.jpg")
+        }
+        at(1.2) {
+            self.straighten(nil)
+            expect(self.imageView.cropAspect == .r16x9 && self.imageView.cropAspectSwapped && abs(px().width - 1687) <= 1 && px().height == 3000,
+                   "memory: 16:9 follows the portrait photo → 9:16 \(sizeText(px())) | \(self.rotationBar.debugCrop)")
+            shot("memory-follow-photo")
+            key(53, "\u{1B}")
+        }
+        at(0.5) { go("grid.jpg") }
+        at(1.2) {
+            // 自由：下次还是自由，默认框是整张
+            self.straighten(nil)
+            self.rotationBar.debugSelectAspect(.free)
+            key(36, "\r")
+        }
+        at(0.4) {
+            expect(CropMemory.aspect == .free, "memory: Free stored")
+            self.rotationBar.onRevert?()
+            go("portrait.jpg")
+        }
+        at(1.2) {
+            self.straighten(nil)
+            expect(self.imageView.cropAspect == .free && px() == CGSize(width: 2000, height: 3000) && self.rotationBar.debugCrop.contains("swap=0"),
+                   "memory: Free starts Free with the default full frame \(sizeText(px())) | \(self.rotationBar.debugCrop)")
+            // 选回原比例、完成：下次是原来的默认
+            self.rotationBar.debugSelectAspect(.original)
+            key(36, "\r")
+        }
+        at(0.4) {
+            expect(CropMemory.aspect == .original, "memory: Original stored")
+            self.straighten(nil)
+            expect(self.imageView.cropAspect == .original && px() == CGSize(width: 2000, height: 3000), "memory: Original starts like before \(sizeText(px()))")
+            key(53, "\u{1B}")
+        }
+        // 已经有没保存的裁剪时，再进去接着调，不被记住的比例顶掉
+        at(0.4) {
+            self.straighten(nil)
+            self.rotationBar.debugSelectAspect(.square)
+            key(36, "\r")
+        }
+        at(0.4) {
+            expect(self.imageView.crop != nil && CropMemory.aspect == .square, "memory: square stored, crop pending")
+            CropMemory.defaults.set(CropGeometry.Aspect.r4x5.rawValue, forKey: "cropLastAspect")
+            self.straighten(nil)
+            expect(self.imageView.cropAspect == .square && px() == CGSize(width: 2000, height: 2000), "memory: a pending crop keeps its own ratio when re-entered \(sizeText(px()))")
+            key(53, "\u{1B}")
+            self.rotationBar.onRevert?()
+            CropMemory.forget()
+        }
+
+        // ---- 14. 覆盖保存：像素尺寸、拍摄信息、没有临时文件、创建时间；写盘时翻页、开始新编辑、退出；RAW 不动
+        func tempLeft() -> [String] { ((try? fm.contentsOfDirectory(atPath: path)) ?? []).filter { $0.hasPrefix(".flipic-rotate") } }
+        func created(_ name: String) -> Date? { try? dir.appendingPathComponent(name).resourceValues(forKeys: [.creationDateKey]).creationDate }
+        var exifBefore: [String]?
+        var createdBefore: Date?
+        var tStart = 0.0, tFile = 0.0, tMain = 0.0
+        let stamp = NSLock()
+        at(0.6) { go("exif.jpg") }
+        at(1.2) {
+            exifBefore = CropSelfTest.exifDump(dir.appendingPathComponent("exif.jpg"))
+            createdBefore = created("exif.jpg")
+            self.straighten(nil)
+            self.rotationBar.debugSelectAspect(.r4x5)
+            key(36, "\r")
+            want = px()
+            before = listing()
+            Straighten.profile = { name, _ in
+                stamp.lock(); defer { stamp.unlock() }
+                if name == "file.done" { tFile = CFAbsoluteTimeGetCurrent() } else if name == "at.3mainCb" { tMain = CFAbsoluteTimeGetCurrent() }
+            }
+            tStart = CFAbsoluteTimeGetCurrent()
+            self.performRotationSave(url: self.folder.current?.url ?? dir.appendingPathComponent("exif.jpg"), turns: 0, degrees: 0, crop: self.imageView.cropSpec, overwrite: true, then: nil)
+        }
+        idle {
+            Straighten.profile = nil
+            let u = dir.appendingPathComponent("exif.jpg")
+            expect(fileSize("exif.jpg") == want && listing() == before && tempLeft().isEmpty, "save path: overwrite exif.jpg is \(sizeText(fileSize("exif.jpg"))) want \(sizeText(want)), no extra or temp files \(tempLeft())")
+            expect(!self.imageView.hasPendingRotation && px() == want && !self.isProcessing, "save path: view shows the saved photo, nothing pending \(sizeText(px())) pending=\(self.imageView.hasPendingRotation) crop=\(self.imageView.crop != nil) deg=\(self.imageView.fineDegrees) turns=\(self.imageView.rotationTurns) processing=\(self.isProcessing) cur=\(self.folder.current?.url.lastPathComponent ?? "-") bar=\(self.rotationBar.debugRow)")
+            expect(created("exif.jpg") == createdBefore, "save path: creation date kept")
+            if let b = exifBefore, let a = CropSelfTest.exifDump(u) {
+                let dims = ["RecordVersion", "ImageWidth", "ImageHeight", "ExifImageWidth", "ExifImageHeight", "ImageSize", "Megapixels", "BitsPerSample", "YCbCrSubSampling", "ThumbnailImage", "ThumbnailLength", "ThumbnailOffset", "PreviewImage"]
+                let lost = b.filter { l in !a.contains(l) && !dims.contains { l.contains($0) } }
+                expect(lost.isEmpty, "save path: exiftool metadata kept (\(b.count) tags before, \(a.count) after) lost=\(lost.prefix(5))")
+            } else {
+                log("save path: exiftool not installed, metadata compared through ImageIO only")
+            }
+            let m = CropSelfTest.meta(u)
+            expect(m.contains("orient=1"), "save path: orientation reset | \(m)")
+            stamp.lock()
+            log(String(format: "timing: exif.jpg overwrite %@ → file written %.0f ms, UI updated %.0f ms after the call", sizeText(want), (tFile - tStart) * 1000, (tMain - tStart) * 1000))
+            stamp.unlock()
+            self.rotationBar.onRevert?()
+        }
+        // 写盘期间：5400 万像素的 big.jpg 裁成 4:5 覆盖，马上翻页、再试着旋转 / 裁剪、看退出会不会等
+        var midFlag = ""
+        var quitWaited = false
+        at(0.6) { go("big.jpg") }
+        at(3.0) {
+            self.straighten(nil)
+            self.rotationBar.debugSelectAspect(.r4x5)
+            key(36, "\r")
+            want = px()
+            before = listing()
+            self.performRotationSave(url: self.folder.current?.url ?? dir.appendingPathComponent("big.jpg"), turns: 0, degrees: 0, crop: self.imageView.cropSpec, overwrite: true, then: nil)
+            expect(self.isProcessing && self.folder.current?.url.lastPathComponent == "big.jpg", "mid-save: saving flag set on big.jpg (cur=\(self.folder.current?.url.lastPathComponent ?? "-") pending=\(self.imageView.hasPendingRotation) sheet=\(self.view.window?.attachedSheet != nil))")
+            self.navigate(1)
+            self.rotateCW(nil)
+            self.straighten(nil)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) {
+                expect(Straighten.hasActiveSave, "mid-save: a save is registered as running (quit would wait)")
+                Straighten.whenSavesDone { quitWaited = true }
+            }
+            midFlag = "sheet=\(self.view.window?.attachedSheet != nil ? 1 : 0) turns=\(self.imageView.rotationTurns) cropping=\(self.isStraightening ? 1 : 0) current=\(self.folder.current?.url.lastPathComponent ?? "-") quitWaited=\(quitWaited ? 1 : 0)"
+            expect(self.view.window?.attachedSheet == nil && self.imageView.rotationTurns == 0 && !self.isStraightening && self.folder.current?.url.lastPathComponent == "big.jpg",
+                   "mid-save: paging waits (no unsaved prompt), rotate / crop refused | \(midFlag)")
+        }
+        idle {
+            expect(quitWaited, "mid-save: the quit handler ran after the write finished")
+            expect(fileSize("big.jpg") == want && listing() == before && tempLeft().isEmpty, "mid-save: big.jpg is \(sizeText(fileSize("big.jpg"))) want \(sizeText(want)), no temp files left \(tempLeft())")
+            expect(self.folder.current?.url.lastPathComponent != "big.jpg" && self.view.window?.attachedSheet == nil, "mid-save: the queued page turn happened afterwards (now \(self.folder.current?.url.lastPathComponent ?? "-"))")
+            let m = CropSelfTest.meta(dir.appendingPathComponent("big.jpg"))
+            expect(m.contains("orient=1") && m.contains("type=public.jpeg"), "mid-save: big.jpg valid after the write | \(m)")
+        }
+        at(0.3) {
+            if let d = rawBefore { expect(CropSelfTest.digest(rawURL) == d, "RAW cam.ARW is byte-identical after every save in this run") } else { log("RAW cam.ARW not in the photo folder, RAW check skipped") }
+        }
+
         // ---- 10. 视频 / 清理模式下菜单不可用（和拉直原来一样的条件）
         at(0.6) {
             go("grid.jpg")
@@ -879,6 +1098,8 @@ extension ViewerViewController {
         at(0.5) {
             Straighten.saveTarget = savedTarget
             Straighten.remindUnsaved = savedRemind
+            CropMemory.defaults = savedMemory
+            suite.removePersistentDomain(forName: suiteName)
             NSLog("CROP end [%@] failures=%d", lang, failures)
             NSApp.terminate(nil)
         }

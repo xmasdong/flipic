@@ -217,3 +217,43 @@ enum CropGeometry {
         return CGRect(x: x0, y: y0, width: x1 - x0, height: y1 - y0)
     }
 }
+
+/// 记住上次裁剪用的比例，下次进裁剪时接着用。
+/// 记的是「完成」（回车、双击、保存）时的比例，Esc 取消不算。
+/// 横竖记的是「框相对这张照片是不是转过」：3:2 在横照片上是横框、在竖照片上是竖框（跟着照片走，不算转过），
+/// 下一张是竖照片就从 2:3 开始；4:5 的竖框从横照片上裁出来（框和照片方向相反），下一张横照片也从竖框开始
+enum CropMemory {
+    /// 测试用：换成临时的偏好设置，不碰真实的
+    static var defaults: UserDefaults = .standard
+    private static let aspectKey = "cropLastAspect", turnedKey = "cropLastAgainstPhoto"
+
+    /// 上次的比例；没记过是原比例
+    static var aspect: CropGeometry.Aspect {
+        CropGeometry.Aspect(rawValue: defaults.object(forKey: aspectKey) as? Int ?? 0) ?? .original
+    }
+
+    static var againstPhoto: Bool { defaults.bool(forKey: turnedKey) }
+
+    /// 测试用：忘掉记住的比例
+    static func forget() {
+        defaults.removeObject(forKey: aspectKey)
+        defaults.removeObject(forKey: turnedKey)
+    }
+
+    /// 完成裁剪时记下：photo 是转好 90° 的照片尺寸，swapped 是裁剪条上的横竖互换
+    static func remember(aspect: CropGeometry.Aspect, swapped: Bool, photo: CGSize) {
+        defaults.set(aspect.rawValue, forKey: aspectKey)
+        let framePortrait = (aspect.ratio(image: photo, swapped: swapped) ?? 1) < 1
+        defaults.set(aspect.swappable && aspect != .original && framePortrait != (photo.height > photo.width), forKey: turnedKey)
+    }
+
+    /// 在这张照片上进裁剪时的起点：(比例, 是否横竖互换)
+    static func start(for photo: CGSize) -> (aspect: CropGeometry.Aspect, swapped: Bool) {
+        let a = aspect
+        guard a.swappable, a != .original else { return (a, false) }
+        let photoPortrait = photo.height > photo.width
+        let framePortrait = photoPortrait != againstPhoto
+        let basePortrait = (a.ratio(image: photo, swapped: false) ?? 1) < 1
+        return (a, basePortrait != framePortrait)
+    }
+}

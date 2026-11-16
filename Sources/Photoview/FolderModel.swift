@@ -102,6 +102,20 @@ final class FolderModel {
         }
     }
 
+    /// 自己写了这些文件（保存裁剪、写星级）：只把它们记的修改时间和大小更新到磁盘上现在的，不扫整个文件夹
+    func noteOwnWrites(_ urls: [URL]) {
+        for u in urls {
+            guard let s = FolderWatcher.stamp(of: u) else { continue }
+            let name = u.lastPathComponent, target = u.standardizedFileURL.path
+            func match(_ item: ImageItem) -> Bool { item.url.lastPathComponent == name && item.url.standardizedFileURL.path == target }
+            for i in items.indices where match(items[i]) { items[i].modified = s.modified; items[i].fileSize = s.size }
+            if var all = unfiltered {
+                for i in all.indices where match(all[i]) { all[i].modified = s.modified; all[i].fileSize = s.size }
+                unfiltered = all
+            }
+        }
+    }
+
     /// 被别的软件改过的照片（修改时间或大小和记下的不一样）：更新记录，返回这些文件。
     /// Flipic 自己写星级、旋转造成的变化只更新记录，不算在内
     func takeModifiedOutside() -> [URL] {

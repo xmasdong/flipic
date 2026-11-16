@@ -116,6 +116,9 @@ final class ZoomableImageView: NSView {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+    /// 屏幕上这张图自己的像素尺寸（预览可能比原图小）
+    var pixelSizeOfDisplayedImage: CGSize { image.map { CGSize(width: $0.width, height: $0.height) } ?? .zero }
+
     /// 当前显示内容的原图像素尺寸（含视图旋转）
     var pixelSize: CGSize { image == nil ? .zero : contentSize }
 
@@ -488,6 +491,23 @@ final class ZoomableImageView: NSView {
         onRotate?()
     }
 
+    /// 旋转、拉直、裁剪已经写进文件：现在显示的这张图就是新文件的内容，直接当新的底图，不再重新解码。
+    /// 显示的图比新文件小很多（比窗口还不清晰）时不收，返回 false 让调用方重新载入
+    func adoptSavedEdit(logicalSize size: CGSize, minPixel: CGFloat) -> Bool {
+        guard hasPendingRotation, !isCropping, !animationActive, let shown = image, size.width > 0, size.height > 0,
+              CGFloat(max(shown.width, shown.height)) >= minPixel else { return false }
+        baseImage = shown
+        logicalSize = size
+        quarterTurns = 0
+        fineDegrees = 0
+        crop = nil
+        cropAspect = .original
+        cropAspectSwapped = false
+        detailRequested = false
+        showingDraft = false
+        return true
+    }
+
     // MARK: - 裁剪与拉直
 
     var canStraighten: Bool { baseImage != nil && !animationActive }
@@ -520,6 +540,17 @@ final class ZoomableImageView: NSView {
         } else {
             cropWanted = CropGeometry.Crop(center: .zero, size: turnedSize)
             cropGrows = true
+            // 没有改过的照片：从上次裁剪用的比例开始（原比例、自由还是和以前一样的默认框）
+            if fineDegrees == 0 {
+                let start = CropMemory.start(for: turnedSize)
+                if start.aspect != .original {
+                    cropAspect = start.aspect
+                    cropAspectSwapped = start.swapped
+                    if let r = start.aspect.ratio(image: turnedSize, swapped: start.swapped) {
+                        cropWanted = CropGeometry.Crop(center: .zero, size: CGSize(width: r, height: 1))
+                    }
+                }
+            }
         }
         let overlay = CropOverlayView()
         overlay.frame = bounds
@@ -574,6 +605,7 @@ final class ZoomableImageView: NSView {
     func endCrop(apply: Bool) {
         guard isCropping else { return }
         if apply {
+            CropMemory.remember(aspect: cropAspect, swapped: cropAspectSwapped, photo: turnedSize)
             crop = cropForOutput
             if crop == nil, cropIsAutomatic || fineDegrees == 0 {
                 cropAspect = .original

@@ -1012,6 +1012,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runCropTest(outDir: outDir, folder: folder)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--cropspeedtest"), i + 2 < CommandLine.arguments.count {
+            // --cropspeedtest <工作文件夹> <照片文件夹>：裁剪后覆盖保存的耗时（照片文件夹里的文件会被改动，要用副本）
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runCropSpeedTest(outDir: outDir, folder: folder)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--cropquittest"), i + 1 < CommandLine.arguments.count {
+            // --cropquittest <照片文件夹>：裁剪覆盖保存写盘期间退出，要等写完（会改动照片文件夹里的文件）
+            let folder = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runCropQuitTest(folder: folder)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--straightentest"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runStraightenTest(outDir: outDir, folder: folder) }
@@ -1318,6 +1330,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func clearRecent(_ sender: Any?) {
         NSDocumentController.shared.clearRecentDocuments(nil)
         NotificationCenter.default.post(name: Recents.didChange, object: nil)
+    }
+
+    /// 裁剪、拉直的保存正在写盘时，等写完再退出（写的是临时文件，原图不会写一半，但临时文件会留在文件夹里）
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let testing = CommandLine.arguments.contains("--cropquittest")
+        guard Straighten.hasActiveSave else { return .terminateNow }
+        if testing { NSLog("QUITTEST applicationShouldTerminate: save running, terminate later") }
+        // 回复放到下一轮主队列：保存刚好这时写完的话，回复不能赶在「稍后退出」之前发出去
+        Straighten.whenSavesDone {
+            DispatchQueue.main.async {
+                if testing { NSLog("QUITTEST replying to terminate") }
+                NSApp.reply(toApplicationShouldTerminate: true)
+            }
+        }
+        return .terminateLater
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { !Self.keepRunning }

@@ -79,6 +79,16 @@ enum Straighten {
 
     enum Target: String { case ask, overwrite, copy }
 
+    /// 测试用：保存各阶段的耗时（--cropspeedtest 挂上，平时是 nil）
+    static var profile: ((String, Double) -> Void)?
+    @inline(__always) static func stage<T>(_ name: String, _ body: () -> T) -> T {
+        guard let profile else { return body() }
+        let t0 = CFAbsoluteTimeGetCurrent()
+        let r = body()
+        profile(name, CFAbsoluteTimeGetCurrent() - t0)
+        return r
+    }
+
     /// 设置 › 看图 › 保存修改：每次询问 / 覆盖原图 / 另存一份。裁剪过的不会不问就覆盖原图（见 ViewerViewController.saveRotation）
     static var saveTarget: Target {
         get { Target(rawValue: UserDefaults.standard.string(forKey: "rotationSaveTarget") ?? "") ?? .ask }
@@ -119,6 +129,8 @@ enum Straighten {
     struct Outcome {
         var result: ImageLoader.RotationWriteResult
         var url: URL?
+        /// 重新编码写出的文件的像素尺寸（旋转、拉直、裁剪后）；无损旋转时是 nil
+        var pixelSize: CGSize?
     }
 
     /// 手动裁剪框和它所在的尺寸（转好 90° 的原图像素）。保存时解出来的全图尺寸万一不一样，按比例换算
@@ -130,6 +142,8 @@ enum Straighten {
     /// 把视图上的旋转和裁剪写进文件。overwrite = false 时另存一份，原图不动。
     /// 只转了 90° 的：能写方向标记的格式不动像素（无损）；裁剪或拉直过的要重新编码，JPEG/HEIC 用 0.95 质量，拍摄信息保留
     static func save(url: URL, quarterTurns: Int, degrees: Double, crop: CropSpec? = nil, overwrite: Bool) -> Outcome {
+        beginSave()
+        defer { endSave() }
         let turns = ((quarterTurns % 4) + 4) % 4
         let cropped = crop != nil
         // RAW 只转 90°：改方向标记，原图或副本都保持 RAW。改不了就退回另存 JPEG
@@ -142,7 +156,7 @@ enum Straighten {
             }
             let fallback = copyURL(for: url, ext: "jpg")
             let r = reencode(url: url, turns: turns, degrees: degrees, to: fallback, type: UTType.jpeg.identifier)
-            return Outcome(result: r, url: r == .failed ? nil : fallback)
+            return Outcome(result: r.result, url: r.result == .failed ? nil : fallback, pixelSize: r.size)
         }
         // RAW 走到这里说明裁剪或拉直过（或改不了方向标记）：只能另存 JPEG
         let writable = !CleanupUnit.isRaw(url) && canOverwrite(url)
@@ -152,11 +166,11 @@ enum Straighten {
                 return Outcome(result: ImageLoader.writeRotation(url: url, clockwiseTurns: turns), url: url)
             }
             let r = reencode(url: url, turns: turns, degrees: degrees, crop: crop, to: url, type: nil)
-            if r != .failed {
+            if r.result != .failed {
                 FolderWatcher.noteOwnWrite(url)
                 ImageLoader.shared.evict(url: url)
             }
-            return Outcome(result: r, url: url)
+            return Outcome(result: r.result, url: url, pixelSize: r.size)
         }
         // 另存：能写回的格式用原格式，RAW 等存成 JPEG
         let ext = writable ? url.pathExtension : "jpg"
@@ -165,7 +179,7 @@ enum Straighten {
             return Outcome(result: lossless, url: out)
         }
         let r = reencode(url: url, turns: turns, degrees: degrees, crop: crop, to: out, type: writable ? nil : UTType.jpeg.identifier)
-        return Outcome(result: r, url: r == .failed ? nil : out)
+        return Outcome(result: r.result, url: r.result == .failed ? nil : out, pixelSize: r.size)
     }
 
     /// 只转 90°、另存：原样拷贝数据，只改方向标记。格式不支持方向标记时返回 nil，改走重新编码
@@ -191,11 +205,14 @@ enum Straighten {
     }
 
     /// 解全分辨率（已按方向校正）→ 转 + 裁 → 按 type（nil = 原格式）编码，拍摄信息带过去，方向改成正常
-    private static func reencode(url: URL, turns: Int, degrees: Double, crop: CropSpec? = nil, to out: URL, type: String?) -> ImageLoader.RotationWriteResult {
+    private static func reencode(url: URL, turns: Int, degrees: Double, crop: CropSpec? = nil, to out: URL, type: String?) -> (result: ImageLoader.RotationWriteResult, size: CGSize?) {
+        let failed: (result: ImageLoader.RotationWriteResult, size: CGSize?) = (.failed, nil)
+        // 点保存之前就在后台解好的全图（见 prewarm）：和下面自己解的是同一个调用，文件没动过才用
+        let warmed = takeWarm(url)
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
               let srcType = CGImageSourceGetType(src),
-              let full = ImageLoader.decodedFull(url: url) else { return .failed }
-        guard let rendered = render(full, quarterTurns: turns, degrees: degrees, crop: scaledCrop(crop, full: full, turns: turns)) else { return .failed }
+              let full = warmed ?? stage("1.decode", { ImageLoader.decodedFull(url: url) }) else { return failed }
+        guard let rendered = stage("2.render", { render(full, quarterTurns: turns, degrees: degrees, crop: scaledCrop(crop, full: full, turns: turns)) }) else { return failed }
         var props = (CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any]) ?? [:]
         props[kCGImagePropertyOrientation as String] = 1
         if var tiff = props[kCGImagePropertyTIFFDictionary as String] as? [String: Any] {
@@ -213,21 +230,107 @@ enum Straighten {
         }
         props[kCGImageDestinationLossyCompressionQuality as String] = 0.95
         let tmp = tempURL(near: out)
-        guard let dest = CGImageDestinationCreateWithURL(tmp as CFURL, (type ?? srcType as String) as CFString, 1, nil) else { return .failed }
+        guard let dest = CGImageDestinationCreateWithURL(tmp as CFURL, (type ?? srcType as String) as CFString, 1, nil) else { return failed }
         // 连同文件里原样的 XMP / IPTC 一起带过去（只按属性字典写会丢图库自定义的 XMP、IPTC 的拍摄日期等）；
         // 方向和像素尺寸改成新的。读不出元数据的格式退回只写属性字典
-        if let fixed = ImageExporter.fixedMetadata(from: src, width: rendered.width, height: rendered.height) {
-            let options: [String: Any] = [kCGImageDestinationLossyCompressionQuality as String: 0.95, kCGImagePropertyOrientation as String: 1]
-            CGImageDestinationAddImageAndMetadata(dest, rendered, fixed, options as CFDictionary)
-        } else {
-            CGImageDestinationAddImage(dest, rendered, props as CFDictionary)
+        let fixedMeta = stage("3.metadata", { ImageExporter.fixedMetadata(from: src, width: rendered.width, height: rendered.height) })
+        stage("4a.addImage") {
+            if let fixed = fixedMeta {
+                let options: [String: Any] = [kCGImageDestinationLossyCompressionQuality as String: 0.95, kCGImagePropertyOrientation as String: 1]
+                CGImageDestinationAddImageAndMetadata(dest, rendered, fixed, options as CFDictionary)
+            } else {
+                CGImageDestinationAddImage(dest, rendered, props as CFDictionary)
+            }
         }
-        guard CGImageDestinationFinalize(dest) else { try? FileManager.default.removeItem(at: tmp); return .failed }
-        return place(tmp, at: out) ? .reencoded : .failed
+        guard stage("4b.encode", { CGImageDestinationFinalize(dest) }) else { try? FileManager.default.removeItem(at: tmp); return failed }
+        return stage("5.replace", { place(tmp, at: out) }) ? (.reencoded, CGSize(width: rendered.width, height: rendered.height)) : failed
+    }
+
+    // MARK: - 提前解码
+
+    /// 裁剪、拉直要把整张照片解开再编码，解码是保存里最长的一段（6000 万像素的 JPEG 要 0.2～0.4 秒）。
+    /// 点「完成」的时候就在后台解好，用户看对话框、点「覆盖原图」的这段时间里它已经备好了。
+    /// 解的是 ImageLoader.decodedFull(url:)，和保存时自己解的完全是同一个调用；记下解之前文件的修改时间和大小，
+    /// 保存时文件变过就不用，重新解。一次只留一张（最多约 1.5 亿像素，8 位约 600 MB 以内）
+    final class WarmDecode {
+        let url: URL
+        let stamp: FolderWatcher.Stamp?
+        private let group = DispatchGroup()
+        private var image: CGImage?
+        init(url: URL) {
+            self.url = url
+            stamp = FolderWatcher.stamp(of: url)
+            group.enter()
+            DispatchQueue.global(qos: .userInitiated).async { [self] in
+                defer { group.leave() }
+                guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
+                      let p = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] else { return }
+                let w = p[kCGImagePropertyPixelWidth as String] as? Int ?? 0, h = p[kCGImagePropertyPixelHeight as String] as? Int ?? 0
+                guard w * h <= 150_000_000, CGImageSourceGetCount(src) == 1 else { return }
+                image = ImageLoader.decodedFull(url: url)
+            }
+        }
+        func wait() -> CGImage? { group.wait(); return image }
+    }
+
+    private static var warm: WarmDecode?
+    private static let warmLock = NSLock()
+
+    static func prewarm(_ url: URL) {
+        warmLock.lock(); defer { warmLock.unlock() }
+        if let w = warm, w.url == url, w.stamp == FolderWatcher.stamp(of: url) { return }
+        let w = WarmDecode(url: url)
+        warm = w
+        // 一直没保存也不留着占内存：两分钟后放掉（保存时会重新解）
+        DispatchQueue.main.asyncAfter(deadline: .now() + 120) {
+            warmLock.lock(); defer { warmLock.unlock() }
+            if warm === w { warm = nil }
+        }
+    }
+
+    static func releaseWarm() {
+        warmLock.lock(); warm = nil; warmLock.unlock()
+    }
+
+    /// 取走备好的全图（等它解完）；不是这个文件、或文件在解之后变过，返回 nil
+    static func takeWarm(_ url: URL) -> CGImage? {
+        warmLock.lock()
+        let w = warm
+        warm = nil
+        warmLock.unlock()
+        guard let w, w.url == url, w.stamp != nil, w.stamp == FolderWatcher.stamp(of: url) else { return nil }
+        return w.wait()
+    }
+
+    // MARK: - 正在写盘的保存（退出时要等它写完）
+
+    private static var activeSaves = 0
+    private static var idleHandlers: [() -> Void] = []
+    private static let saveLock = NSLock()
+
+    private static func beginSave() { saveLock.lock(); activeSaves += 1; saveLock.unlock() }
+
+    private static func endSave() {
+        saveLock.lock()
+        activeSaves -= 1
+        let handlers = activeSaves == 0 ? idleHandlers : []
+        if activeSaves == 0 { idleHandlers = [] }
+        saveLock.unlock()
+        if !handlers.isEmpty { DispatchQueue.main.async { handlers.forEach { $0() } } }
+    }
+
+    static var hasActiveSave: Bool { saveLock.lock(); defer { saveLock.unlock() }; return activeSaves > 0 }
+
+    /// 没有保存在写盘时马上回调，否则等最后一个写完（在主线程回调）
+    static func whenSavesDone(_ f: @escaping () -> Void) {
+        saveLock.lock()
+        if activeSaves == 0 { saveLock.unlock(); f(); return }
+        idleHandlers.append(f)
+        saveLock.unlock()
     }
 
     private static func tempURL(near out: URL) -> URL {
-        out.deletingLastPathComponent().appendingPathComponent(".flipic-rotate-\(UUID().uuidString).\(out.pathExtension)")
+        out.deletingLastPathComponent().appendingPathComponent("\(FolderWatcher.tempPrefix)\(UUID().uuidString).\(out.pathExtension)")
     }
 
     /// 临时文件换到目标位置（覆盖时用 replaceItem，保留原文件的创建时间、标签等）
