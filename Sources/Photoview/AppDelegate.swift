@@ -1142,6 +1142,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     self?.windowController?.runCleanupTest(outDir: outDir)
                 }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--thumbmenutest"), i + 1 < CommandLine.arguments.count {
+            // --thumbmenutest <工作文件夹>：缩略图右键菜单（选区规则、编辑 / 打开方式作用于多选、超过 20 张先确认），最后一行 THUMBMENU checks=N failures=M
+            let work = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                ViewerViewController.makeThumbMenuPhotos(workDir: work)
+                self?.windowController?.open(URL(fileURLWithPath: work + "/photos"))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+                    (self?.windowController?.contentViewController as? ViewerViewController)?.runThumbMenuTest(workDir: work)
+                }
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--peekpagingtest"), i + 1 < CommandLine.arguments.count {
             // --peekpagingtest <工作文件夹>：贴合预览里横竖图来回翻页，窗口和照片尺寸不能越翻越小，最后一行 PEEKTEST checks=N failures=M
             let work = CommandLine.arguments[i + 1]

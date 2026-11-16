@@ -200,6 +200,9 @@ Déposez un dossier ou une image pour ouvrir";
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "Modifier dans l’éditeur photo…";
 "menu.editIn" = "Modifier dans %@";
+"menu.editInCount" = "Modifier %2$d photos dans %1$@";
+"menu.editChooseCount" = "Modifier %d photos dans l’éditeur photo…";
+"msg.openManyInfo" = "Avec beaucoup de photos, l’éditeur peut mettre du temps.";
 "menu.openWith" = "Ouvrir avec";
 "menu.openWithOther" = "Autre…";
 "menu.setEditor" = "Choisir l’éditeur photo…";

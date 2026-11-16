@@ -315,6 +315,7 @@ final class ViewerViewController: NSViewController {
             self.updateRatingLabel()
         }
         filmstrip.collectionView.dragURLs = { [weak self] i in self?.filmstripDragURLs(from: i) ?? [] }
+        filmstrip.collectionView.onContextMenu = { [weak self] i in self?.filmstripContextMenu(for: i) }
         view.addSubview(filmstrip)
 
         buildHUD()
@@ -1792,6 +1793,15 @@ final class ViewerViewController: NSViewController {
         return folder.withHiddenPartners(urls)
     }
 
+    /// 缩略图上的右键菜单，和大图上的是同一个。和访达一样：点在多选里的一张上，选区不动、菜单对选中的全部；
+    /// 点在选区外面，先只选这一张（也成为当前照片，和普通点击一样）再弹菜单
+    func filmstripContextMenu(for i: Int) -> NSMenu? {
+        guard cleanup == nil, compareView == nil, folder.items.indices.contains(i) else { return nil }
+        let selected = Set(filmstrip.collectionView.selectionIndexPaths.map(\.item))
+        if !(selected.count > 1 && selected.contains(i)) { filmstripClicked(i, []) }
+        return imageView.menu
+    }
+
     // MARK: - 菜单动作
 
     @objc func openFolderPanel(_ sender: Any?) {
@@ -2543,9 +2553,34 @@ final class ViewerViewController: NSViewController {
     /// 测试用：不真的打开后期软件，只记下要送过去的文件
     var debugOpenedFiles: [URL]?
 
+    /// 测试用：每次交给后期软件的（软件, 文件），一次调用记一条
+    var debugOpenCalls: [(app: URL, files: [URL])] = []
+    /// 测试用：一次开的照片太多时的确认，返回 true 就继续
+    var debugConfirmMany: ((Int) -> Bool)?
+    /// 一次打开超过这么多张先问一下
+    static let openManyThreshold = 20
+
     private func open(_ files: [URL], with app: URL) {
+        guard !files.isEmpty else { return }
+        guard files.count > Self.openManyThreshold else { performOpen(files, with: app); return }
+        if let confirm = debugConfirmMany {
+            if confirm(files.count) { performOpen(files, with: app) }
+            return
+        }
+        guard let w = view.window else { performOpen(files, with: app); return }
+        let alert = NSAlert()
+        alert.messageText = L10n.f("pro.openAllTitle", "一次打开 %d 张照片？", files.count)
+        alert.informativeText = L10n.t("msg.openManyInfo", "照片多时后期软件可能要花一会儿。")
+        alert.addButton(withTitle: L10n.t("pro.openAllGo", "打开"))
+        alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
+        alert.beginSheetModal(for: w) { [weak self] r in
+            if r == .alertFirstButtonReturn { self?.performOpen(files, with: app) }
+        }
+    }
+
+    private func performOpen(_ files: [URL], with app: URL) {
         guard let first = files.first else { return }
-        if debugOpenedFiles != nil { debugOpenedFiles = files; return }
+        if debugOpenedFiles != nil { debugOpenedFiles = files; debugOpenCalls.append((app, files)); return }
         let config = NSWorkspace.OpenConfiguration()
         config.activates = true
         NSWorkspace.shared.open(files, withApplicationAt: app, configuration: config) { [weak self] _, error in
@@ -2582,7 +2617,11 @@ final class ViewerViewController: NSViewController {
         }
     }
 
+    /// 测试用：代替选软件的面板，直接给出选中的软件
+    var debugPickApplication: ((@escaping (URL) -> Void) -> Void)?
+
     func pickApplication(_ done: @escaping (URL) -> Void) {
+        if let hook = debugPickApplication { hook(done); return }
         guard let window = view.window else { return }
         Self.pickApplication(in: window, done)
     }
@@ -2600,21 +2639,37 @@ final class ViewerViewController: NSViewController {
         }
     }
 
-    /// 打开方式：当前照片能用哪些软件打开，默认软件排第一，设好的后期软件打勾
+    /// 打开方式：选中的照片能用哪些软件打开。多选时取这几张文件类型的共同可用软件；
+    /// 设好的后期软件排第一并打勾，接着是系统默认软件，其余按名字排。选一个软件就把选中的全部一次交给它，不改后期软件的设置
     func populateOpenWithMenu(_ menu: NSMenu) {
         menu.removeAllItems()
-        guard cleanup == nil, let file = editTargetURL() else { return }
+        guard cleanup == nil else { return }
+        let files = editTargetURLs()
+        guard let first = files.first else { return }
         let ws = NSWorkspace.shared
-        let defaultApp = ws.urlForApplication(toOpen: file)
-        var apps = ws.urlsForApplications(toOpen: file)
-            .filter { $0.lastPathComponent != Bundle.main.bundleURL.lastPathComponent }
+        var samples: [URL] = []
+        var seenExt = Set<String>()
+        for f in files where seenExt.insert(f.pathExtension.lowercased()).inserted { samples.append(f) }
+        var apps = ws.urlsForApplications(toOpen: samples[0])
+        for s in samples.dropFirst() {
+            let ok = Set(ws.urlsForApplications(toOpen: s).map(\.path))
+            apps = apps.filter { ok.contains($0.path) }
+        }
+        let me = Bundle.main.bundleURL.lastPathComponent
+        let defaultApp = ws.urlForApplication(toOpen: first)
+        let editor = editorAppURL
         var seen = Set<String>()
-        apps = apps.filter { seen.insert(Self.appName($0)).inserted }
-            .sorted { a, b in
-                if a == defaultApp { return true }
-                if b == defaultApp { return false }
-                return Self.appName(a).localizedStandardCompare(Self.appName(b)) == .orderedAscending
-            }
+        apps = apps.filter { $0.lastPathComponent != me && seen.insert(Self.appName($0)).inserted }
+        func rank(_ u: URL) -> Int { u.path == editor?.path ? 0 : (u == defaultApp ? 1 : 2) }
+        apps.sort { a, b in
+            let (ra, rb) = (rank(a), rank(b))
+            if ra != rb { return ra < rb }
+            return Self.appName(a).localizedStandardCompare(Self.appName(b)) == .orderedAscending
+        }
+        // 设好的后期软件系统没列出来也放在第一位，用户自己选的
+        if let editor, !apps.contains(where: { $0.path == editor.path }), editor.lastPathComponent != me {
+            apps.insert(editor, at: 0)
+        }
         for app in apps {
             let it = NSMenuItem(title: Self.appName(app), action: #selector(openWithMenuItem(_:)), keyEquivalent: "")
             it.target = self
@@ -2622,7 +2677,7 @@ final class ViewerViewController: NSViewController {
             let icon = ws.icon(forFile: app.path)
             icon.size = NSSize(width: 16, height: 16)
             it.image = icon
-            if app.path == editorAppURL?.path { it.state = .on }
+            if app.path == editor?.path { it.state = .on }
             menu.addItem(it)
         }
         menu.addItem(.separator())
@@ -7501,8 +7556,15 @@ extension ViewerViewController: NSMenuItemValidation {
         } else if menuItem.action == #selector(setSlideshowInterval(_:)) {
             menuItem.state = menuItem.tag == slideshowInterval ? .on : .off
         } else if menuItem.action == #selector(openInEditor(_:)) {
-            menuItem.title = editorAppURL.map { L10n.f("menu.editIn", "在%@中编辑", Self.spaced(Self.appName($0))) }
-                ?? L10n.t("menu.editChoose", "在后期软件中编辑…")
+            // 多选时标题带上张数
+            let n = stripPicked.isEmpty ? 1 : editTargetURLs().count
+            if let app = editorAppURL {
+                menuItem.title = n > 1 ? L10n.f("menu.editInCount", "在%1$@中编辑 %2$d 张", Self.spaced(Self.appName(app)), n)
+                    : L10n.f("menu.editIn", "在%@中编辑", Self.spaced(Self.appName(app)))
+            } else {
+                menuItem.title = n > 1 ? L10n.f("menu.editChooseCount", "在后期软件中编辑 %d 张…", n)
+                    : L10n.t("menu.editChoose", "在后期软件中编辑…")
+            }
             return folder.current != nil
         } else if menuItem.action == #selector(setWheelAction(_:)) {
             menuItem.state = (menuItem.tag == 1) == ZoomableImageView.wheelNavigates ? .on : .off

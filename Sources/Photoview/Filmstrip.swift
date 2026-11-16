@@ -85,6 +85,17 @@ final class FilmstripCollectionView: NSCollectionView {
     /// 点在空白处：多选收回到只选当前这一张
     var onBlankClick: (() -> Void)?
 
+    /// 右键点在第几张：看图界面按访达的规则定选区（点在多选里就保持，点在外面就只选它）再给菜单；空白处和没有菜单时返回 nil
+    var onContextMenu: ((Int) -> NSMenu?)?
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        // 右键不开始拖动、不翻页：只在这里定选区、给菜单
+        downEvent = nil
+        deferredClick = false
+        guard let ip = indexPathForItem(at: convert(event.locationInWindow, from: nil)) else { return nil }
+        return onContextMenu?(ip.item)
+    }
+
     private var downEvent: NSEvent?
     private var downIndex: Int?
     /// 按在已经多选的照片上：松手时没拖动才改成只选这一张，拖动就带走整组

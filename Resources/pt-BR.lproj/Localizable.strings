@@ -200,6 +200,9 @@ Arraste uma pasta ou imagem para abrir";
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "Editar no editor de fotos…";
 "menu.editIn" = "Editar no %@";
+"menu.editInCount" = "Editar %2$d fotos no %1$@";
+"menu.editChooseCount" = "Editar %d fotos no editor de fotos…";
+"msg.openManyInfo" = "Com muitas fotos o editor pode demorar.";
 "menu.openWith" = "Abrir com";
 "menu.openWithOther" = "Outro…";
 "menu.setEditor" = "Definir editor de fotos…";

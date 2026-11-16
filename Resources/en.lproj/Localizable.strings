@@ -212,6 +212,9 @@ Drop a folder or image to open";
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "Edit in Photo Editor…";
 "menu.editIn" = "Edit in %@";
+"menu.editInCount" = "Edit %2$d Photos in %1$@";
+"menu.editChooseCount" = "Edit %d Photos in Photo Editor…";
+"msg.openManyInfo" = "Editors can take a while with many photos.";
 "menu.openWith" = "Open With";
 "menu.openWithOther" = "Other…";
 "menu.setEditor" = "Set Photo Editor…";

@@ -200,6 +200,9 @@ Return  إعادة تسمية الصورة الحالية
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "التحرير في محرر الصور…";
 "menu.editIn" = "التحرير في %@";
+"menu.editInCount" = "تحرير %2$d صور في %1$@";
+"menu.editChooseCount" = "تحرير %d صور في محرر الصور…";
+"msg.openManyInfo" = "قد يستغرق المحرر وقتًا مع الصور الكثيرة.";
 "menu.openWith" = "فتح باستخدام";
 "menu.openWithOther" = "أخرى…";
 "menu.setEditor" = "تعيين محرر الصور…";

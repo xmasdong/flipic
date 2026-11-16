@@ -200,6 +200,9 @@ Ordner oder Bild hineinziehen zum Öffnen";
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "In Bildbearbeitung bearbeiten …";
 "menu.editIn" = "In %@ bearbeiten";
+"menu.editInCount" = "%2$d Fotos in %1$@ bearbeiten";
+"menu.editChooseCount" = "%d Fotos in Bildbearbeitung bearbeiten …";
+"msg.openManyInfo" = "Bei vielen Fotos braucht der Editor eine Weile.";
 "menu.openWith" = "Öffnen mit";
 "menu.openWithOther" = "Andere …";
 "menu.setEditor" = "Bildbearbeitung festlegen …";

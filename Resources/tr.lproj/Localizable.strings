@@ -200,6 +200,9 @@ Açmak için klasör veya resim sürükleyin";
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "Fotoğraf düzenleyicide düzenle…";
 "menu.editIn" = "%@ ile düzenle";
+"menu.editInCount" = "%2$d fotoğrafı %1$@ ile düzenle";
+"menu.editChooseCount" = "%d fotoğrafı fotoğraf düzenleyicide düzenle…";
+"msg.openManyInfo" = "Fotoğraf çoksa düzenleyici biraz zaman alabilir.";
 "menu.openWith" = "Birlikte aç";
 "menu.openWithOther" = "Diğer…";
 "menu.setEditor" = "Fotoğraf düzenleyiciyi ayarla…";

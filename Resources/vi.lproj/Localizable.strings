@@ -200,6 +200,9 @@ Kéo thư mục hoặc ảnh vào để mở";
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "Sửa trong trình chỉnh ảnh…";
 "menu.editIn" = "Sửa trong %@";
+"menu.editInCount" = "Sửa %2$d ảnh trong %1$@";
+"menu.editChooseCount" = "Sửa %d ảnh trong trình chỉnh ảnh…";
+"msg.openManyInfo" = "Nhiều ảnh thì phần mềm chỉnh ảnh có thể mất một lúc.";
 "menu.openWith" = "Mở bằng";
 "menu.openWithOther" = "Khác…";
 "menu.setEditor" = "Đặt trình chỉnh ảnh…";

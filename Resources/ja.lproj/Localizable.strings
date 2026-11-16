@@ -200,6 +200,9 @@ Return  表示中の画像を名称変更
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "編集アプリで編集…";
 "menu.editIn" = "%@で編集";
+"menu.editInCount" = "%2$d 枚を%1$@で編集";
+"menu.editChooseCount" = "%d 枚を編集アプリで編集…";
+"msg.openManyInfo" = "写真が多いと編集アプリに時間がかかります。";
 "menu.openWith" = "このアプリで開く";
 "menu.openWithOther" = "その他…";
 "menu.setEditor" = "編集アプリを設定…";

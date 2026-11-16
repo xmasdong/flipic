@@ -212,6 +212,9 @@ Esc  先关掉右上角的照片信息
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "在后期软件中编辑…";
 "menu.editIn" = "在%@中编辑";
+"menu.editInCount" = "在%1$@中编辑 %2$d 张";
+"menu.editChooseCount" = "在后期软件中编辑 %d 张…";
+"msg.openManyInfo" = "照片多时后期软件可能要花一会儿。";
 "menu.openWith" = "打开方式";
 "menu.openWithOther" = "其他…";
 "menu.setEditor" = "设置后期软件…";

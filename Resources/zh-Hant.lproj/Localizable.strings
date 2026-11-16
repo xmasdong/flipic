@@ -200,6 +200,9 @@ Return  重新命名目前圖片
 /* 幻灯片间隔、后期软件 */
 "menu.editChoose" = "在後製軟體中編輯…";
 "menu.editIn" = "在%@中編輯";
+"menu.editInCount" = "在%1$@中編輯 %2$d 張";
+"menu.editChooseCount" = "在後製軟體中編輯 %d 張…";
+"msg.openManyInfo" = "照片多時後製軟體可能要花一會兒。";
 "menu.openWith" = "打開方式";
 "menu.openWithOther" = "其他…";
 "menu.setEditor" = "設定後製軟體…";
