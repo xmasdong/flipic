@@ -10,13 +10,15 @@ REPO = ROOT.parent
 DOCS = REPO / "docs"
 OUT = ROOT / "public"
 BASE = "https://flipic.app"
-UPDATED = "2026-10-31"
+UPDATED = "2026-11-16"
+# 水印功能 1.0.43 发布后改成 True；False 时站点里不出现任何水印文字和图片
+SHOW_WATERMARK = False
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
 SIZE = "5 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
-SHOTS_V = hashlib.sha1(b"".join(f.read_bytes() for f in sorted((REPO / "docs/shots").iterdir()) if f.is_file())).hexdigest()[:8]
+SHOTS_V = hashlib.sha1(b"".join(f.read_bytes() for f in sorted((REPO / "docs/shots").iterdir()) if f.is_file() and (SHOW_WATERMARK or not f.name.startswith("wm-")))).hexdigest()[:8]
 SHOTS = f"/shots/{SHOTS_V}/"
 ASSET_V = hashlib.sha1((ROOT / "src/site.css").read_bytes() + (ROOT / "src/site.js").read_bytes()).hexdigest()[:10]
 GITHUB = "https://github.com/xmasdong/flipic"
@@ -290,6 +292,15 @@ HOME = {
              "<p>平时画面上只有照片，想看参数就按 <kbd>I</kbd>，右上角会列出相机、镜头、快门、光圈、ISO 和拍摄时间，看完按 <kbd>Esc</kbd> 关掉。</p>"
              "<p>iPhone 拍的 HDR 照片也能按 HDR 显示，亮的地方比普通白色更亮，跟系统「预览」看到的一样。这个要在设置里打开，屏幕也得支持 HDR。</p>"),
         ],
+        "film_feature": ("film.webp", "Flipic Lens 胶片滤镜面板：十款效果的缩略图和强度、颗粒、光晕滑块", "给照片套上胶片的颜色",
+             "<p>按 <kbd>⇧F</kbd> 打开胶片滤镜面板，每一格都是当前这张照片套上这一款的样子，点一下就换。一共十款：偏暖的人像、日常的暖色、浓一点的反转片色、清冷的薄荷、细腻鲜艳的、夜景用的电影色、灰调的纪实，再加三款黑白。</p>"
+             "<p>下面三个滑块调强度、颗粒和光晕。翻到下一张，效果还在，可以一路翻下去，看整组照片套上以后什么样。按住 <kbd>\\</kbd> 看原图，<kbd>G</kbd> 开关，<kbd>,</kbd> 和 <kbd>.</kbd> 换上一款、下一款。</p>"
+             "<p>这只改看到的画面，原图不会动。想留下来就点「另存一份…」，拍摄信息、说明和位置都带着。⌘S 导出、批量转换格式和导出预设里也能选胶片，整批一起套。视频、动图和 HDR 照片不套用。</p>"
+             "<p>「暖调人像」和「经典黑白」免费，其余八款是 Pro 功能，试用期内十款都能用。</p>"),
+        "wm_feature": ("wm-editor.webp", "Flipic Lens 导出水印编辑窗口：平铺的文字水印预览在一张示意证件上", "导出的副本加水印",
+             "<p>拿照片去办事、发样片给客户或者署个名，可以给导出的副本加水印。文字或者你自己的图片（比如 logo）都行，可以斜着平铺满整张，也可以放在九个位置里的某一处。大小、透明度、颜色和角度都能调。</p>"
+             "<p>自带三个起点：证件用途、样片、署名，改几个字就能用。每次导出时还能单独填一行字，比如这一份证件复印件是办什么事用的，只对这一次导出有效，存好的水印不变。</p>"
+             "<p>⌘S 导出、批量转换格式和导出预设（Pro）里都能选，也可以从「文件 › 加水印导出…」直接进。原照片不会被改，视频和动图会跳过。水印能让别人不方便直接拿去用，但拦不住有心人，重要的东西别只靠它。</p>"),
         "more_title": "其他功能",
         "more": [
             ("一次看四张", "按 ⇧C 可以四张一起并排看，放大、拖动也是一起动。"),
@@ -299,11 +310,16 @@ HOME = {
             ("按星级分文件夹（Pro）", "挑完可以按星级一下分到几个子文件夹里，也可以用 ⌥1 到 ⌥9 把照片丢进常用的文件夹。"),
             ("窗口置顶和分享", "点右上角的图钉，窗口就一直浮在最上面，修图时拿来对照参考图挺方便。分享按钮能用隔空投送、信息、邮件发出去。"),
             ("幻灯片", "每张停 1 到 10 秒，切换的渐变时长也能调。单击暂停，暂停时可以手动翻页和打星。"),
-            ("HEIC 批量转 JPG", "整个文件夹一次转成 JPEG、PNG 或 HEIC，转好的放在子文件夹里，原图不动。"),
+            ("HEIC 批量转 JPG", "整个文件夹一次转成 JPEG、PNG 或 HEIC，可以选保存到哪里，不会覆盖同名文件，原图不动，转到一半可以取消。"),
             ("旋转、裁剪和拉直", "转 90° 只改方向标记，JPEG、HEIC 和相机 RAW 都不重新编码，画质没有损失。按 ⇧R 打开「裁剪与拉直」，拖裁剪框或者选个比例，裁完可以覆盖原图，也可以另存一份。RAW 不会被改，裁剪结果另存成 JPEG。"),
             ("照片里写的说明", "按 I 打开照片信息，文件里写的标题和说明（IPTC）显示在最上面，下面是作者、署名、版权、地名和关键词，文字可以选中复制。按 ⇧I 在「常用」和「全部」之间切换。这些信息只能看，Flipic Lens 不改。"),
             ("说明翻译", "说明的语言和界面语言不一样时，说明下面会出现「翻译」按钮，译文显示在原文下方。用的是 macOS 自带的翻译，在本机完成，需要 macOS 15 或更新。"),
             ("批量重命名和导出", "可以按序号批量改名。导出时选格式和质量，导出前能看到大概多大。"),
+            ("导出时限制尺寸和大小", "⌘S 导出和批量转换格式时，可以设长边不超过多少像素、文件不超过多少 MB（JPEG 和 HEIC，会先降质量，不够再缩小）、转成 sRGB。拍摄信息、说明和版权默认保留，位置信息可以单独去掉。"),
+            ("颜色标签", "按 6、7、8、9 打红、黄、绿、蓝标签，再按一次取消。用的是访达自己的标签，别的软件里也看得到。「照片」菜单里能只看某种颜色。"),
+            ("缩略图上点右键", "在底部缩略图上选一张或几张，点右键就能送去后期软件，设好了软件时菜单第一项直接写软件名和张数。「打开方式」里能临时换别的软件，评分、标签、标记、复制、分享、移到废纸篓在这里也能用。"),
+            ("裁剪记住上次的比例", "下次进入裁剪，默认用上次完成裁剪时的比例，横图裁 3:2，换到竖图会自动变成 2:3。"),
+            ("导出预设（Pro）", "把常用的导出方式存成预设，一步导出一批照片：格式、质量、尺寸上限、保存位置和文件名模板都记在里面，快捷键是 ⌥⌘1 到 ⌥⌘9。"),
             ("界面语言", "支持 14 种语言，跟随系统设置。"),
         ],
         "vs_title": "和「预览」的区别",
@@ -319,10 +335,10 @@ HOME = {
         "keys_title": "常用快捷键",
         "keys": [("← →", "上一张 / 下一张"), ("空格", "窗口贴合照片比例"), ("0", "按住时在鼠标处放大到 100%，松手恢复"),
                  ("I", "照片信息"), ("⇧I", "照片信息切换「常用 / 全部」"), ("⇧R", "裁剪与拉直"), ("1–5", "打 1 到 5 星，再按一次取消"), ("S", "幻灯片放映"), ("⌘E", "在后期软件中编辑"),
-                 ("⇧⌘K", "清理模式"), ("⌘⌫", "移到废纸篓"), ("⌘,", "设置，快捷键都能改")],
+                 ("⇧⌘K", "清理模式"), ("⇧F", "胶片滤镜"), ("6–9", "红、黄、绿、蓝颜色标签"), ("⌘⌫", "移到废纸篓"), ("⌘,", "设置，快捷键都能改")],
         "guides_title": "指南",
         "faq": [
-            ("Flipic Lens 收费吗？", "看图、评星、标记、筛选、导出、清理这些都免费，没有广告，也不用注册账号，代码以 MIT 协议开源在 GitHub。另有可选的 <a href=\"/pro/\">Pro</a>，¥68 一次买断，下载后可以先试用 7 天，只加了批量处理和几个专业功能，大多数人用不上。"),
+            ("Flipic Lens 收费吗？", "看图、评星、标记、筛选、导出、清理、两款胶片滤镜这些都免费，没有广告，也不用注册账号，代码以 MIT 协议开源在 GitHub。另有可选的 <a href=\"/pro/\">Pro</a>，¥68 一次买断，下载后可以先试用 7 天，只加了批量处理、另外八款胶片滤镜和几个专业功能，大多数人用不上。"),
             ("Flipic Lens 和 App Store 上的 Flipic 是同一个吗？", "不是。Flipic Lens 原名 Flipic（更早叫 PixDeck），是 Mac 看图挑片软件；App Store 上的「Flipic: Photo Organizer」是另一位开发者的 iPhone App。为了区分，2026 年 11 月起改名 Flipic Lens，下载地址、激活码和设置都不变。"),
             ("从网上下载的安全吗？", "安装包用 Developer ID 签名，并通过了 Apple 公证，macOS 安装时会自动校验。Flipic Lens 没有账号，照片只在本机处理。"),
             ("能代替 Lightroom 挑片吗？", "挑片可以用它。在 Flipic Lens 里翻一遍、打星、删掉废片，打的星 Lightroom 和 Capture One 都读得到。调色修图还是回原来的软件，按 ⌘E 就能把当前这张在那边打开。"),
@@ -335,6 +351,7 @@ HOME = {
             ("Intel 芯片的 Mac 能用吗？", "能。Flipic Lens 同时支持 Apple 芯片和 Intel 芯片，需要 macOS 13 或更新版本。"),
             ("以前装过 PixDeck 怎么办？", "Flipic Lens 就是改名后的 PixDeck。把「应用程序」里的 PixDeck 拖进废纸篓，再装 Flipic Lens，原来的设置都会保留。"),
         ],
+        "wm_faq": [("导出的照片能加水印吗？", "能，免费。⌘S 导出、批量转换格式里选「水印」，或者从「文件 › 加水印导出…」进入。可以用文字或自己的图片，平铺或放在九个位置之一，大小、透明度、颜色、角度都能调。原照片不会被改，视频和动图会跳过。水印只能让别人不方便直接拿去用，防不住有心人。")],
         "end": "下载 Flipic Lens",
     },
     "en": {
@@ -362,6 +379,15 @@ HOME = {
              "<p>Normally the window shows only the photo. Press <kbd>I</kbd> to see the camera, lens, shutter speed, aperture, ISO and date taken in the top-right corner, and <kbd>Esc</kbd> to close it.</p>"
              "<p>HDR photos from an iPhone can be shown in HDR, with highlights brighter than normal white, the same as in Preview. Turn it on in Settings; your display needs to support HDR.</p>"),
         ],
+        "film_feature": ("film-en.webp", "Flipic Lens Film Looks panel: ten swatches of the current photo with Strength, Grain and Halation sliders", "Give photos the color of film",
+             "<p>Press <kbd>⇧F</kbd> to open the Film Looks panel. Each swatch is the current photo with that look, and one click switches to it. There are ten: a warm portrait look, an everyday warm, a richer slide-film color, a cool mint, a fine vivid one, a night look with a cinema feel, a muted documentary gray, and three in black and white.</p>"
+             "<p>Three sliders set Strength, Grain and Halation. The look stays on as you page, so you can go through a whole set and see how it sits. Hold <kbd>\\</kbd> to see the original, press <kbd>G</kbd> to turn it on and off, and <kbd>,</kbd> and <kbd>.</kbd> for the previous and next look.</p>"
+             "<p>It only changes what you see; your files are not touched. To keep a result, click Save a Copy…; camera info, caption and location go with it. Export, Batch Convert Format and export presets can apply a look to a whole batch too. Videos, animated images and HDR photos are left as they are.</p>"
+             "<p>Warm Portrait and Classic B&amp;W are free. The other eight are Pro, and all ten work during the trial.</p>"),
+        "wm_feature": ("wm-editor-en.webp", "Flipic Lens Export Watermarks window: a tiled text watermark previewed on a sample ID card", "Watermark the copies you export",
+             "<p>Sending a copy of an ID, or a proof to a client? Add a watermark to the exported copy: text, or your own picture such as a logo, tiled diagonally across the photo or placed once in one of nine positions. Size, opacity, color and angle are adjustable.</p>"
+             "<p>Three starting styles are built in: For verification only, Proof and Signature. You can also type a line of text for a single export, for example what this copy of an ID is for; it applies to that export only and the saved watermark stays as it is.</p>"
+             "<p>Pick one in Export (⌘S), Batch Convert Format and, with Pro, export presets, or go straight to File › Export with Watermark…. Originals are never changed, and videos and animated images are skipped. A watermark makes reuse harder but does not prevent it, so don’t rely on it alone for anything important.</p>"),
         "more_title": "More features",
         "more": [
             ("Four at once", "Press ⇧C to put four frames of a burst side by side; zooming and dragging move them together."),
@@ -371,11 +397,16 @@ HOME = {
             ("Sort by rating (Pro)", "When you’re done, split the folder into subfolders by stars in one go, or send photos to favorite folders with ⌥1 to ⌥9."),
             ("Keep on top and share", "Click the pin at the top right to keep the window above other apps, handy for a reference image while editing. The share button sends the photo by AirDrop, Messages or Mail."),
             ("Slideshow", "Each photo stays 1 to 10 seconds and the crossfade length is adjustable. Click to pause; while paused you can page and rate."),
-            ("Batch convert HEIC to JPG", "Convert a whole folder to JPEG, PNG or HEIC. The new files go into a subfolder and the originals are left alone."),
+            ("Batch convert HEIC to JPG", "Convert a whole folder to JPEG, PNG or HEIC. Choose where the results go; files with the same name are never overwritten, the originals are left alone, and you can cancel part way."),
             ("Rotate, crop and straighten", "90° turns only change the orientation tag, for JPEG, HEIC and camera RAW alike, so nothing is re-encoded. ⇧R opens Crop & Straighten: drag the frame or pick a ratio, then overwrite the original or save a copy. RAW files are not changed; the crop is saved as a JPEG."),
             ("Captions stored in the file", "Press I and the headline and caption written into the file (IPTC) are shown at the top of the info panel, above the creator, credit, copyright, place and keywords. The text can be selected and copied. ⇧I switches between Essentials and All. Flipic Lens reads this data and does not edit it."),
             ("Translate a caption", "When a caption is in a different language from the interface, a Translate button appears under it and the translation is shown below the original. It uses the translation built into macOS, on your Mac, and needs macOS 15 or later."),
             ("Batch rename and export", "Rename by sequence number. When exporting, pick a format and quality and see roughly how big the file will be."),
+            ("Size limits on export", "Export (⌘S) and Batch Convert Format can limit the long edge to a number of pixels, keep the file under a size in MB (JPEG and HEIC; quality drops first, then dimensions) and convert to sRGB. Shooting information, captions and copyright are kept by default, and location can be removed on its own."),
+            ("Color tags", "Press 6, 7, 8 or 9 for a red, yellow, green or blue tag; press again to remove it. They are Finder’s own tags, so other apps see them too. Show by Color Tag in the Photo menu filters to one color."),
+            ("Right-click on thumbnails", "Select one or several photos in the thumbnail strip and right-click to send them to your editor; when one is set, the first item names it and the count. Open With lets you pick another app for this time, and rating, tags, marks, copy, share and Move to Trash work here too."),
+            ("Crop remembers the ratio", "The next crop starts with the ratio you last finished with. 3:2 on a landscape photo becomes 2:3 on a portrait one."),
+            ("Export presets (Pro)", "Save the ways you usually export and deliver a batch in one step: format, quality, size limits, destination and a file name template are all remembered. Shortcuts are ⌥⌘1 to ⌥⌘9."),
             ("Languages", "14 interface languages, following your system setting."),
         ],
         "vs_title": "How it differs from Preview",
@@ -391,10 +422,10 @@ HOME = {
         "keys_title": "Keyboard shortcuts",
         "keys": [("← →", "Previous / next photo"), ("Space", "Wrap the window to the photo"), ("0", "Zoom to 100% at the pointer; hold to peek"),
                  ("I", "Photo info"), ("⇧I", "Photo info: Essentials / All"), ("⇧R", "Crop & Straighten"), ("1–5", "Rate one to five stars; again to clear"), ("S", "Slideshow"), ("⌘E", "Edit in your photo editor"),
-                 ("⇧⌘K", "Cleanup Mode"), ("⌘⌫", "Move to Trash"), ("⌘,", "Settings; change any shortcut")],
+                 ("⇧⌘K", "Cleanup Mode"), ("⇧F", "Film Looks"), ("6–9", "Red, yellow, green, blue tags"), ("⌘⌫", "Move to Trash"), ("⌘,", "Settings; change any shortcut")],
         "guides_title": "Guides",
         "faq": [
-            ("Is Flipic Lens free?", "Viewing, ratings, marks, filtering, export and Cleanup Mode are free, with no ads and no account, and the code is MIT licensed on GitHub. There is an optional <a href=\"/en/pro/\">Pro</a> upgrade, $12.99 once, with a 7-day trial in every download. It only adds batch and pro tools; most people won’t need it."),
+            ("Is Flipic Lens free?", "Viewing, ratings, marks, filtering, export, Cleanup Mode and two film looks are free, with no ads and no account, and the code is MIT licensed on GitHub. There is an optional <a href=\"/en/pro/\">Pro</a> upgrade, $12.99 once, with a 7-day trial in every download. It adds batch tools, the other eight film looks and a few pro features; most people won’t need it."),
             ("Is Flipic Lens the same as Flipic on the App Store?", "No. Flipic Lens was formerly Flipic (and PixDeck before that) and is a Mac culling app. “Flipic: Photo Organizer” on the App Store is an iPhone app from another developer. We renamed to Flipic Lens in November 2026 to keep the two apart; download links, license keys and settings are unchanged."),
             ("Is the download safe?", "It is signed with a Developer ID and notarized by Apple; macOS checks it on install. Flipic Lens has no account and keeps photos on your Mac."),
             ("Can it replace Lightroom for culling?", "For culling, yes; for editing, no. Page through, check focus, rate, mark and delete rejects in Flipic Lens, and Lightroom or Capture One will read the ratings. Edit in the app you already use; ⌘E opens the current photo there."),
@@ -406,6 +437,7 @@ HOME = {
             ("Which formats are supported?", "JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and camera RAW from Sony, Canon, Nikon, Fujifilm and others."),
             ("Does it run on Intel Macs?", "Yes. Flipic Lens is universal for Apple silicon and Intel and needs macOS 13 or later."),
         ],
+        "wm_faq": [("Can I add a watermark to exported photos?", "Yes, and it is free. Choose a watermark in Export (⌘S) or Batch Convert Format, or use File › Export with Watermark…. It can be text or your own picture, tiled or placed in one of nine positions, with size, opacity, color and angle adjustable. Originals are never changed, and videos and animated images are skipped. A watermark makes reuse harder but cannot prevent it.")],
         "end": "Download Flipic Lens",
     },
 }
@@ -1224,8 +1256,8 @@ guide("zh", "/guides/read-iptc-caption-mac/", "Mac 上怎么看照片里的说�
 # ---------------------------------------------------------------- 渲染
 
 HOME_PRO = {
-    "zh": ("免费版够用吗", "够用。上面说的这些功能都是免费的，以后也会一直免费。如果你经常一次要整理几百上千张照片，可以看看 Pro，里面加了修图前后对比、JPG 和 RAW 合并显示、按星级分文件夹这些批量处理的功能，一次买断。平时看看照片的话用不上，不用买。", "/pro/", "看看 Pro 有什么"),
-    "en": ("Is the free version enough?", "Yes. Everything described above is free and will stay free. If you often sort through hundreds or thousands of photos at once, take a look at Pro. It adds batch tools such as before/after comparison, showing JPG and RAW pairs as one photo and sorting into folders by rating, for a one-time price. If you mostly just look at photos, you won’t need it.", "/en/pro/", "See what Pro adds"),
+    "zh": ("免费版够用吗", "够用。上面说的这些功能都是免费的，以后也会一直免费。如果你经常一次要整理几百上千张照片，可以看看 Pro，里面加了修图前后对比、JPG 和 RAW 合并显示、按星级分文件夹这些批量处理的功能，还有另外八款胶片滤镜和导出预设，一次买断。平时看看照片的话用不上，不用买。", "/pro/", "看看 Pro 有什么"),
+    "en": ("Is the free version enough?", "Yes. Everything described above is free and will stay free. If you often sort through hundreds or thousands of photos at once, take a look at Pro. It adds batch tools such as before/after comparison, showing JPG and RAW pairs as one photo and sorting into folders by rating, plus the other eight film looks and export presets, for a one-time price. If you mostly just look at photos, you won’t need it.", "/en/pro/", "See what Pro adds"),
 }
 
 
@@ -1233,7 +1265,7 @@ def render_home(lang):
     h = HOME[lang]
     t = T[lang]
     path = t["home"]
-    schema = [app_schema(lang, h["desc"]), faq_schema(h["faq"]),
+    schema = [app_schema(lang, h["desc"]), faq_schema(h["faq"] + (h["wm_faq"] if SHOW_WATERMARK else [])),
               {"@context": "https://schema.org", "@type": "WebSite", "name": "Flipic Lens", "url": f"{BASE}{path}", "inLanguage": t["lang"]}]
     out = head(lang, path, h["title"], h["desc"], schema) + header(lang, path)
     first = f'<img class="on" src="{SHOTS}browse-01.webp" alt="{esc(h["deck_alt"].format(n=1))}" width="1440" height="900" fetchpriority="high">'
@@ -1257,8 +1289,9 @@ def render_home(lang):
 </section>
 <div class="wrap" id="features">
 """
-    for i, (img, alt, h2, body) in enumerate(h["features"]):
-        dims = (1440, 967) if img.startswith("cleanup") else (1440, 900)
+    feats = list(h["features"]) + [h["film_feature"]] + ([h["wm_feature"]] if SHOW_WATERMARK else [])
+    for i, (img, alt, h2, body) in enumerate(feats):
+        dims = shot_size(img) if img.startswith(("film", "wm-")) else (1440, 967) if img.startswith("cleanup") else (1440, 900)
         out += f"""<section class="feature{' flip' if i % 2 else ''}">
   <div class="copytext"><h2>{h2}</h2>{body}</div>
   {shot(img, alt, *dims)}
@@ -1279,7 +1312,7 @@ def render_home(lang):
     out += f'<section class="wrap pro-note"><h2>{pro[0]}</h2><p>{pro[1]}</p><p><a href="{pro[2]}">{pro[3]}</a></p></section>\n'
     items = "".join(f'<li><a href="{g["path"]}"><b>{esc(g["title"])}</b><span>{esc(g["summary"])}</span></a></li>' for g in GUIDES[lang])
     out += f'<section class="wrap guides" id="guides"><h2>{h["guides_title"]}</h2><ol>{items}</ol></section>\n'
-    faqs = "".join(f"<details><summary>{esc(q)}</summary><p>{a}</p></details>" for q, a in h["faq"])
+    faqs = "".join(f"<details><summary>{esc(q)}</summary><p>{a}</p></details>" for q, a in h["faq"] + (h["wm_faq"] if SHOW_WATERMARK else []))
     out += f'<section class="wrap faq" id="faq"><h2>{t["faq"]}</h2>{faqs}</section>\n'
     out += f'<section class="wrap end"><h2>{h["end"]}</h2>{download_block(lang)}</section>\n</main>\n'
     return out + footer(lang)
@@ -1375,8 +1408,18 @@ PRO = {
             "img": "pro-before-after.webp",
             "alt": "修图前后对比的分割视图：左边是原片，右边是调亮、调冷以后的版本",
         },
+        "film": {
+            "h": "胶片滤镜的全部十款",
+            "body": [
+                "胶片滤镜面板里十款效果，「暖调人像」和「经典黑白」免费，另外八款是 Pro：日常暖色、浓郁反转片、清冷薄荷、细腻鲜艳、电影夜色、纪实灰调、柔和黑白、粗颗粒黑白。下载后的 7 天试用里，十款都能用。",
+                "按 <kbd>⇧F</kbd> 打开面板，强度、颗粒、光晕三个滑块可调，翻页时效果一直保持，原图不会被改。另存一份、⌘S 导出和批量转换里的胶片选项，用哪一款都一样。",
+            ],
+            "img": "film.webp",
+            "alt": "胶片滤镜面板：十款效果的缩略图，下面是强度、颗粒、光晕滑块",
+        },
         "small_title": "还有这些",
         "small": [
+            ("导出预设", "把常用的导出方式存成预设，一步导出一批照片，快捷键是 ⌥⌘1 到 ⌥⌘9。预设除了格式、质量、尺寸上限和文件名模板，还能带上一款胶片滤镜{wm}。"),
             ("JPG 和 RAW 合并显示", "相机同时存 JPG 和 RAW 的话，同名的两个文件只显示成一张，张数不会翻倍，按 V 切换看哪一张。打星、标记、导出、删除都当成一张处理。"),
             ("按星级分到子文件夹", "打完星以后，可以把整个文件夹的照片按星级复制或移动到「5 星」「4 星」这样的子文件夹里。"),
             ("常用文件夹", "最多设 9 个常用文件夹，看图时按 ⌥1 到 ⌥9 就把当前照片复制或移动过去。"),
@@ -1393,7 +1436,7 @@ PRO = {
                       ("导出到文件夹、并排对比、清理模式", "有", "有"), ("批量转格式、批量重命名", "有", "有"),
                       ("工作台", "", "有"), ("放大到眼睛", "", "有"), ("按内容、按照片里的字找照片", "", "有"), ("修图前后对比", "", "有"), ("JPG 和 RAW 合并显示", "", "有"), ("按星级分到子文件夹", "", "有"),
                       ("常用文件夹 ⌥1–⌥9", "", "有"), ("删除没挑中的照片", "", "有"), ("批量送进后期软件", "", "有"),
-                      ("自定义同名关联", "", "有")],
+                      ("自定义同名关联", "", "有"), ("胶片滤镜：暖调人像、经典黑白", "有", "有"), ("胶片滤镜：另外八款", "", "有"), ("导出预设", "", "有")],
         "faq": [
             ("激活码怎么用？", "付款成功的页面上有激活码和「在 Flipic Lens 中激活」按钮，点一下就激活了。也可以复制激活码，粘贴到 Flipic Lens「设置 › Pro」里。"),
             ("要联网验证吗？", "第一次激活需要联网，把激活码绑定到这台 Mac，只发订单号和设备号的哈希。之后离线也能用，每隔一段时间联网核对一次；长时间（60 天）没联上网，联网一次就恢复。"),
@@ -1453,8 +1496,18 @@ PRO = {
             "img": "pro-before-after-en.webp",
             "alt": "Before and after split view: the original on the left, a brighter, cooler edit on the right",
         },
+        "film": {
+            "h": "All ten film looks",
+            "body": [
+                "Of the ten looks in the Film Looks panel, Warm Portrait and Classic B&amp;W are free. The other eight are Pro: Everyday Warm, Rich Slide, Cool Mint, Fine Color, Cinema Night, Muted Gray, Soft B&amp;W and Coarse B&amp;W. All ten work during the 7-day trial in every download.",
+                "Press <kbd>⇧F</kbd> to open the panel. Strength, Grain and Halation are adjustable, the look stays on as you page, and your originals are never changed. Save a Copy and the Film option in Export (⌘S) and Batch Convert work the same with any look.",
+            ],
+            "img": "film-en.webp",
+            "alt": "Film Looks panel: ten swatches of the current photo above Strength, Grain and Halation sliders",
+        },
         "small_title": "And also",
         "small": [
+            ("Export presets", "Save the ways you usually export and deliver a batch in one step; the shortcuts are ⌥⌘1 to ⌥⌘9. Besides format, quality, size limits and a file name template, a preset can carry a film look{wm}."),
             ("Show JPG and RAW as one photo", "If your camera saves both JPG and RAW, each pair shows up as one photo, so the count doesn’t double. Press V to switch between them. Rating, marking, exporting and deleting treat the pair as one."),
             ("Sort into folders by rating", "After rating, copy or move the photos in a folder into subfolders like “5 stars” and “4 stars”."),
             ("Favorite folders", "Set up to nine folders, then press ⌥1 to ⌥9 while viewing to copy or move the current photo there."),
@@ -1471,7 +1524,7 @@ PRO = {
                       ("Export to folder, side-by-side, Cleanup Mode", "Yes", "Yes"), ("Batch convert, batch rename", "Yes", "Yes"),
                       ("Workbench", "", "Yes"), ("Zoom to the eyes", "", "Yes"), ("Find photos by content or text", "", "Yes"), ("Before & after", "", "Yes"), ("Merge JPG and RAW", "", "Yes"), ("Sort into folders by rating", "", "Yes"),
                       ("Favorite folders ⌥1–⌥9", "", "Yes"), ("Delete what you didn’t pick", "", "Yes"), ("Send a batch to your editor", "", "Yes"),
-                      ("Custom linked files", "", "Yes")],
+                      ("Custom linked files", "", "Yes"), ("Film looks: Warm Portrait, Classic B&W", "Yes", "Yes"), ("Film looks: the other eight", "", "Yes"), ("Export presets", "", "Yes")],
         "faq": [
             ("How do I activate?", "The payment confirmation page shows your key and an Activate in Flipic Lens button. Or copy the key and paste it into Flipic Lens › Settings › Pro."),
             ("Does it need to go online?", "The first activation goes online to bind the key to this Mac, sending only hashes of the order number and device ID. After that it works offline and checks in now and then; if it has been offline for a long time (60 days), going online once restores it."),
@@ -1512,11 +1565,12 @@ def render_pro(lang):
     buy_btn = f'<a class="btn" href="{PRO_BUY_URL}" data-value="{value}" data-currency="{currency}">{p["buy"]}{" · " + esc(price) if price else ""}</a>'
     try_btn = f'<a class="btn line" href="/download/Flipic.dmg" download>{DOWNLOAD_ICON}{p["try"]}</a>'
     paras = lambda xs: "".join(f"<p>{x}</p>" for x in xs)
-    wb, ey, se, tx, ba = p["workbench"], p["eyes"], p["search"], p["text"], p["ba"]
+    wb, ey, se, tx, ba, fl = p["workbench"], p["eyes"], p["search"], p["text"], p["ba"], p["film"]
     hero_img = "pro-workbench.webp" if lang == "zh" else "pro-workbench-en.webp"
     skip = "".join(f"<li>{esc(x)}</li>" for x in p["skip"])
     pair = "".join(f"<figure>{pro_shot(img, alt)}<figcaption>{esc(cap)}</figcaption></figure>" for img, alt, cap in ey["shots"])
-    small = "".join(f"<li><h3>{esc(h)}</h3><p>{esc(b)}</p></li>" for h, b in p["small"])
+    wm_tail = {"zh": "和一个水印", "en": " and a watermark"}[lang] if SHOW_WATERMARK else ""
+    small = "".join(f"<li><h3>{esc(h)}</h3><p>{esc(b.replace('{wm}', wm_tail))}</p></li>" for h, b in p["small"])
     hd = p["free_head"]
     rows = "".join(f'<tr><td>{esc(a)}</td><td>{esc(b)}</td><td class="yes">{esc(c)}</td></tr>' for a, b, c in p["free_rows"])
     faqs = "".join(f"<details><summary>{esc(q)}</summary><p>{a}</p></details>" for q, a in p["faq"])
@@ -1554,6 +1608,10 @@ def render_pro(lang):
 <section class="pro-wide">
   <div class="pro-split"><h2>{ba['h']}</h2><p>{ba['body']}</p></div>
   {pro_shot(ba['img'], ba['alt'])}
+</section>
+<section class="feature flip">
+  <div class="copytext"><h2>{fl['h']}</h2>{paras(fl['body'])}</div>
+  {pro_shot(fl['img'], fl['alt'])}
 </section>
 </div>
 <section class="wrap pro-small"><h2>{p['small_title']}</h2><ul>{small}</ul></section>
@@ -1701,7 +1759,8 @@ def main():
     OUT.mkdir(parents=True)
     for name in ["favicon.png", "icon-256.png", "og.jpg", "version.json"]:
         shutil.copy(DOCS / name, OUT / name)
-    shutil.copytree(DOCS / "shots", OUT / "shots" / SHOTS_V)
+    shutil.copytree(DOCS / "shots", OUT / "shots" / SHOTS_V,
+                    ignore=None if SHOW_WATERMARK else shutil.ignore_patterns("wm-*"))
     shutil.copytree(DOCS / "download", OUT / "download")
     shutil.copy(ROOT / "src/site.css", OUT / "site.css")
     shutil.copy(ROOT / "src/site.js", OUT / "site.js")
@@ -1744,6 +1803,7 @@ def main():
     (OUT / f"{INDEXNOW_KEY}.txt").write_text(INDEXNOW_KEY)
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {BASE}/sitemap.xml\n")
 
+    WM_LLMS = ("- Export watermark (free): text or picture, tiled or single position, adjustable size, opacity, color and angle; used in Export, Batch Convert and export presets; originals are never changed; videos and animated images are skipped.\n" if SHOW_WATERMARK else "")
     guide_lines = "\n".join(f"- [{g['title']}]({BASE}{g['path']}): {g['desc']}" for lang in ("en", "zh") for g in GUIDES[lang])
     (OUT / "llms.txt").write_text(f"""# Flipic Lens
 
@@ -1757,7 +1817,9 @@ Key facts:
 - IPTC captions (free): press I and the IPTC Headline and Description stored in the file are shown at the top of the photo info panel, above creator, credit, copyright, place and keywords; ⇧I switches between Essentials and All. Read-only: Flipic Lens does not edit IPTC or other metadata.
 - Caption translation (free): when a caption is in a different language from the interface, a Translate button shows the translation below the original, using the translation built into macOS on the Mac itself; nothing is sent to a server. Needs macOS 15 or later.
 - Crop & Straighten (free, ⇧R): drag the crop frame or pick a ratio (Original, Free, 1:1, 4:5, 3:2, 16:9), then overwrite the original or save a copy. Capture info, caption and copyright are kept; RAW files are not changed and the crop is saved as a JPEG. There are no color, exposure, filter or retouching tools; ⌘E hands the photo to Lightroom or Capture One.
-- Optional HDR display, customizable shortcuts, global show/hide shortcut, ⌘E hand-off to Photoshop/Lightroom/Capture One.
+- Film looks (⇧F): ten color looks shown as swatches of the current photo, with Strength, Grain and Halation sliders; the look stays on while paging, originals are never changed, Save a Copy… writes a new file, and Export, Batch Convert and export presets can apply it to a batch. Two looks are free, eight are Pro (all ten during the 7-day trial).
+- Color tags (keys 6-9, Finder tags), export size limits (long edge, file size in MB, sRGB), right-click menu on thumbnails, and Crop remembers the last ratio.
+{WM_LLMS}- Optional HDR display, customizable shortcuts, global show/hide shortcut, ⌘E hand-off to Photoshop/Lightroom/Capture One.
 - Formats: JPEG, PNG, HEIC, WebP, GIF, TIFF, AVIF, JPEG XL, camera RAW (Sony, Canon, Nikon, Fujifilm, more).
 - Download: {BASE}/download/Flipic.dmg · Source: {GITHUB} · Current version: {VERSION}
 
