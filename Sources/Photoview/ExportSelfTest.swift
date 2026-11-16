@@ -419,15 +419,14 @@ extension ViewerViewController {
         for k in keys { defaults.removeObject(forKey: k) }
         /// 抓一个窗口（保存面板 sheet 或对话框）本身的样子；系统允许应用抓自己的窗口
         func render(_ w: NSWindow?, _ name: String) {
-            // 对话框直接抓它自己；保存面板是 sheet，单抓是空壳，改抓它在屏幕上的那块区域
+            // 对话框直接按窗口号抓；保存面板是 sheet，按窗口号抓只有空壳，改画附件窗口自己的内容（本进程里画，不碰屏幕）
             let sheet = w?.sheetParent != nil
-            var cg = CGRect.null
-            if let w, sheet, let screen = w.screen ?? NSScreen.main {
-                let f = w.frame
-                cg = CGRect(x: f.minX, y: screen.frame.maxY - f.maxY, width: f.width, height: f.height)
+            if sheet {
+                let ok = WatermarkSelfTest.shootView(self.exportAccessory?.view.window?.contentView ?? self.exportAccessory?.view, shots.appendingPathComponent("\(name)-\(lang).png"))
+                if !ok { T.check(false, "screenshot \(name) failed") }
+                return
             }
-            guard let w, let img = sheet ? CGWindowListCreateImage(cg, .optionOnScreenOnly, kCGNullWindowID, .bestResolution)
-                    : CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(w.windowNumber), [.boundsIgnoreFraming, .bestResolution]) else {
+            guard let w, let img = CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(w.windowNumber), [.boundsIgnoreFraming, .bestResolution]) else {
                 T.check(false, "screenshot \(name) failed"); return
             }
             let rep = NSBitmapImageRep(cgImage: img)

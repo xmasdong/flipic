@@ -97,14 +97,9 @@ enum ImageExporter {
         var watermarkFailed = false
         func styled(_ img: CGImage) -> CGImage {
             guard hasStage else { return img }
-            var out = img
-            if let token = options.effect { out = ExportEffect.apply?(out, token, source) ?? out }
-            if let wm = options.watermark {
-                // 水印画不出来（文字是空的、logo 找不到）就整张导出失败，不能悄悄出一份没水印的副本
-                if let marked = WatermarkRenderer.render(out, job: wm, fileName: fileName) { out = marked } else { watermarkFailed = true }
-            }
-            if options.toSRGB, let s = converted(out) { out = s }
-            return out
+            let r = applyStages(img, options: options, source: source, fileName: fileName)
+            if r.watermarkFailed { watermarkFailed = true }
+            return r.image
         }
         base = styled(plain)
         if watermarkFailed { return nil }
@@ -162,6 +157,20 @@ enum ImageExporter {
             if watermarkFailed { return nil }
         }
         return smallest
+    }
+
+    /// 缩小之后、编码之前的那几步：胶片 → 水印 → 转 sRGB。导出和导出面板里的预览共用这一份，预览才和真正导出的一致。
+    /// 水印画不出来时 watermarkFailed 为 true（导出要整张失败；预览只是显示没有水印的图）
+    static func applyStages(_ img: CGImage, options: ExportOptions, source: URL?, fileName: String?) -> (image: CGImage, watermarkFailed: Bool) {
+        var out = img
+        var failed = false
+        if let token = options.effect { out = ExportEffect.apply?(out, token, source) ?? out }
+        if let wm = options.watermark {
+            // 水印画不出来（文字是空的、logo 找不到）就整张导出失败，不能悄悄出一份没水印的副本
+            if let marked = WatermarkRenderer.render(out, job: wm, fileName: fileName) { out = marked } else { failed = true }
+        }
+        if options.toSRGB, let s = converted(out) { out = s }
+        return (out, failed)
     }
 
     /// 编码并写到 url（先写临时文件再换过去，不会留下写了一半的文件）。成功返回结果

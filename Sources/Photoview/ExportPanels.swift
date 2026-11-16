@@ -184,6 +184,13 @@ final class ExportAccessory {
     let qualityLabel: NSTextField
     let estimateLabel: NSTextField
     let options: ExportOptionsView
+    /// 右边的预览：照片按现在的选项导出后的样子
+    let preview = ExportPreviewPane(width: ExportAccessory.previewWidth)
+    /// 控件那一列的宽度、预览的宽度、两列之间的空隙、左右的边距
+    static let controlsWidth: CGFloat = 320
+    static let previewWidth: CGFloat = 360
+    static let columnGap: CGFloat = 24
+    static let sideInset: CGFloat = 20
 
     init(formats: [String], formatIndex: Int, quality: Double, onChange: @escaping () -> Void) {
         popup = NSPopUpButton(frame: .zero)
@@ -213,21 +220,26 @@ final class ExportAccessory {
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 10
-        // 新系统上附件区贴着保存面板的左右边，自己留出和面板上半部分一样的边距
-        stack.edgeInsets = NSEdgeInsets(top: 8, left: 20, bottom: 6, right: 20)
         #if FLIPIC_PRO
         let presetButton = NSButton(title: L10n.t("preset.saveAs", "存为预设…"), target: nil, action: nil)
         presetButton.controlSize = .small
         presetButton.bezelStyle = .rounded
         stack.addArrangedSubview(presetButton)
         #endif
-        let width: CGFloat = 320
+        let width = Self.controlsWidth
         for v in [popup, q, sep, estimateLabel] { v.translatesAutoresizingMaskIntoConstraints = false; v.widthAnchor.constraint(equalToConstant: width).isActive = true }
         estimateLabel.preferredMaxLayoutWidth = width
         estimateLabel.heightAnchor.constraint(equalToConstant: 32).isActive = true
-        stack.layoutSubtreeIfNeeded()
-        stack.frame = NSRect(origin: .zero, size: stack.fittingSize)
-        view = stack
+        // 左边控件，右边预览（和控件那一列一样高）；新系统上附件区贴着保存面板的左右边，自己留出和面板上半部分一样的边距
+        let outer = NSStackView(views: [stack, preview])
+        outer.orientation = .horizontal
+        outer.alignment = .top
+        outer.spacing = Self.columnGap
+        outer.edgeInsets = NSEdgeInsets(top: 8, left: Self.sideInset, bottom: 6, right: Self.sideInset)
+        preview.heightAnchor.constraint(equalTo: stack.heightAnchor).isActive = true
+        outer.layoutSubtreeIfNeeded()
+        outer.frame = NSRect(origin: .zero, size: outer.fittingSize)
+        view = outer
         slider.target = self
         slider.action = #selector(sliderMoved(_:))
         popup.target = self
@@ -237,13 +249,23 @@ final class ExportAccessory {
         presetButton.action = #selector(saveAsPreset(_:))
         #endif
         self.onChange = onChange
-        options.onChange = { [weak self] in self?.onChange?() }
+        options.onChange = { [weak self] in
+            self?.onChange?()
+            self?.preview.scheduleUpdate()
+        }
+        preview.optionsProvider = { [weak self] in self?.options.options ?? ExportOptions() }
         // 「本次文字」那一行出现或消失：附件的大小跟着变，保存面板会按新的大小排
         options.onLayout = { [weak self] in
             guard let self, let stack = self.view as? NSStackView else { return }
             stack.layoutSubtreeIfNeeded()
             stack.setFrameSize(stack.fittingSize)
         }
+        preview.scheduleUpdate()
+    }
+
+    /// 预览用哪张照片：和导出时一样带上旋转、拉直、裁剪
+    func setPhoto(url: URL, turns: Int, degrees: Double, crop: Straighten.CropSpec?) {
+        preview.setSource(url: url, turns: turns, degrees: degrees, crop: crop)
     }
 
     private var onChange: (() -> Void)?
@@ -269,6 +291,9 @@ final class BatchAccessory: NSObject {
     let slider: NSSlider
     let qualityLabel: NSTextField
     let options: ExportOptionsView
+    /// 右边的预览：用这一批的第一张照片。对话框里控件那一列很高，预览不跟着拉长，固定高度、贴在上面
+    let preview = ExportPreviewPane(width: BatchAccessory.previewWidth, height: 240)
+    static let previewWidth: CGFloat = 300
     private let pathLabel = NSTextField(labelWithString: "")
     private let noteLabel = NSTextField(wrappingLabelWithString: "")
     private(set) var outDir: URL
@@ -334,10 +359,18 @@ final class BatchAccessory: NSObject {
         noteLabel.preferredMaxLayoutWidth = width
         noteLabel.heightAnchor.constraint(equalToConstant: 44).isActive = true
         refresh()
-        stack.layoutSubtreeIfNeeded()
-        stack.frame = NSRect(origin: .zero, size: stack.fittingSize)
-        view = stack
+        // 左边控件，右边预览（和控件那一列一样高）
+        let outer = NSStackView(views: [stack, preview])
+        outer.orientation = .horizontal
+        outer.alignment = .top
+        outer.spacing = 24
+        outer.layoutSubtreeIfNeeded()
+        outer.frame = NSRect(origin: .zero, size: outer.fittingSize)
+        view = outer
         formatMoved(popup)
+        preview.optionsProvider = { [weak self] in self?.options.options ?? ExportOptions() }
+        options.onChange = { [weak self] in self?.preview.scheduleUpdate() }
+        preview.setSource(url: source)
         // 「本次文字」那一行出现或消失：附件和对话框的大小跟着变
         options.onLayout = { [weak self] in
             guard let self, let stack = self.view as? NSStackView else { return }

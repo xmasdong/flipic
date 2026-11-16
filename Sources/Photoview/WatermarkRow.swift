@@ -1,8 +1,8 @@
 import AppKit
 
 /// 导出窗口（⌘S 面板、批量转换、预设编辑）里的「水印」一行：菜单（无 / 存过的样式 / 编辑水印…），
-/// 选了样式就在下面多出一行「本次文字」，预填样式的文字，只改这一次的导出，不改动样式
-final class WatermarkRowView: NSStackView, NSTextFieldDelegate {
+/// 选了样式就在下面多出「本次文字」（多行输入，回车是换行），预填样式的文字，只改这一次的导出，不改动样式
+final class WatermarkRowView: NSStackView {
     static var label: String { L10n.t("wm.label", "水印") }
     static var noneTitle: String { L10n.t("wm.none", "无") }
     static var editTitle: String { L10n.t("wm.edit", "编辑水印…") }
@@ -17,7 +17,8 @@ final class WatermarkRowView: NSStackView, NSTextFieldDelegate {
     var onLayout: (() -> Void)?
 
     let popup = NSPopUpButton(frame: .zero)
-    let field = NSTextField()
+    /// 本次文字：多行，约三行高
+    let field = MultilineTextField(width: 232)
     private let labelView = NSTextField(labelWithString: WatermarkRowView.label)
     private let noteLabel = NSTextField(wrappingLabelWithString: "")
     private let detail = NSStackView()
@@ -53,13 +54,7 @@ final class WatermarkRowView: NSStackView, NSTextFieldDelegate {
             labelView.widthAnchor.constraint(equalToConstant: labelWidth).isActive = true
         }
 
-        field.delegate = self
-        field.font = .systemFont(ofSize: 13)
-        field.lineBreakMode = .byTruncatingTail
-        field.usesSingleLineMode = true
-        field.cell?.isScrollable = true
-        field.translatesAutoresizingMaskIntoConstraints = false
-        field.widthAnchor.constraint(equalToConstant: 232).isActive = true
+        field.onTextChange = { [weak self] in self?.onChange?() }
         field.setAccessibilityLabel(L10n.t("wm.field.title", "本次文字"))
         field.toolTip = L10n.t("wm.field.title", "本次文字")
         noteLabel.font = .systemFont(ofSize: 11)
@@ -179,6 +174,4 @@ final class WatermarkRowView: NSStackView, NSTextFieldDelegate {
         if notify { onChange?() }
         if changed { onLayout?() }
     }
-
-    func controlTextDidChange(_ obj: Notification) { onChange?() }
 }

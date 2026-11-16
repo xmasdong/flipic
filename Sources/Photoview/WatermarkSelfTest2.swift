@@ -4,7 +4,7 @@ import ImageIO
 /// --watermarktest 的后半：真的走一遍 ⌘S 面板；各窗口截图；编辑窗口；三张完整导出样张；各语言的排版检查
 extension ViewerViewController {
     /// 看图窗口里打开照片，真的点 ⌘S（保存面板是 sheet），选水印、改本次文字、点「导出」
-    func runWatermarkPanelFlow(work: URL, outs: URL, src: URL, idcard: URL) {
+    func runWatermarkPanelFlow(work: URL, outs: URL, src: URL, idcard: URL, shotsDir: URL) {
         typealias T = WatermarkSelfTest
         typealias X = ExportSelfTest
         let fm = FileManager.default
@@ -36,8 +36,35 @@ extension ViewerViewController {
         let hStyle = panel.frame.height
         T.info("panel height none=\(hNone) style=\(hStyle) accessory=\(acc.view.frame.height)")
         T.check(hStyle > hNone, "panel: the save panel itself grows when the text field appears (\(hNone) → \(hStyle))")
-        row.field.stringValue = "仅供办理租房使用"
-        row.field.delegate?.controlTextDidChange?(Notification(name: NSControl.textDidChangeNotification, object: row.field))
+        // 真正的保存面板：附件在哪个窗口里、预览画出来没有、回车和 Tab 在面板里是什么表现，再按窗口号抓图
+        acc.preview.delay = 0.02
+        let lang0 = Bundle.main.preferredLocalizations.first ?? "?"
+        row.field.debugType(lang0.hasPrefix("zh") ? "仅供办理租房使用\n2026-11-16" : "For rental application only\n2026-11-16")
+        acc.preview.debugFlush()
+        T.check(acc.preview.lastImage != nil && acc.preview.debugBaseReady, "real panel: the preview in the ⌘S accessory rendered the opened photo")
+        let tv = row.field.textView
+        _ = tv.window?.makeFirstResponder(tv)
+        let host = tv.window
+        T.info("real panel: accessory window title=「\(host?.title ?? "-")」 class=\(host.map { String(describing: type(of: $0)) } ?? "-") isPanel=\(host === panel) sheet=\(panel.sheetParent != nil) accessory frame=\(acc.view.frame.size) windowFrame=\(host?.frame.size ?? .zero)")
+        T.check(host?.firstResponder === tv, "real panel: the multi-line field can take focus inside the save panel")
+        if let host {
+            let before = tv.string
+            for (code, chars) in [(UInt16(36), "\r"), (UInt16(0), "x")] {
+                let e = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: host.windowNumber,
+                                         context: nil, characters: chars, charactersIgnoringModifiers: chars, isARepeat: false, keyCode: code)!
+                if !host.performKeyEquivalent(with: e) { NSApp.sendEvent(e) }
+                T.spin(0.15)
+            }
+            T.check(tv.string == before + "\nx" && panel.sheetParent != nil && self.exportAccessory != nil, "real panel: Return in the field typed a newline and the Save panel stayed open (\(tv.string.suffix(4).debugDescription))")
+        }
+        row.field.debugType(lang0.hasPrefix("zh") ? "仅供办理租房使用\n2026-11-16" : "For rental application only\n2026-11-16")
+        acc.preview.debugFlush()
+        T.spin(0.8)
+        T.shootOurWindows(prefix: "real-panel", dir: shotsDir)
+        // 保存面板的内容是系统另一个进程画的，按窗口号抓只有空壳，附件窗口也不在屏幕上：附件窗口自己的内容在本进程里画一遍
+        T.check(T.shootView(host?.contentView, shotsDir.appendingPathComponent("real-panel-accessory-window-\(lang0).png")), "shot: the real save panel's accessory window (\(host?.title ?? "-")), drawn in-process")
+
+        row.field.debugType("仅供办理租房使用")
         T.spin(8) { self.exportEstimateLabel?.stringValue.contains("…") == false && self.exportEstimateLabel?.stringValue.isEmpty == false }
         T.check(self.exportEstimateLabel?.stringValue.contains("…") == false, "panel: estimate follows the watermarked image: \(self.exportEstimateLabel?.stringValue ?? "-")")
         let dest = ui.appendingPathComponent("p3-compressed.jpg")
@@ -88,6 +115,8 @@ extension ViewerViewController {
         let lang = Bundle.main.preferredLocalizations.first ?? "?"
         let id = store.styles.first { $0.builtIn == "id" }!, proof = store.styles.first { $0.builtIn == "proof" }!, sign = store.styles.first { $0.builtIn == "sign" }!
 
+        runExportPreviewChecks(work: work, idcard: idcard, portrait: portrait, landscape: landscape, store: store, shots: shots, lang: lang)
+
         // ---- 三张完整导出的样张
         func sample(_ url: URL, _ style: WatermarkStyle, _ name: String) {
             var o = ExportOptions(); o.watermark = WatermarkJob(style: style)
@@ -102,6 +131,7 @@ extension ViewerViewController {
 
         // ---- 导出窗口各处的截图（普通窗口里放附件；保存面板本身是 sheet，抓不到）
         func shootAccessory(_ a: ExportAccessory, _ name: String) {
+            a.preview.debugFlush()
             let pad: CGFloat = 20
             let box = NSView(frame: NSRect(x: 0, y: 0, width: a.view.frame.width + 2 * pad, height: a.view.frame.height + 2 * pad))
             a.view.frame.origin = NSPoint(x: pad, y: pad)
@@ -115,16 +145,26 @@ extension ViewerViewController {
             T.layoutCheck(box, name)
             win.orderOut(nil)
         }
+        let two = lang.hasPrefix("zh") ? "仅供办理租房使用\n2026-11-16" : "For rental application only\n2026-11-16"
         WatermarkMemory.defaults.removeObject(forKey: WatermarkMemory.exportKey)
         let a1 = ExportAccessory(formats: ["JPEG", "PNG", "HEIC"], formatIndex: 0, quality: 85) {}
+        a1.preview.delay = 0.02
+        a1.setPhoto(url: idcard, turns: 0, degrees: 0, crop: nil)
+        a1.estimateLabel.stringValue = L10n.f("exp.estimate", "预计大小： %@", "1.2 MB")
         shootAccessory(a1, "export-panel-none")
         a1.options.watermarkRow.debugSelect(1)
-        a1.options.watermarkRow.field.stringValue = (lang.hasPrefix("zh") ? "仅供办理租房使用" : "For rental application only")
-        a1.estimateLabel.stringValue = L10n.f("exp.estimate", "预计大小： %@", "1.2 MB")
+        a1.options.watermarkRow.field.debugType(two)
         shootAccessory(a1, "export-panel-watermark")
+        // 样片（竖的照片）
+        a1.setPhoto(url: portrait, turns: 0, degrees: 0, crop: nil)
+        a1.options.watermarkRow.debugSelect(2)
+        a1.options.watermarkRow.field.debugType(lang.hasPrefix("zh") ? "样片 请勿外传" : "Sample - do not share")
+        shootAccessory(a1, "export-panel-proof")
 
         let (alert, bacc) = debugBatchAlert()
         bacc.options.watermarkRow.debugSelect(2)
+        bacc.options.watermarkRow.field.debugType(two)
+        bacc.preview.debugFlush()
         alert.layout()
         alert.window.center()
         alert.window.makeKeyAndOrderFront(nil)
@@ -157,8 +197,7 @@ extension ViewerViewController {
         pm.debugOptionsView?.watermarkRow.debugSelect(2)
         T.spin(0.2)
         T.check(ExportPresetStore.shared.presets.first?.options.watermark?.style.id == proof.id, "preset editor: choosing a style stores the full style in the preset")
-        pm.debugOptionsView?.watermarkRow.field.stringValue = "预设文字"
-        pm.debugOptionsView?.watermarkRow.controlTextDidChange(Notification(name: NSControl.textDidChangeNotification))
+        pm.debugOptionsView?.watermarkRow.field.debugType("预设文字")
         T.check(ExportPresetStore.shared.presets.first?.options.watermark?.text == "预设文字", "preset editor: the text is stored in the preset, not in the style (style text '\(store.style(id: proof.id)?.text ?? "-")')")
         pm.debugOptionsView?.watermarkRow.debugSelect(0)
         T.check(ExportPresetStore.shared.presets.first?.options.watermark == nil, "preset editor: choosing 无 clears the watermark")

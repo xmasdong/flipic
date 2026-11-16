@@ -4207,6 +4207,7 @@ final class ViewerViewController: NSViewController {
         }
         panel.accessoryView = acc.view
         panel.nameFieldStringValue = item.url.deletingPathExtension().lastPathComponent + "-compressed.jpg"
+        acc.setPhoto(url: item.url, turns: imageView.rotationTurns, degrees: imageView.fineDegrees, crop: imageView.cropSpec)
         exportAccessory = acc
         exportSavePanel = panel
 

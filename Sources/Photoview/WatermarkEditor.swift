@@ -748,22 +748,33 @@ final class WatermarkEditor: NSWindowController, NSTableViewDataSource, NSTableV
 /// 预览：图按比例缩放放在中间，没有图案和渐变，边上一条细线
 final class WatermarkPreviewView: NSView {
     var image: NSImage? { didSet { needsDisplay = true } }
+    /// 整块预览区也画一圈细线（背景和窗口颜色接近时看得出范围）
+    var showsFrame = false
+    /// 导出窗口里用：不铺底色，照片靠上放，四周不留黑边
+    var plain = false { didSet { needsDisplay = true } }
 
     override func draw(_ dirtyRect: NSRect) {
-        let bg = Theme.gray(dark: 0.1, light: 0.9)
-        bg.setFill()
-        bounds.fill()
+        if !plain {
+            let bg = Theme.gray(dark: 0.1, light: 0.9)
+            bg.setFill()
+            bounds.fill()
+            if showsFrame {
+                NSColor.separatorColor.setStroke()
+                NSBezierPath(rect: bounds.insetBy(dx: 0.5, dy: 0.5)).stroke()
+            }
+        }
         guard let image, let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
         let iw = CGFloat(cg.width), ih = CGFloat(cg.height)
         let s = min(bounds.width / iw, bounds.height / ih)
-        let r = NSRect(x: (bounds.width - iw * s) / 2, y: (bounds.height - ih * s) / 2, width: iw * s, height: ih * s).integral
+        let y = plain ? bounds.height - ih * s : (bounds.height - ih * s) / 2
+        let r = NSRect(x: (bounds.width - iw * s) / 2, y: y, width: iw * s, height: ih * s).integral
         NSGraphicsContext.current?.cgContext.interpolationQuality = .high
         NSGraphicsContext.current?.cgContext.draw(cg, in: r)
         NSColor.separatorColor.setStroke()
-        NSBezierPath(rect: r.insetBy(dx: -0.5, dy: -0.5)).stroke()
+        NSBezierPath(rect: r.insetBy(dx: 0.5, dy: 0.5)).stroke()
     }
 
-    override var isOpaque: Bool { true }
+    override var isOpaque: Bool { !plain }
     override var intrinsicContentSize: NSSize { NSSize(width: NSView.noIntrinsicMetric, height: NSView.noIntrinsicMetric) }
 }
 

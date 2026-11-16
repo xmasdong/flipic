@@ -3,7 +3,7 @@ import CryptoKit
 import ImageIO
 import UniformTypeIdentifiers
 
-/// `Flipic --watermarktest <工作文件夹>`：导出水印的自测。工作文件夹里要有 data/small（几张小图，一张横的一张竖的）。
+/// `Flipic --watermarktest <工作文件夹>`：导出水印的自测。测试照片放在 <工作文件夹>/data/small；没有就自己画十张示意图（横竖都有，纯合成，不依赖外部文件）。
 /// 渲染器（覆盖、位置、大小随分辨率、不透明度 0、占位符、色彩空间、位深、速度）、导出流程（⌘S、批量、预设、大小限制、元数据、原文件不变、
 /// 视频和动图跳过）、样式存取、logo、三个导出窗口里的「水印」一行、编辑窗口和菜单，以及各处截图。
 /// 要在带自己 bundle id 的测试 .app 里跑。最后一行 WATERMARKTEST checks=N failures=M 是汇总
@@ -149,6 +149,36 @@ enum WatermarkSelfTest {
         return (try? d.write(to: path)) != nil
     }
 
+    /// 把一个视图当前画出来的样子存成 PNG（本进程里画，不经过屏幕）
+    @discardableResult
+    static func shootView(_ v: NSView?, _ path: URL) -> Bool {
+        guard let v, let rep = v.bitmapImageRepForCachingDisplay(in: v.bounds) else { return false }
+        v.cacheDisplay(in: v.bounds, to: rep)
+        return (try? rep.representation(using: .png, properties: [:])?.write(to: path)) != nil
+    }
+
+    /// 本进程现有的每个窗口（保存面板 sheet、macOS 26 上单独的「Save Panel Accessory View」窗口……）各按窗口号抓一张，返回它们的名字和大小
+    @discardableResult
+    static func shootOurWindows(prefix: String, dir: URL) -> [String] {
+        let lang = Bundle.main.preferredLocalizations.first ?? "?"
+        guard let list = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: Any]] else { return [] }
+        var described: [String] = []
+        var n = 0
+        for w in list where (w[kCGWindowOwnerPID as String] as? Int32) == getpid() {
+            guard let num = w[kCGWindowNumber as String] as? Int, let b = w[kCGWindowBounds as String] as? [String: CGFloat], (b["Width"] ?? 0) > 150, (b["Height"] ?? 0) > 60 else { continue }
+            let name = (w[kCGWindowName as String] as? String) ?? ""
+            let safe = String(name.map { $0.isLetter || $0.isNumber ? $0 : "-" }.prefix(30))
+            n += 1
+            guard let img = CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(num), [.boundsIgnoreFraming, .bestResolution]),
+                  let d = NSBitmapImageRep(cgImage: img).representation(using: .png, properties: [:]) else { described.append("#\(num) 「\(name)」 (not captured)"); continue }
+            let file = "\(prefix)-\(lang)-\(n)-\(safe).png"
+            try? d.write(to: dir.appendingPathComponent(file))
+            described.append("#\(num) 「\(name)」 \(Int(b["Width"] ?? 0))x\(Int(b["Height"] ?? 0)) → \(file)")
+        }
+        info("windows of this process captured by id: \(described)")
+        return described
+    }
+
     // MARK: - 造图
 
     /// 证件样的测试图：灰桌面上一张浅色卡片，照片位、几条线、几行假文字（全是虚构的示意内容）
@@ -187,6 +217,53 @@ enum WatermarkSelfTest {
         CGImageDestinationFinalize(dest)
     }
 
+    /// 合成的示意照片：天空、太阳或月亮、远山、地面、几个色块，再加一点确定性的颗粒。不是任何真实照片
+    static func makeScene(_ url: URL, width w: Int, height h: Int, seed: Int, night: Bool = false) {
+        let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: srgb, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+        let hue = CGFloat(seed % 7) / 7
+        let W = CGFloat(w), H = CGFloat(h)
+        ctx.setFillColor(night ? CGColor(red: 0.07, green: 0.09, blue: 0.20, alpha: 1) : CGColor(red: 0.55 + hue * 0.2, green: 0.74, blue: 0.90 - hue * 0.2, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: W, height: H))
+        ctx.setFillColor(night ? CGColor(gray: 0.93, alpha: 1) : CGColor(red: 1, green: 0.88, blue: 0.5, alpha: 1))
+        ctx.fillEllipse(in: CGRect(x: W * (0.2 + hue * 0.5), y: H * 0.68, width: H * 0.12, height: H * 0.12))
+        ctx.setFillColor(night ? CGColor(red: 0.12, green: 0.14, blue: 0.26, alpha: 1) : CGColor(red: 0.36, green: 0.52, blue: 0.40, alpha: 1))
+        ctx.move(to: CGPoint(x: 0, y: H * 0.38)); ctx.addLine(to: CGPoint(x: W * 0.3, y: H * 0.58)); ctx.addLine(to: CGPoint(x: W * 0.55, y: H * 0.42))
+        ctx.addLine(to: CGPoint(x: W * 0.8, y: H * 0.6)); ctx.addLine(to: CGPoint(x: W, y: H * 0.4)); ctx.addLine(to: CGPoint(x: W, y: 0)); ctx.addLine(to: CGPoint(x: 0, y: 0)); ctx.fillPath()
+        ctx.setFillColor(night ? CGColor(red: 0.05, green: 0.06, blue: 0.10, alpha: 1) : CGColor(red: 0.62, green: 0.55, blue: 0.40, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: W, height: H * 0.28))
+        let colors: [CGColor] = [CGColor(red: 0.85, green: 0.25, blue: 0.2, alpha: 1), CGColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 1), CGColor(red: 0.95, green: 0.8, blue: 0.2, alpha: 1)]
+        for i in 0..<3 {
+            ctx.setFillColor(colors[(i + seed) % 3])
+            ctx.fill(CGRect(x: W * (0.12 + CGFloat(i) * 0.27), y: H * 0.08, width: W * 0.16, height: H * (0.12 + 0.04 * CGFloat((i + seed) % 3))))
+        }
+        // 颗粒：线性同余，同样的 seed 同样的图
+        var state = UInt64(seed + 1) &* 6364136223846793005
+        let base = ctx.data!.assumingMemoryBound(to: UInt8.self)
+        let bpr = ctx.bytesPerRow
+        for y in 0..<h { for x in 0..<w {
+            state = state &* 6364136223846793005 &+ 1442695040888963407
+            let n = Int((state >> 40) & 15) - 8
+            let o = y * bpr + x * 4
+            for c in 0..<3 { base[o + c] = UInt8(max(0, min(255, Int(base[o + c]) + n))) }
+        } }
+        let dest = CGImageDestinationCreateWithURL(url as CFURL, UTType.jpeg.identifier as CFString, 1, nil)!
+        CGImageDestinationAddImage(dest, ctx.makeImage()!, [kCGImageDestinationLossyCompressionQuality: 0.9] as CFDictionary)
+        CGImageDestinationFinalize(dest)
+    }
+
+    /// 没有测试照片就自己画十张（数量和名字照老的测试用）：竖的是 face_0、kid_*，别的是横的
+    static func ensureSmallData(_ dir: URL) {
+        let fm = FileManager.default
+        let existing = ((try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? []).filter { $0.pathExtension.lowercased() == "jpg" }
+        guard existing.count < 2 else { return }
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        let names = ["face_0", "kid_0", "kid_1", "street_0", "street_1", "night_0", "night_1", "beach_0", "beach_1", "beach_2"]
+        for (i, n) in names.enumerated() {
+            let portrait = n.hasPrefix("face") || n.hasPrefix("kid")
+            makeScene(dir.appendingPathComponent("\(n).jpg"), width: portrait ? 800 : 1200, height: portrait ? 1200 : 800, seed: i, night: n.hasPrefix("night"))
+        }
+    }
+
     /// 带透明背景的 logo：红色圆环 + 里面一个实心圆，圆环以外全透明
     static func makeLogoPNG(_ url: URL) {
         let n = 400
@@ -216,6 +293,7 @@ extension ViewerViewController {
         let bundleID = Bundle.main.bundleIdentifier ?? "?"
         let data = work.appendingPathComponent("data/small")
         let uiOnly = CommandLine.arguments.contains("--ui-only")
+        T.ensureSmallData(data)
         T.info("language=\(lang) bundle=\(bundleID) exiftool=\(X.exiftoolPath ?? "none") uiOnly=\(uiOnly)")
         T.check(bundleID != "com.xmasdong.photoview" && !bundleID.isEmpty, "isolated: test bundle id is \(bundleID), not the real prefs domain")
         let jpgs = ((try? fm.contentsOfDirectory(at: data, includingPropertiesForKeys: nil)) ?? []).filter { $0.pathExtension.lowercased() == "jpg" }.sorted { $0.path < $1.path }
@@ -651,7 +729,7 @@ extension ViewerViewController {
             T.spin(2) { self.folder.count > 0 }
         } else {
             // ===== 7. 真的走一遍 ⌘S 面板 =====
-            runWatermarkPanelFlow(work: run, outs: outs, src: src, idcard: idcard)
+            runWatermarkPanelFlow(work: run, outs: outs, src: src, idcard: idcard, shotsDir: shots)
         }
         // 原文件不变
         T.check(originals.map { T.sha($0) } == shaBefore, "originals: all four source photos are byte-identical after every export in this run")
