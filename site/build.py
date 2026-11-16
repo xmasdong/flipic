@@ -12,7 +12,7 @@ OUT = ROOT / "public"
 BASE = "https://flipic.app"
 UPDATED = "2026-11-16"
 # 水印功能 1.0.43 发布后改成 True；False 时站点里不出现任何水印文字和图片
-SHOW_WATERMARK = False
+SHOW_WATERMARK = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
 SIZE = "5 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变

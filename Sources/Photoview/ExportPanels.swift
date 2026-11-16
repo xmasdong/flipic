@@ -3,6 +3,8 @@ import AppKit
 /// 导出选项那一组控件：「导出为…」面板和「批量转换格式」对话框共用
 final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
     var onChange: (() -> Void)?
+    /// 水印那一行下面的「本次文字」出现或消失了：外面的窗口要重新量大小
+    var onLayout: (() -> Void)?
     private let keepMeta = NSButton(checkboxWithTitle: L10n.t("exp.keepMeta", "保留拍摄信息、说明和版权"), target: nil, action: nil)
     private let stripGPS = NSButton(checkboxWithTitle: L10n.t("exp.stripGPS", "去掉位置信息"), target: nil, action: nil)
     private let longCheck = NSButton(checkboxWithTitle: L10n.t("exp.longEdge", "长边不超过"), target: nil, action: nil)
@@ -17,7 +19,19 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
     private var filmIndex = 0
     #endif
 
-    init(options o: ExportOptions) {
+    /// 「水印」一行（免费功能，开源版也有）
+    let watermarkRow: WatermarkRowView
+
+    /// watermarkKey：这个窗口记住上次水印选择用的键（nil = 不记，预设编辑用）；forPreset：是预设编辑里的；preselectWatermark：「加水印导出…」进来的
+    init(options o: ExportOptions, watermarkKey: String? = nil, forPreset: Bool = false, preselectWatermark: Bool = false) {
+        // 「胶片」「水印」两个标签一样宽，后面的菜单才对得齐
+        let labelFont = NSFont.systemFont(ofSize: 13)
+        func w(_ s: String) -> CGFloat { ceil((s as NSString).size(withAttributes: [.font: labelFont]).width) + 2 }
+        var labelWidth = w(WatermarkRowView.label)
+        #if FLIPIC_PRO
+        labelWidth = max(labelWidth, w(FilmExportUI.label))
+        #endif
+        watermarkRow = WatermarkRowView(job: o.watermark, memoryKey: watermarkKey, forPreset: forPreset, labelWidth: labelWidth, preselect: preselectWatermark)
         super.init(frame: .zero)
         orientation = .vertical
         alignment = .leading
@@ -60,13 +74,40 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         filmPopup.selectItem(at: filmIndex)
         filmPopup.target = self
         filmPopup.action = #selector(filmChanged(_:))
-        let filmRow = NSStackView(views: [unit(FilmExportUI.label), filmPopup])
+        let filmLabel = unit(FilmExportUI.label)
+        filmLabel.translatesAutoresizingMaskIntoConstraints = false
+        filmLabel.widthAnchor.constraint(equalToConstant: labelWidth).isActive = true
+        let filmRow = NSStackView(views: [filmLabel, filmPopup])
         filmRow.spacing = 8
         filmRow.alignment = .centerY
         addArrangedSubview(filmRow)
         setCustomSpacing(10, after: srgb)
         #endif
+        addArrangedSubview(watermarkRow)
+        #if !FLIPIC_PRO
+        setCustomSpacing(10, after: srgb)
+        #endif
+        watermarkRow.onChange = { [weak self] in self?.onChange?() }
+        watermarkRow.onLayout = { [weak self] in self?.onLayout?() }
+        // 证件用途：副本多半要发给别人，默认把拍摄地点去掉（可以再取消勾选）
+        watermarkRow.onPick = { [weak self] id in self?.stripLocationForID(id) }
+        if !forPreset { stripLocationForID(watermarkRow.activeID) }
         sync()
+    }
+
+    /// 是我们替用户勾上的（换成别的水印时再取消；用户自己点过就不再管）
+    private var autoStripped = false
+
+    private func stripLocationForID(_ id: UUID?) {
+        if id == WatermarkBuiltIn.id.fixedID {
+            guard stripGPS.state != .on else { return }
+            stripGPS.state = .on
+            autoStripped = true
+        } else if autoStripped {
+            stripGPS.state = .off
+            autoStripped = false
+        } else { return }
+        onChange?()
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -94,6 +135,7 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         #if FLIPIC_PRO
         o.effect = FilmExportUI.token(forIndex: filmPopup.indexOfSelectedItem, initial: effectToken)
         #endif
+        o.watermark = watermarkRow.job
         return o
     }
 
@@ -117,6 +159,7 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
     #endif
 
     @objc private func changed(_ sender: Any?) {
+        if (sender as AnyObject?) === stripGPS { autoStripped = false }
         sync()
         onChange?()
     }
@@ -158,7 +201,8 @@ final class ExportAccessory {
         #if FLIPIC_PRO
         initial.effect = FilmEffect.defaultToken   // 现在开着哪一款，默认就导出带哪一款；没开就是无
         #endif
-        options = ExportOptionsView(options: initial)
+        options = ExportOptionsView(options: initial, watermarkKey: WatermarkMemory.exportKey, preselectWatermark: WatermarkMemory.forceNextExport)
+        WatermarkMemory.forceNextExport = false
         let q = NSStackView(views: [qualityLabel, slider])
         q.spacing = 8
         qualityLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -193,6 +237,12 @@ final class ExportAccessory {
         #endif
         self.onChange = onChange
         options.onChange = { [weak self] in self?.onChange?() }
+        // 「本次文字」那一行出现或消失：附件的大小跟着变，保存面板会按新的大小排
+        options.onLayout = { [weak self] in
+            guard let self, let stack = self.view as? NSStackView else { return }
+            stack.layoutSubtreeIfNeeded()
+            stack.setFrameSize(stack.fittingSize)
+        }
     }
 
     private var onChange: (() -> Void)?
@@ -225,6 +275,8 @@ final class BatchAccessory: NSObject {
     private(set) var redirected: Bool
     private(set) var userChose = false
     private let source: URL
+    /// 装着这个附件的对话框（水印那一行高度变了要让它重新排）
+    weak var alert: NSAlert?
 
     init(source: URL, formatIndex: Int, quality: Double) {
         self.source = source
@@ -237,7 +289,7 @@ final class BatchAccessory: NSObject {
         #if FLIPIC_PRO
         initial.effect = FilmEffect.defaultToken
         #endif
-        options = ExportOptionsView(options: initial)
+        options = ExportOptionsView(options: initial, watermarkKey: WatermarkMemory.batchKey)
         let d = BatchConvert.defaultOutputFolder(for: source, ext: BatchConvert.formats[max(0, min(formatIndex, 2))].ext)
         outDir = d.url
         redirected = d.redirected
@@ -285,6 +337,13 @@ final class BatchAccessory: NSObject {
         stack.frame = NSRect(origin: .zero, size: stack.fittingSize)
         view = stack
         formatMoved(popup)
+        // 「本次文字」那一行出现或消失：附件和对话框的大小跟着变
+        options.onLayout = { [weak self] in
+            guard let self, let stack = self.view as? NSStackView else { return }
+            stack.layoutSubtreeIfNeeded()
+            stack.setFrameSize(stack.fittingSize)
+            self.alert?.layout()
+        }
     }
 
     var formatIndex: Int { popup.indexOfSelectedItem }

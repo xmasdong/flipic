@@ -1002,6 +1002,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runExportOptionsTest(outDir: outDir, raw: raw)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--watermarktest"), i + 1 < CommandLine.arguments.count {
+            // --watermarktest <工作文件夹> [--ui-only]：导出水印的自测，最后一行 WATERMARKTEST checks=N failures=M
+            let outDir = CommandLine.arguments[i + 1]
+            // 定时器回调里跑（不是主队列的块里）：测试里要转运行循环等后台线程回到主队列，在主队列的块里转，回来的块不会执行
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runWatermarkTest(outDir: outDir)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--cardmarktest"), i + 1 < CommandLine.arguments.count {
             // --cardmarktest <工作文件夹>：存储卡标记不写卡的自测（用 hdiutil 磁盘映像），最后一行 CARDTEST summary
             let outDir = CommandLine.arguments[i + 1]
@@ -1392,6 +1399,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.renameCurrent(_:)): .rename,
         #selector(ViewerViewController.saveRotation(_:)): .saveRotation,
         #selector(ViewerViewController.exportAs(_:)): .exportAs,
+        #selector(ViewerViewController.exportWithWatermark(_:)): .exportWatermarked,
         #selector(ViewerViewController.exportToFolder(_:)): .exportFolder,
         #selector(ViewerViewController.trashCurrent(_:)): .trash,
         #selector(ViewerViewController.batchConvert(_:)): .batchConvert,
@@ -1593,6 +1601,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.close", "关闭窗口"), #selector(AppDelegate.closePhotosOrWindow(_:)), "w")
             m.addItem(.separator())
             item(m, L10n.t("menu.exportAs", "导出为…"), #selector(ViewerViewController.exportAs(_:)))
+            item(m, L10n.t("menu.exportWatermarked", "加水印导出…"), #selector(ViewerViewController.exportWithWatermark(_:)))
             item(m, L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(ViewerViewController.exportToFolder(_:)))
             #if FLIPIC_PRO
             let sendItem = NSMenuItem(title: L10n.t("menu.sendTo", "发送到"), action: nil, keyEquivalent: "")

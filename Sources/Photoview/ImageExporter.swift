@@ -17,6 +17,9 @@ struct ExportOptions: Equatable {
     var toSRGB = false
     /// 出图前对像素再处理一遍（由 Pro 装上的 ExportEffect 认得）：不透明的一段文字，nil = 不处理。不记在偏好设置里
     var effect: String?
+    /// 导出的副本上加水印：整份样式 + 这一次的文字（共用代码，免费功能）。nil = 不加。不记在偏好设置里；
+    /// 原文件不会被改，水印只在导出、转换出来的副本里
+    var watermark: WatermarkJob?
 
     private static let d = UserDefaults.standard
 
@@ -32,7 +35,8 @@ struct ExportOptions: Equatable {
         }
         set {
             d.set(newValue.keepMetadata, forKey: "export.keepMeta")
-            d.set(newValue.stripGPS, forKey: "export.stripGPS")
+            // 证件水印会自动勾上「去掉位置信息」，这一次的勾选不记到以后的普通导出里
+            if newValue.watermark?.style.id != WatermarkBuiltIn.id.fixedID { d.set(newValue.stripGPS, forKey: "export.stripGPS") }
             d.set(newValue.maxLongEdge != nil, forKey: "export.longEdgeOn")
             if let e = newValue.maxLongEdge { d.set(e, forKey: "export.longEdge") }
             d.set(newValue.maxBytes != nil, forKey: "export.sizeOn")
@@ -82,19 +86,28 @@ enum ImageExporter {
     /// source 是原文件，用来带元数据；cancelled 在耗时的编码之间检查
     static func encode(_ image: CGImage, source: URL?, uti: String, quality: Double, options: ExportOptions,
                        cancelled: () -> Bool = { false }) -> Outcome? {
-        // 有 effect 时先缩小、再处理、最后才转 sRGB：处理在原来的色域里做，颗粒的粗细也跟着最终的像素尺寸走
-        let hasEffect = options.effect != nil
+        // 有 effect 或水印时先缩小、再处理、最后才转 sRGB：处理在原来的色域里做，颗粒的粗细、水印的大小也跟着最终的像素尺寸走。
+        // 顺序：缩小 → 胶片 → 水印 → 转 sRGB → 编码
+        let hasStage = options.effect != nil || options.watermark != nil
         var base = image
-        if !hasEffect, options.toSRGB, let s = converted(base) { base = s }
+        if !hasStage, options.toSRGB, let s = converted(base) { base = s }
         if let edge = options.maxLongEdge, edge < max(base.width, base.height), let s = scaled(base, longEdge: edge) { base = s }
         let plain = base
+        let fileName = source?.deletingPathExtension().lastPathComponent
+        var watermarkFailed = false
         func styled(_ img: CGImage) -> CGImage {
-            guard let token = options.effect else { return img }
-            var out = ExportEffect.apply?(img, token, source) ?? img
+            guard hasStage else { return img }
+            var out = img
+            if let token = options.effect { out = ExportEffect.apply?(out, token, source) ?? out }
+            if let wm = options.watermark {
+                // 水印画不出来（文字是空的、logo 找不到）就整张导出失败，不能悄悄出一份没水印的副本
+                if let marked = WatermarkRenderer.render(out, job: wm, fileName: fileName) { out = marked } else { watermarkFailed = true }
+            }
             if options.toSRGB, let s = converted(out) { out = s }
             return out
         }
         base = styled(plain)
+        if watermarkFailed { return nil }
         let meta = options.keepMetadata ? source.flatMap { carriedMetadata(for: $0, width: base.width, height: base.height, options: options) } : nil
         // 元数据在缩小后要重写像素尺寸，所以每个尺寸各取一次
         func data(_ img: CGImage, _ q: Int) -> Data? {
@@ -146,6 +159,7 @@ enum ImageExporter {
             if edge < 200 { break }
             guard let s = scaled(plain, longEdge: edge) else { break }
             current = styled(s)
+            if watermarkFailed { return nil }
         }
         return smallest
     }

@@ -2059,6 +2059,7 @@ final class ViewerViewController: NSViewController {
         case .edit: openInEditor(nil)
         case .reveal: revealInFinder(nil)
         case .exportAs: exportAs(nil)
+        case .exportWatermarked: exportWithWatermark(nil)
         case .saveRotation: saveRotation(nil)
         case .straighten: straighten(nil)
         case .infoLevel: toggleInfoLevel(nil)
@@ -4017,6 +4018,7 @@ final class ViewerViewController: NSViewController {
         let acc = BatchAccessory(source: source, formatIndex: d.integer(forKey: "batch.format"),
                                  quality: d.object(forKey: "batch.quality") as? Double ?? 85)
         alert.accessoryView = acc.view
+        acc.alert = alert
         alert.addButton(withTitle: L10n.t("bc.start", "开始转换"))
         alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
         return (alert, acc)
@@ -4030,6 +4032,7 @@ final class ViewerViewController: NSViewController {
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         let settings = acc.settings
         ExportOptions.saved = settings.options
+        acc.options.watermarkRow.rememberChoice()
         UserDefaults.standard.set(acc.formatIndex, forKey: "batch.format")
         UserDefaults.standard.set(settings.quality, forKey: "batch.quality")
         convertAll(urls, settings: settings)
@@ -4221,6 +4224,7 @@ final class ViewerViewController: NSViewController {
             let f = Self.exportFormats[acc.popup.indexOfSelectedItem]
             let options = acc.options.options
             ExportOptions.saved = options
+            acc.options.watermarkRow.rememberChoice()
             UserDefaults.standard.set(acc.popup.indexOfSelectedItem, forKey: "export.format")
             UserDefaults.standard.set(acc.slider.doubleValue, forKey: "export.quality")
             let currentBytes = ((try? FileManager.default.attributesOfItem(atPath: item.url.path))?[.size] as? Int64) ?? 0

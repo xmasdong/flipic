@@ -77,7 +77,7 @@ enum ShortcutAction: String, CaseIterable {
     case prev, next, first, last
     case zoomIn, zoomOut, zoomAtPointer, actualSize, peek, fullscreen
     case info, infoLevel, filmstrip, slideshow, rotateCW, rotateCCW, straighten
-    case rename, trash, edit, reveal, exportAs, exportFolder, saveRotation
+    case rename, trash, edit, reveal, exportAs, exportWatermarked, exportFolder, saveRotation
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
     case tagRed, tagYellow, tagGreen, tagBlue
@@ -166,7 +166,7 @@ enum ShortcutAction: String, CaseIterable {
         case .toggleApp: return .global
         case .prev, .next, .first, .last, .zoomIn, .zoomOut, .zoomAtPointer, .actualSize, .peek, .zoomEye: return .browse
         case .fullscreen, .info, .infoLevel, .filmstrip, .slideshow, .rotateCW, .rotateCCW, .straighten: return .view
-        case .rename, .trash, .edit, .reveal, .exportAs, .exportFolder, .saveRotation, .share: return .file
+        case .rename, .trash, .edit, .reveal, .exportAs, .exportWatermarked, .exportFolder, .saveRotation, .share: return .file
         case .preset1, .preset2, .preset3, .preset4, .preset5, .preset6, .preset7, .preset8, .preset9: return .file
         case .pinWindow, .playLive, .filmPanel, .filmToggle, .filmPrev, .filmNext, .filmHold: return .view
         case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench, .copyText: return .tools
@@ -203,6 +203,7 @@ enum ShortcutAction: String, CaseIterable {
         case .edit: return plain(L10n.t("menu.editChoose", "在后期软件中编辑…"))
         case .reveal: return L10n.t("menu.reveal", "在 Finder 中显示")
         case .exportAs: return plain(L10n.t("menu.exportAs", "导出为…"))
+        case .exportWatermarked: return plain(L10n.t("menu.exportWatermarked", "加水印导出…"))
         case .exportFolder: return plain(L10n.t("menu.exportFolder", "导出到文件夹…"))
         case .saveRotation: return L10n.t("menu.saveRotation", "保存修改")
         case .cleanup: return L10n.t("menu.cleanup", "清理模式")
@@ -271,6 +272,7 @@ enum ShortcutAction: String, CaseIterable {
         case .edit: return KeyCombo(keyCode: 14, mods: .command, chars: "e")
         case .reveal: return KeyCombo(keyCode: 15, mods: .command, chars: "r")
         case .exportAs: return KeyCombo(keyCode: 1, mods: .command, chars: "s")
+        case .exportWatermarked: return KeyCombo(keyCode: 1, mods: [.command, .shift], chars: "s")   // ⌘S 导出，加上 ⇧ 就是加水印导出；这个组合没有别的用处
         case .exportFolder: return KeyCombo(keyCode: 14, mods: [.command, .shift], chars: "e")
         case .saveRotation: return KeyCombo(keyCode: 1, mods: [.command, .option], chars: "s")
         case .cleanup: return KeyCombo(keyCode: 40, mods: [.command, .shift], chars: "k")

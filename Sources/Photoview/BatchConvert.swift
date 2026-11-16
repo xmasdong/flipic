@@ -19,6 +19,8 @@ enum BatchConvert {
     struct Summary {
         var converted = 0
         var skipped = 0
+        /// 加水印时跳过的视频和动图
+        var skippedMotion = 0
         var failed = 0
         /// 设了大小限制却压不进去的文件名（已经按最小的写出了）
         var overLimit: [String] = []
@@ -55,7 +57,7 @@ enum BatchConvert {
 
     /// 已经是目标格式的文件，按现在的选项转一遍会有变化吗：没设任何限制就原样不动（重新压缩只会掉画质）
     static func needsWork(_ url: URL, settings s: Settings) -> Bool {
-        if s.options.effect != nil { return true }
+        if s.options.effect != nil || s.options.watermark != nil { return true }
         guard isSameFormat(url, ext: s.ext) else { return true }
         let o = s.options
         if !o.keepMetadata { return true }
@@ -105,6 +107,8 @@ enum BatchConvert {
         for (i, url) in urls.enumerated() {
             if isCancelled() { sum.cancelled = true; break }
             autoreleasepool {
+                // 加水印时视频和动图跳过：它们加不了水印，也不能悄悄出一份没水印的副本
+                if s.options.watermark != nil, !WatermarkEligibility.isStill(url) { sum.skippedMotion += 1; return }
                 let work = needsWork(url, settings: s)
                 guard work || s.alwaysWrite else { sum.skipped += 1; return }
                 let base = s.outputName?(url, sum.converted + 1) ?? url.deletingPathExtension().lastPathComponent
@@ -152,6 +156,7 @@ enum BatchConvert {
         var lines: [String] = []
         lines.append(L10n.f("bc.sum.converted", "已转换 %d 张", sum.converted))
         if sum.skipped > 0 { lines.append(L10n.f("bc.sum.skipped", "跳过 %d 张（已经是这个格式，没有需要改的）", sum.skipped)) }
+        if sum.skippedMotion > 0 { lines.append(L10n.f("bc.sum.skippedMotion", "跳过 %d 个视频或动图（加不了水印）", sum.skippedMotion)) }
         if sum.failed > 0 {
             lines.append(L10n.f("bc.sum.failed", "失败 %d 张：%@", sum.failed, sum.failedNames.prefix(5).joined(separator: "、") + (sum.failedNames.count > 5 ? "…" : "")))
         }
