@@ -87,3 +87,38 @@
     document.querySelectorAll('.keys button').forEach(b => b.addEventListener('click', () => played('button')));
   }
 })();
+
+// Windows 版候补名单：提交到 /api/waitlist（只存邮箱、语言、国家、日期）。没有 JS 时表单一直是隐藏的
+(() => {
+  const form = document.querySelector('.wl-form');
+  if (!form) return;
+  form.hidden = false;
+  const status = document.querySelector('.waitlist .wl-status');
+  const button = form.querySelector('button');
+  const msg = JSON.parse(form.dataset.msg);
+  const say = (text, bad) => { status.textContent = text; status.classList.toggle('bad', !!bad); };
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = form.elements.email.value.trim();
+    if (!email || !form.elements.email.checkValidity()) { say(msg.invalid, true); return; }
+    button.disabled = true;
+    say(msg.sending);
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'omit',
+        body: JSON.stringify({ email, lang: form.dataset.lang, website: form.elements.website.value }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        say(msg.ok);
+        form.elements.email.value = '';
+        if (typeof window.gtag === 'function') window.gtag('event', 'waitlist_windows', { site_lang: form.dataset.lang });
+        return;
+      }
+      say(res.status === 429 ? msg.busy : res.status === 400 ? msg.invalid : msg.error, true);
+    } catch {
+      say(msg.error, true);
+    }
+    button.disabled = false;
+  });
+})();

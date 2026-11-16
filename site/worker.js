@@ -123,6 +123,79 @@ function isDownloadStart(request, response) {
   return response.status === 200 || response.status === 206;
 }
 
+// Windows 版候补名单：只存邮箱、页面语言、国家（粗粒度）、日期；不存 IP、UA、来源页。
+// 防刷靠同源检查、蜜罐、2 KB 体积上限和每天新增上限，不记录访客任何标识
+const WAITLIST_MAX_BODY = 2048;
+const WAITLIST_DAILY_CAP = 500;
+const WAITLIST_ORIGINS = new Set(["https://flipic.app", "https://www.flipic.app"]);
+const EMAIL_RE = /^[a-z0-9](?:[a-z0-9._%+-]{0,62}[a-z0-9])?@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/;
+
+function jsonReply(status, body, extra = {}) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...extra },
+  });
+}
+
+function sameSite(request) {
+  const origin = request.headers.get("origin");
+  if (origin) return WAITLIST_ORIGINS.has(origin);
+  const referer = request.headers.get("referer");
+  if (!referer) return false;
+  try {
+    return WAITLIST_ORIGINS.has(new URL(referer).origin);
+  } catch {
+    return false;
+  }
+}
+
+export function normalizeEmail(value) {
+  if (typeof value !== "string") return null;
+  const email = value.trim().toLowerCase();
+  if (!email || email.length > 254 || /[\u0000-\u001f\u007f]/.test(email)) return null;
+  if (email.includes("..") || !EMAIL_RE.test(email)) return null;
+  return email;
+}
+
+async function handleWaitlist(request, env) {
+  if (request.method !== "POST") return jsonReply(405, { ok: false, error: "invalid" }, { Allow: "POST" });
+  if (!env.STATS) return jsonReply(503, { ok: false, error: "server" });
+  if (!sameSite(request)) return jsonReply(403, { ok: false, error: "invalid" });
+  if (!/^application\/json\b/i.test(request.headers.get("content-type") || "")) return jsonReply(415, { ok: false, error: "invalid" });
+  const declared = Number(request.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > WAITLIST_MAX_BODY) return jsonReply(413, { ok: false, error: "invalid" });
+  let text;
+  try {
+    text = await request.text();
+  } catch {
+    return jsonReply(400, { ok: false, error: "invalid" });
+  }
+  if (text.length > WAITLIST_MAX_BODY) return jsonReply(413, { ok: false, error: "invalid" });
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return jsonReply(400, { ok: false, error: "invalid" });
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return jsonReply(400, { ok: false, error: "invalid" });
+  // 蜜罐：真人看不到这个字段；填了的当成功处理，不存，不让脚本知道被拦了
+  if (data.website !== undefined && data.website !== "") return jsonReply(200, { ok: true });
+  const email = normalizeEmail(data.email);
+  if (!email || (data.lang !== "zh" && data.lang !== "en")) return jsonReply(400, { ok: false, error: "invalid" });
+  const country = /^[A-Za-z]{2}$/.test(request.cf?.country || "") ? request.cf.country.toUpperCase() : null;
+  const now = new Date();
+  try {
+    const today = await env.STATS.prepare("SELECT COUNT(*) AS n FROM waitlist_windows WHERE created_at >= ?")
+      .bind(now.toISOString().slice(0, 10)).first();
+    if ((today?.n ?? 0) >= WAITLIST_DAILY_CAP) return jsonReply(429, { ok: false, error: "busy" }, { "Retry-After": "86400" });
+    await env.STATS.prepare("INSERT OR IGNORE INTO waitlist_windows (email, lang, country, created_at) VALUES (?, ?, ?, ?)")
+      .bind(email, data.lang, country, now.toISOString()).run();
+  } catch {
+    return jsonReply(500, { ok: false, error: "server" });
+  }
+  return jsonReply(200, { ok: true });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -136,6 +209,8 @@ export default {
         headers: { Location: `https://flipic.app${url.pathname}${url.search}` },
       });
     }
+
+    if (url.pathname === "/api/waitlist") return handleWaitlist(request, env);
 
     // 只判断中文首页，其他路径一律原样交给静态资源
     if (url.pathname !== "/") {

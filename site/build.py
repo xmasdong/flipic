@@ -13,6 +13,8 @@ BASE = "https://flipic.app"
 UPDATED = "2026-11-16"
 # 水印功能 1.0.43 发布后改成 True；False 时站点里不出现任何水印文字和图片
 SHOW_WATERMARK = True
+# Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
+SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
 SIZE = "5 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
@@ -74,7 +76,7 @@ LEGAL = {
     "operator": {"zh": "Flipic Lens 团队", "en": "Flipic Lens Team"},   # 运营主体
     "email": "support@flipic.app",      # 联系邮箱，Cloudflare Email Routing 转发
     "refund_days": 14,                  # 官网购买 Pro 后几天内可以退款
-    "effective": "2026-11-04",          # 生效日期
+    "effective": "2026-11-16" if SHOW_WINDOWS_WAITLIST else "2026-11-04",   # 生效日期；隐私政策新增候补名单一节时改成当天
 }
 # Mac App Store 版的名字只放在本机的 site/private.json（不进公开仓库）；没有时页面写「Mac App Store 版」
 _private = ROOT / "private.json"
@@ -193,14 +195,15 @@ def gh_button(lang):
             f'<span class="gh-main">{GITHUB_ICON}<span class="gh-text">Star</span></span>{count}</a>')
 
 
-def download_block(lang, big=True, brew=False):
+def download_block(lang, big=True, brew=False, win=False):
     t = T[lang]
     brew_line = (f'\n<p class="brew">{"或者用 Homebrew 装：" if lang == "zh" else "Or with Homebrew: "}'
                  '<code>brew install xmasdong/flipic/flipic-lens</code></p>') if brew else ""
     facts = "".join(f"<li>{f}</li>" for f in t["facts"])
+    win_link = f'\n  <a class="alt win-link" href="#windows">{WAITLIST[lang]["link"]}</a>' if win else ""
     return f"""<div class="get">
   <a class="btn" href="/download/Flipic.dmg" download>{DOWNLOAD_ICON}{t['download']}</a>
-  <span class="alt">{t['github_alt'].format(gh=GITHUB)}</span>
+  <span class="alt">{t['github_alt'].format(gh=GITHUB)}</span>{win_link}
 </div>
 <ul class="facts">{facts}</ul>{brew_line}
 <div class="on-phone"><p>{t['phone']}</p><button class="copy" type="button" data-url="https://flipic.app" data-done="{t['phone_done']}">{t['phone_btn']}</button></div>"""
@@ -1255,6 +1258,48 @@ guide("zh", "/guides/read-iptc-caption-mac/", "Mac 上怎么看照片里的说�
 
 # ---------------------------------------------------------------- 渲染
 
+WAITLIST = {
+    "zh": {
+        "h": "想要 Windows 版吗",
+        "p": "现在只有 Mac 版，Windows 版还没有，也不一定会做。想用的话留个邮箱，人够多我们就做。做出来只发一封邮件告诉你，邮箱不会用在别的地方。",
+        "label": "邮箱", "ph": "你的邮箱", "btn": "留下邮箱", "link": "用 Windows？",
+        "sending": "提交中", "ok": "记下了，做出来会告诉你。",
+        "invalid": "这个邮箱看起来不对，检查一下再试。",
+        "error": "没提交成功，过一会儿再试一次。",
+        "busy": "今天提交的人太多了，明天再试一次。",
+        "nojs": "提交需要开启 JavaScript。",
+    },
+    "en": {
+        "h": "Want a Windows version?",
+        "p": "Flipic Lens only runs on Mac for now. There is no Windows version yet, and no promise of one. If you would use it, leave your email. If enough people ask, we will build it, and we will send you one email when it is ready. We use the address for nothing else.",
+        "label": "Email", "ph": "Your email", "btn": "Notify me", "link": "On Windows?",
+        "sending": "Sending", "ok": "Got it. We will tell you if it gets made.",
+        "invalid": "That email address doesn\u2019t look right. Please check it and try again.",
+        "error": "That didn\u2019t go through. Please try again in a moment.",
+        "busy": "Too many sign-ups today. Please try again tomorrow.",
+        "nojs": "You need JavaScript turned on to submit this.",
+    },
+}
+
+
+def waitlist_block(lang):
+    w = WAITLIST[lang]
+    msgs = {k: w[k] for k in ("sending", "ok", "invalid", "error", "busy")}
+    return f"""<section class="wrap waitlist" id="windows">
+  <h2>{w['h']}</h2>
+  <p>{w['p']}</p>
+  <form class="wl-form" data-lang="{lang}" data-msg="{esc(json.dumps(msgs, ensure_ascii=False))}" novalidate hidden>
+    <label class="sr" for="wl-email">{w['label']}</label>
+    <input id="wl-email" type="email" name="email" inputmode="email" autocomplete="email" maxlength="254" placeholder="{w['ph']}" required>
+    <div class="wl-hp" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+    <button class="btn" type="submit">{w['btn']}</button>
+  </form>
+  <p class="wl-status" role="status" aria-live="polite"></p>
+  <noscript><p class="wl-status">{w['nojs']}</p></noscript>
+</section>
+"""
+
+
 HOME_PRO = {
     "zh": ("免费版够用吗", "够用。上面说的这些功能都是免费的，以后也会一直免费。如果你经常一次要整理几百上千张照片，可以看看 Pro，里面加了修图前后对比、JPG 和 RAW 合并显示、按星级分文件夹这些批量处理的功能，还有另外八款胶片滤镜和导出预设，一次买断。平时看看照片的话用不上，不用买。", "/pro/", "看看 Pro 有什么"),
     "en": ("Is the free version enough?", "Yes. Everything described above is free and will stay free. If you often sort through hundreds or thousands of photos at once, take a look at Pro. It adds batch tools such as before/after comparison, showing JPG and RAW pairs as one photo and sorting into folders by rating, plus the other eight film looks and export presets, for a one-time price. If you mostly just look at photos, you won’t need it.", "/en/pro/", "See what Pro adds"),
@@ -1274,7 +1319,7 @@ def render_home(lang):
   <p class="eyebrow rise">{h['eyebrow']}</p>
   <h1 class="rise">{h['h1']}</h1>
   <p class="lede rise">{h['lede']}</p>
-  <div class="rise">{download_block(lang, brew=True)}</div>
+  <div class="rise">{download_block(lang, brew=True, win=SHOW_WINDOWS_WAITLIST)}</div>
 </section>
 <section class="wrap stage" aria-label="{'翻页演示' if lang == 'zh' else 'Paging demo'}">
   <div class="frame" id="frame" data-total="8" data-base="{SHOTS}" data-alt="{esc(h['deck_alt'])}">{first}</div>
@@ -1314,7 +1359,10 @@ def render_home(lang):
     out += f'<section class="wrap guides" id="guides"><h2>{h["guides_title"]}</h2><ol>{items}</ol></section>\n'
     faqs = "".join(f"<details><summary>{esc(q)}</summary><p>{a}</p></details>" for q, a in h["faq"] + (h["wm_faq"] if SHOW_WATERMARK else []))
     out += f'<section class="wrap faq" id="faq"><h2>{t["faq"]}</h2>{faqs}</section>\n'
-    out += f'<section class="wrap end"><h2>{h["end"]}</h2>{download_block(lang)}</section>\n</main>\n'
+    out += f'<section class="wrap end"><h2>{h["end"]}</h2>{download_block(lang)}</section>\n'
+    if SHOW_WINDOWS_WAITLIST:
+        out += waitlist_block(lang)
+    out += "</main>\n"
     return out + footer(lang)
 
 
@@ -1652,6 +1700,12 @@ def legal_pages(lang):
     m = f'<a href="mailto:{mail}">{mail}</a>'
     days = LEGAL["refund_days"]
     eff = LEGAL["effective"]
+    wl_zh = """<h2>Windows 版候补名单</h2>
+<p>如果你在首页的「想要 Windows 版吗」一栏留下邮箱，我们会保存你的邮箱地址、当时页面的语言、你所在的国家（由 Cloudflare 判断，只到国家）和提交日期，不保存 IP 地址。这些只用来在 Windows 版发布时给你发一封邮件，也用来估计有多少人想要，不会用于别的用途，也不会提供给第三方。数据存放在本站的 Cloudflare 数据库里。想从名单里删掉，发邮件到 {m}，写上你留的邮箱就行。</p>
+""".replace("{m}", m) if SHOW_WINDOWS_WAITLIST else ""
+    wl_en = """<h2>Windows version waitlist</h2>
+<p>If you leave your email in the “Want a Windows version?” box on the home page, we store your email address, the language of the page you were on, your country (worked out by Cloudflare, country level only) and the date. We don’t store your IP address. We use this only to send you one email if a Windows version is released, and to gauge how many people want one. It isn’t used for anything else or given to anyone else, and it lives in this site’s Cloudflare database. To be removed from the list, email {m} with the address you left.</p>
+""".replace("{m}", m) if SHOW_WINDOWS_WAITLIST else ""
     if lang == "zh":
         privacy = ("/privacy/", "隐私政策", f"{both} 的隐私政策：照片只在你的 Mac 上处理，不收集个人信息；购买 Pro 时付款信息由 Stripe 或 Apple 处理。", f"""
 <p class="lede">生效日期：{eff}</p>
@@ -1670,7 +1724,7 @@ def legal_pages(lang):
 <h2>网站</h2>
 <p>flipic.app 托管在 Cloudflare 上。Cloudflare 为了安全和正常运行会记录访问日志（比如 IP 地址和浏览器类型）。</p>
 <p>网站用 Google Analytics 4 统计访问量，以及点了下载、购买、GitHub 这些按钮的次数，用来了解大家从哪里来、哪些内容有用。Google Analytics 会在浏览器里存 cookie，记录页面、来源、大致地区和设备类型，不记录完整 IP，也不知道你是谁；我们关闭了广告和个性化相关的功能。来自欧洲经济区、英国和瑞士的访问不写统计 cookie。网站没有广告和第三方字体。Google 如何处理这些数据见 <a href="https://policies.google.com/privacy">Google 隐私政策</a>。软件本身不包含任何统计。</p>
-<h2>查询和删除</h2>
+{wl_zh}<h2>查询和删除</h2>
 <p>如果你想知道我们保存了哪些和你的订单有关的信息，或者希望删除，请发邮件到 {m}。按照财务和税务法规必须保留的付款记录除外。</p>
 <h2>政策变化</h2>
 <p>软件或服务处理信息的方式有变化时，我们会更新这一页并修改生效日期。</p>
@@ -1712,7 +1766,7 @@ def legal_pages(lang):
 <h2>The website</h2>
 <p>flipic.app is hosted on Cloudflare. Cloudflare keeps access logs (such as IP address and browser type) for security and operation.</p>
 <p>The website uses Google Analytics 4 to count visits and clicks on buttons such as download, buy and GitHub, so we can see where visitors come from and which pages help. Google Analytics stores cookies in your browser and records pages, referrers, approximate region and device type; it doesn’t record your full IP address or who you are, and we keep its advertising and personalization features off. Visits from the European Economic Area, the UK and Switzerland don’t get analytics cookies. The site has no ads and no third-party fonts. See the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>. The app itself contains no analytics.</p>
-<h2>Questions and deletion</h2>
+{wl_en}<h2>Questions and deletion</h2>
 <p>To find out what we hold about your order, or to ask us to delete it, email {m}. Payment records we must keep for tax and accounting law are excepted.</p>
 <h2>Changes</h2>
 <p>If the way the app or services handle information changes, we’ll update this page and its effective date.</p>
