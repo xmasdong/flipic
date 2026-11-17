@@ -80,6 +80,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             TrashSelfTest.run(folder: URL(fileURLWithPath: CommandLine.arguments[i + 1]))
             return
         }
+        // 崩溃报告自测：--crashreporttest <工作文件夹>，不碰真实报告文件夹、偏好设置和网络，最后一行 CRASHTEST summary
+        if let i = CommandLine.arguments.firstIndex(of: "--crashreporttest") {
+            CrashReportSelfTest.run(outDir: i + 1 < CommandLine.arguments.count ? CommandLine.arguments[i + 1] : nil)
+        }
         // 打开文件夹耗时：--listbench <文件夹>
         if let i = CommandLine.arguments.firstIndex(of: "--listbench"), i + 1 < CommandLine.arguments.count {
             TagSelfTest.listBench(folder: URL(fileURLWithPath: CommandLine.arguments[i + 1]))
@@ -345,6 +349,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         FilmEffect.install()
         NotificationCenter.default.addObserver(forName: License.didChange, object: nil, queue: .main) { _ in Pairs.install(); BurstEyes.install() }
         #endif
+        // 上次崩溃了的话，在打开任何照片之前问一次、答完再往下走：
+        // 从访达双击的照片在这之前只是排在 pendingURLs 里（弹框期间到的也一样），照片一崩就闪退的情况下提示也一定能出现。
+        // 没有待处理报告时只列一次目录，不延迟；自测环境和 --xxx 启动参数下什么都不做
+        CrashReporter.checkOnLaunch()
         newViewerWindow()
         NSApp.activate(ignoringOtherApps: true)
 

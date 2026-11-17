@@ -102,7 +102,7 @@
 "msg.rotSaving" = "儲存中…";
 "msg.rotHint" = "已旋轉檢視 · ⌘⌥S 可儲存到檔案";
 "about.body" = "■ 簡介
-macOS 原生看圖器：秒開大圖、順暢翻頁、手勢縮放、EXIF 隨手看。照片只在本機處理，不收集個人資料，不用註冊帳號。只在檢查更新、下載辨識模型、啟用 Pro 或你送出回饋時連網。
+macOS 原生看圖器：秒開大圖、順暢翻頁、手勢縮放、EXIF 隨手看。照片只在本機處理，不收集個人資料，不用註冊帳號。只在檢查更新、下載辨識模型、啟用 Pro、你送出回饋或你按「傳送」崩潰報告時連網。
 
 ■ 使用方式
 把資料夾或圖片拖進視窗即可瀏覽；也可以在 Finder 裡右鍵圖片選擇用 Flipic 開啟。
@@ -1207,3 +1207,18 @@ Return  重新命名目前圖片
 "wm.imageFail" = "這張圖片打不開";
 "wm.preview.placeholder" = "現在沒有開啟照片，這裡用示意圖預覽。";
 "wm.preview.photo" = "預覽用的是現在這張照片：%@";
+
+/* crash report (opt-in) */
+"crash.title" = "Flipic Lens 上次意外結束了。要把崩潰報告傳給開發者嗎？";
+"crash.info" = "報告裡有崩在哪裡、軟體與系統的版本、Mac 的型號，不含照片、檔名和路徑。按「傳送」才會送出。";
+"crash.send" = "傳送";
+"crash.dontSend" = "不傳送";
+"crash.note" = "你當時在做什麼？（可不填）";
+"crash.dontAsk" = "不再詢問";
+"crash.view" = "查看報告內容…";
+"crash.viewTitle" = "將要傳送的內容";
+"crash.close" = "關閉";
+"crash.sent" = "崩潰報告已傳送，謝謝";
+"set.crash" = "崩潰報告：";
+"set.crashAsk" = "意外結束後，問我要不要傳送崩潰報告";
+"set.crashNote" = "只有你按「傳送」才會送出，不會自動上傳。內容是崩在哪裡、軟體與系統版本、Mac 型號，不含照片、檔名和路徑，傳送前可以先看到完整內容。";

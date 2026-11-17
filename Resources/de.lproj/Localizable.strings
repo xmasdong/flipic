@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Wird gesichert…";
 "msg.rotHint" = "Ansicht gedreht · ⌘⌥S zum Sichern in der Datei";
 "about.body" = "■ ÜBER
-Ein nativer macOS-Bildbetrachter: sofortiges Öffnen, flüssige Ordner-Navigation, Gesten-Zoom und EXIF auf einen Blick. Fotos werden nur auf Ihrem Mac verarbeitet, ohne Erfassung persönlicher Daten und ohne Konto. Online geht die App nur, um nach Updates zu suchen, das Erkennungsmodell zu laden, Pro zu aktivieren oder Ihr Feedback zu senden.
+Ein nativer macOS-Bildbetrachter: sofortiges Öffnen, flüssige Ordner-Navigation, Gesten-Zoom und EXIF auf einen Blick. Fotos werden nur auf Ihrem Mac verarbeitet, ohne Erfassung persönlicher Daten und ohne Konto. Online geht die App nur, um nach Updates zu suchen, das Erkennungsmodell zu laden, Pro zu aktivieren, Ihr Feedback zu senden oder einen Absturzbericht zu übermitteln, nachdem Sie auf „Senden“ geklickt haben.
 
 ■ BENUTZUNG
 Ordner oder Bild in dieses Fenster ziehen zum Ansehen; oder im Finder Rechtsklick → Mit Flipic öffnen.
@@ -1202,3 +1202,18 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "wm.imageFail" = "Dieses Bild lässt sich nicht öffnen";
 "wm.preview.placeholder" = "Es ist kein Foto geöffnet, die Vorschau zeigt ein Beispielbild.";
 "wm.preview.photo" = "Die Vorschau zeigt das Foto, das du gerade ansiehst: %@";
+
+/* crash report (opt-in) */
+"crash.title" = "Flipic Lens wurde beim letzten Mal unerwartet beendet. Den Absturzbericht an den Entwickler senden?";
+"crash.info" = "Der Bericht enthält, wo der Absturz passierte, die App- und macOS-Version und das Mac-Modell. Fotos, Dateinamen und Pfade sind nicht enthalten. Ohne Klick auf „Senden“ wird nichts gesendet.";
+"crash.send" = "Senden";
+"crash.dontSend" = "Nicht senden";
+"crash.note" = "Was haben Sie gerade gemacht? (optional)";
+"crash.dontAsk" = "Nicht mehr fragen";
+"crash.view" = "Bericht ansehen …";
+"crash.viewTitle" = "Was gesendet würde";
+"crash.close" = "Schließen";
+"crash.sent" = "Absturzbericht gesendet. Danke";
+"set.crash" = "Absturzberichte:";
+"set.crashAsk" = "Nach einem unerwarteten Beenden fragen, ob ein Absturzbericht gesendet werden soll";
+"set.crashNote" = "Ohne Klick auf „Senden“ wird nichts gesendet. Der Bericht enthält, wo der Absturz passierte, die App- und macOS-Version und das Mac-Modell, aber keine Fotos, Dateinamen oder Pfade. Den vollständigen Text können Sie vorher ansehen.";

@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Enregistrement…";
 "msg.rotHint" = "Vue pivotée · ⌘⌥S pour enregistrer dans le fichier";
 "about.body" = "■ À PROPOS
-Une visionneuse d'images native pour macOS : ouverture instantanée, navigation fluide entre dossiers, zoom gestuel et EXIF en un coup d'œil. Les photos sont traitées sur votre Mac : aucune collecte de données personnelles, aucun compte. L’app ne se connecte que pour vérifier les mises à jour, télécharger le modèle de reconnaissance, activer Pro ou envoyer un avis que vous avez écrit.
+Une visionneuse d'images native pour macOS : ouverture instantanée, navigation fluide entre dossiers, zoom gestuel et EXIF en un coup d'œil. Les photos sont traitées sur votre Mac : aucune collecte de données personnelles, aucun compte. L’app ne se connecte que pour vérifier les mises à jour, télécharger le modèle de reconnaissance, activer Pro, envoyer un avis que vous avez écrit ou envoyer un rapport de plantage une fois que vous avez cliqué sur Envoyer.
 
 ■ UTILISATION
 Déposez un dossier ou une image dans la fenêtre pour parcourir ; ou clic droit sur une image dans le Finder → Ouvrir avec Flipic.
@@ -1202,3 +1202,18 @@ Déposez un dossier ou une image pour ouvrir";
 "wm.imageFail" = "Impossible d’ouvrir cette image";
 "wm.preview.placeholder" = "Aucune photo n’est ouverte : l’aperçu utilise une image d’exemple.";
 "wm.preview.photo" = "L’aperçu utilise la photo affichée : %@";
+
+/* crash report (opt-in) */
+"crash.title" = "Flipic Lens s’est fermé de façon inattendue la dernière fois. Envoyer le rapport de plantage au développeur ?";
+"crash.info" = "Le rapport indique où l’app a planté, les versions de l’app et de macOS et le modèle de votre Mac. Il ne contient ni photos, ni noms de fichiers, ni chemins. Rien n’est envoyé tant que vous ne cliquez pas sur Envoyer.";
+"crash.send" = "Envoyer";
+"crash.dontSend" = "Ne pas envoyer";
+"crash.note" = "Que faisiez-vous ? (facultatif)";
+"crash.dontAsk" = "Ne plus demander";
+"crash.view" = "Voir le rapport…";
+"crash.viewTitle" = "Contenu qui serait envoyé";
+"crash.close" = "Fermer";
+"crash.sent" = "Rapport de plantage envoyé. Merci";
+"set.crash" = "Rapports de plantage :";
+"set.crashAsk" = "Après une fermeture inattendue, demander si je veux envoyer un rapport de plantage";
+"set.crashNote" = "Rien n’est envoyé tant que vous ne cliquez pas sur Envoyer. Le rapport indique où l’app a planté, les versions de l’app et de macOS et le modèle du Mac, sans photos, noms de fichiers ni chemins. Vous pouvez lire le texte complet avant l’envoi.";

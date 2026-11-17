@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Đang lưu…";
 "msg.rotHint" = "Đã xoay khung xem · ⌘⌥S để lưu vào tệp";
 "about.body" = "■ GIỚI THIỆU
-Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Ảnh chỉ được xử lý trên máy Mac của bạn, không thu thập dữ liệu cá nhân, không cần tài khoản. Ứng dụng chỉ kết nối mạng khi kiểm tra cập nhật, tải mô hình nhận dạng, kích hoạt Pro hoặc gửi góp ý bạn viết.
+Trình xem ảnh gốc cho macOS: mở tức thì, điều hướng thư mục mượt mà, thu phóng bằng cử chỉ và EXIF ngay tầm mắt. Ảnh chỉ được xử lý trên máy Mac của bạn, không thu thập dữ liệu cá nhân, không cần tài khoản. Ứng dụng chỉ kết nối mạng khi kiểm tra cập nhật, tải mô hình nhận dạng, kích hoạt Pro, gửi góp ý bạn viết hoặc gửi báo cáo sự cố sau khi bạn bấm Gửi.
 
 ■ CÁCH DÙNG
 Kéo thư mục hoặc ảnh vào cửa sổ để duyệt; hoặc nhấp phải ảnh trong Finder và mở bằng Flipic.
@@ -1202,3 +1202,18 @@ Kéo thư mục hoặc ảnh vào để mở";
 "wm.imageFail" = "Không mở được hình ảnh này";
 "wm.preview.placeholder" = "Chưa mở ảnh nào nên bản xem trước dùng ảnh mẫu.";
 "wm.preview.photo" = "Bản xem trước dùng ảnh bạn đang xem: %@";
+
+/* crash report (opt-in) */
+"crash.title" = "Lần trước Flipic Lens đã thoát đột ngột. Gửi báo cáo sự cố cho nhà phát triển?";
+"crash.info" = "Báo cáo cho biết sự cố xảy ra ở đâu, phiên bản ứng dụng và macOS, và kiểu máy Mac. Báo cáo không có ảnh, tên tệp hay đường dẫn. Không có gì được gửi đi cho đến khi bạn bấm Gửi.";
+"crash.send" = "Gửi";
+"crash.dontSend" = "Không gửi";
+"crash.note" = "Lúc đó bạn đang làm gì? (không bắt buộc)";
+"crash.dontAsk" = "Không hỏi lại";
+"crash.view" = "Xem nội dung báo cáo…";
+"crash.viewTitle" = "Nội dung sẽ được gửi";
+"crash.close" = "Đóng";
+"crash.sent" = "Đã gửi báo cáo sự cố. Cảm ơn bạn";
+"set.crash" = "Báo cáo sự cố:";
+"set.crashAsk" = "Sau khi thoát đột ngột, hỏi tôi có muốn gửi báo cáo sự cố không";
+"set.crashNote" = "Không có gì được gửi đi cho đến khi bạn bấm Gửi. Báo cáo cho biết sự cố xảy ra ở đâu, phiên bản ứng dụng và macOS, kiểu máy Mac, không có ảnh, tên tệp hay đường dẫn, và bạn có thể xem toàn bộ nội dung trước khi gửi.";

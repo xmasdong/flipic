@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Salvataggio…";
 "msg.rotHint" = "Vista ruotata · ⌘⌥S per salvare nel file";
 "about.body" = "■ INFORMAZIONI
-Un visualizzatore di immagini nativo per macOS: apertura immediata, navigazione fluida tra cartelle, zoom a gesti ed EXIF a colpo d'occhio. Le foto vengono elaborate sul tuo Mac: nessuna raccolta di dati personali, nessun account. Si connette solo per controllare gli aggiornamenti, scaricare il modello di riconoscimento, attivare Pro o inviare il feedback che scrivi.
+Un visualizzatore di immagini nativo per macOS: apertura immediata, navigazione fluida tra cartelle, zoom a gesti ed EXIF a colpo d'occhio. Le foto vengono elaborate sul tuo Mac: nessuna raccolta di dati personali, nessun account. Si connette solo per controllare gli aggiornamenti, scaricare il modello di riconoscimento, attivare Pro, inviare il feedback che scrivi o inviare una segnalazione di arresto dopo che hai fatto clic su Invia.
 
 ■ UTILIZZO
 Trascina una cartella o un'immagine nella finestra per sfogliare; oppure clic destro su un'immagine nel Finder e apri con Flipic.
@@ -1202,3 +1202,18 @@ Trascina una cartella o un'immagine per aprire";
 "wm.imageFail" = "Impossibile aprire questa immagine";
 "wm.preview.placeholder" = "Nessuna foto aperta: l’anteprima usa un’immagine di esempio.";
 "wm.preview.photo" = "L’anteprima usa la foto che stai guardando: %@";
+
+/* crash report (opt-in) */
+"crash.title" = "Flipic Lens si è chiuso in modo imprevisto l’ultima volta. Inviare la segnalazione di arresto allo sviluppatore?";
+"crash.info" = "La segnalazione indica dove si è verificato l’arresto, le versioni dell’app e di macOS e il modello del Mac. Non include foto, nomi di file né percorsi. Non viene inviato nulla finché non fai clic su Invia.";
+"crash.send" = "Invia";
+"crash.dontSend" = "Non inviare";
+"crash.note" = "Che cosa stavi facendo? (facoltativo)";
+"crash.dontAsk" = "Non chiedere più";
+"crash.view" = "Visualizza segnalazione…";
+"crash.viewTitle" = "Ciò che verrebbe inviato";
+"crash.close" = "Chiudi";
+"crash.sent" = "Segnalazione di arresto inviata. Grazie";
+"set.crash" = "Segnalazioni di arresto:";
+"set.crashAsk" = "Dopo una chiusura imprevista, chiedi se inviare una segnalazione di arresto";
+"set.crashNote" = "Non viene inviato nulla finché non fai clic su Invia. La segnalazione indica dove si è verificato l’arresto, le versioni dell’app e di macOS e il modello del Mac, senza foto, nomi di file né percorsi; puoi leggere il testo completo prima.";

@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Guardando…";
 "msg.rotHint" = "Vista girada · ⌘⌥S para guardar en el archivo";
 "about.body" = "■ ACERCA DE
-Un visor de imágenes nativo para macOS: apertura instantánea, navegación fluida por carpetas, zoom por gestos y EXIF de un vistazo. Las fotos se procesan en tu Mac: sin recopilación de datos personales ni cuentas. Solo se conecta para buscar actualizaciones, descargar el modelo de reconocimiento, activar Pro o enviar los comentarios que escribas.
+Un visor de imágenes nativo para macOS: apertura instantánea, navegación fluida por carpetas, zoom por gestos y EXIF de un vistazo. Las fotos se procesan en tu Mac: sin recopilación de datos personales ni cuentas. Solo se conecta para buscar actualizaciones, descargar el modelo de reconocimiento, activar Pro, enviar los comentarios que escribas o enviar un informe de fallos cuando pulses Enviar.
 
 ■ USO
 Arrastra una carpeta o imagen a esta ventana para verla; o clic derecho sobre una imagen en el Finder y abrir con Flipic.
@@ -1202,3 +1202,18 @@ Arrastra una carpeta o imagen para abrir";
 "wm.imageFail" = "No se puede abrir esta imagen";
 "wm.preview.placeholder" = "No hay ninguna foto abierta; la vista previa usa una imagen de ejemplo.";
 "wm.preview.photo" = "La vista previa usa la foto que estás viendo: %@";
+
+/* crash report (opt-in) */
+"crash.title" = "Flipic Lens se cerró de forma inesperada la última vez. ¿Enviar el informe de fallos al desarrollador?";
+"crash.info" = "El informe indica dónde falló, las versiones de la app y de macOS y el modelo de tu Mac. No incluye fotos, nombres de archivo ni rutas. No se envía nada hasta que pulses Enviar.";
+"crash.send" = "Enviar";
+"crash.dontSend" = "No enviar";
+"crash.note" = "¿Qué estabas haciendo? (opcional)";
+"crash.dontAsk" = "No volver a preguntar";
+"crash.view" = "Ver informe…";
+"crash.viewTitle" = "Lo que se enviaría";
+"crash.close" = "Cerrar";
+"crash.sent" = "Informe de fallos enviado. Gracias";
+"set.crash" = "Informes de fallos:";
+"set.crashAsk" = "Tras un cierre inesperado, preguntar si quiero enviar un informe de fallos";
+"set.crashNote" = "No se envía nada hasta que pulses Enviar. El informe indica dónde falló, las versiones de la app y de macOS y el modelo del Mac, sin fotos, nombres de archivo ni rutas, y puedes leer el texto completo antes.";

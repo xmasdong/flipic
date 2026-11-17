@@ -433,6 +433,8 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private let openPeek = NSButton(checkboxWithTitle: L10n.t("set.openPeekCheck", "窗口贴合照片比例（和按空格一样）"), target: nil, action: nil)
     private let peekKeep = NSButton(checkboxWithTitle: L10n.t("set.peekKeep", "贴合预览翻上一张、下一张时，窗口留在原地"), target: nil, action: nil)
     private let autoUpdate = NSButton(checkboxWithTitle: L10n.t("set.autoUpdate", "自动检查更新（每天一次）"), target: nil, action: nil)
+    /// App Store 版没有这个功能，行是隐藏的
+    private let crashAsk = NSButton(checkboxWithTitle: L10n.t("set.crashAsk", "意外退出后，问我要不要发送崩溃报告"), target: nil, action: nil)
     private let keepRunning = NSButton(checkboxWithTitle: L10n.t("set.keepRunning", "关掉窗口后留在后台，再打开图片更快"), target: nil, action: nil)
     private let trashLocal = NSButton(checkboxWithTitle: L10n.t("set.trashLocalCheck", "删除外置盘上的照片时，复制到本机废纸篓"), target: nil, action: nil)
     private let themePopup = NSPopUpButton()
@@ -463,6 +465,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         newWindow.target = self; newWindow.action = #selector(newWindowChanged)
         autoUpdate.target = self; autoUpdate.action = #selector(autoUpdateChanged)
         let checkNow = pillButton(L10n.t("set.checkNow", "现在检查"), self, #selector(checkNow))
+        crashAsk.target = self; crashAsk.action = #selector(crashAskChanged)
         let updateRow = NSStackView(views: [autoUpdate, checkNow])
         updateRow.spacing = 12
         let choose = pillButton(L10n.t("set.choose", "选择…"), self, #selector(chooseEditorApp))
@@ -493,9 +496,11 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             spacerRow(note(L10n.t("set.trashNote", "打开后，外置盘（U 盘、移动硬盘）上的照片删除时先复制到本机废纸篓再删原文件，所有删除都在一处查看和清空。代价是要多复制一份，几百张 RAW 会慢一些，也会临时占本机空间；复制不成时仍然退回该盘自己的废纸篓。关掉后和访达一样，进该盘自己的废纸篓。"))),
             [label(L10n.t("set.update", "更新：")), updateRow],
             spacerRow(note(L10n.t("set.updateNote", "默认每天自动检查一次。每次只发送：软件版本号、安装了多久（不到 7 天、7–29 天、30 天或以上三档之一）、Pro 是否已激活。不含任何能识别你的信息。"))),
+            [label(L10n.t("set.crash", "崩溃报告：")), crashAsk],
+            spacerRow(note(L10n.t("set.crashNote", "只有你点「发送」才会发出，不会自动上传。内容是崩在哪里、软件和系统版本、Mac 型号，不含照片、文件名和路径，发送前可以先看到完整内容。"))),
         ])
-        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 后期软件 7 说明 8 外观 9 说明 10 后台 11 删除 12 说明 13 更新 14 说明
-        for r in [1, 4, 7, 9, 12, 14] { g.row(at: r).topPadding = -4 }
+        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 后期软件 7 说明 8 外观 9 说明 10 后台 11 删除 12 说明 13 更新 14 说明 15 崩溃报告 16 说明
+        for r in [1, 4, 7, 9, 12, 14, 16] { g.row(at: r).topPadding = -4 }
         view = host(g)
         reload()
     }
@@ -514,6 +519,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         peekKeep.state = ViewerViewController.peekKeepsPosition ? .on : .off
         newWindow.state = AppDelegate.openInNewWindow ? .on : .off
         autoUpdate.state = UpdateChecker.autoCheck ? .on : .off
+        crashAsk.state = CrashReporter.askEnabled ? .on : .off
         let isDefault = DefaultViewer.isDefault
         defaultStatus.stringValue = isDefault ? L10n.t("set.isDefault", "Flipic 已是默认看图软件")
             : L10n.f("set.currentDefault", "现在双击照片用「%@」打开", DefaultViewer.currentName)
@@ -544,6 +550,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     }
 
     @objc private func autoUpdateChanged() { UpdateChecker.autoCheck = autoUpdate.state == .on }
+    @objc private func crashAskChanged() { CrashReporter.askEnabled = crashAsk.state == .on }
 
     @objc private func checkNow() {
         (NSApp.delegate as? AppDelegate)?.checkForUpdates(nil)

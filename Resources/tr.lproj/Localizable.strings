@@ -102,7 +102,7 @@
 "msg.rotSaving" = "Kaydediliyor…";
 "msg.rotHint" = "Görünüm döndürüldü · ⌘⌥S ile dosyaya kaydedin";
 "about.body" = "■ HAKKINDA
-macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Fotoğraflar yalnızca Mac'inizde işlenir; kişisel veri toplama yok, hesap yok. Yalnızca güncellemeleri denetlemek, tanıma modelini indirmek, Pro'yu etkinleştirmek veya yazdığınız geri bildirimi göndermek için internete bağlanır.
+macOS için yerel bir resim görüntüleyici: anında açılma, akıcı klasör gezinme, hareketle yakınlaştırma ve EXIF tek bakışta. Fotoğraflar yalnızca Mac'inizde işlenir; kişisel veri toplama yok, hesap yok. Yalnızca güncellemeleri denetlemek, tanıma modelini indirmek, Pro'yu etkinleştirmek, yazdığınız geri bildirimi göndermek veya Gönder’e tıkladıktan sonra çökme raporu göndermek için internete bağlanır.
 
 ■ KULLANIM
 Gezinmek için bir klasörü veya resmi bu pencereye sürükleyin; ya da Finder'da bir resme sağ tıklayıp Flipic ile açın.
@@ -1202,3 +1202,18 @@ Açmak için klasör veya resim sürükleyin";
 "wm.imageFail" = "Bu resim açılamıyor";
 "wm.preview.placeholder" = "Açık fotoğraf yok, önizleme örnek bir resim kullanıyor.";
 "wm.preview.photo" = "Önizleme şu an baktığınız fotoğrafı kullanıyor: %@";
+
+/* crash report (opt-in) */
+"crash.title" = "Flipic Lens geçen sefer beklenmedik şekilde kapandı. Çökme raporu geliştiriciye gönderilsin mi?";
+"crash.info" = "Rapor, çökmenin nerede olduğunu, uygulama ve macOS sürümlerini ve Mac modelinizi içerir. Fotoğraf, dosya adı veya yol içermez. Gönder’e tıklamadıkça hiçbir şey gönderilmez.";
+"crash.send" = "Gönder";
+"crash.dontSend" = "Gönderme";
+"crash.note" = "O sırada ne yapıyordunuz? (isteğe bağlı)";
+"crash.dontAsk" = "Bir daha sorma";
+"crash.view" = "Raporu görüntüle…";
+"crash.viewTitle" = "Gönderilecek içerik";
+"crash.close" = "Kapat";
+"crash.sent" = "Çökme raporu gönderildi. Teşekkürler";
+"set.crash" = "Çökme raporları:";
+"set.crashAsk" = "Beklenmedik kapanmadan sonra çökme raporu gönderilip gönderilmeyeceğini sor";
+"set.crashNote" = "Gönder’e tıklamadıkça hiçbir şey gönderilmez. Rapor, çökmenin nerede olduğunu, uygulama ve macOS sürümlerini ve Mac modelini içerir; fotoğraf, dosya adı veya yol içermez. Göndermeden önce tüm metni okuyabilirsiniz.";
