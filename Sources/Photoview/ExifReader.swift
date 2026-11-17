@@ -9,6 +9,8 @@ struct ExifEntry {
     var link: URL? = nil
     /// 值最多排几行，超出的截断（鼠标停上去能看全）
     var lines: Int = 2
+    /// 拍摄地点的坐标：面板据此在这一行下面排位置小地图
+    var coordinate: (lat: Double, lon: Double)? = nil
 }
 
 /// 「全部」里的一组
@@ -415,7 +417,7 @@ enum ExifReader {
         var text = String(format: "%.5f° %@, %.5f° %@", abs(lat), lat >= 0 ? "N" : "S", abs(lon), lon >= 0 ? "E" : "W")
         if altitude, let alt = altitudeText(gps) { text += " · " + alt }
         let link = URL(string: String(format: "https://maps.apple.com/?ll=%.6f,%.6f&q=%.6f,%.6f", lat, lon, lat, lon))
-        return ExifEntry(label: L10n.t("exif.location", "拍摄地点"), value: text, link: link)
+        return ExifEntry(label: L10n.t("exif.location", "拍摄地点"), value: text, link: link, coordinate: (lat, lon))
     }
 
     private static func altitude(_ props: [String: Any]) -> ExifEntry? {

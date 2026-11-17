@@ -1204,7 +1204,7 @@ Return  表示中の画像を名称変更
 "wm.preview.photo" = "プレビューには表示中の写真を使っています：%@";
 
 /* crash report (opt-in) */
-"crash.title" = "Flipic Lens は前回、予期せず終了しました。クラッシュレポートを開発者に送信しますか？";
+"crash.title" = "Flipic は前回、予期せず終了しました。クラッシュレポートを開発者に送信しますか？";
 "crash.info" = "レポートには、終了した場所、アプリと macOS のバージョン、Mac のモデルが含まれます。写真、ファイル名、パスは含まれません。「送信」を押すまで何も送られません。";
 "crash.send" = "送信";
 "crash.dontSend" = "送信しない";
@@ -1217,3 +1217,45 @@ Return  表示中の画像を名称変更
 "set.crash" = "クラッシュレポート：";
 "set.crashAsk" = "予期せず終了した後、クラッシュレポートを送るか確認する";
 "set.crashNote" = "「送信」を押すまで何も送られません。内容は、終了した場所、アプリと macOS のバージョン、Mac のモデルで、写真、ファイル名、パスは含まれません。送信前に全文を確認できます。";
+"set.infoMapLabel" = "位置情報マップ：";
+"set.infoMap" = "情報パネルに位置の地図を表示";
+"set.infoMapNote" = "地図は Apple マップを使用し、「マップ」App と同じく周辺の地図をインターネット経由で読み込みます。オフの間は情報パネルに「地図を表示」ボタンだけが表示され、クリックするまで読み込みません。位置情報のない写真では地図を読み込みません。";
+"info.map.show" = "地図を表示";
+"info.map.note" = "地図は Apple マップを使用します。インターネット接続が必要です。";
+"info.map.always" = "今後は自動で表示";
+"info.map.failed" = "地図を読み込めません";
+"info.map.label" = "撮影場所の地図";
+"wb.key.space" = "スペース";
+"wb.showCaption" = "サイズとファイル容量を表示";
+"crop.hint.1x1" = "正方形";
+"crop.hint.4x5" = "縦長の投稿";
+"crop.hint.3x4" = "SNS 縦長";
+"crop.hint.2x3" = "プリント";
+"crop.hint.3x2" = "カメラ標準";
+"crop.hint.16x9" = "ワイド動画";
+"crop.hint.9x16" = "縦型動画 / 壁紙";
+"crop.custom" = "カスタム…";
+"crop.custom.title" = "カスタム比率";
+"crop.custom.info" = "幅と高さを 1〜100 の整数で入力してください。";
+"crop.custom.w" = "幅";
+"crop.custom.h" = "高さ";
+"crop.custom.apply" = "適用";
+
+/* split into several images (Pro) */
+"split.mode.crop" = "切り抜き";
+"split.mode.split" = "分割";
+"split.mode.label" = "切り抜きか分割";
+"split.layout" = "分け方";
+"split.panel" = "1枚あたり";
+"split.stripGPS" = "位置情報を削除";
+"split.row" = "横に%d枚";
+"split.grid" = "グリッド %@";
+"split.summary" = "%1$d枚、1枚あたり %2$d × %3$d";
+"split.working" = "分割しています…";
+"split.failed" = "分割に失敗しました。何も書き出されていません";
+"split.done" = "%1$d枚に分割し、「%2$@」に保存しました";
+"split.donePartial" = "%1$d枚を書き出しました。%2$d枚は書き出せませんでした（保存先「%3$@」）";
+"split.folderSuffix" = "_分割";
+"split.chooseMessage" = "この場所には書き込めません。分割したフォルダの保存先を選んでください";
+"split.choosePrompt" = "選択";
+"pro.f.splitPhoto" = "分割";

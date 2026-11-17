@@ -91,6 +91,51 @@ final class SettingsWindowController: NSWindowController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5 + Double(root.panes.count) * 0.8) { NSApp.terminate(nil) }
     }
 
+    /// --settingstabtest <输出文件夹>：选中鼠标页截图，并量每个分页按钮里图标和标题的位置
+    func debugTabTest(outDir: String) {
+        try? FileManager.default.createDirectory(atPath: outDir, withIntermediateDirectories: true)
+        showWindow(nil)
+        window?.makeKeyAndOrderFront(nil)
+        let mouse = root.panes.firstIndex { $0.id == .mouse } ?? 0
+        // SETTAB_ALL=1：每一页都截一张 pane-<序号>.png（给人看新加的设置项）
+        if ProcessInfo.processInfo.environment["SETTAB_ALL"] == "1" {
+            func shoot(_ i: Int) {
+                guard i < root.panes.count else { NSApp.terminate(nil); return }
+                root.select(i)
+                window?.layoutIfNeeded()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { [self] in
+                    if let w = window, let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber),
+                                                                      [.bestResolution, .boundsIgnoreFraming]),
+                       let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/pane-\(i).png") as CFURL,
+                                                                  "public.png" as CFString, 1, nil) {
+                        CGImageDestinationAddImage(dest, img, nil)
+                        CGImageDestinationFinalize(dest)
+                    }
+                    shoot(i + 1)
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { shoot(0) }
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [self] in
+            root.select(mouse)
+            window?.layoutIfNeeded()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [self] in
+                if let w = window, let img = CGWindowListCreateImage(.null, [.optionIncludingWindow], CGWindowID(w.windowNumber),
+                                                                  [.bestResolution, .boundsIgnoreFraming]),
+                   let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: "\(outDir)/tabs.png") as CFURL,
+                                                              "public.png" as CFString, 1, nil) {
+                    CGImageDestinationAddImage(dest, img, nil)
+                    CGImageDestinationFinalize(dest)
+                }
+                let report = root.debugTabReport()
+                print(report)
+                fflush(stdout)
+                NSApp.terminate(nil)
+            }
+        }
+    }
+
     func debugStatus() -> String {
         func find(_ v: NSView) -> String? {
             if let t = v as? NSTextField, t.font?.pointSize == NSFont.smallSystemFontSize, t.lineBreakMode == .byTruncatingTail { return t.stringValue }
@@ -179,6 +224,33 @@ private final class SettingsRoot: NSViewController {
         view = v
     }
 
+    /// 测试用：每个分页按钮的图标、标题位置（相对按钮，原点在左上）
+    func debugTabReport() -> String {
+        var lines: [String] = []
+        var titleY: [CGFloat] = []
+        var fails = 0
+        for b in buttons {
+            b.layoutSubtreeIfNeeded()
+            // 按钮是翻转坐标（原点在左上）；符号图带对齐边距，frame 比格子大，量格子用对齐矩形
+            let icon = b.iconView.alignmentRect(forFrame: b.iconView.frame), lab = b.label.frame
+            let h = b.bounds.height
+            let imgH = b.iconView.image?.size.height ?? 0
+            let topGap = icon.minY + (icon.height - imgH) / 2
+            let titleTop = lab.minY
+            let need = b.label.intrinsicContentSize.width
+            let fit = need <= lab.width + 0.5
+            let ok = topGap >= 6 && fit
+            if !ok { fails += 1 }
+            titleY.append(lab.minY)
+            let f = { (v: CGFloat) in String(format: "%.1f", v) }
+            lines.append("SETTAB \(ok ? "ok" : "FAIL") \(b.label.stringValue) btn=\(f(b.bounds.width))x\(f(h)) iconTopGap=\(f(topGap)) iconFrame=\(f(icon.minX)),\(f(icon.minY)),\(f(icon.width)),\(f(icon.height)) titleTop=\(f(titleTop)) titleBottomGap=\(f(h - lab.maxY)) titleFrame=\(f(lab.minX)),\(f(lab.minY)),\(f(lab.width)),\(f(lab.height)) need=\(f(need))")
+        }
+        let same = Set(titleY.map { Int(($0 * 10).rounded()) }).count <= 1
+        if !same { fails += 1 }
+        lines.append("SETTAB summary tabs=\(buttons.count) titleMinYSame=\(same) fails=\(fails) \(fails == 0 ? "ok" : "FAIL")")
+        return lines.joined(separator: "\n")
+    }
+
     @objc private func tabClicked(_ sender: NSButton) { select(sender.tag) }
 
     func select(_ index: Int) {
@@ -195,6 +267,9 @@ private final class SettingsRoot: NSViewController {
         // 按窗口宽度量高度，不限宽时文字排成一长行，量出来偏矮
         let widthPin = pv.widthAnchor.constraint(equalToConstant: 600)
         widthPin.isActive = true
+        // 先排两遍：第一遍定出说明文字的实际宽度（NoteLabel 据此改折行宽度），第二遍按新的行数算高度
+        pv.layoutSubtreeIfNeeded()
+        pv.layoutSubtreeIfNeeded()
         let fit = pv.fittingSize.height
         widthPin.isActive = false
         if fit > maxHeight {
@@ -235,6 +310,7 @@ private final class SettingsRoot: NSViewController {
         }
         guard let window = view.window else { return }
         view.layoutSubtreeIfNeeded()
+        view.layoutSubtreeIfNeeded()
         let content = window.frameRect(forContentRect: NSRect(origin: .zero, size: view.fittingSize))
         var frame = window.frame
         frame.origin.y += frame.height - content.height
@@ -249,41 +325,72 @@ private final class FlippedDocView: NSView {
 }
 
 /// 分页按钮：图标在上、文字在下，选中时垫一块浅色圆角底，悬停略亮（同看图工具条）
+/// 内容自己排：图标放在固定高度的格子里居中，各页标题才在同一条线上
 private final class SettingsTabButton: NSButton {
     var isSelected = false { didSet { restyle() } }
     private var hovering = false { didSet { restyle() } }
     private var trackingArea: NSTrackingArea?
+    let iconView = NSImageView()
+    let label = NSTextField(labelWithString: "")
+    private let name: String
 
     convenience init(title: String, symbol: String) {
-        self.init(frame: .zero)
+        self.init(frame: .zero, name: title, symbol: symbol)
+    }
+
+    private init(frame: NSRect, name: String, symbol: String) {
+        self.name = name
+        super.init(frame: frame)
         isBordered = false
         wantsLayer = true
         layer?.cornerRadius = 9
-        let img = NSImage(systemSymbolName: symbol, accessibilityDescription: title)?
+        self.title = ""
+        setAccessibilityLabel(name)
+        iconView.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 17, weight: .medium))
-        image = img
-        imagePosition = .imageAbove
-        self.title = title
-        font = .systemFont(ofSize: 11.5, weight: .medium)
+        iconView.imageScaling = .scaleNone
+        iconView.imageAlignment = .alignCenter
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        label.stringValue = name
+        label.font = .systemFont(ofSize: 11.5, weight: .medium)
+        label.lineBreakMode = .byClipping
+        label.maximumNumberOfLines = 1
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.setContentCompressionResistancePriority(.required, for: .horizontal)
+        addSubview(iconView)
+        addSubview(label)
         translatesAutoresizingMaskIntoConstraints = false
-        heightAnchor.constraint(equalToConstant: 54).isActive = true
-        widthAnchor.constraint(greaterThanOrEqualToConstant: 76).isActive = true
+        NSLayoutConstraint.activate([
+            // 上边距 8、图标格 22、图标到标题 5、下边距约 7
+            iconView.topAnchor.constraint(equalTo: topAnchor, constant: 8),
+            iconView.heightAnchor.constraint(equalToConstant: 22),
+            iconView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 28),
+            label.topAnchor.constraint(equalTo: iconView.bottomAnchor, constant: 5),
+            label.centerXAnchor.constraint(equalTo: centerXAnchor),
+            heightAnchor.constraint(equalToConstant: 56),
+            widthAnchor.constraint(greaterThanOrEqualToConstant: 76),
+        ])
         restyle()
     }
 
+    required init?(coder: NSCoder) { fatalError() }
+
     override var intrinsicContentSize: NSSize {
-        var s = super.intrinsicContentSize
-        s.width += 24
-        return s
+        NSSize(width: label.intrinsicContentSize.width + 24, height: 56)
+    }
+
+    // 点击一律落到按钮自己，不被图标和文字截走
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        super.hitTest(point) == nil ? nil : self
     }
 
     override var acceptsFirstResponder: Bool { false }
 
     private func restyle() {
         let color: NSColor = isSelected ? .labelColor : .secondaryLabelColor
-        contentTintColor = color
-        attributedTitle = NSAttributedString(string: title, attributes: [
-            .foregroundColor: color, .font: font ?? .systemFont(ofSize: 11.5)])
+        iconView.contentTintColor = color
+        label.textColor = color
         effectiveAppearance.performAsCurrentDrawingAppearance {
             layer?.backgroundColor = isSelected ? Theme.overlay(0.12).cgColor : hovering ? Theme.overlay(0.06).cgColor : nil
         }
@@ -360,8 +467,30 @@ func label(_ s: String) -> NSTextField {
     return l
 }
 
+/// 说明文字：按实际排出来的宽度重新算高度。左边标签很长的语言（俄语、德语）右栏会比 340 窄，
+/// 只按 340 算高度的话会少算几行，最后几行被截掉
+final class NoteLabel: NSTextField {
+    /// 高度直接按当前宽度让 cell 量（和真正画的时候一样的内边距），不靠 preferredMaxLayoutWidth 估
+    override var intrinsicContentSize: NSSize {
+        let base = super.intrinsicContentSize
+        let w = bounds.width
+        guard w > 40, let cell else { return base }
+        let h = cell.cellSize(forBounds: NSRect(x: 0, y: 0, width: w, height: 10_000)).height
+        return NSSize(width: base.width, height: max(base.height, ceil(h)))
+    }
+
+    override func layout() {
+        super.layout()
+        let w = bounds.width.rounded(.down)
+        if w > 40, abs(preferredMaxLayoutWidth - w) > 0.5 {
+            preferredMaxLayoutWidth = w
+            invalidateIntrinsicContentSize()
+        }
+    }
+}
+
 func note(_ s: String) -> NSTextField {
-    let l = NSTextField(wrappingLabelWithString: s)
+    let l = NoteLabel(wrappingLabelWithString: s)
     l.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
     l.textColor = .secondaryLabelColor
     l.preferredMaxLayoutWidth = 340
@@ -608,6 +737,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     private let rotSavePopup = NSPopUpButton()
     private let rotRemind = WrapCheckbox(title: L10n.t("set.rotRemind", "翻到别的照片时，提醒没保存的修改"))
     private let autoTranslate = WrapCheckbox(title: L10n.t("set.autoTranslate", "自动翻译照片说明"))
+    private let infoMapCheck = WrapCheckbox(title: L10n.t("set.infoMap", "在信息面板里显示位置地图"))
 
     override func loadView() {
         for sec in ViewerViewController.slideshowIntervals {
@@ -696,6 +826,11 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
                 spacerRow(note(L10n.t("set.autoTranslateNote", "用系统自带的翻译在这台 Mac 上完成，译成界面语言，排在原文下面。只在翻译语言已经下载时自动翻译；还没下载的，点说明下面的「翻译」，系统会问要不要下载。"))),
             ], at: rows.firstIndex { ($0.first as? NSTextField)?.stringValue == L10n.t("set.recents", "最近打开：") } ?? rows.count)
         }
+        infoMapCheck.target = self; infoMapCheck.action = #selector(infoMapChanged)
+        rows.insert(contentsOf: [
+            [label(L10n.t("set.infoMapLabel", "位置地图：")), infoMapCheck],
+            spacerRow(note(L10n.t("set.infoMapNote", "地图来自 Apple 地图，和系统「地图」App 一样需要联网加载这一带的地图。关闭时，信息面板里只显示一个「显示地图」按钮，点了才加载。没有位置信息的照片不会加载地图。"))),
+        ], at: rows.firstIndex { ($0.first as? NSTextField)?.stringValue == L10n.t("set.recents", "最近打开：") } ?? rows.count)
         // 系统不支持实况文本时整行不出现
         if TextRecognition.liveTextSupported {
             rows.insert(contentsOf: [
@@ -742,6 +877,14 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         }
         rotRemind.state = Straighten.remindUnsaved ? .on : .off
         autoTranslate.state = CaptionTranslation.autoTranslate ? .on : .off
+        infoMapCheck.state = LocationMap.autoShow ? .on : .off
+    }
+
+    @objc private func infoMapChanged() {
+        let on = infoMapCheck.state == .on
+        LocationMap.autoShow = on
+        // 关掉就是不想再自动联网：本次运行里点过「显示地图」的自动加载也一并停掉
+        if !on { LocationMap.sessionAuto = false }
     }
 
     @objc private func autoTranslateChanged() { CaptionTranslation.autoTranslate = autoTranslate.state == .on }

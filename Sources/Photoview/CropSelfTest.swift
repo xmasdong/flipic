@@ -331,6 +331,7 @@ extension ViewerViewController {
     /// 鼠标用合成的事件直接交给裁剪框，按键交给看图视图，保存走底部那条和询问对话框。
     /// 截图和日志带界面语言，换语言用 -AppleLanguages 启动。测完恢复原来的设置
     func runCropTest(outDir: String, folder path: String) {
+        CropSubject.disabledForTest = true
         let savedTarget = Straighten.saveTarget, savedRemind = Straighten.remindUnsaved
         let lang = Bundle.main.preferredLocalizations.first ?? "?"
         let fm = FileManager.default

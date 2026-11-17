@@ -26,6 +26,9 @@ final class ViewerViewController: NSViewController {
     /// 保存写盘期间用户想翻页：等写完再翻（只留最后一个想做的）
     private var afterSave: (() -> Void)?
     private let hudStack = NSStackView()
+    /// 提示里的一个操作按钮（比如导出后的「在 Finder 中显示」），只在 flash 带了操作时显示
+    private let hudActionButton = NSButton()
+    private var hudAction: (() -> Void)?
     private let hudNameLabel = NSTextField(labelWithString: "")
     private let hudDimsLabel = NSTextField(labelWithString: "")
     private let hudExifLabel1 = NSTextField(labelWithString: "")
@@ -847,6 +850,13 @@ final class ViewerViewController: NSViewController {
             (hudExifLabel1, .monospacedDigitSystemFont(ofSize: 12, weight: .regular), .secondaryLabelColor),
             (hudExifLabel2, .monospacedDigitSystemFont(ofSize: 12, weight: .regular), .secondaryLabelColor),
         ]
+        hudActionButton.isBordered = false
+        hudActionButton.bezelStyle = .inline
+        hudActionButton.controlSize = .small
+        hudActionButton.target = self
+        hudActionButton.action = #selector(hudActionClicked)
+        hudActionButton.isHidden = true
+        hudActionButton.translatesAutoresizingMaskIntoConstraints = false
         for (label, f, c) in labels {
             label.font = f
             label.textColor = c
@@ -858,6 +868,7 @@ final class ViewerViewController: NSViewController {
             label.translatesAutoresizingMaskIntoConstraints = false
             hudStack.addArrangedSubview(label)
         }
+        hudStack.addArrangedSubview(hudActionButton)
 
         NSLayoutConstraint.activate([
             hudStack.topAnchor.constraint(equalTo: hudView.topAnchor),
@@ -2252,9 +2263,35 @@ final class ViewerViewController: NSViewController {
     /// 自测用：最近一次 flash 的文字
     var debugLastFlash = ""
 
-    func flash(_ msg: String, seconds: Double = 2) {
+    @objc private func hudActionClicked() {
+        let run = hudAction
+        hudAction = nil
+        hudActionButton.isHidden = true
+        run?()
+    }
+
+    /// 自测用：点提示里的操作按钮（没有就返回 false）
+    @discardableResult
+    func debugClickFlashAction() -> Bool {
+        guard !hudActionButton.isHidden, hudAction != nil else { return false }
+        hudActionClicked()
+        return true
+    }
+
+    var debugFlashActionTitle: String? { hudActionButton.isHidden ? nil : hudActionButton.title }
+
+    /// action：提示下面带一个按钮（title 是按钮上的字），点了执行
+    func flash(_ msg: String, seconds: Double = 2, actionTitle: String? = nil, action: (() -> Void)? = nil) {
         debugLastFlash = msg
         isFlashing = true
+        hudAction = action
+        if let actionTitle, action != nil {
+            hudActionButton.attributedTitle = NSAttributedString(string: actionTitle, attributes: [
+                .font: NSFont.systemFont(ofSize: 12, weight: .medium), .foregroundColor: NSColor.controlAccentColor])
+            hudActionButton.isHidden = false
+        } else {
+            hudActionButton.isHidden = true
+        }
         hudNameLabel.stringValue = msg
         hudDimsLabel.isHidden = true
         hudExifLabel1.isHidden = true
@@ -2263,6 +2300,8 @@ final class ViewerViewController: NSViewController {
         flashItem?.cancel()
         let item = DispatchWorkItem { [weak self] in
             self?.isFlashing = false
+            self?.hudActionButton.isHidden = true
+            self?.hudAction = nil
             self?.updateHUD()
         }
         flashItem = item
@@ -4327,7 +4366,7 @@ final class ViewerViewController: NSViewController {
         rotationBar.onDegrees = { [weak self] d in self?.imageView.setStraighten(degrees: d) }
         rotationBar.onReset = { [weak self] in self?.nudgeStraighten(to: 0) }
         rotationBar.onCancel = { [weak self] in self?.finishStraighten(apply: false) }
-        rotationBar.onDone = { [weak self] in self?.finishStraighten(apply: true) }
+        rotationBar.onDone = { [weak self] in self?.finishStraighten(apply: true, explicit: true) }
         rotationBar.onRevert = { [weak self] in self?.imageView.resetRotation() }
         rotationBar.onSave = { [weak self] in self?.saveRotation(nil) }
         rotationBar.onAspect = { [weak self] a in self?.imageView.setCropAspect(a, swapped: false) }
@@ -4336,7 +4375,10 @@ final class ViewerViewController: NSViewController {
             v.setCropAspect(v.cropAspect, swapped: !v.cropAspectSwapped)
         }
         imageView.onCropChange = { [weak self] in self?.syncCropBar() }
-        imageView.onCropApply = { [weak self] in self?.finishStraighten(apply: true) }
+        imageView.onCropApply = { [weak self] in self?.finishStraighten(apply: true, explicit: true) }
+        #if FLIPIC_PRO
+        wireSplitBar()
+        #endif
         let previous = imageView.onRotate
         imageView.onRotate = { [weak self] in
             previous?()
@@ -4348,11 +4390,14 @@ final class ViewerViewController: NSViewController {
     var isStraightening: Bool { imageView.isCropping }
 
     /// 裁剪条上的比例、互换按钮和输出尺寸跟着裁剪框走
-    private func syncCropBar() {
+    func syncCropBar() {
         guard isStraightening else { return }
         rotationBar.setAspect(imageView.cropAspect, swapped: imageView.cropAspectSwapped)
         rotationBar.setOutputSize(imageView.pixelSize)
         rotationBar.setDegrees(imageView.fineDegrees)
+        #if FLIPIC_PRO
+        syncSplitBar()
+        #endif
     }
 
     /// 裁剪时照片和手柄让开底部那条（窗口大小变了、缩略图栏开关后也要重算）
@@ -4415,8 +4460,13 @@ final class ViewerViewController: NSViewController {
         rotationAutoSave?.cancel()
         rotationAutoSave = nil
         liveText?.reset()
+        // 框先放在照片中心，后台找到主体后再滑过去（用户没动框的话）
+        imageView.cropSubjectKey = folder.current.map { CropSubject.key(for: $0.url) }
         imageView.beginCrop()
         guard isStraightening else { return }
+        #if FLIPIC_PRO
+        rotationBar.resetSplitMode()
+        #endif
         rotationBar.showStraighten(degrees: imageView.fineDegrees)
         syncCropBar()
         updateCropInset()
@@ -4428,8 +4478,20 @@ final class ViewerViewController: NSViewController {
         rotationBar.setDegrees(v)
     }
 
-    func finishStraighten(apply: Bool) {
+    /// explicit = 用户自己点了完成 / 按了回车 / 在框里双击。切图时只有这几种才真的导出；
+    /// 翻页、保存、导出这些顺带收起裁剪的场合在切图里等于取消，不会悄悄写出一堆文件
+    func finishStraighten(apply: Bool, explicit: Bool = false) {
         guard isStraightening else { return }
+        var apply = apply
+        if apply, imageView.isSplitMode {
+            #if FLIPIC_PRO
+            if explicit {
+                finishSplit()
+                return
+            }
+            #endif
+            apply = false
+        }
         imageView.endCrop(apply: apply)
         updateRotationBar()
         // 裁剪、拉直完成：保存要把整张照片解开再编码，趁用户点保存、看对话框的时候先在后台解好
@@ -4446,7 +4508,7 @@ final class ViewerViewController: NSViewController {
         case 123, 124:
             let step = mods.contains(.shift) ? 1.0 : 0.1
             nudgeStraighten(to: imageView.fineDegrees + (event.keyCode == 123 ? -step : step))
-        case 36, 76: finishStraighten(apply: true)
+        case 36, 76: finishStraighten(apply: true, explicit: true)
         case 53: finishStraighten(apply: false)
         default:
             return !mods.contains(.command)

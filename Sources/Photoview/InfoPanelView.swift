@@ -63,6 +63,8 @@ final class InfoPanelView: NSVisualEffectView {
     /// 直方图：一直是这一个视图，每次重排放回原位；换了照片先清掉，后台算完再填
     private let histogramView = HistogramView(width: InfoPanelView.contentWidth)
     private var histogramTicket: HistogramLoader.Ticket?
+    /// 位置小地图：同样一直是这一个视图，有位置的照片才排进去
+    private let mapView = LocationMapView(width: InfoPanelView.contentWidth)
 
     private final class FlippedView: NSView {
         override var isFlipped: Bool { true }
@@ -158,6 +160,23 @@ final class InfoPanelView: NSVisualEffectView {
         syncTranslation()
         loadHistogram(url, sameFile: sameFile)
         rebuild(keepScroll: sameFile)
+        syncMap()
+    }
+
+    /// 面板收起时取消还没发出和还在路上的地图请求；再打开时重新排版会按需重新加载
+    override func viewDidHide() {
+        super.viewDidHide()
+        mapView.reset()
+    }
+
+    /// 这张照片有位置才让地图工作（要在排进面板之后，深浅色和屏幕倍数才对）；没有就取消
+    private func syncMap() {
+        let entries = info.common + info.sections.flatMap(\.rows)
+        if shownURL != nil, !isHidden, let e = entries.first(where: { $0.coordinate != nil }), let c = e.coordinate {
+            mapView.show(latitude: c.lat, longitude: c.lon, link: e.link)
+        } else {
+            mapView.reset()
+        }
     }
 
     /// 面板开着、排到这张照片时才算。翻走了就取消：连翻时排着队的不再解码，晚回来的结果也不会填到别的照片上。
@@ -192,6 +211,7 @@ final class InfoPanelView: NSVisualEffectView {
         histogramView.histogram = nil
         syncTranslation()
         rebuild()
+        mapView.reset()
     }
 
     @objc private func levelPicked(_ sender: NSSegmentedControl) {
@@ -231,7 +251,10 @@ final class InfoPanelView: NSVisualEffectView {
             none.textColor = .secondaryLabelColor
             stack.addArrangedSubview(none)
         }
-        info.common.forEach(addRow)
+        for e in info.common {
+            addRow(e)
+            if e.coordinate != nil { addMap() }
+        }
     }
 
     private func buildAll() {
@@ -260,7 +283,10 @@ final class InfoPanelView: NSVisualEffectView {
         for s in info.sections {
             addSectionHeader(s.title)
             if s.isShooting { addHistogram() }
-            s.rows.forEach(addPairRow)
+            for e in s.rows {
+                addPairRow(e)
+                if e.coordinate != nil { addMap() }
+            }
         }
         if stack.arrangedSubviews.isEmpty {
             let none = NSTextField(labelWithString: L10n.t("ui.noExif", "此文件没有 EXIF 信息"))
@@ -528,6 +554,12 @@ final class InfoPanelView: NSVisualEffectView {
         stack.setCustomSpacing(10, after: histogramView)
     }
 
+    /// 位置小地图排在「拍摄地点」那一行下面，占满面板宽度
+    private func addMap() {
+        stack.addArrangedSubview(mapView)
+        stack.setCustomSpacing(10, after: mapView)
+    }
+
     /// 「全部」里每组上面的小标题；除了第一组，上面加一条细线
     private func addSectionHeader(_ title: String) {
         if let last = stack.arrangedSubviews.last {
@@ -682,6 +714,8 @@ final class InfoPanelView: NSVisualEffectView {
     }
 
     /// 面板里排着的直方图（没排、没算出来是 nil），自测用
+    /// 位置小地图现在排在面板里才给（没有位置的照片、面板收起时是 nil）
+    var debugMapView: LocationMapView? { mapView.superview != nil ? mapView : nil }
     var debugHistogram: Histogram? { histogramView.superview != nil && !histogramView.isHidden ? histogramView.histogram : nil }
 
     var debugOverflow: (content: CGFloat, visible: CGFloat) { (document.frame.height, scroll.contentView.bounds.height) }

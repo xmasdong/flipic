@@ -315,6 +315,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             exit(0)
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--crashprompttest"), i + 1 < CommandLine.arguments.count {
+            let out = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { CrashPromptShot.run(outDir: out) }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--settingstabtest"), i + 1 < CommandLine.arguments.count {
+            buildMenu()
+            #if FLIPIC_PRO
+            License.install()
+            #endif
+            SettingsWindowController.shared.debugTabTest(outDir: CommandLine.arguments[i + 1])
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--settingspanes"), i + 1 < CommandLine.arguments.count {
             buildMenu()
             #if FLIPIC_PRO
@@ -607,6 +620,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         #if FLIPIC_PRO
+        if let i = CommandLine.arguments.firstIndex(of: "--splittest"), i + 2 < CommandLine.arguments.count {
+            // --splittest <输出文件夹> <照片文件夹>：切图（Pro）和框放在主体上；只能在测试 bundle id 下跑，最后一行 SPLITTEST end 是汇总
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runSplitTest(outDir: outDir, folder: folder)
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--filmtest"), i + 1 < CommandLine.arguments.count {
             // --filmtest <工作文件夹> [RAW 文件夹] [--ui-only]：胶片滤镜的自测，最后一行 FILMTEST checks=N failures=M
             let outDir = CommandLine.arguments[i + 1]
@@ -986,6 +1007,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.windowController?.open(URL(fileURLWithPath: folder))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.windowController?.runPickedNavTest(outDir: outDir) }
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--maptest"), i + 2 < CommandLine.arguments.count {
+            // --maptest <输出文件夹> <一张 JPEG>：信息面板位置小地图的自测（假的地图提供者，MAPTEST_LIVE=1 时用真的），最后一行 MAPTEST summary
+            let outDir = CommandLine.arguments[i + 1], photo = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runMapTest(outDir: outDir, photo: photo)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--infopaneltest"), i + 2 < CommandLine.arguments.count {
             // --infopaneltest <截图文件夹> <照片文件夹>：每张照片的信息面板在「常用」「全部」两级各截一张（诊断用）
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
@@ -1038,6 +1065,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runCropTest(outDir: outDir, folder: folder)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--cropratiotest"), i + 2 < CommandLine.arguments.count {
+            // --cropratiotest <输出文件夹> <照片文件夹>：新增比例和自定义比例（照片文件夹里放 land.jpg、port.jpg，只另存副本）
+            let outDir = CommandLine.arguments[i + 1], folder = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runCropRatioTest(outDir: outDir, folder: folder)
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--cropspeedtest"), i + 2 < CommandLine.arguments.count {
             // --cropspeedtest <工作文件夹> <照片文件夹>：裁剪后覆盖保存的耗时（照片文件夹里的文件会被改动，要用副本）

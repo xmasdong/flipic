@@ -417,6 +417,6 @@ enum VideoInfo {
         var text = String(format: "%.5f° %@, %.5f° %@", abs(lat), lat >= 0 ? "N" : "S", abs(lon), lon >= 0 ? "E" : "W")
         if nums.count >= 3 { text += String(format: " · %.0f m", nums[2]) }
         let link = URL(string: String(format: "https://maps.apple.com/?ll=%.6f,%.6f&q=%.6f,%.6f", lat, lon, lat, lon))
-        return ExifEntry(label: L10n.t("exif.location", "拍摄地点"), value: text, link: link)
+        return ExifEntry(label: L10n.t("exif.location", "拍摄地点"), value: text, link: link, coordinate: (lat, lon))
     }
 }

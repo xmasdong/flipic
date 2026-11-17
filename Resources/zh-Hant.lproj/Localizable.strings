@@ -1209,7 +1209,7 @@ Return  重新命名目前圖片
 "wm.preview.photo" = "預覽用的是現在這張照片：%@";
 
 /* crash report (opt-in) */
-"crash.title" = "Flipic Lens 上次意外結束了。要把崩潰報告傳給開發者嗎？";
+"crash.title" = "Flipic 上次意外結束了。要把崩潰報告傳給開發者嗎？";
 "crash.info" = "報告裡有崩在哪裡、軟體與系統的版本、Mac 的型號，不含照片、檔名和路徑。按「傳送」才會送出。";
 "crash.send" = "傳送";
 "crash.dontSend" = "不傳送";
@@ -1222,3 +1222,45 @@ Return  重新命名目前圖片
 "set.crash" = "崩潰報告：";
 "set.crashAsk" = "意外結束後，問我要不要傳送崩潰報告";
 "set.crashNote" = "只有你按「傳送」才會送出，不會自動上傳。內容是崩在哪裡、軟體與系統版本、Mac 型號，不含照片、檔名和路徑，傳送前可以先看到完整內容。";
+"set.infoMapLabel" = "位置地圖：";
+"set.infoMap" = "在資訊面板裡顯示位置地圖";
+"set.infoMapNote" = "地圖來自 Apple 地圖，和系統「地圖」App 一樣需要連網載入這一帶的地圖。關閉時，資訊面板裡只顯示一個「顯示地圖」按鈕，點了才載入。沒有位置資訊的照片不會載入地圖。";
+"info.map.show" = "顯示地圖";
+"info.map.note" = "地圖來自 Apple 地圖，需要連網載入";
+"info.map.always" = "以後自動顯示";
+"info.map.failed" = "地圖載入不了";
+"info.map.label" = "拍攝地點地圖";
+"wb.key.space" = "空白鍵";
+"wb.showCaption" = "顯示尺寸和檔案大小";
+"crop.hint.1x1" = "方形";
+"crop.hint.4x5" = "Instagram 直式";
+"crop.hint.3x4" = "社群直式";
+"crop.hint.2x3" = "相片沖印";
+"crop.hint.3x2" = "相機原生";
+"crop.hint.16x9" = "橫式影片";
+"crop.hint.9x16" = "直式 / 桌布";
+"crop.custom" = "自訂…";
+"crop.custom.title" = "自訂比例";
+"crop.custom.info" = "寬與高各填 1 到 100 的整數";
+"crop.custom.w" = "寬";
+"crop.custom.h" = "高";
+"crop.custom.apply" = "套用";
+
+/* split into several images (Pro) */
+"split.mode.crop" = "裁剪";
+"split.mode.split" = "切圖";
+"split.mode.label" = "裁剪或切圖";
+"split.layout" = "切法";
+"split.panel" = "每張";
+"split.stripGPS" = "去掉位置資訊";
+"split.row" = "橫排 %d 張";
+"split.grid" = "網格 %@";
+"split.summary" = "%1$d 張，每張 %2$d × %3$d";
+"split.working" = "正在切圖…";
+"split.failed" = "切圖失敗，沒有寫出任何檔案";
+"split.done" = "已切成 %1$d 張，放在「%2$@」";
+"split.donePartial" = "切出 %1$d 張，另有 %2$d 張沒能寫出，放在「%3$@」";
+"split.folderSuffix" = "_切圖";
+"split.chooseMessage" = "照片所在的位置不能寫入，請選一個放切圖資料夾的位置";
+"split.choosePrompt" = "選擇";
+"pro.f.splitPhoto" = "切圖";

@@ -16,6 +16,11 @@ final class CropOverlayView: NSView {
     /// 调角度时显示细网格，方便对齐地平线
     var showsFineGrid = false { didSet { fineLayer.isHidden = !showsFineGrid } }
 
+    /// 切图（Pro）：把框分成 列 × 行 格，画分隔线和每格的序号；nil 就是普通裁剪的三分线
+    var split: (cols: Int, rows: Int)? {
+        didSet { if split?.cols != oldValue?.cols || split?.rows != oldValue?.rows { refresh() } }
+    }
+
     var onChange: ((CropGeometry.Crop) -> Void)?
     var onApply: (() -> Void)?
 
@@ -24,6 +29,9 @@ final class CropOverlayView: NSView {
     private let thirdsLayer = CAShapeLayer()
     private let borderLayer = CAShapeLayer()
     private let handleLayer = CAShapeLayer()
+    private let splitLayer = CAShapeLayer()
+    /// 切图时每格左上角的序号（深色小底 + 白字，不管照片多亮都看得清）
+    private var numberLayers: [CATextLayer] = []
 
     override var isFlipped: Bool { true }
 
@@ -43,13 +51,17 @@ final class CropOverlayView: NSView {
         borderLayer.strokeColor = NSColor.white.withAlphaComponent(0.9).cgColor
         borderLayer.lineWidth = 1
         handleLayer.fillColor = NSColor.white.cgColor
-        for l in [thirdsLayer, borderLayer, handleLayer] {
+        splitLayer.fillColor = nil
+        splitLayer.strokeColor = NSColor.white.cgColor
+        splitLayer.lineWidth = 1.5
+        splitLayer.lineDashPattern = [6, 3]
+        for l in [thirdsLayer, borderLayer, handleLayer, splitLayer] {
             l.shadowColor = NSColor.black.cgColor
             l.shadowOpacity = 0.5
             l.shadowRadius = 1
             l.shadowOffset = .zero
         }
-        for l in [dimLayer, fineLayer, thirdsLayer, borderLayer, handleLayer] { layer?.addSublayer(l) }
+        for l in [dimLayer, fineLayer, thirdsLayer, splitLayer, borderLayer, handleLayer] { layer?.addSublayer(l) }
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -80,12 +92,22 @@ final class CropOverlayView: NSView {
         dim.addRect(bounds)
         dim.addRect(f)
 
-        let fine = CGMutablePath(), thirds = CGMutablePath()
+        let fine = CGMutablePath(), thirds = CGMutablePath(), splitPath = CGMutablePath()
         for i in 1..<9 {
             let x = (f.minX + f.width * CGFloat(i) / 9).rounded() + 0.5, y = (f.minY + f.height * CGFloat(i) / 9).rounded() + 0.5
             let path = i % 3 == 0 ? thirds : fine
             path.move(to: CGPoint(x: x, y: f.minY)); path.addLine(to: CGPoint(x: x, y: f.maxY))
             path.move(to: CGPoint(x: f.minX, y: y)); path.addLine(to: CGPoint(x: f.maxX, y: y))
+        }
+        if let split {
+            for c in 1..<max(1, split.cols) {
+                let x = (f.minX + f.width * CGFloat(c) / CGFloat(split.cols)).rounded() + 0.5
+                splitPath.move(to: CGPoint(x: x, y: f.minY)); splitPath.addLine(to: CGPoint(x: x, y: f.maxY))
+            }
+            for r in 1..<max(1, split.rows) {
+                let y = (f.minY + f.height * CGFloat(r) / CGFloat(split.rows)).rounded() + 0.5
+                splitPath.move(to: CGPoint(x: f.minX, y: y)); splitPath.addLine(to: CGPoint(x: f.maxX, y: y))
+            }
         }
 
         // 手柄：四角是 L 形，四边中间一小段，都压在框线外侧
@@ -109,14 +131,43 @@ final class CropOverlayView: NSView {
 
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        for l in [dimLayer, fineLayer, thirdsLayer, borderLayer, handleLayer] { l.frame = bounds }
+        for l in [dimLayer, fineLayer, thirdsLayer, splitLayer, borderLayer, handleLayer] { l.frame = bounds }
+        splitLayer.path = splitPath
+        layoutNumbers(in: f)
         dimLayer.path = dim
         fineLayer.path = fine
-        thirdsLayer.path = thirds
+        thirdsLayer.path = split == nil ? thirds : CGMutablePath()
         borderLayer.path = CGPath(rect: f.insetBy(dx: 0.5, dy: 0.5), transform: nil)
         handleLayer.path = handles
         CATransaction.commit()
         window?.invalidateCursorRects(for: self)
+    }
+
+    /// 切图的序号：从左到右、从上到下 1、2、3…，每格左上角一个小标。格子太小（不到 28 点）就不画
+    private func layoutNumbers(in f: CGRect) {
+        let count = split.map { $0.cols * $0.rows } ?? 0
+        let cw = split.map { f.width / CGFloat($0.cols) } ?? 0, ch = split.map { f.height / CGFloat($0.rows) } ?? 0
+        let show = count > 0 && min(cw, ch) >= 28
+        while numberLayers.count < count {
+            let t = CATextLayer()
+            t.alignmentMode = .center
+            t.fontSize = 11
+            t.font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
+            t.foregroundColor = NSColor.white.cgColor
+            t.backgroundColor = NSColor.black.withAlphaComponent(0.6).cgColor
+            t.cornerRadius = 4
+            t.contentsScale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+            layer?.addSublayer(t)
+            numberLayers.append(t)
+        }
+        for (i, t) in numberLayers.enumerated() {
+            guard show, i < count, let split else { t.isHidden = true; continue }
+            let c = i % split.cols, r = i / split.cols
+            let w: CGFloat = i >= 9 ? 24 : 18
+            t.isHidden = false
+            t.string = "\(i + 1)"
+            t.frame = CGRect(x: f.minX + CGFloat(c) * cw + 5, y: f.minY + CGFloat(r) * ch + 5, width: w, height: 16)
+        }
     }
 
     override func layout() {
@@ -249,5 +300,11 @@ final class CropOverlayView: NSView {
     func debugHandlePoint(_ h: CropGeometry.Handle) -> CGPoint { h.point(on: cropFrame) }
     var debugLayers: String {
         "dim=\(dimLayer.path != nil ? 1 : 0) thirds=\(thirdsLayer.path != nil ? 1 : 0) handles=\(handleLayer.path != nil ? 1 : 0) fine=\(fineLayer.isHidden ? 0 : 1)"
+    }
+    /// 测试用：切图的分隔线条数和现在显示的序号
+    var debugSplitInfo: (lines: Int, numbers: [String]) {
+        var n = 0
+        splitLayer.path?.applyWithBlock { e in if e.pointee.type == .moveToPoint { n += 1 } }
+        return (n, numberLayers.filter { !$0.isHidden }.compactMap { $0.string as? String })
     }
 }

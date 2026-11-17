@@ -486,7 +486,7 @@ enum CrashPrompt {
     static func ask(_ p: CrashReporter.Pending) -> CrashReporter.Answer {
         let alert = NSAlert()
         alert.alertStyle = .informational
-        alert.messageText = L10n.t("crash.title", "Flipic Lens 上次意外退出了。把崩溃报告发给开发者吗？")
+        alert.messageText = L10n.t("crash.title", "Flipic 上次意外退出了。把崩溃报告发给开发者吗？")
         alert.informativeText = L10n.t("crash.info", "报告里有崩在哪里、软件和系统的版本、Mac 的型号，不含照片、文件名和路径。点「发送」才会发出。")
         alert.addButton(withTitle: L10n.t("crash.send", "发送"))
         alert.addButton(withTitle: L10n.t("crash.dontSend", "不发送"))

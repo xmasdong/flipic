@@ -68,6 +68,17 @@ final class ZoomableImageView: NSView {
     /// 进裁剪前的状态，取消时回到这里
     private var cropEntry: (turns: Int, degrees: Double, crop: CropGeometry.Crop?, aspect: CropGeometry.Aspect, swapped: Bool)?
     private var fineGridHide: DispatchWorkItem?
+    /// 切图（Pro）：设了就是在切图模式，框按整体比例锁定、框上画分格；nil = 普通裁剪
+    private(set) var splitSpec: CropSplitSpec?
+    var isSplitMode: Bool { splitSpec != nil }
+    /// 这一次裁剪里用户有没有亲手拖过框（拖动或拉手柄）。没拖过，换比例、换分格时框都放在主体上；拖过就照原来的规矩
+    private(set) var cropTouched = false
+    /// 找主体用的缓存键（照片路径 + 修改时间），看图界面进裁剪前设；nil 就不找，框居中
+    var cropSubjectKey: String?
+    /// 主体：归一化、左上原点、相对没转过的照片。nil = 还没找到或者没有
+    private var subjectNorm: CGRect?
+    private var cropSession = 0
+    private var cropTween: Timer?
     /// 框、比例或角度变了（底部那条跟着更新尺寸和比例）
     var onCropChange: (() -> Void)?
     /// 在框里双击 = 完成
@@ -478,7 +489,14 @@ final class ZoomableImageView: NSView {
         imageLayer.contents = image
         refreshBackdrop()
         fit(animate: !isCropping)
-        if isCropping { refitCrop() }
+        if isCropping {
+            // 切图时「原比例」的整体比例跟着照片方向变
+            if let spec = splitSpec {
+                cropWanted = CropGeometry.Crop(center: cropWanted.center, size: CGSize(width: spec.overallAspect(image: turnedSize), height: 1))
+                cropGrows = true
+            }
+            refitCrop()
+        }
         onRotate?()
     }
 
@@ -541,6 +559,10 @@ final class ZoomableImageView: NSView {
     func beginCrop() {
         guard let baseImage, !animationActive, cropOverlay == nil else { return }
         cropEntry = (quarterTurns, fineDegrees, crop, cropAspect, cropAspectSwapped)
+        cropSession += 1
+        cropTouched = crop != nil
+        subjectNorm = nil
+        splitSpec = nil
         if let crop {
             cropWanted = crop
             cropGrows = false
@@ -564,6 +586,9 @@ final class ZoomableImageView: NSView {
         overlay.autoresizingMask = [.width, .height]
         overlay.onChange = { [weak self] c in
             guard let self else { return }
+            self.cropTween?.invalidate()
+            self.cropTween = nil
+            self.cropTouched = true
             self.cropWanted = c
             self.cropNow = c
             self.cropGrows = false
@@ -580,6 +605,7 @@ final class ZoomableImageView: NSView {
         CATransaction.commit()
         mode = .fit
         refitCrop()
+        if !cropTouched { requestSubject() }
     }
 
     /// 拖滑块或按 ← →：照片在框下面转，框按需要缩小 / 变大，始终留在照片里
@@ -599,13 +625,76 @@ final class ZoomableImageView: NSView {
         guard isCropping else { return }
         cropAspect = aspect
         cropAspectSwapped = swapped && aspect.swappable
+        splitSpec = nil
+        cropOverlay?.split = nil
         if let r = aspect.ratio(image: turnedSize, swapped: cropAspectSwapped) {
-            cropWanted = CropGeometry.Crop(center: cropNow.center, size: CGSize(width: r, height: 1))
+            cropWanted = CropGeometry.Crop(center: framePlacement(ratio: r, keeping: cropNow.center, original: aspect == .original), size: CGSize(width: r, height: 1))
             cropGrows = true
         } else {
             cropWanted = cropNow
         }
         refitCrop()
+    }
+
+    /// 切图（Pro）：spec 非 nil 进切图模式（框按整体比例放，居中在主体上），nil 回到普通裁剪
+    func setSplit(_ spec: CropSplitSpec?) {
+        guard isCropping else { return }
+        guard let spec else {
+            guard splitSpec != nil else { return }
+            setCropAspect(cropAspect, swapped: cropAspectSwapped)
+            return
+        }
+        splitSpec = spec
+        let r = spec.overallAspect(image: turnedSize)
+        cropWanted = CropGeometry.Crop(center: framePlacement(ratio: r, keeping: cropNow.center, original: false), size: CGSize(width: r, height: 1))
+        cropGrows = true
+        refitCrop()
+    }
+
+    /// 现在的框（切图要用）和转好 90° 的照片尺寸
+    var currentCrop: CropGeometry.Crop { cropNow }
+    var turnedPhotoSize: CGSize { turnedSize }
+
+    // MARK: 主体居中
+
+    /// 转好 90° 的照片里的主体框（归一化）
+    private var turnedSubject: CGRect? { subjectNorm.map { CropSubject.turned($0, clockwise: quarterTurns) } }
+
+    /// 新比例的框放在哪（中心）：没手动拖过、主体已知就放在主体上；没拖过但主体还没找到就居中；拖过沿用 keeping（原来的规矩）。
+    /// original = 原比例：框就是整张照片，不挪（保持默认框的样子）
+    private func framePlacement(ratio: CGFloat, keeping: CGPoint, original: Bool) -> CGPoint {
+        guard !cropTouched else { return keeping }
+        if original { return .zero }
+        return CropSubject.place(ratio: ratio, image: turnedSize, degrees: fineDegrees, subject: turnedSubject).center
+    }
+
+    /// 异步找主体：缓存里有马上放；没有就后台算，算完框还没被用户碰过就滑到主体上
+    private func requestSubject() {
+        guard isCropping, !CropSubject.disabledForTest, let key = cropSubjectKey, let baseImage else { return }
+        if let hit = CropSubject.cached(key) {
+            subjectNorm = hit
+            recenterOnSubject(animated: false)
+            return
+        }
+        let session = cropSession
+        CropSubject.find(key: key, image: baseImage) { [weak self] rect in
+            guard let self, self.isCropping, self.cropSession == session else { return }
+            self.subjectNorm = rect
+            self.recenterOnSubject(animated: true)
+        }
+    }
+
+    private func recenterOnSubject(animated: Bool) {
+        guard isCropping, !cropTouched, subjectNorm != nil else { return }
+        let ratio: CGFloat
+        if let spec = splitSpec {
+            ratio = spec.overallAspect(image: turnedSize)
+        } else if cropAspect != .original, let r = cropAspect.ratio(image: turnedSize, swapped: cropAspectSwapped) {
+            ratio = r
+        } else { return }
+        cropWanted = CropGeometry.Crop(center: framePlacement(ratio: ratio, keeping: cropNow.center, original: false), size: CGSize(width: ratio, height: 1))
+        cropGrows = true
+        refitCrop(animated: animated)
     }
 
     /// 结束裁剪与拉直：apply = false 回到进来之前的样子。之后显示裁好的图，和拉直一样算「改了还没保存」
@@ -639,6 +728,11 @@ final class ZoomableImageView: NSView {
 
     private func removeCropOverlay() {
         guard let overlay = cropOverlay else { return }
+        cropTween?.invalidate()
+        cropTween = nil
+        splitSpec = nil
+        cropSubjectKey = nil
+        subjectNorm = nil
         fineGridHide?.cancel()
         fineGridHide = nil
         overlay.removeFromSuperview()
@@ -652,11 +746,32 @@ final class ZoomableImageView: NSView {
     }
 
     /// 角度、比例或照片方向变了：从用户想要的框重新放进照片，再重画
-    private func refitCrop() {
+    private func refitCrop(animated: Bool = false) {
         guard isCropping else { return }
-        cropNow = CropGeometry.fitted(cropWanted, image: turnedSize, degrees: fineDegrees, grow: cropGrows)
-        layoutCrop()
-        onCropChange?()
+        cropTween?.invalidate()
+        cropTween = nil
+        let target = CropGeometry.fitted(cropWanted, image: turnedSize, degrees: fineDegrees, grow: cropGrows)
+        guard animated, target != cropNow, cropNow.size.width > 0 else {
+            cropNow = target
+            layoutCrop()
+            onCropChange?()
+            return
+        }
+        // 框滑到新位置：0.25 秒，慢出
+        let from = cropNow, began = CACurrentMediaTime(), duration = 0.25
+        let timer = Timer(timeInterval: 1.0 / 60, repeats: true) { [weak self] t in
+            guard let self, self.isCropping else { t.invalidate(); return }
+            let p = min(1, (CACurrentMediaTime() - began) / duration)
+            let e = CGFloat(1 - pow(1 - p, 3))
+            func mix(_ a: CGFloat, _ b: CGFloat) -> CGFloat { a + (b - a) * e }
+            self.cropNow = p >= 1 ? target : CropGeometry.Crop(center: CGPoint(x: mix(from.center.x, target.center.x), y: mix(from.center.y, target.center.y)),
+                                                                size: CGSize(width: mix(from.size.width, target.size.width), height: mix(from.size.height, target.size.height)))
+            self.layoutCrop()
+            self.onCropChange?()
+            if p >= 1 { t.invalidate(); self.cropTween = nil }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        cropTween = timer
     }
 
     /// 裁剪时的布局：转过的整张照片（连四个角）缩进窗口，四周留边给手柄，底部让开裁剪条。
@@ -684,7 +799,8 @@ final class ZoomableImageView: NSView {
         overlay.degrees = fineDegrees
         overlay.scale = scale
         overlay.imageCenter = center
-        overlay.lockedAspect = cropAspect.ratio(image: q, swapped: cropAspectSwapped)
+        overlay.lockedAspect = splitSpec.map { $0.overallAspect(image: q) } ?? cropAspect.ratio(image: q, swapped: cropAspectSwapped)
+        overlay.split = splitSpec.map { ($0.cols, $0.rows) }
         if !overlay.isDragging { overlay.crop = cropNow }
         overlay.refresh()
         onImageFrameChange?()

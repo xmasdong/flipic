@@ -1221,7 +1221,7 @@ Esc  先关掉右上角的照片信息
 "wm.preview.photo" = "预览用的是现在这张照片：%@";
 
 /* crash report (opt-in) */
-"crash.title" = "Flipic Lens 上次意外退出了。把崩溃报告发给开发者吗？";
+"crash.title" = "Flipic 上次意外退出了。把崩溃报告发给开发者吗？";
 "crash.info" = "报告里有崩在哪里、软件和系统的版本、Mac 的型号，不含照片、文件名和路径。点「发送」才会发出。";
 "crash.send" = "发送";
 "crash.dontSend" = "不发送";
@@ -1234,3 +1234,45 @@ Esc  先关掉右上角的照片信息
 "set.crash" = "崩溃报告：";
 "set.crashAsk" = "意外退出后，问我要不要发送崩溃报告";
 "set.crashNote" = "只有你点「发送」才会发出，不会自动上传。内容是崩在哪里、软件和系统版本、Mac 型号，不含照片、文件名和路径，发送前可以先看到完整内容。";
+"set.infoMapLabel" = "位置地图：";
+"set.infoMap" = "在信息面板里显示位置地图";
+"set.infoMapNote" = "地图来自 Apple 地图，和系统「地图」App 一样需要联网加载这一带的地图。关闭时，信息面板里只显示一个「显示地图」按钮，点了才加载。没有位置信息的照片不会加载地图。";
+"info.map.show" = "显示地图";
+"info.map.note" = "地图来自 Apple 地图，需要联网加载";
+"info.map.always" = "以后自动显示";
+"info.map.failed" = "地图加载不了";
+"info.map.label" = "拍摄地点地图";
+"wb.key.space" = "空格";
+"wb.showCaption" = "显示尺寸和文件大小";
+"crop.hint.1x1" = "方图";
+"crop.hint.4x5" = "Instagram 竖图";
+"crop.hint.3x4" = "小红书竖图";
+"crop.hint.2x3" = "照片冲印";
+"crop.hint.3x2" = "相机原生";
+"crop.hint.16x9" = "横屏视频";
+"crop.hint.9x16" = "竖屏 / 壁纸";
+"crop.custom" = "自定义…";
+"crop.custom.title" = "自定义比例";
+"crop.custom.info" = "宽和高各填 1 到 100 的整数";
+"crop.custom.w" = "宽";
+"crop.custom.h" = "高";
+"crop.custom.apply" = "应用";
+
+/* split into several images (Pro) */
+"split.mode.crop" = "裁剪";
+"split.mode.split" = "切图";
+"split.mode.label" = "裁剪或切图";
+"split.layout" = "切法";
+"split.panel" = "每张";
+"split.stripGPS" = "去掉位置信息";
+"split.row" = "横排 %d 张";
+"split.grid" = "网格 %@";
+"split.summary" = "%1$d 张，每张 %2$d × %3$d";
+"split.working" = "正在切图…";
+"split.failed" = "切图失败，没有写出任何文件";
+"split.done" = "已切成 %1$d 张，放在「%2$@」";
+"split.donePartial" = "切出 %1$d 张，另有 %2$d 张没能写出，放在「%3$@」";
+"split.folderSuffix" = "_切图";
+"split.chooseMessage" = "照片所在的位置不能写入，请选一个放切图文件夹的位置";
+"split.choosePrompt" = "选择";
+"pro.f.splitPhoto" = "切图";

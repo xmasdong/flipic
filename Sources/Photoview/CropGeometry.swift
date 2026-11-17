@@ -1,6 +1,19 @@
 import CoreGraphics
 import Foundation
 
+/// 切图（Pro）时盖在裁剪框上的格子：列数、行数和单格的宽高比（nil = 和照片一样）。
+/// 整个框的比例就是各格拼起来的比例（3 格 3:4 → 9:4）。开源版没有切图，这里只是个数据，没人去设
+struct CropSplitSpec: Equatable {
+    var cols: Int
+    var rows: Int
+    var panelRatio: CGFloat?
+
+    func overallAspect(image: CGSize) -> CGFloat {
+        let p = panelRatio ?? (image.height > 0 ? image.width / image.height : 1)
+        return p * CGFloat(max(1, cols)) / CGFloat(max(1, rows))
+    }
+}
+
 /// 裁剪框的几何，全是纯函数，不碰界面。
 /// 坐标：原点在「转好 90° 的照片」中心，x 朝右、y 朝下，单位是原图像素。
 /// 裁剪框永远是正的（和屏幕对齐），照片在它下面绕中心顺时针转了 degrees 度。
@@ -32,9 +45,10 @@ enum CropGeometry {
         }
     }
 
-    /// 比例：原比例、自由、1:1、4:5、3:2、16:9
+    /// 比例：原比例、自由、1:1、4:5、3:4、2:3、3:2、16:9、9:16、自定义。
+    /// rawValue 要写进偏好设置，已有的 0…5 不能改；新增的往后排，界面上的顺序在 RotationBar.aspectOrder
     enum Aspect: Int, CaseIterable {
-        case original, free, square, r4x5, r3x2, r16x9
+        case original = 0, free = 1, square = 2, r4x5 = 3, r3x2 = 4, r16x9 = 5, r3x4 = 6, r2x3 = 7, r9x16 = 8, custom = 9
 
         /// 能不能横竖互换（自由和 1:1 换了也一样）
         var swappable: Bool { self != .free && self != .square }
@@ -49,6 +63,10 @@ enum CropGeometry {
             case .r4x5: r = 4.0 / 5.0
             case .r3x2: r = 3.0 / 2.0
             case .r16x9: r = 16.0 / 9.0
+            case .r3x4: r = 3.0 / 4.0
+            case .r2x3: r = 2.0 / 3.0
+            case .r9x16: r = 9.0 / 16.0
+            case .custom: r = CGFloat(CropMemory.customWidth) / CGFloat(CropMemory.customHeight)
             }
             return swapped ? 1 / r : r
         }
@@ -226,6 +244,33 @@ enum CropMemory {
     /// 测试用：换成临时的偏好设置，不碰真实的
     static var defaults: UserDefaults = .standard
     private static let aspectKey = "cropLastAspect", turnedKey = "cropLastAgainstPhoto"
+    private static let customWKey = "cropCustomW", customHKey = "cropCustomH"
+
+    /// 自定义比例的宽、高：1…100 的整数，没设过是 5:7
+    static let customRange = 1...100
+    static var customWidth: Int { customValue(customWKey, fallback: 5) }
+    static var customHeight: Int { customValue(customHKey, fallback: 7) }
+
+    private static func customValue(_ key: String, fallback: Int) -> Int {
+        let v = defaults.object(forKey: key) as? Int ?? fallback
+        return customRange.contains(v) ? v : fallback
+    }
+
+    /// 把输入框里的两段文字变成 (宽, 高)；不是 1…100 的整数就是 nil
+    static func parseCustom(width: String, height: String) -> (w: Int, h: Int)? {
+        let t = { (s: String) in s.trimmingCharacters(in: .whitespaces) }
+        guard let w = Int(t(width)), let h = Int(t(height)), customRange.contains(w), customRange.contains(h) else { return nil }
+        return (w, h)
+    }
+
+    /// 应用自定义比例时记下宽高（合法才记，返回是否记下了）
+    @discardableResult
+    static func setCustom(width: Int, height: Int) -> Bool {
+        guard customRange.contains(width), customRange.contains(height) else { return false }
+        defaults.set(width, forKey: customWKey)
+        defaults.set(height, forKey: customHKey)
+        return true
+    }
 
     /// 上次的比例；没记过是原比例
     static var aspect: CropGeometry.Aspect {
@@ -238,6 +283,8 @@ enum CropMemory {
     static func forget() {
         defaults.removeObject(forKey: aspectKey)
         defaults.removeObject(forKey: turnedKey)
+        defaults.removeObject(forKey: customWKey)
+        defaults.removeObject(forKey: customHKey)
     }
 
     /// 完成裁剪时记下：photo 是转好 90° 的照片尺寸，swapped 是裁剪条上的横竖互换

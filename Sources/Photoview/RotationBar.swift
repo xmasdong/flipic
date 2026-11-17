@@ -19,15 +19,84 @@ final class RotationBar: NSVisualEffectView {
     private var straightenRow: NSStackView!
     private var cropRow: NSStackView!
     private var pendingRow: NSStackView!
-    private let aspectControl = NSSegmentedControl()
+    /// 比例选择：一个显示当前比例的按钮，点开是菜单（每个比例后面带一句淡淡的用途说明）
+    private let aspectButton = NSButton()
+    private var currentAspect = CropGeometry.Aspect.original
+    private var currentSwapped = false
+    /// 刚弹出的自定义比例对话框（测试用）
+    private(set) weak var customAlert: NSAlert?
     private let swapButton = NSButton()
+    #if FLIPIC_PRO
+    /// 切图（Pro）：裁剪 | 切图 开关和切图的几个控件。开源版没有这一块
+    let splitUI = SplitBarUI()
+    /// 选了切图 / 回到裁剪（Pro 检查已通过）
+    var onSplitMode: ((Bool) -> Void)?
+    private var aspectViews: [NSView] = []
+    #endif
     private let sizeLabel = NSTextField(labelWithString: "")
-    /// 各个比例的写法；选中的那个横竖互换后写成反过来的（4:5 → 5:4）
-    private static let aspectTitles: [(CropGeometry.Aspect, String, String)] = [
-        (.original, L10n.t("crop.original", "原比例"), L10n.t("crop.original", "原比例")),
-        (.free, L10n.t("crop.free", "自由"), L10n.t("crop.free", "自由")),
-        (.square, "1:1", "1:1"), (.r4x5, "4:5", "5:4"), (.r3x2, "3:2", "2:3"), (.r16x9, "16:9", "9:16"),
-    ]
+    /// 菜单里的顺序；自定义最后，前面有分隔线
+    static let aspectOrder: [CropGeometry.Aspect] = [.original, .free, .square, .r4x5, .r3x4, .r2x3, .r3x2, .r16x9, .r9x16, .custom]
+
+    /// 比例的写法；swapped 时写成反过来的（4:5 → 5:4）
+    static func title(_ aspect: CropGeometry.Aspect, swapped: Bool) -> String {
+        let fixed: (Int, Int)
+        switch aspect {
+        case .original: return L10n.t("crop.original", "原比例")
+        case .free: return L10n.t("crop.free", "自由")
+        case .square: return "1:1"
+        case .r4x5: fixed = (4, 5)
+        case .r3x4: fixed = (3, 4)
+        case .r2x3: fixed = (2, 3)
+        case .r3x2: fixed = (3, 2)
+        case .r16x9: fixed = (16, 9)
+        case .r9x16: fixed = (9, 16)
+        case .custom: fixed = (CropMemory.customWidth, CropMemory.customHeight)
+        }
+        return swapped ? "\(fixed.1):\(fixed.0)" : "\(fixed.0):\(fixed.1)"
+    }
+
+    /// 说明在菜单里统一从这一列开始（点）：比最宽的比例「16:9」宽一点
+    static let hintColumn: CGFloat = 52
+
+    /// 比例 + 制表位 + 淡淡的说明：所有说明对齐在同一列，不随比例文字的长短错开
+    static func titleWithHint(_ ratio: String, hint: String) -> NSAttributedString {
+        let style = NSMutableParagraphStyle()
+        style.tabStops = [NSTextTab(textAlignment: .left, location: hintColumn)]
+        style.defaultTabInterval = hintColumn
+        let t = NSMutableAttributedString(string: ratio + "\t", attributes: [.font: NSFont.menuFont(ofSize: 0), .paragraphStyle: style])
+        t.append(NSAttributedString(string: hint, attributes: [.font: NSFont.menuFont(ofSize: 11), .foregroundColor: NSColor.secondaryLabelColor,
+                                                               .paragraphStyle: style]))
+        return t
+    }
+
+    /// 测试用：说明文字起点离标题左边多远（点），用排版算出来；没有说明的项是 nil
+    static func debugHintStartX(_ title: NSAttributedString) -> CGFloat? {
+        guard let tab = title.string.firstIndex(of: "\t") else { return nil }
+        let storage = NSTextStorage(attributedString: title)
+        let manager = NSLayoutManager()
+        let container = NSTextContainer(size: CGSize(width: 10_000, height: 100))
+        container.lineFragmentPadding = 0
+        manager.addTextContainer(container)
+        storage.addLayoutManager(manager)
+        manager.ensureLayout(for: container)
+        let hintIndex = title.string.distance(from: title.string.startIndex, to: title.string.index(after: tab))
+        let glyph = manager.glyphIndexForCharacter(at: hintIndex)
+        return manager.location(forGlyphAt: glyph).x + manager.lineFragmentRect(forGlyphAt: glyph, effectiveRange: nil).minX
+    }
+
+    /// 菜单里比例后面的一句话；原比例、自由、自定义没有
+    static func hint(_ aspect: CropGeometry.Aspect) -> String? {
+        switch aspect {
+        case .square: return L10n.t("crop.hint.1x1", "方图")
+        case .r4x5: return L10n.t("crop.hint.4x5", "Instagram 竖图")
+        case .r3x4: return L10n.t("crop.hint.3x4", "小红书竖图")
+        case .r2x3: return L10n.t("crop.hint.2x3", "照片冲印")
+        case .r3x2: return L10n.t("crop.hint.3x2", "相机原生")
+        case .r16x9: return L10n.t("crop.hint.16x9", "横屏视频")
+        case .r9x16: return L10n.t("crop.hint.9x16", "竖屏 / 壁纸")
+        default: return nil
+        }
+    }
 
     init() {
         super.init(frame: .zero)
@@ -63,14 +132,14 @@ final class RotationBar: NSVisualEffectView {
         straightenRow.setCustomSpacing(16, after: hint)
 
         let aspectTitle = Self.label(L10n.t("rot.bar.aspect", "比例"), bold: true)
-        aspectControl.segmentCount = Self.aspectTitles.count
-        aspectControl.trackingMode = .selectOne
-        aspectControl.segmentStyle = .rounded
-        aspectControl.segmentDistribution = .fit
-        for (i, t) in Self.aspectTitles.enumerated() { aspectControl.setLabel(t.1, forSegment: i) }
-        aspectControl.selectedSegment = 0
-        aspectControl.target = self
-        aspectControl.action = #selector(aspectChanged)
+        aspectButton.bezelStyle = .rounded
+        aspectButton.image = NSImage(systemSymbolName: "chevron.up.chevron.down", accessibilityDescription: nil)
+        aspectButton.imagePosition = .imageTrailing
+        aspectButton.title = Self.title(.original, swapped: false)
+        aspectButton.setAccessibilityLabel(L10n.t("rot.bar.aspect", "比例"))
+        aspectButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        aspectButton.target = self
+        aspectButton.action = #selector(aspectClicked)
         swapButton.bezelStyle = .rounded
         swapButton.image = NSImage(systemSymbolName: "rectangle.portrait.rotate", accessibilityDescription: nil)
             ?? NSImage(systemSymbolName: "arrow.triangle.2.circlepath", accessibilityDescription: nil)
@@ -88,7 +157,21 @@ final class RotationBar: NSVisualEffectView {
         gap.translatesAutoresizingMaskIntoConstraints = false
         gap.setContentHuggingPriority(.init(1), for: .horizontal)
         gap.setContentCompressionResistancePriority(.init(1), for: .horizontal)
-        cropRow = NSStackView(views: [aspectTitle, aspectControl, swapButton, gap, sizeLabel])
+        cropRow = NSStackView(views: [aspectTitle, aspectButton, swapButton, gap, sizeLabel])
+        #if FLIPIC_PRO
+        aspectViews = [aspectTitle, aspectButton, swapButton]
+        cropRow.insertArrangedSubview(splitUI.modeView, at: 0)
+        cropRow.setCustomSpacing(16, after: splitUI.modeView)
+        for v in splitUI.splitViews {
+            v.isHidden = true
+            cropRow.insertArrangedSubview(v, at: cropRow.arrangedSubviews.count - 2)
+        }
+        splitUI.window = { [weak self] in self?.window }
+        splitUI.onMode = { [weak self] on in
+            self?.applySplitVisibility(on)
+            self?.onSplitMode?(on)
+        }
+        #endif
 
         let pendingTitle = Self.label(L10n.t("rot.bar.pending", "修改还没保存"), bold: false)
         let revert = Self.button(L10n.t("rot.bar.revert", "还原"), #selector(revertClicked), self)
@@ -138,6 +221,9 @@ final class RotationBar: NSVisualEffectView {
     var isStraightening: Bool { !isHidden && !straightenRow.isHidden }
 
     func showStraighten(degrees: Double) {
+        #if FLIPIC_PRO
+        splitUI.refreshProMark()
+        #endif
         setDegrees(degrees)
         straightenRow.isHidden = false
         cropRow.isHidden = false
@@ -160,36 +246,118 @@ final class RotationBar: NSVisualEffectView {
 
     /// 选中的比例；swapped 时把它写成反过来的，互换按钮只在换了有区别的比例上能点
     func setAspect(_ aspect: CropGeometry.Aspect, swapped: Bool) {
-        for (i, t) in Self.aspectTitles.enumerated() {
-            aspectControl.setLabel(t.0 == aspect && swapped ? t.2 : t.1, forSegment: i)
-            if t.0 == aspect { aspectControl.selectedSegment = i }
-        }
+        currentAspect = aspect
+        currentSwapped = swapped
+        aspectButton.title = Self.title(aspect, swapped: swapped)
         swapButton.isEnabled = aspect.swappable
     }
+
+    #if FLIPIC_PRO
+    private func applySplitVisibility(_ split: Bool) {
+        for v in aspectViews { v.isHidden = split }
+        for v in splitUI.splitViews { v.isHidden = !split }
+    }
+
+    /// 进裁剪时总是从「裁剪」开始
+    func resetSplitMode() {
+        splitUI.setMode(split: false)
+        applySplitVisibility(false)
+    }
+
+    /// 切图时右边显示的一句话（几张、每张多大）
+    func setSplitSummary(_ text: String) { sizeLabel.stringValue = text }
+    #endif
 
     /// 输出的像素尺寸，比如 4000 × 5000
     func setOutputSize(_ size: CGSize) {
         sizeLabel.stringValue = size.width > 0 ? "\(Int(size.width)) × \(Int(size.height))" : ""
     }
 
-    @objc private func aspectChanged() {
-        let i = aspectControl.selectedSegment
-        guard Self.aspectTitles.indices.contains(i) else { return }
-        onAspect?(Self.aspectTitles[i].0)
+    /// 比例菜单；当前的打勾
+    func makeAspectMenu() -> NSMenu {
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        for a in Self.aspectOrder {
+            if a == .custom { menu.addItem(.separator()) }
+            let item = NSMenuItem(title: a == .custom ? L10n.t("crop.custom", "自定义…") : Self.title(a, swapped: false), action: #selector(aspectPicked(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = a.rawValue
+            if let hint = Self.hint(a) { item.attributedTitle = Self.titleWithHint(item.title, hint: hint) }
+            if a == currentAspect { item.state = .on }
+            menu.addItem(item)
+        }
+        return menu
+    }
+
+    @objc private func aspectClicked() {
+        let menu = makeAspectMenu()
+        // 菜单贴在按钮下沿往上展开时选中项对齐按钮：直接从按钮上沿弹出
+        menu.popUp(positioning: menu.item(withTag: currentAspect.rawValue), at: NSPoint(x: 0, y: aspectButton.bounds.height + 2), in: aspectButton)
+    }
+
+    @objc private func aspectPicked(_ sender: NSMenuItem) {
+        guard let a = CropGeometry.Aspect(rawValue: sender.tag) else { return }
+        select(a)
+    }
+
+    private func select(_ a: CropGeometry.Aspect) {
+        if a == .custom { askCustom() } else { onAspect?(a) }
+    }
+
+    /// 自定义比例：宽、高两个小输入框（1…100 的整数），不合法时「应用」点不了
+    private func askCustom() {
+        let alert = NSAlert()
+        alert.messageText = L10n.t("crop.custom.title", "自定义比例")
+        alert.informativeText = L10n.t("crop.custom.info", "宽和高各填 1 到 100 的整数")
+        let apply = alert.addButton(withTitle: L10n.t("crop.custom.apply", "应用"))
+        let cancel = alert.addButton(withTitle: L10n.t("rot.bar.cancel", "取消"))
+        cancel.keyEquivalent = "\u{1b}"
+        let sheet = CustomRatioFields(width: CropMemory.customWidth, height: CropMemory.customHeight) { ok in apply.isEnabled = ok }
+        alert.accessoryView = sheet
+        alert.window.initialFirstResponder = sheet.widthField
+        customAlert = alert
+        let confirm = { [weak self, weak sheet] (code: NSApplication.ModalResponse) in
+            guard code == .alertFirstButtonReturn, let sheet, let v = sheet.value,
+                  CropMemory.setCustom(width: v.w, height: v.h) else { return }
+            self?.onAspect?(.custom)
+        }
+        if let w = window { alert.beginSheetModal(for: w, completionHandler: confirm) } else { confirm(alert.runModal()) }
     }
 
     @objc private func swapClicked() { onSwap?() }
 
-    /// 测试用：像点了比例那一格一样
-    func debugSelectAspect(_ aspect: CropGeometry.Aspect) {
-        guard let i = Self.aspectTitles.firstIndex(where: { $0.0 == aspect }) else { return }
-        aspectControl.selectedSegment = i
-        aspectChanged()
-    }
+    /// 测试用：像在菜单里选了这个比例（自定义会弹出对话框）
+    func debugSelectAspect(_ aspect: CropGeometry.Aspect) { select(aspect) }
 
     var debugCrop: String {
-        let i = aspectControl.selectedSegment
-        return "aspect=\(i >= 0 ? aspectControl.label(forSegment: i) ?? "-" : "-") swap=\(swapButton.isEnabled ? 1 : 0) size=\(sizeLabel.stringValue)"
+        "aspect=\(aspectButton.title) swap=\(swapButton.isEnabled ? 1 : 0) size=\(sizeLabel.stringValue)"
+    }
+
+    /// 测试用：菜单上每一项的文字和打勾情况
+    var debugMenuItems: [(title: String, checked: Bool)] {
+        makeAspectMenu().items.filter { !$0.isSeparatorItem }.map { ($0.attributedTitle?.string ?? $0.title, $0.state == .on) }
+    }
+
+    /// 测试用：菜单里每一项的富文本标题（没有就是普通标题）
+    var debugMenuAttributedTitles: [NSAttributedString] {
+        makeAspectMenu().items.filter { !$0.isSeparatorItem }.map { $0.attributedTitle ?? NSAttributedString(string: $0.title) }
+    }
+
+    /// 测试用：像点了按钮那样弹出菜单；0.8 秒后调 onShown（此时菜单在屏幕上），再把菜单收起。
+    /// 返回 onShown 有没有赶上菜单还开着（程序不在前台时系统可能很快收掉，调用方可以重试）
+    @discardableResult
+    func debugPopMenu(onShown: @escaping (NSMenu) -> Void) -> Bool {
+        let menu = makeAspectMenu()
+        var shown = false
+        let t = Timer(timeInterval: 0.8, repeats: false) { _ in
+            shown = true
+            onShown(menu)
+            menu.cancelTracking()
+        }
+        RunLoop.main.add(t, forMode: .common)
+        menu.popUp(positioning: menu.item(withTag: currentAspect.rawValue), at: NSPoint(x: 0, y: aspectButton.bounds.height + 2), in: aspectButton)
+        t.invalidate()
+        return shown
     }
 
     @objc private func sliderMoved() {
@@ -207,4 +375,48 @@ final class RotationBar: NSVisualEffectView {
     @objc private func saveClicked() { onSave?() }
 
     var debugRow: String { isHidden ? "hidden" : (straightenRow.isHidden ? "pending" : "straighten") }
+}
+
+/// 自定义比例对话框里的「宽 : 高」两个小输入框；两个都是 1…100 的整数才算合法
+final class CustomRatioFields: NSView, NSTextFieldDelegate {
+    let widthField = NSTextField(string: ""), heightField = NSTextField(string: "")
+    private let onValid: (Bool) -> Void
+
+    init(width: Int, height: Int, onValid: @escaping (Bool) -> Void) {
+        self.onValid = onValid
+        super.init(frame: NSRect(x: 0, y: 0, width: 230, height: 28))
+        func label(_ s: String) -> NSTextField {
+            let l = NSTextField(labelWithString: s)
+            l.font = .systemFont(ofSize: 13)
+            return l
+        }
+        for (f, v, id) in [(widthField, width, "cropCustomW"), (heightField, height, "cropCustomH")] {
+            f.stringValue = String(v)
+            f.alignment = .center
+            f.delegate = self
+            f.setAccessibilityIdentifier(id)
+            f.translatesAutoresizingMaskIntoConstraints = false
+            f.widthAnchor.constraint(equalToConstant: 56).isActive = true
+        }
+        let colon = label(":")
+        let row = NSStackView(views: [label(L10n.t("crop.custom.w", "宽")), widthField, colon, label(L10n.t("crop.custom.h", "高")), heightField])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 8
+        row.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(row)
+        NSLayoutConstraint.activate([
+            row.leadingAnchor.constraint(equalTo: leadingAnchor),
+            row.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+        DispatchQueue.main.async { [weak self] in self?.report() }
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    var value: (w: Int, h: Int)? { CropMemory.parseCustom(width: widthField.stringValue, height: heightField.stringValue) }
+
+    private func report() { onValid(value != nil) }
+
+    func controlTextDidChange(_ obj: Notification) { report() }
 }
