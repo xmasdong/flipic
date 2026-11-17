@@ -348,6 +348,34 @@ extension ViewerViewController {
             let v = VolumeInfo(root: URL(fileURLWithPath: "/Volumes/X"), name: "NOUUID", uuid: nil, capacity: 64_000_000_000, readOnly: false, removable: true, ejectable: true, internalDisk: false, local: true, fsType: "msdos")
             T.check(v.key == "name:NOUUID|64000000000", "volume key falls back to name + capacity when there is no UUID: \(v.key)")
         }
+        #if FLIPIC_PRO
+        // ================= 六、工作台：卡上只记在应用记录里的标记，列目录和统计都算标记
+        do {
+            let dmg = work.appendingPathComponent("wbcard.dmg")
+            if !T.makeImage(dmg, fs: "ExFAT", name: "WBCARD") {
+                T.check(false, "workbench: could not create exFAT image")
+            } else {
+                let a = mounts.appendingPathComponent("wb")
+                if !T.attach(dmg, at: a, readOnly: false) {
+                    T.check(false, "workbench: could not attach exFAT image")
+                } else {
+                    T.attached.append(a)
+                    let dir = T.populate(a)
+                    let f = dir.appendingPathComponent("IMG_0001.JPG")
+                    T.check(CardMarks.usesAppSide(dir) && CardMarks.set(true, for: f), "workbench: card volume, mark written to the app-side store only")
+                    T.check((TagSelfTest.rawTags(f) ?? []).isEmpty, "workbench: no Finder tag on the file")
+                    let list = WorkbenchViewController.listPhotos(dir)
+                    let m = list.first { $0.url.lastPathComponent == "IMG_0001.JPG" }?.marked
+                    let u = list.first { $0.url.lastPathComponent == "IMG_0002.JPG" }?.marked
+                    T.check(m == true && u == false, "workbench: listPhotos marked=\(String(describing: m)) sibling=\(String(describing: u))")
+                    let st = WorkbenchStore.computeStats(dir)
+                    T.check(st?.marked == 1, "workbench: computeStats marked=\(st.map { String($0.marked) } ?? "nil")")
+                    detachAndRemember(a, &T.attached)
+                }
+            }
+            try? fm.removeItem(at: dmg)
+        }
+        #endif
         T.info("cleanup: detaching and deleting images")
         for m in T.attached { T.detach(m) }
         T.attached.removeAll()
