@@ -1259,3 +1259,7 @@ Açmak için klasör veya resim sürükleyin";
 "split.chooseMessage" = "Bu konuma yazılamıyor. Bölünmüş görsellerin klasörünün nereye kurulacağını seçin";
 "split.choosePrompt" = "Seç";
 "pro.f.splitPhoto" = "Görseli böl";
+"set.hwheel" = "Yatay kaydırma:";
+"hwheel.navigate" = "Önceki / sonraki fotoğraf";
+"hwheel.pan" = "Fotoğrafı sola ve sağa kaydır";
+"set.hwheelNote" = "Farenin yatay tekerleği için geçerlidir (Logitech MX Master'ın başparmak tekerleği gibi). Farenin yan tuşları (geri / ileri) her zaman önceki / sonraki fotoğrafa geçer.";

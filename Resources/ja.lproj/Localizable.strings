@@ -1259,3 +1259,7 @@ Return  表示中の画像を名称変更
 "split.chooseMessage" = "この場所には書き込めません。分割したフォルダの保存先を選んでください";
 "split.choosePrompt" = "選択";
 "pro.f.splitPhoto" = "分割";
+"set.hwheel" = "横スクロール：";
+"hwheel.navigate" = "前 / 次の写真";
+"hwheel.pan" = "写真を左右に動かす";
+"set.hwheelNote" = "マウスの横ホイール（Logicool MX Master の親指ホイールなど）に適用されます。マウスのサイドボタン（戻る / 進む）は常に前 / 次の写真に切り替わります。";

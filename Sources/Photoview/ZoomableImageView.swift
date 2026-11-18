@@ -1038,6 +1038,11 @@ final class ZoomableImageView: NSView {
         get { UserDefaults.standard.bool(forKey: "wheelNavInverted") }
         set { UserDefaults.standard.set(newValue, forKey: "wheelNavInverted") }
     }
+    /// 鼠标横向滚轮（如罗技 MX Master 拇指轮）：true = 切换上一张 / 下一张（默认），false = 左右移动图片
+    static var hWheelNavigates: Bool {
+        get { UserDefaults.standard.object(forKey: "hWheelNavigates") == nil ? true : UserDefaults.standard.bool(forKey: "hWheelNavigates") }
+        set { UserDefaults.standard.set(newValue, forKey: "hWheelNavigates") }
+    }
     private var wheelAccum: CGFloat = 0
     private var wheelFlippedInGesture = false
     private var lastWheelFlip = Date.distantPast
@@ -1051,6 +1056,15 @@ final class ZoomableImageView: NSView {
         if !event.momentumPhase.isEmpty, Date().timeIntervalSince(pinchEndTime) < 0.35 { return }
         let cmd = event.modifierFlags.contains(.command)
         if !cmd, handleHorizontalSwipe(event) { return }
+        // 鼠标横向滚轮（非触控板）：翻页或平移，不走下面按纵向滚动处理的逻辑
+        if !cmd, !event.hasPreciseScrollingDeltas, abs(event.scrollingDeltaX) > abs(event.scrollingDeltaY) {
+            if Self.hWheelNavigates {
+                flipByHorizontalWheel(event)
+            } else if mode != .fit {
+                panByWheel(event)
+            }
+            return
+        }
         if Self.wheelNavigates {
             if cmd {
                 zoomByWheel(event)
@@ -1172,6 +1186,28 @@ final class ZoomableImageView: NSView {
         }
         lastWheelFlip = Date()
         onNavigate?(dy < 0 ? 1 : -1)
+    }
+
+    /// 鼠标横向滚轮一格一张，限速同纵向滚轮；往左滚（deltaX 为负）= 下一张
+    private func flipByHorizontalWheel(_ event: NSEvent) {
+        var dx = event.scrollingDeltaX
+        if event.isDirectionInvertedFromDevice { dx = -dx }
+        if Self.wheelNavInverted { dx = -dx }
+        guard dx != 0 else { return }
+        guard Date().timeIntervalSince(lastWheelFlip) > 0.06 else { return }
+        lastWheelFlip = Date()
+        onNavigate?(dx < 0 ? 1 : -1)
+    }
+
+    /// 鼠标侧键：后退（3）= 上一张，前进（4）= 下一张
+    override func otherMouseDown(with event: NSEvent) {
+        onActivity?()
+        guard !isCropping else { super.otherMouseDown(with: event); return }
+        switch event.buttonNumber {
+        case 3: onNavigate?(-1)
+        case 4: onNavigate?(1)
+        default: super.otherMouseDown(with: event)
+        }
     }
 
     override func mouseDown(with event: NSEvent) {

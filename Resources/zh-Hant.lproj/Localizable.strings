@@ -1264,3 +1264,7 @@ Return  重新命名目前圖片
 "split.chooseMessage" = "照片所在的位置不能寫入，請選一個放切圖資料夾的位置";
 "split.choosePrompt" = "選擇";
 "pro.f.splitPhoto" = "切圖";
+"set.hwheel" = "橫向捲動：";
+"hwheel.navigate" = "切換上一張 / 下一張";
+"hwheel.pan" = "左右移動圖片";
+"set.hwheelNote" = "適用於滑鼠的橫向滾輪（如羅技 MX Master 的拇指滾輪）。滑鼠側鍵的後退 / 前進一律是上一張 / 下一張。";

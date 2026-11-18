@@ -503,6 +503,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--iomeasure"), i + 3 < CommandLine.arguments.count {
+            // --iomeasure <文件夹> <viewer|viewer-date|viewer-bigthumb|workbench> <输出目录> [秒数]：量打开文件夹读了多少磁盘，最后一行 IOMEASURE summary
+            let a = CommandLine.arguments
+            let folder = a[i + 1], mode = a[i + 2], outDir = a[i + 3]
+            let secs = i + 4 < a.count ? Double(a[i + 4]) ?? 90 : 90
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                IOMeasure.run(folder: folder, mode: mode, outDir: outDir, seconds: secs,
+                              viewer: self?.windowController?.contentViewController as? ViewerViewController)
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--workbenchtest"), i + 2 < CommandLine.arguments.count {
             // --workbenchtest <输出目录> <文件夹…>：工作台第 1 期的主要操作走一遍，每步截图
             let outDir = CommandLine.arguments[i + 1]
@@ -1049,6 +1060,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let outDir = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runFolderSyncTest(outDir: outDir)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--hwheeltest"), i + 1 < CommandLine.arguments.count {
+            // --hwheeltest <工作文件夹>：鼠标横向滚轮 / 侧键翻页自测，最后一行 HWHEEL summary
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runHWheelTest(outDir: outDir)
             }
         } else if let i = CommandLine.arguments.firstIndex(of: "--cardmarktest"), i + 1 < CommandLine.arguments.count {
             // --cardmarktest <工作文件夹>：存储卡标记不写卡的自测（用 hdiutil 磁盘映像），最后一行 CARDTEST summary

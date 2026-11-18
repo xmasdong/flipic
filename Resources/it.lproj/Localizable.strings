@@ -1259,3 +1259,7 @@ Trascina una cartella o un'immagine per aprire";
 "split.chooseMessage" = "Non è possibile scrivere in questa posizione. Scegli dove creare la cartella delle parti";
 "split.choosePrompt" = "Scegli";
 "pro.f.splitPhoto" = "Dividi in immagini";
+"set.hwheel" = "Scorrimento orizzontale:";
+"hwheel.navigate" = "Foto precedente / successiva";
+"hwheel.pan" = "Sposta la foto a sinistra e a destra";
+"set.hwheelNote" = "Vale per la rotella orizzontale del mouse (come la rotella del pollice del Logitech MX Master). I tasti laterali del mouse (indietro / avanti) passano sempre alla foto precedente / successiva.";

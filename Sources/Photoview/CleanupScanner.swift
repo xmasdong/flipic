@@ -91,13 +91,13 @@ final class CleanupScanner {
     var onProgress: (() -> Void)?
     var onFinish: (() -> Void)?
 
-    private let queue: OperationQueue = {
-        let q = OperationQueue()
-        q.name = "Flipic.cleanup"
-        q.maxConcurrentOperationCount = CleanupScanner.workers
-        q.qualityOfService = .utility
-        return q
-    }()
+    private let queue: OperationQueue
+    /// 这个文件夹实际开几路：慢存储（外接盘、网络卷）只开 1 路，按目录顺序一张张读，机械盘不来回寻道
+    let workerCount: Int
+    /// 让路给前台：工作台在外接盘上开的检查放到最低优先级，宫格的缩略图、星级先读
+    var runsInBackground = false {
+        didSet { queue.qualityOfService = runsInBackground ? .background : .utility }
+    }
     /// 并行路数：核心数的一半，2~6 路。实测 917 张人像 2 路 21 秒、4 路 11 秒、6 路 8 秒，再多基本不涨；
     /// 每多一路内存多约 20MB。FLIPIC_CLEANUP_WORKERS 仅测速用
     static let workers: Int = {
@@ -115,6 +115,12 @@ final class CleanupScanner {
     init(folder: URL, units: [CleanupUnit], useCache: Bool = true) {
         self.units = units
         cacheURL = useCache ? Self.cacheFile(for: folder) : nil
+        // 外置硬盘、存储卡上两路：一路读盘时另一路在算，硬盘不用在很多文件之间来回跳
+        workerCount = Volumes.isSlowStorage(folder) ? 2 : Self.workers
+        queue = OperationQueue()
+        queue.name = "Flipic.cleanup"
+        queue.maxConcurrentOperationCount = workerCount
+        queue.qualityOfService = .utility
     }
 
     deinit { queue.cancelAllOperations() }
@@ -146,14 +152,23 @@ final class CleanupScanner {
         done = units.count - todo.count
         DispatchQueue.main.async { self.onProgress?() }
 
-        // 只对大小相同的文件算哈希，绝大多数文件一次都不用读全
+        // 只对大小相同的文件算哈希，绝大多数文件一次都不用读全；
+        // 大小相同的先比头尾各 256KB（RAW 常常大小一样），头尾也一样的才读全文件算 SHA-256。
+        // 没算全哈希的文件就不是重复（CleanupResult 只把同一全哈希的归成一组）
         let bySize = Dictionary(grouping: units.filter { $0.fileSize > 0 }, by: \.fileSize).values.filter { $0.count > 1 }
         let hashOp = BlockOperation { [weak self] in
             for group in bySize {
+                var byQuick: [String: [CleanupUnit]] = [:]
                 for u in group {
                     guard let self, !self.cancelled else { return }
-                    if let h = Self.sha256(of: u.primary) {
-                        self.lock.lock(); self.hashes[u.primary] = h; self.lock.unlock()
+                    if let q = Self.quickFingerprint(of: u.primary) { byQuick[q, default: []].append(u) }
+                }
+                for same in byQuick.values where same.count > 1 {
+                    for u in same {
+                        guard let self, !self.cancelled else { return }
+                        if let h = Self.sha256(of: u.primary) {
+                            self.lock.lock(); self.hashes[u.primary] = h; self.lock.unlock()
+                        }
                     }
                 }
             }
@@ -286,6 +301,26 @@ final class CleanupScanner {
         let xs = pts.map(\.x), ys = pts.map(\.y)
         let w = (xs.max()! - xs.min()!), h = (ys.max()! - ys.min()!)
         return w > 0 ? Float(h / w) : 1
+    }
+
+    /// 快速指纹：大小 + 头尾各 256KB 的 SHA-256（不到 512KB 的文件就是整个文件）
+    static func quickFingerprint(of url: URL) -> String? {
+        guard let fh = try? FileHandle(forReadingFrom: url) else { return nil }
+        defer { try? fh.close() }
+        let span: UInt64 = 256 << 10
+        return autoreleasepool {
+            guard let size = try? fh.seekToEnd(), (try? fh.seek(toOffset: 0)) != nil,
+                  let head = try? fh.read(upToCount: Int(span)) else { return nil }
+            var hasher = SHA256()
+            hasher.update(data: head)
+            if size > span * 2 {
+                guard (try? fh.seek(toOffset: size - span)) != nil, let tail = try? fh.read(upToCount: Int(span)) else { return nil }
+                hasher.update(data: tail)
+            } else if size > span, let rest = try? fh.read(upToCount: Int(size - span)) {
+                hasher.update(data: rest)
+            }
+            return "\(size):" + hasher.finalize().map { String(format: "%02x", $0) }.joined()
+        }
     }
 
     private static func sha256(of url: URL) -> String? {

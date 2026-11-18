@@ -1259,3 +1259,7 @@ Kéo thư mục hoặc ảnh vào để mở";
 "split.chooseMessage" = "Không thể ghi vào vị trí này. Hãy chọn nơi tạo thư mục chứa ảnh đã chia";
 "split.choosePrompt" = "Chọn";
 "pro.f.splitPhoto" = "Chia ảnh";
+"set.hwheel" = "Cuộn ngang:";
+"hwheel.navigate" = "Ảnh trước / sau";
+"hwheel.pan" = "Di chuyển ảnh sang trái và phải";
+"set.hwheelNote" = "Áp dụng cho con lăn ngang của chuột (như con lăn ngón cái của Logitech MX Master). Các nút bên của chuột (lùi / tiến) luôn chuyển về ảnh trước / sau.";

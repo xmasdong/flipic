@@ -1271,3 +1271,7 @@ Drop a folder or image to open";
 "split.chooseMessage" = "This location cannot be written to. Choose where to put the split folder";
 "split.choosePrompt" = "Choose";
 "pro.f.splitPhoto" = "Split";
+"set.hwheel" = "Horizontal scroll:";
+"hwheel.navigate" = "Previous / Next Photo";
+"hwheel.pan" = "Move the photo left and right";
+"set.hwheelNote" = "Applies to a mouse's horizontal wheel (such as the thumb wheel on a Logitech MX Master). The mouse side buttons (back / forward) always go to the previous / next photo.";

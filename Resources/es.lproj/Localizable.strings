@@ -1259,3 +1259,7 @@ Arrastra una carpeta o imagen para abrir";
 "split.chooseMessage" = "No se puede escribir en esta ubicación. Elige dónde crear la carpeta con las partes";
 "split.choosePrompt" = "Elegir";
 "pro.f.splitPhoto" = "Dividir imagen";
+"set.hwheel" = "Desplazamiento horizontal:";
+"hwheel.navigate" = "Foto anterior / siguiente";
+"hwheel.pan" = "Mover la foto a izquierda y derecha";
+"set.hwheelNote" = "Se aplica a la rueda horizontal del ratón (como la rueda del pulgar del Logitech MX Master). Los botones laterales del ratón (atrás / adelante) siempre pasan a la foto anterior / siguiente.";

@@ -973,19 +973,28 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
     private let wheelNav = NSButton(radioButtonWithTitle: L10n.t("wheel.navigate", "切换上一张 / 下一张"), target: nil, action: nil)
     private let invert = NSButton(checkboxWithTitle: L10n.t("wheel.invert", "反转缩放方向"), target: nil, action: nil)
     private let invertNav = NSButton(checkboxWithTitle: L10n.t("wheel.invertNav", "反转翻页方向"), target: nil, action: nil)
+    private let hWheelNav = NSButton(radioButtonWithTitle: L10n.t("hwheel.navigate", "切换上一张 / 下一张"), target: nil, action: nil)
+    private let hWheelPan = NSButton(radioButtonWithTitle: L10n.t("hwheel.pan", "左右移动图片"), target: nil, action: nil)
     private let wheelNote = note("")
 
     override func loadView() {
         for b in [wheelZoom, wheelNav] { b.target = self; b.action = #selector(wheelChanged(_:)) }
+        for b in [hWheelNav, hWheelPan] { b.target = self; b.action = #selector(hWheelChanged(_:)) }
         invert.target = self; invert.action = #selector(invertChanged)
         invertNav.target = self; invertNav.action = #selector(invertNavChanged)
         let radios = NSStackView(views: [wheelZoom, wheelNav])
         radios.orientation = .vertical
         radios.alignment = .leading
         radios.spacing = 6
+        let hRadios = NSStackView(views: [hWheelNav, hWheelPan])
+        hRadios.orientation = .vertical
+        hRadios.alignment = .leading
+        hRadios.spacing = 6
         let g = grid([
             [label(L10n.t("set.wheel", "滚轮 / 双指上下：")), radios],
             spacerRow(wheelNote),
+            [label(L10n.t("set.hwheel", "横向滚动：")), hRadios],
+            spacerRow(note(L10n.t("set.hwheelNote", "适用于鼠标的横向滚轮（如罗技 MX Master 的拇指滚轮）。鼠标侧键的后退 / 前进始终是上一张 / 下一张。"))),
             [label(L10n.t("set.navDirection", "翻页方向：")), invertNav],
             spacerRow(note(L10n.t("set.invertNavNote", "默认手指往下滑是下一张。勾上后照片跟着手指走，往下滑回到上一张、往上滑是下一张，和刷手机一样。鼠标滚轮和触控板都适用。"))),
             [label(L10n.t("set.zoomDirection", "缩放方向：")), invert],
@@ -994,9 +1003,12 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
         ])
         g.row(at: 0).rowAlignment = .none
         g.cell(atColumnIndex: 0, rowIndex: 0).yPlacement = .top
+        g.cell(atColumnIndex: 0, rowIndex: 2).yPlacement = .top
+        g.row(at: 2).rowAlignment = .none
         g.row(at: 1).topPadding = -4
         g.row(at: 3).topPadding = -4
         g.row(at: 5).topPadding = -4
+        g.row(at: 7).topPadding = -4
         view = host(g)
         reload()
     }
@@ -1007,13 +1019,22 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
         wheelNav.state = nav ? .on : .off
         invert.state = ZoomableImageView.wheelZoomInverted ? .on : .off
         invertNav.state = ZoomableImageView.wheelNavInverted ? .on : .off
-        invertNav.isEnabled = nav
+        let hnav = ZoomableImageView.hWheelNavigates
+        // 横向滚轮翻页也按这个方向，所以两种翻页有一种开着就能勾
+        invertNav.isEnabled = nav || hnav
+        hWheelNav.state = hnav ? .on : .off
+        hWheelPan.state = hnav ? .off : .on
         wheelNote.stringValue = nav ? L10n.t("wheel.navigate.on", "滚轮：切换图片（⌘+滚轮缩放）")
                                     : L10n.t("wheel.zoom.on", "滚轮：缩放图片（⌘+滚轮平移）")
     }
 
     @objc private func wheelChanged(_ sender: NSButton) {
         ZoomableImageView.wheelNavigates = sender === wheelNav
+        reload()
+    }
+
+    @objc private func hWheelChanged(_ sender: NSButton) {
+        ZoomableImageView.hWheelNavigates = sender === hWheelNav
         reload()
     }
 

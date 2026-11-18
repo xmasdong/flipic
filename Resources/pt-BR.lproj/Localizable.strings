@@ -1259,3 +1259,7 @@ Arraste uma pasta ou imagem para abrir";
 "split.chooseMessage" = "Não é possível gravar neste local. Escolha onde criar a pasta das partes";
 "split.choosePrompt" = "Escolher";
 "pro.f.splitPhoto" = "Dividir imagem";
+"set.hwheel" = "Rolagem horizontal:";
+"hwheel.navigate" = "Foto anterior / seguinte";
+"hwheel.pan" = "Mover a foto para a esquerda e a direita";
+"set.hwheelNote" = "Vale para a roda horizontal do mouse (como a roda do polegar do Logitech MX Master). Os botões laterais do mouse (voltar / avançar) sempre passam para a foto anterior / seguinte.";

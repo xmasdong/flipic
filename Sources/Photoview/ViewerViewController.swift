@@ -169,6 +169,7 @@ final class ViewerViewController: NSViewController {
     /// 全分辨率图只在放大到预览不够清晰时才解码（ImageLoader 里只留 2 张）
     private enum CachePolicy {
         static let warmupLimit = 100
+        static let slowWarmupLimit = 30
         static let previewAhead = 5      // 浏览方向前方多备几张
         static let previewBehind = 2     // 后方留少量，往回翻也快
         static let evictPreviewOutside = 8
@@ -1636,11 +1637,12 @@ final class ViewerViewController: NSViewController {
         let gen = folderGeneration
         let fallbacks = Dictionary(folder.items.filter { $0.captureDate == nil }.map { ($0.url, $0.modified) },
                                    uniquingKeysWith: { a, _ in a })
-        let urls = Array(fallbacks.keys)
+        // 按文件名排好：慢存储上每路按目录顺序读一段，少寻道
+        let urls = fallbacks.keys.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var dates = [Date](repeating: .distantPast, count: urls.count)
             dates.withUnsafeMutableBufferPointer { buf in
-                DispatchQueue.concurrentPerform(iterations: urls.count) { i in
+                DiskIO.forEach(urls) { i in
                     buf[i] = FolderModel.readCaptureDate(url: urls[i], fallback: fallbacks[urls[i]] ?? nil)
                 }
             }
@@ -1722,11 +1724,14 @@ final class ViewerViewController: NSViewController {
         let gen = warmupGeneration
         var urls: [URL] = []
         var next = 1
-        while urls.count < CachePolicy.warmupLimit {
+        // 外接盘上只预热前后 30 张：一张缩略图在 USB 机械盘上要几十毫秒，100 张会和翻页抢盘
+        let dir = folder.allItems.first?.url.deletingLastPathComponent()
+        let limit = dir.map(Volumes.isSlowStorage) == true ? CachePolicy.slowWarmupLimit : CachePolicy.warmupLimit
+        while urls.count < limit {
             var expanded = false
             for offset in [next, -next] {
                 let idx = folder.index + offset
-                if urls.count < CachePolicy.warmupLimit, folder.items.indices.contains(idx) {
+                if urls.count < limit, folder.items.indices.contains(idx) {
                     urls.append(folder.items[idx].url)
                     expanded = true
                 }
@@ -3188,7 +3193,7 @@ final class ViewerViewController: NSViewController {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var values = [Int](repeating: 0, count: missing.count)
             values.withUnsafeMutableBufferPointer { buf in
-                DispatchQueue.concurrentPerform(iterations: missing.count) { i in buf[i] = Rating.read(missing[i]) }
+                DiskIO.forEach(missing) { i in buf[i] = Rating.read(missing[i]) }
             }
             DispatchQueue.main.async {
                 guard let self, self.folderGeneration == gen else { return }

@@ -1276,3 +1276,7 @@ Esc  先关掉右上角的照片信息
 "split.chooseMessage" = "照片所在的位置不能写入，请选一个放切图文件夹的位置";
 "split.choosePrompt" = "选择";
 "pro.f.splitPhoto" = "切图";
+"set.hwheel" = "横向滚动：";
+"hwheel.navigate" = "切换上一张 / 下一张";
+"hwheel.pan" = "左右移动图片";
+"set.hwheelNote" = "适用于鼠标的横向滚轮（如罗技 MX Master 的拇指滚轮）。鼠标侧键的后退 / 前进始终是上一张 / 下一张。";

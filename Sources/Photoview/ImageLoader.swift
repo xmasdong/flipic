@@ -467,7 +467,9 @@ final class ImageLoader {
     func thumb(for url: URL) -> CGImage? {
         if let hit = cachedThumb(for: url) { return hit }
         let px = FilmstripView.thumbPixel
-        guard let img = Self.renderThumbnail(url: url, maxPixel: px, allowEmbedded: px <= 160) else { return nil }
+        // RAW 不管多大的格子都先用相机内嵌的预览（只读文件里那一段）；太小才整张解码 RAW
+        guard let img = Self.rawEmbeddedPreview(url: url, maxPixel: px)
+                ?? Self.renderThumbnail(url: url, maxPixel: px, allowEmbedded: px <= 160) else { return nil }
         // 顺带读文件头：快速连翻时缩略图能先顶上去，要知道原图尺寸才摆得对
         _ = info(for: url)
         thumbCache.set(CGBox(image: img, px: px), for: url, cost: pixelBytes(img))

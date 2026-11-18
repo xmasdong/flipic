@@ -1259,3 +1259,7 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "split.chooseMessage" = "An diesem Ort kann nicht geschrieben werden. Wählen Sie, wo der Ordner mit den Teilen angelegt werden soll";
 "split.choosePrompt" = "Auswählen";
 "pro.f.splitPhoto" = "Bild teilen";
+"set.hwheel" = "Horizontales Scrollen:";
+"hwheel.navigate" = "Vorheriges / nächstes Foto";
+"hwheel.pan" = "Foto nach links und rechts verschieben";
+"set.hwheelNote" = "Gilt für das horizontale Rad einer Maus (etwa das Daumenrad der Logitech MX Master). Die Seitentasten der Maus (zurück / vor) wechseln immer zum vorherigen / nächsten Foto.";
