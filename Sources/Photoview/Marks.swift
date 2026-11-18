@@ -5,13 +5,17 @@ import Foundation
 enum Marks {
     /// 改名为 Flipic Lens 后标签名仍是「Flipic」，老用户打过的标记照样认得；App Store 版用自己的名字
     static let tagName = AppInfo.name.hasPrefix(AppInfo.defaultName) ? AppInfo.defaultName : AppInfo.name
+    private static let alsoMarkedNames: [String] = []
+    /// 认作标记的所有标签名（写的那个排第一）
+    static var markNames: [String] { [tagName] + alsoMarkedNames }
     /// 访达标签颜色序号：1 灰 2 绿 3 紫 4 蓝 5 黄 6 红 7 橙
     private static let colorIndex = 2
     private static let attr = "com.apple.metadata:_kMDItemUserTags"
 
     /// 列目录时顺带取回的标签名里有没有它
     static func isMarked(tagNames: [String]?) -> Bool {
-        tagNames?.contains(tagName) ?? false
+        guard let tagNames else { return false }
+        return markNames.contains { tagNames.contains($0) }
     }
 
     /// 单个文件有没有标记：访达标签，或者（在存储卡上时）这台电脑记着的标记
@@ -42,7 +46,7 @@ enum Marks {
     private static func setTag(_ on: Bool, for url: URL) -> Bool {
         var tags = readTags(url)
         // 标签存成「名称\n颜色序号」，没有颜色时只有名称
-        tags.removeAll { $0 == tagName || $0.hasPrefix(tagName + "\n") }
+        tags.removeAll { t in markNames.contains { t == $0 || t.hasPrefix($0 + "\n") } }
         if on { tags.append("\(tagName)\n\(colorIndex)") }
         guard writeTags(tags, to: url) else { return false }
         return isMarked(fresh(url)) == on

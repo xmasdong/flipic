@@ -1044,6 +1044,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runWatermarkTest(outDir: outDir)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--foldersynctest"), i + 1 < CommandLine.arguments.count {
+            // --foldersynctest <工作文件夹>：列不出目录时正在看的照片不被拿掉，最后一行 FOLDERSYNC summary
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runFolderSyncTest(outDir: outDir)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--cardmarktest"), i + 1 < CommandLine.arguments.count {
             // --cardmarktest <工作文件夹>：存储卡标记不写卡的自测（用 hdiutil 磁盘映像），最后一行 CARDTEST summary
             let outDir = CommandLine.arguments[i + 1]

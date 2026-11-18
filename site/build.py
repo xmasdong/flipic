@@ -16,7 +16,7 @@ SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
 SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "5 MB"
+SIZE = "8 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -64,6 +64,8 @@ PAIRS = {
 }
 
 # Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
+# Mac App Store 上的 Flipic Lens（改名前的名字在 private.json 的 store_app_name）。中国大陆区没有上架
+APP_STORE_URL = "https://apps.apple.com/app/id6829623097"
 PRO_BUY_URL = "https://buy.stripe.com/9B66oI6Rg3uocmU2BAcbC02"
 PRO_PRICE = {"zh": "¥68", "en": "$12.99"}
 PRO_VALUE = {"zh": (68, "CNY"), "en": (12.99, "USD")}   # GA4 begin_checkout 的金额
@@ -76,7 +78,7 @@ LEGAL = {
     "operator": {"zh": "Flipic Lens 团队", "en": "Flipic Lens Team"},   # 运营主体
     "email": "support@flipic.app",      # 联系邮箱，Cloudflare Email Routing 转发
     "refund_days": 14,                  # 官网购买 Pro 后几天内可以退款
-    "effective": "2026-11-16" if SHOW_WINDOWS_WAITLIST else "2026-11-04",   # 生效日期；隐私政策新增候补名单一节时改成当天
+    "effective": "2026-11-18",   # 生效日期；隐私政策新增候补名单一节时改成当天
 }
 # Mac App Store 版的名字只放在本机的 site/private.json（不进公开仓库）；没有时页面写「Mac App Store 版」
 _private = ROOT / "private.json"
@@ -92,8 +94,8 @@ DOWNLOAD_ICON = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 T = {
     "zh": {
         "lang": "zh-CN", "home": "/", "features": "功能", "guides": "指南", "faq": "常见问题",
-        "other": "English", "download": "免费下载 Mac 版", "github_alt": "也可以从 <a href=\"{gh}/releases/latest\">GitHub</a> 下载",
-        "facts": ["免费开源", "安装包约 5 MB", "macOS 13 或更新", "Apple 芯片与 Intel 通用", "已通过 Apple 公证", "不用账号"],
+        "other": "English", "download": "免费下载 Mac 版", "github_alt": "也可以从 <a href=\"{gh}/releases/latest\">GitHub</a> 下载，或者到 <a href=\"{store}\">Mac App Store</a>（中国大陆区暂未上架）",
+        "facts": ["免费开源", "安装包约 8 MB", "macOS 13 或更新", "Apple 芯片与 Intel 通用", "已通过 Apple 公证", "不用账号"],
         "phone": "Flipic Lens 是 Mac 软件，手机上装不了。复制网址，到 Mac 的浏览器里打开就能下载。",
         "phone_btn": "复制网址 flipic.app", "phone_done": "已复制，到 Mac 上粘贴打开",
         "crumbs_home": "Flipic Lens", "crumbs_guides": "指南", "updated": "更新于 " + UPDATED,
@@ -106,8 +108,8 @@ T = {
     },
     "en": {
         "lang": "en", "home": "/en/", "features": "Features", "guides": "Guides", "faq": "FAQ",
-        "other": "中文", "download": "Download for Mac, free", "github_alt": "or get it from <a href=\"{gh}/releases/latest\">GitHub</a>",
-        "facts": ["Free and open source", "About 5 MB download", "macOS 13 or later", "Apple silicon and Intel", "Notarized by Apple", "No account needed"],
+        "other": "中文", "download": "Download for Mac, free", "github_alt": "or get it from <a href=\"{gh}/releases/latest\">GitHub</a> or the <a href=\"{store}\">Mac App Store</a>",
+        "facts": ["Free and open source", "About 8 MB download", "macOS 13 or later", "Apple silicon and Intel", "Notarized by Apple", "No account needed"],
         "phone": "Flipic Lens is a Mac app and can't be installed on a phone. Copy the address and open it in a browser on your Mac.",
         "phone_btn": "Copy flipic.app", "phone_done": "Copied. Paste it on your Mac.",
         "crumbs_home": "Flipic Lens", "crumbs_guides": "Guides", "updated": "Updated " + UPDATED,
@@ -203,7 +205,7 @@ def download_block(lang, big=True, brew=False, win=False):
     win_link = f'\n  <a class="alt win-link" href="#windows">{WAITLIST[lang]["link"]}</a>' if win else ""
     return f"""<div class="get">
   <a class="btn" href="/download/Flipic.dmg" download>{DOWNLOAD_ICON}{t['download']}</a>
-  <span class="alt">{t['github_alt'].format(gh=GITHUB)}</span>{win_link}
+  <span class="alt">{t['github_alt'].format(gh=GITHUB, store=APP_STORE_URL)}</span>{win_link}
 </div>
 <ul class="facts">{facts}</ul>{brew_line}
 <div class="on-phone"><p>{t['phone']}</p><button class="copy" type="button" data-url="https://flipic.app" data-done="{t['phone_done']}">{t['phone_btn']}</button></div>"""
@@ -343,6 +345,7 @@ HOME = {
         "faq": [
             ("Flipic Lens 收费吗？", "看图、评星、标记、筛选、导出、清理、两款胶片滤镜这些都免费，没有广告，也不用注册账号，代码以 MIT 协议开源在 GitHub。另有可选的 <a href=\"/pro/\">Pro</a>，¥68 一次买断，下载后可以先试用 7 天，只加了批量处理、另外八款胶片滤镜和几个专业功能，大多数人用不上。"),
             ("Flipic Lens 和 App Store 上的 Flipic 是同一个吗？", "不是。Flipic Lens 原名 Flipic（更早叫 PixDeck），是 Mac 看图挑片软件；App Store 上的「Flipic: Photo Organizer」是另一位开发者的 iPhone App。为了区分，2026 年 11 月起改名 Flipic Lens，下载地址、激活码和设置都不变。"),
+            ("Mac App Store 上能下载吗？", "能，在 <a href=\"" + APP_STORE_URL + "\">Mac App Store</a> 搜 Flipic Lens" + (f"（上架时叫 {STORE_NAME}）" if STORE_NAME else "") + "，免费下载，中国大陆区暂未上架。App Store 版的 Pro 在 App 里购买，可以按月、按年订阅（年订阅首次有 7 天免费试用），也可以一次买断，付款和续订都由 Apple 处理。它和官网版是分开买的：官网的激活码在 App Store 版里用不了，App Store 里买的 Pro 也不能用在官网版上。"),
             ("从网上下载的安全吗？", "安装包用 Developer ID 签名，并通过了 Apple 公证，macOS 安装时会自动校验。Flipic Lens 没有账号，照片只在本机处理。"),
             ("能代替 Lightroom 挑片吗？", "挑片可以用它。在 Flipic Lens 里翻一遍、打星、删掉废片，打的星 Lightroom 和 Capture One 都读得到。调色修图还是回原来的软件，按 ⌘E 就能把当前这张在那边打开。"),
             ("和 Bridge、Photo Mechanic、Lightroom 有什么不同？", "Bridge 更像素材和元数据工具，Photo Mechanic 强在拷卡、IPTC 和交付，Lightroom Classic 要先进目录再挑。Flipic Lens 只做打开文件夹、翻页、看焦点、打星、标记和清理这一段，挑完再把留下的导入后期。完整对比见 <a href=\"/compare/\">Mac 看图与挑片软件对比</a>。"),
@@ -430,6 +433,7 @@ HOME = {
         "faq": [
             ("Is Flipic Lens free?", "Viewing, ratings, marks, filtering, export, Cleanup Mode and two film looks are free, with no ads and no account, and the code is MIT licensed on GitHub. There is an optional <a href=\"/en/pro/\">Pro</a> upgrade, $12.99 once, with a 7-day trial in every download. It adds batch tools, the other eight film looks and a few pro features; most people won’t need it."),
             ("Is Flipic Lens the same as Flipic on the App Store?", "No. Flipic Lens was formerly Flipic (and PixDeck before that) and is a Mac culling app. “Flipic: Photo Organizer” on the App Store is an iPhone app from another developer. We renamed to Flipic Lens in November 2026 to keep the two apart; download links, license keys and settings are unchanged."),
+            ("Is Flipic Lens on the Mac App Store?", "Yes. Search for Flipic Lens on the <a href=\"" + APP_STORE_URL + "\">Mac App Store</a>" + (f" (it launched there as {STORE_NAME})" if STORE_NAME else "") + "; it is a free download, not available in mainland China. In the App Store version, Pro is bought inside the app as a monthly or yearly subscription (the yearly plan starts with a 7-day free trial for new subscribers) or a one-time purchase, and Apple handles payment and renewals. It is bought separately from the website version: a license key from flipic.app doesn’t work in the App Store version, and Pro bought on the App Store doesn’t carry over to the website version."),
             ("Is the download safe?", "It is signed with a Developer ID and notarized by Apple; macOS checks it on install. Flipic Lens has no account and keeps photos on your Mac."),
             ("Can it replace Lightroom for culling?", "For culling, yes; for editing, no. Page through, check focus, rate, mark and delete rejects in Flipic Lens, and Lightroom or Capture One will read the ratings. Edit in the app you already use; ⌘E opens the current photo there."),
             ("How is Flipic Lens different from Bridge, Photo Mechanic or Lightroom?", "Bridge is an asset and metadata browser, Photo Mechanic is built for ingest, IPTC and delivery, and Lightroom Classic works from an imported catalog. Flipic Lens covers the catalog-free first pass: open a folder, page, check focus, rate, mark and clean up, then send the keepers to your editor. See the <a href=\"/en/compare/\">full comparison</a>."),
@@ -452,6 +456,7 @@ GUIDES = {"zh": [], "en": []}
 
 def guide(lang, path, title, short, desc, summary, body, howto=None, faq=None, title_suffix=True,
           updated=UPDATED, published=UPDATED):
+    published = min(published, updated)   # 发布日期不能晚于更新日期（默认值 UPDATED 会比手写的 updated 新）
     GUIDES[lang].append(dict(path=path, title=title, short=short, desc=desc, summary=summary, body=body,
                              howto=howto, faq=faq, title_suffix=title_suffix, updated=updated, published=published))
 
@@ -512,7 +517,7 @@ guide("zh", "/guides/windows-image-viewer-for-mac/", "Windows 看图软件的替
 <h2>Honeyview 和 IrfanView 有 Mac 版吗</h2>
 <p>没有。Honeyview 由 Bandisoft 开发，只出了 Windows 版；IrfanView 官方也只支持 Windows。网上的「Mac 版」要么是别的软件，要么是用 Wine 套壳运行，不建议装来路不明的安装包。</p>
 <h2>Mac 上可以用的替代</h2>
-<p><strong>Flipic Lens</strong>：免费开源，安装包 5 MB 左右。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
+<p><strong>Flipic Lens</strong>：免费开源，安装包 8 MB 左右。双击一张图后用 <kbd>←</kbd> <kbd>→</kbd> 翻完整个文件夹，滚轮默认缩放，按 <kbd>0</kbd> 在鼠标处放大到 100%，这些都照着 Windows 看图软件的手感来做。快捷键都能在设置里改；用 Mos 改过滚轮方向的，可以把缩放方向反过来。</p>
 <p><strong>XnView MP</strong>：功能很全的跨平台看图和管理软件，个人使用免费。适合需要大量格式转换、元数据编辑的人，界面比较复杂。</p>
 <p><strong>qView</strong>：开源的极简看图软件，界面几乎只有图片。功能少，适合只想打开看看的人。</p>
 <h2>换过来后常见的几处不同</h2>
@@ -536,9 +541,9 @@ guide("zh", "/guides/cull-event-photos/", "Mac 上怎么挑活动照片",
 <p>打完星在 Lightroom 里怎么读，见 <a href="/guides/star-rating-lightroom/">Mac 照片打星，Lightroom 能认吗</a>；连拍、闭眼和拍糊的照片怎么先分组，见 <a href="/guides/burst-closed-eyes-cleanup/">连拍、闭眼、拍糊的照片，Mac 上先挑再删</a>。</p>""",
       howto=["用 Flipic Lens 打开整个文件夹，按 ⇧⌘K 进入清理模式", "确认要删的连拍、闭眼、模糊照片，移到废纸篓", "翻看剩下的照片，按 1–5 打星", "按 ⌘E 把选中的照片交给 Lightroom 或 Photoshop"], updated="2026-11-07")
 
-guide("en", "/en/guides/mac-preview-next-image/", "Next photo in Mac Preview: why arrows fail, 3 fixes",
+guide("en", "/en/guides/mac-preview-next-image/", "How to go to the next photo on a Mac (Preview arrow keys)",
       "Next photo in Mac Preview",
-      "To see the next photo in Preview, open the whole folder: select the photos in Finder, press ⌘↓, then use the arrow keys. Quick Look and Flipic Lens also work.",
+      "Preview only pages through the photos you opened together, so the arrow keys stop after one. Three ways to page a whole folder: one Finder shortcut, Quick Look, or a viewer.",
       "Why the arrows stop, and how to page a whole folder",
       f"""<p>Preview opens only the file you double-clicked, so the arrow keys have nothing to move to. The direct fix is to open the folder's photos as a set: select them in Finder, press <kbd>⌘↓</kbd>, and the arrows work inside that Preview window. If you would rather start from one photo and keep paging, double-click it in Flipic Lens and press <kbd>→</kbd>.</p>
 <h2>Next image in the same folder</h2>
@@ -595,7 +600,7 @@ guide("en", "/en/guides/irfanview-for-mac/", "IrfanView for Mac: free alternativ
 <h2>Is there an IrfanView for Mac?</h2>
 <p>No. IrfanView officially supports Windows only, and Honeyview from Bandisoft is Windows-only too. Anything labeled "for Mac" is either a different app or Windows software wrapped in Wine, so be careful with unofficial installers.</p>
 <h2>Alternatives that run natively on a Mac</h2>
-<p><strong>Flipic Lens</strong>: free and open source, a 5 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
+<p><strong>Flipic Lens</strong>: free and open source, an 8 MB download. Double-click a photo and page with <kbd>←</kbd> <kbd>→</kbd>; the wheel zooms by default; <kbd>0</kbd> zooms to 100% at the pointer. Every shortcut can be remapped, and if you reversed your wheel with Mos you can flip the zoom direction.</p>
 <p><strong>XnView MP</strong>: a full-featured cross-platform viewer and organizer, free for personal use; great for heavy conversion and metadata work, busier interface.</p>
 <p><strong>qView</strong>: a minimal open-source viewer that is little more than the image; few features by design.</p>
 <h2>Things that work differently on a Mac</h2>
@@ -721,7 +726,7 @@ guide("en", "/en/guides/flowvision-alternative/", "FlowVision vs Flipic Lens: wh
 <h2>Where FlowVision fits</h2>
 <p>FlowVision is the one to try if you think in folders. Its waterfall and grid layouts show many images at different sizes at once, which suits going through a shoot, a download folder or a reference library before deciding what to open. It plays video in the same window, so mixed folders of clips and stills stay in one place. The app also handles file management while you browse: move, copy and rename files, add tags and ratings, and jump between folders with right-click gestures. It is GPL-3.0, needs macOS 11.0 or later, and handles camera RAW.</p>
 <h2>Where Flipic Lens fits</h2>
-<p>Flipic Lens is the one to try if you cull by stepping through photos. Open a folder, double-click any photo and press <kbd>←</kbd> or <kbd>→</kbd>; the window moves through the folder one image at a time, with a thumbnail strip along the bottom. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus, <kbd>1</kbd>–<kbd>5</kbd> to rate, and <kbd>P</kbd> to mark keepers. Ratings are written as standard XMP, so Lightroom, Bridge and Capture One can read them. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac, and nothing is deleted until you choose Move to Trash. Flipic Lens is MIT-licensed, a 5 MB download, needs macOS 13 or later, and runs on Apple silicon and Intel.</p>
+<p>Flipic Lens is the one to try if you cull by stepping through photos. Open a folder, double-click any photo and press <kbd>←</kbd> or <kbd>→</kbd>; the window moves through the folder one image at a time, with a thumbnail strip along the bottom. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus, <kbd>1</kbd>–<kbd>5</kbd> to rate, and <kbd>P</kbd> to mark keepers. Ratings are written as standard XMP, so Lightroom, Bridge and Capture One can read them. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac, and nothing is deleted until you choose Move to Trash. Flipic Lens is MIT-licensed, an 8 MB download, needs macOS 13 or later, and runs on Apple silicon and Intel.</p>
 <h2>Which should you pick?</h2>
 <p>If you want to see a whole folder at once and keep video in the same view, FlowVision fits better. If you want to open one photo and go forward and back with the arrow keys while rating and marking, Flipic Lens fits better. Both are free and open source, so trying both costs nothing but a download.</p>
 <h2>FlowVision facts and links</h2>
@@ -829,7 +834,7 @@ guide("en", "/en/guides/photo-mechanic-alternative-mac/", "Photo Mechanic altern
 <p>For culling, the useful keys are all there. Press <kbd>0</kbd> to zoom to 100% at the pointer and check focus. Press <kbd>1</kbd> to <kbd>5</kbd> to rate, <kbd>P</kbd> to mark keepers. Press <kbd>C</kbd> for two photos side by side or <kbd>⇧C</kbd> for four, with zoom and pan synced. Cleanup Mode groups similar bursts, exact duplicates, closed eyes and blurry shots on your Mac before you decide what to delete. Viewing, ratings, marks, side-by-side comparison and Cleanup Mode are free.</p>
 <figure>{shot('filmstrip.webp', 'Flipic Lens thumbnail strip and arrow-key paging')}<figcaption>Flipic Lens: open one photo, then page through the folder.</figcaption></figure>
 <h2>Where the two differ</h2>
-<p>Photo Mechanic is stronger when the job includes ingest automation, detailed metadata, keywording and delivery. Flipic Lens is stronger when you want to open a folder quickly and judge one photo at a time without a catalog. It shows the IPTC headline and caption stored in a file and can translate the caption, but it does not edit metadata. Flipic Lens is also Mac-only, MIT-licensed and a 5 MB download; it needs macOS 13 or later.</p>
+<p>Photo Mechanic is stronger when the job includes ingest automation, detailed metadata, keywording and delivery. Flipic Lens is stronger when you want to open a folder quickly and judge one photo at a time without a catalog. It shows the IPTC headline and caption stored in a file and can translate the caption, but it does not edit metadata. Flipic Lens is also Mac-only, MIT-licensed and an 8 MB download; it needs macOS 13 or later.</p>
 <p>Photo Mechanic is not the only heavier option, and Flipic Lens is not trying to replace it. If you already use Photo Mechanic for the parts of the workflow that matter to you, keep it. Use Flipic Lens when you just want to look at the pictures and pick.</p>
 <h2>Can you use both?</h2>
 <p>Yes. You can keep a full workflow app for ingest and metadata, then open the folder in a lighter viewer for a quick pass. Flipic Lens does not import, copy or catalog your files, and opening a folder does not move anything. Unless you rotate or crop a photo, the only photo data it writes is the rating you set, as standard XMP; marks are stored as Finder tags. Other apps can read the ratings. If you later decide you need the wider workflow, you can go back without a migration.</p>
@@ -911,7 +916,7 @@ guide("en", "/en/guides/adobe-bridge-alternative-mac/", "Adobe Bridge vs Flipic 
 <ul><li><strong>Metadata and asset management.</strong> Bridge edits metadata, adds keywords, labels and ratings, and finds files with filters, collections and metadata search.</li><li><strong>Adobe Camera Raw.</strong> Bridge opens RAW files in Camera Raw and sits next to Photoshop and the rest of Creative Cloud.</li><li><strong>Batch work.</strong> Batch rename and batch export, plus PDF contact sheets and publishing to Adobe Stock or Portfolio.</li></ul>
 <h2>Where Flipic Lens fits</h2>
 <ul><li><strong>No import step.</strong> Open the folder, double-click a photo and press the arrow keys. There is no catalog to create or maintain.</li><li><strong>Focus and comparison.</strong> Press 0 to zoom to 100% at the pointer; press C for two photos or Shift-C for four, with zoom and pan synced.</li><li><strong>Ratings and marks in the file.</strong> 1 to 5 stars are written as standard XMP, with a same-name .xmp sidecar for proprietary RAW. P marks are Finder tags.</li></ul>
-<p><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blurry shots. Nothing is deleted until you choose Move to Trash.<br><strong>Small and local.</strong> A 5 MB MIT-licensed Mac app that keeps photos on your Mac. Pro is a one-time purchase with a 7-day trial; the Workbench adds a project grid.</p>
+<p><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blurry shots. Nothing is deleted until you choose Move to Trash.<br><strong>Small and local.</strong> An 8 MB MIT-licensed Mac app that keeps photos on your Mac. Pro is a one-time purchase with a 7-day trial; the Workbench adds a project grid.</p>
 <h2>Using them together</h2>
 <p>Use Bridge when the job is metadata, keywords, Adobe Camera Raw or batch delivery. Use Flipic Lens when you want to open the same folder and cull without importing. Flipic Lens writes standard XMP ratings, so the ratings can travel with the files; Bridge remains the place for the heavier metadata work.</p>
 <p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
@@ -936,7 +941,7 @@ guide("en", "/en/guides/fastrawviewer-alternative-mac/", "FastRawViewer vs Flipi
 <ul><li><strong>RAW data, not an embedded preview.</strong> It renders the RAW and shows a RAW histogram, RAW statistics and highlight inspection.</li><li><strong>Exposure and focus tools.</strong> Shadow Boost, per-channel view, focus peaking and exposure compensation help you see what a converter can recover.</li><li><strong>RAW+JPEG mode.</strong> It handles RAW and JPEG pairs and can work through folders without creating a catalog.</li></ul>
 <h2>Where Flipic Lens fits</h2>
 <ul><li><strong>Simple paging.</strong> Double-click one photo and use the arrow keys through the folder, with no import and no catalog.</li><li><strong>Fast focus checks and comparison.</strong> Press 0 to zoom to 100% at the pointer; C and Shift-C compare two or four frames with synced zoom and pan.</li><li><strong>Ratings and marks.</strong> 1 to 5 stars go into standard XMP, with a same-name .xmp sidecar for proprietary RAW. P marks are Finder tags.</li></ul>
-<p><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.<br><strong>Small and local.</strong> A 5 MB MIT-licensed Mac app that keeps photos on your Mac; Pro adds the Workbench grid and is a one-time purchase with a 7-day trial.</p>
+<p><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.<br><strong>Small and local.</strong> An 8 MB MIT-licensed Mac app that keeps photos on your Mac; Pro adds the Workbench grid and is a one-time purchase with a 7-day trial.</p>
 <h2>Using them together</h2>
 <p>Open a shoot in FastRawViewer when you need the RAW histogram or a careful exposure check. Use Flipic Lens for the broader pass: page, rate, mark and let Cleanup Mode group the obvious rejects. Both can write ratings to XMP, so pick one app for the rating pass to keep the sidecars predictable.</p>
 <p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
@@ -962,7 +967,7 @@ guide("en", "/en/guides/xnview-mp-alternative-mac/", "XnView MP vs Flipic Lens: 
 <p><strong>Image Compare.</strong> Compare up to four images in one view.</p>
 <h2>Where Flipic Lens fits</h2>
 <ul><li><strong>No catalog to manage.</strong> Open the folder and start paging; no import and no library.</li><li><strong>Focus and comparison.</strong> 0 zooms to 100% at the pointer; C and Shift-C compare two or four photos with synced zoom and pan.</li><li><strong>Ratings in standard XMP.</strong> 1 to 5 stars, with a same-name .xmp sidecar for proprietary RAW; P marks are Finder tags.</li></ul>
-<p><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blur, with you deciding what goes.<br><strong>Small, free and local.</strong> A 5 MB MIT-licensed Mac app. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid.</p>
+<p><strong>Cleanup Mode.</strong> Free on-device grouping of similar bursts, duplicates, closed eyes and blur, with you deciding what goes.<br><strong>Small, free and local.</strong> An 8 MB MIT-licensed Mac app. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid.</p>
 <h2>Using them together</h2>
 <p>Use XnView MP for format conversion, batch rename, catalog searches and cross-platform work. Use Flipic Lens when you want to sit in one folder and cull. Both can write XMP ratings, so choose one app for the rating pass if you want to keep the sidecars simple.</p>
 <p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
@@ -987,7 +992,7 @@ guide("en", "/en/guides/apolloone-alternative/", "ApolloOne vs Flipic Lens: two 
 <ul><li><strong>Metadata and keywords.</strong> Full EXIF and IPTC editing, hierarchical keywords and code replacements written as XMP.</li><li><strong>More viewing tools.</strong> Tabs and windows, split-view comparison, HDR display and export, video playback and non-destructive Quick Edit.</li><li><strong>Burst organization.</strong> Stacks and Auto-Stack collapse a burst into one thumbnail, while Focus Score helps compare sharpness.</li></ul>
 <p><strong>Batch work.</strong> Batch rename and conversion are built in.</p>
 <h2>Where Flipic Lens fits</h2>
-<ul><li><strong>Simple and open source.</strong> A 5 MB MIT-licensed Mac app with no import and no catalog.</li><li><strong>Culling without setup.</strong> Double-click a photo, arrow through the folder, press 0 to check focus, C or Shift-C to compare, 1 to 5 to rate and P to mark.</li><li><strong>Ratings and marks in standard places.</strong> Stars are standard XMP with a same-name .xmp sidecar for proprietary RAW; P marks are Finder tags.</li></ul>
+<ul><li><strong>Simple and open source.</strong> An 8 MB MIT-licensed Mac app with no import and no catalog.</li><li><strong>Culling without setup.</strong> Double-click a photo, arrow through the folder, press 0 to check focus, C or Shift-C to compare, 1 to 5 to rate and P to mark.</li><li><strong>Ratings and marks in standard places.</strong> Stars are standard XMP with a same-name .xmp sidecar for proprietary RAW; P marks are Finder tags.</li></ul>
 <p><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.<br><strong>Pro when needed.</strong> The Workbench adds a project grid, zoom to the eyes, content and text search, and more, as a one-time purchase with a 7-day trial.</p>
 <h2>Using them together</h2>
 <p>Use ApolloOne when you need IPTC editing, keywords, HDR or a quick non-destructive edit. Use Flipic Lens when the job is to open a folder and make a first selection. Flipic Lens shows the IPTC caption stored in a file and can crop and straighten, but it does not edit metadata or adjust color. Both write ratings as XMP, so decide which app owns the rating pass if keeping sidecars tidy matters to you.</p>
@@ -1039,7 +1044,7 @@ guide("zh", "/guides/adobe-bridge-mac/", "Bridge 和 Flipic Lens 怎么选",
 <ul><li><strong>元数据和素材管理。</strong> 改元数据、加关键词、标签和星级，用筛选、收藏夹和元数据搜索找文件。</li><li><strong>Adobe Camera Raw。</strong> 从 Bridge 把 RAW 交给 Camera Raw，和 Photoshop、Creative Cloud 连在一起。</li><li><strong>批处理。</strong> 批量重命名、批量导出、PDF 联系表，也能发 Adobe Stock 或 Portfolio。</li></ul>
 <h2>Flipic Lens 更适合的地方</h2>
 <ul><li><strong>不用导入。</strong> 打开文件夹，双击一张，方向键就翻；没有图库要建，也没有导入步骤。</li><li><strong>看焦点和并排比较。</strong> 按 0 在鼠标处放大到 100%；按 C 两张、⇧C 四张，缩放和拖动同步。</li><li><strong>星级和标记落在文件里。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记是访达标签。</li></ul>
-<p><strong>清理模式。</strong> 免费，在本机分相似连拍、重复、闭眼和模糊；你按「移到废纸篓」之前不会删。<br><strong>小、免费、不用账号。</strong> 约 5 MB，MIT 开源。Pro 一次买断，下载后可以先试用 7 天，工作台多一个项目宫格。</p>
+<p><strong>清理模式。</strong> 免费，在本机分相似连拍、重复、闭眼和模糊；你按「移到废纸篓」之前不会删。<br><strong>小、免费、不用账号。</strong> 约 8 MB，MIT 开源。Pro 一次买断，下载后可以先试用 7 天，工作台多一个项目宫格。</p>
 <h2>一起用</h2>
 <p>要写关键词、改元数据、跑 Camera Raw 或做批量交付，用 Bridge。要在同一个文件夹里先挑一遍，用 Flipic Lens。Flipic Lens 写的是标准 XMP 星级，文件带得走；更重的元数据工作还是回 Bridge 做。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
@@ -1065,7 +1070,7 @@ guide("zh", "/guides/photo-mechanic-mac/", "Photo Mechanic 的 Mac 替代",
 <p><strong>Plus 版的图库。</strong> 需要跨硬盘管理大量照片时，Plus 版多了图像数据库。</p>
 <h2>Flipic Lens 更适合的地方</h2>
 <ul><li><strong>打开就能挑。</strong> 不导入，不建图库，双击一张就按方向键翻。</li><li><strong>看焦点和比较。</strong> 按 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放同步。</li><li><strong>星级和标记。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记存成访达标签。</li></ul>
-<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些还是你决定。<br><strong>小、免费、不用账号。</strong> 约 5 MB，MIT 开源。Pro 一次买断，带 7 天试用，工作台有项目宫格。</p>
+<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些还是你决定。<br><strong>小、免费、不用账号。</strong> 约 8 MB，MIT 开源。Pro 一次买断，带 7 天试用，工作台有项目宫格。</p>
 <h2>一起用</h2>
 <p>要拷卡、写 IPTC、批量改关键词、直接交付，用 Photo Mechanic。照片已经在硬盘上、只想先挑一遍，就用 Flipic Lens。Flipic Lens 能显示文件里写的 IPTC 标题和说明，说明还能翻译，但它不编辑元数据。两边的星级都走 XMP，但建议固定一个软件负责打星，免得 sidecar 被两边反复改。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
@@ -1091,7 +1096,7 @@ guide("zh", "/guides/xnview-mp-mac/", "XnView MP 和 Flipic Lens 怎么选",
 <p><strong>四张比较。</strong> Image Compare 最多同时看四张。</p>
 <h2>Flipic Lens 更适合的地方</h2>
 <ul><li><strong>不用图库。</strong> 打开文件夹就翻，不导入，不建库。</li><li><strong>看焦点和比较。</strong> 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放和拖动同步。</li><li><strong>星级写标准 XMP。</strong> 1 到 5 星，专有 RAW 写同名 .xmp；P 标记是访达标签。</li></ul>
-<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼、模糊，删哪些由你决定。<br><strong>小、免费、不用账号。</strong> 约 5 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</p>
+<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼、模糊，删哪些由你决定。<br><strong>小、免费、不用账号。</strong> 约 8 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</p>
 <h2>一起用</h2>
 <p>要转格式、批量改名、跨平台看图或在图库里搜，用 XnView MP。要在一个文件夹里先挑一遍，用 Flipic Lens。两边都能写 XMP 星级，固定一个软件打星会更省心。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
@@ -1116,7 +1121,7 @@ guide("zh", "/guides/fastrawviewer-mac/", "FastRawViewer 和 Flipic Lens",
 <ul><li><strong>看的是 RAW 数据。</strong> 不是内嵌 JPEG，给的是 RAW 直方图、RAW 统计和过曝检查。</li><li><strong>曝光和焦点工具。</strong> Shadow Boost、分通道查看、峰值对焦、曝光补偿，帮你看后期还能拉回多少。</li><li><strong>RAW+JPEG 模式。</strong> 同时处理 RAW 和 JPEG，按文件夹浏览，不建图库。</li></ul>
 <h2>Flipic Lens 更适合的地方</h2>
 <ul><li><strong>打开就翻。</strong> 双击一张，方向键翻整个文件夹，不导入，不建库。</li><li><strong>看焦点和比较。</strong> 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放同步。</li><li><strong>星级和标记。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记是访达标签。</li></ul>
-<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些由你决定。<br><strong>小、免费、不用账号。</strong> 约 5 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</p>
+<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些由你决定。<br><strong>小、免费、不用账号。</strong> 约 8 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</p>
 <h2>一起用</h2>
 <p>要判断曝光、看 RAW 直方图、峰值对焦，用 FastRawViewer。要快速翻一遍、打星、标记、清理，用 Flipic Lens。两边都能写 XMP 星级，但固定一个软件负责评分，sidecar 更可控。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
@@ -1141,7 +1146,7 @@ guide("en", "/en/compare/", "Compare Mac photo viewers and culling tools",
 <ul><li><strong>Just open a folder and cull:</strong> Flipic Lens, with no import and XMP ratings. Preview can open a file but does not browse a folder on its own.</li><li><strong>Metadata, keywords or Adobe batch work:</strong> Adobe Bridge.</li><li><strong>High-volume ingest, IPTC and delivery:</strong> Photo Mechanic.</li></ul>
 <p><strong>RAW histogram, exposure and focus peaking:</strong> FastRawViewer.<br><strong>Many formats, batch conversion or Linux:</strong> XnView MP.<br><strong>Mac-native metadata, HDR, stacks and quick edits:</strong> ApolloOne.<br><strong>Waterfall or grid browsing with video:</strong> FlowVision.<br><strong>Editing and a long-term catalog:</strong> Lightroom Classic.</p>
 <h2>What Flipic Lens covers</h2>
-<p>Flipic Lens reads the folder you open, double-click any photo and page with the arrow keys. Press 0 to zoom to 100% at the pointer, C or Shift-C to compare two or four frames with synced zoom, 1 to 5 to rate and P to mark. Ratings are standard XMP, with a same-name .xmp sidecar for proprietary RAW; marks are Finder tags. Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac. The app is about 5 MB, MIT-licensed and keeps photos on your Mac. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid, zoom to the eyes, and content and text search.</p>
+<p>Flipic Lens reads the folder you open, double-click any photo and page with the arrow keys. Press 0 to zoom to 100% at the pointer, C or Shift-C to compare two or four frames with synced zoom, 1 to 5 to rate and P to mark. Ratings are standard XMP, with a same-name .xmp sidecar for proprietary RAW; marks are Finder tags. Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac. The app is about 8 MB, MIT-licensed and keeps photos on your Mac. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid, zoom to the eyes, and content and text search.</p>
 <h2>What this table does not cover</h2>
 <p>Price amounts, camera compatibility and plugin ecosystems change. The table only compares the pricing model and the main job each app is built for; check the vendor page before you buy. For the detailed rows, open the individual comparison pages linked above.</p>
 <p>For the full open-source list, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>.</p>""",
@@ -1166,7 +1171,7 @@ guide("zh", "/compare/", "Mac 看图与挑片软件对比",
 <ul><li><strong>只想打开文件夹挑一遍：</strong> Flipic Lens，不导入，星级写 XMP。预览能打开文件，但不适合翻整个文件夹。</li><li><strong>元数据、关键词或 Adobe 批处理：</strong> Adobe Bridge。</li><li><strong>大量拷卡、IPTC 和交付：</strong> Photo Mechanic。</li></ul>
 <p><strong>RAW 直方图、曝光和峰值对焦：</strong> FastRawViewer。<br><strong>格式多、批量转换或 Linux：</strong> XnView MP。<br><strong>Mac 原生元数据、HDR、堆栈和快速编辑：</strong> ApolloOne。<br><strong>瀑布流或网格浏览，还要看视频：</strong> FlowVision。<br><strong>修图和长期目录管理：</strong> Lightroom Classic。</p>
 <h2>Flipic Lens 覆盖什么</h2>
-<p>Flipic Lens 直接读你打开的文件夹，双击一张就用方向键翻。按 0 在鼠标处放大到 100%，按 C 两张、⇧C 四张，缩放同步；1 到 5 打星，P 标记。星级写标准 XMP，专有 RAW 写同名 .xmp；标记是访达标签。清理模式在本机分连拍、重复、闭眼和模糊。安装包约 5 MB，MIT 开源，不用账号。Pro 一次买断，带 7 天试用，多出工作台宫格、放大到眼睛、按内容和文字搜索。</p>
+<p>Flipic Lens 直接读你打开的文件夹，双击一张就用方向键翻。按 0 在鼠标处放大到 100%，按 C 两张、⇧C 四张，缩放同步；1 到 5 打星，P 标记。星级写标准 XMP，专有 RAW 写同名 .xmp；标记是访达标签。清理模式在本机分连拍、重复、闭眼和模糊。安装包约 8 MB，MIT 开源，不用账号。Pro 一次买断，带 7 天试用，多出工作台宫格、放大到眼睛、按内容和文字搜索。</p>
 <h2>这张表不覆盖什么</h2>
 <p>具体价格、相机兼容性和插件生态会变。表里只写价格模式和主要用途，买之前看各家官网。每一行的详细对比，点上面对应链接。</p>
 <p>开源看图清单见 <a href="/guides/mac-image-viewer-recommend/">Mac 看图软件推荐</a>。</p>""",
@@ -1490,6 +1495,7 @@ PRO = {
             ("要联网验证吗？", "第一次激活需要联网，把激活码绑定到这台 Mac，只发订单号和设备号的哈希。之后离线也能用，每隔一段时间联网核对一次；长时间（60 天）没联上网，联网一次就恢复。"),
             ("能装在几台 Mac 上？", "一个激活码只限购买者本人使用，最多激活你自己的 2 台 Mac。换电脑时，先在旧 Mac 的「设置 › Pro」里停用，空出名额；旧 Mac 坏了没法操作的，在 App 里「关于 › 反馈建议」告诉我们解绑。"),
             ("激活码丢了怎么办？", "在 <a href=\"https://pay.flipic.app/recover?lang=zh\">找回激活码</a> 页面输入付款邮箱和卡号后四位就能找回。"),
+            ("我是在 Mac App Store 下载的，能用这里的激活码吗？", "不能。<a href=\"" + APP_STORE_URL + "\">Mac App Store 版</a>的 Pro 在 App 里通过 Apple 购买（按月、按年订阅或一次买断），和官网的激活码是分开的，两边不能互通。想用激活码，请从本站下载官网版。"),
             ("Flipic Lens 还是开源的吗？", "是。看图和挑片的核心功能继续开源（MIT），Pro 功能的代码不在公开仓库里。"),
         ],
     },
@@ -1578,6 +1584,7 @@ PRO = {
             ("Does it need to go online?", "The first activation goes online to bind the key to this Mac, sending only hashes of the order number and device ID. After that it works offline and checks in now and then; if it has been offline for a long time (60 days), going online once restores it."),
             ("How many Macs?", "A key is for the buyer’s own use and can be activated on up to 2 of your own Macs. When you switch Macs, deactivate it on the old one in Settings › Pro to free the slot. If the old Mac is broken, let us know via About › Send Feedback in the app and we’ll release it."),
             ("I lost my key", "Use <a href=\"https://pay.flipic.app/recover?lang=en\">Recover Key</a> with your payment email and the last four digits of your card."),
+            ("I got Flipic Lens from the Mac App Store. Can I use a key from here?", "No. In the <a href=\"" + APP_STORE_URL + "\">Mac App Store version</a>, Pro is bought through Apple inside the app (monthly, yearly or one-time) and is separate from flipic.app license keys; the two don’t carry over. To use a key, download the website version from this site."),
             ("Is Flipic Lens still open source?", "Yes. The core viewer and culling features stay open source (MIT). Pro code isn’t in the public repository."),
         ],
     },
@@ -1689,13 +1696,13 @@ def legal_pages(lang):
     op = esc(LEGAL["operator"][lang])
     store = esc(STORE_NAME)
     if lang == "zh":
-        both = f"Flipic Lens 和 {store}" if store else "Flipic Lens"
-        store_full = f"{store}（同一款软件在 Mac App Store 上的版本）" if store else "Flipic Lens 的 Mac App Store 版"
-        store_short = f" {store} " if store else "Mac App Store 版"
+        both = "Flipic Lens"
+        store_full = f"Mac App Store 上的 Flipic Lens（原名 {store}）" if store else "Mac App Store 上的 Flipic Lens"
+        store_short = "Mac App Store 版"
     else:
-        both = f"Flipic Lens and {store}" if store else "Flipic Lens"
-        store_full = f"{store} (the same app on the Mac App Store)" if store else "the Mac App Store version of Flipic Lens"
-        store_short = store or "The Mac App Store version"
+        both = "Flipic Lens"
+        store_full = f"Flipic Lens on the Mac App Store (formerly {store})" if store else "Flipic Lens on the Mac App Store"
+        store_short = "The Mac App Store version"
     mail = esc(LEGAL["email"])
     m = f'<a href="mailto:{mail}">{mail}</a>'
     days = LEGAL["refund_days"]
@@ -1712,15 +1719,15 @@ def legal_pages(lang):
 <div class="prose">
 <p>这份政策适用于 Flipic Lens（从 flipic.app 和 GitHub 下载的版本）、{store_full}、flipic.app 网站和 pay.flipic.app 付款服务。运营者是{op}。</p>
 <h2>软件本身</h2>
-<p>照片只在你的 Mac 上读取和显示，不会上传到任何地方。软件不需要账号，没有广告和崩溃上报，不收集设备信息，也不统计你用了哪些功能。</p>
+<p>照片只在你的 Mac 上读取和显示，不会上传到任何地方。软件不需要账号，没有广告，不会自动上报崩溃，不收集设备信息，也不统计你用了哪些功能。</p>
 <p>你给照片打的星级写进照片的 XMP 信息，相机 RAW 写在同名的 .xmp 文件里；挑片标记是访达标签；设置保存在这台 Mac 上。这些都留在你自己的电脑上。</p>
 <p>Flipic Lens 默认每天自动检查一次更新，可以在设置里关掉，也可以点「检查更新」手动检查。检查时向 flipic.app 请求一个写着最新版本号的文件，请求里带软件版本号、安装了多久（不到 7 天、7 到 29 天、30 天或以上，三档之一）和 Pro 是否已激活；手动检查时多带一个「手动」标记。请求里没有任何标识，没有确切的安装日期或天数，也不保存 cookie。服务器只按日期、国家、软件版本、时长档位和 Pro 标记累加次数，同时累加这个文件和官网安装包被请求的次数，不保存 IP 地址。你点「立即更新」时，安装包从 GitHub 下载。</p>
 <p>另外几种情况会联网，都由你主动触发：在设置里下载「更准的中文识别」模型时，从 GitHub 下载；在「关于 Flipic Lens」里发送反馈时，发送你写的内容、你留的邮箱（可以不填）和 App、系统版本，存在 pay.flipic.app 的反馈记录里，用来回复你和改进软件，不含照片和文件；为了让开发者及时看到，你写的内容和 App、系统版本会通过推送通知服务 Bark 发到开发者的手机上，邮箱不会；为了防止刷屏，同时保存一个加盐处理过的 IP 哈希，不保存 IP 本身；软件意外退出后，下次打开时会问你要不要把崩溃报告发给开发者，点「发送」才会发出，可以先看到完整内容，也可以在设置里关掉这个询问。报告里是崩在哪里、软件和系统版本、Mac 型号，发出前会去掉用户名、文件名和路径，不含照片；它存在 pay.flipic.app，同样只保存加盐的 IP 哈希，新报告的摘要（崩溃位置和版本）会通过 Bark 推送到开发者手机。信息面板里的位置地图默认不加载，你点「显示地图」（或在设置里打开自动显示）后，才会像在系统「地图」App 里查看一个地点那样，向 Apple 地图请求照片所在区域的地图；没有位置信息的照片不会请求。</p>
-<p>{store_short}付费下载即是完整版，没有 App 内购买；它不检查更新，更新和付款都由 App Store 负责，App 本身不联网。</p>
+<p>{store_short}有些不同：它不检查更新，更新由 App Store 负责；没有崩溃报告，也没有激活码，不会连接激活服务器。它只在这几种情况联网：上面说的发送反馈、显示位置地图、下载识别模型，以及在 App 里购买 Pro 时和 App Store 通信。</p>
 <h2>购买 Pro</h2>
 <p>在官网购买时，付款由 Stripe 处理，银行卡等支付信息由 Stripe 收集，我们看不到完整卡号。付款完成后，pay.flipic.app 从 Stripe 读取这笔订单的邮箱和订单号，生成激活码。激活码里包含邮箱和订单号，在你的 Mac 上离线验证。订单记录保存在我们的 Stripe 账户里，用来帮你找回激活码、处理退款和记账。激活时，Flipic Lens 把激活码发给 pay.flipic.app 验证，服务器只记下订单号的哈希和这台 Mac 设备号的哈希（不存邮箱和电脑名），用来把激活码限制在 2 台 Mac 上，之后每隔一段时间核对一次；IP 地址只用来限制请求频率，不保存。付款成功页会把这笔订单的金额和 Stripe 订单编号报给 Google Analytics，用来统计购买次数，不含邮箱。Stripe 如何处理信息见 <a href="{STRIPE_PRIVACY}">Stripe 隐私政策</a>。</p>
 <p>找回激活码时，你填写的邮箱和卡号后四位（或收据号）只用来在 Stripe 里查找订单，不会保存。为了防止有人反复试探，找回页面按 IP 地址限制每分钟的请求次数，IP 地址不保存。</p>
-<p>在 App Store 购买时，付款和账户都由 Apple 处理，我们收不到你的姓名、邮箱或支付信息。见 <a href="{APPLE_PRIVACY}">Apple 隐私政策</a>。</p>
+<p>在 App Store 版里购买 Pro（订阅或买断）时，付款、续订和账户都由 Apple 处理，我们收不到你的姓名、邮箱或支付信息，App 只从 App Store 得知这台 Mac 上的 Pro 是否有效。见 <a href="{APPLE_PRIVACY}">Apple 隐私政策</a>。</p>
 <h2>网站</h2>
 <p>flipic.app 托管在 Cloudflare 上。Cloudflare 为了安全和正常运行会记录访问日志（比如 IP 地址和浏览器类型）。</p>
 <p>网站用 Google Analytics 4 统计访问量，以及点了下载、购买、GitHub 这些按钮的次数，用来了解大家从哪里来、哪些内容有用。Google Analytics 会在浏览器里存 cookie，记录页面、来源、大致地区和设备类型，不记录完整 IP，也不知道你是谁；我们关闭了广告和个性化相关的功能。来自欧洲经济区、英国和瑞士的访问不写统计 cookie。网站没有广告和第三方字体。Google 如何处理这些数据见 <a href="https://policies.google.com/privacy">Google 隐私政策</a>。软件本身不包含任何统计。</p>
@@ -1736,13 +1743,13 @@ def legal_pages(lang):
 <h2>免费使用</h2>
 <p>Flipic Lens 的源代码以 <a href="https://opensource.org/license/mit">MIT 协议</a>在 <a href="{GITHUB}">GitHub</a> 开源。看图、评星、标记、筛选、导出、清理这些功能免费使用，不需要注册。</p>
 <h2>Pro</h2>
-<p>Pro 是一次性购买，不是订阅。买过以后，之后发布的更新里的 Pro 功能都可以用。Pro 只供购买者本人使用，一个激活码最多激活购买者自己的 2 台 Mac，激活时绑定设备，超过 2 台无法激活。</p>
+<p>官网的 Pro 是一次性购买，不是订阅。买过以后，之后发布的更新里的 Pro 功能都可以用。Pro 只供购买者本人使用，一个激活码最多激活购买者自己的 2 台 Mac，激活时绑定设备，超过 2 台无法激活。</p>
 <p>官网购买得到的激活码请不要公开分享。被公开传播的激活码，以及已经退款或拒付的订单对应的激活码，会被作废。</p>
 <h2>退款</h2>
 <p>在官网购买 Pro 后 {days} 天内，发邮件到 {m} 并附上付款邮箱，我们会全额退款，不需要说明理由。退款后对应的激活码作废。</p>
 <p>在 App Store 购买的，退款按 Apple 的规定办理，请到 <a href="{APPLE_REFUND}">reportaproblem.apple.com</a> 申请。</p>
 <h2>App Store 版</h2>
-<p>从 Mac App Store 获得的{store_short}付费下载即包含 Pro 的全部功能，同时适用 <a href="{APPLE_EULA}">Apple 标准最终用户许可协议</a>。两者不一致的地方，以 Apple 的协议为准。</p>
+<p>{store_full}免费下载，免费功能和官网版相同。Pro 在 App 里购买，可以选按月或按年的自动续期订阅，也可以一次买断。订阅到期前 24 小时内会自动续费，可以随时在 App Store 的账户设置里取消，取消后用到当期结束。App Store 版和官网版的 Pro 分开购买，不能互通。App Store 版同时适用 <a href="{APPLE_EULA}">Apple 标准最终用户许可协议</a>，两者不一致的地方，以 Apple 的协议为准。</p>
 <h2>责任</h2>
 <p>软件按现状提供。删除、移动、批量整理照片会改动你的文件；删除的照片会先移到废纸篓。处理重要照片前请先备份。在法律允许的范围内，我们不对使用软件造成的数据丢失或其他间接损失承担责任。</p>
 <h2>联系和变更</h2>
@@ -1754,15 +1761,15 @@ def legal_pages(lang):
 <div class="prose">
 <p>This policy covers Flipic Lens (the version downloaded from flipic.app and GitHub), {store_full}, the flipic.app website and the pay.flipic.app payment service. They are run by {op}.</p>
 <h2>The app</h2>
-<p>Your photos are read and shown only on your Mac and are never uploaded. The app has no account, no ads and no crash reporting, doesn’t collect device information and doesn’t track which features you use.</p>
+<p>Your photos are read and shown only on your Mac and are never uploaded. The app has no account, no ads and no automatic crash reporting, doesn’t collect device information and doesn’t track which features you use.</p>
 <p>Star ratings are written into each photo’s XMP data, or into a matching .xmp file for camera RAW; marks are Finder tags; settings are stored on your Mac. All of this stays on your computer.</p>
 <p>Flipic Lens checks for updates automatically once a day by default; you can turn this off in Settings, or click Check for Updates yourself. Each check requests a small file from flipic.app that contains the latest version number. The request carries the app’s version number, how long ago the app was installed as one of three ranges (under 7 days, 7–29 days, 30 days or more) and whether Pro is activated, plus a flag when you started the check yourself. It carries no identifier, no exact install date or day count, and stores no cookies. The server only adds to counters by date, country, app version, install-age range and Pro flag, and counts how many times this file and the installer on the website are requested; it does not keep IP addresses. When you click Update Now, the installer is downloaded from GitHub.</p>
 <p>A few other things connect, and only when you trigger them: downloading the more accurate recognition model in Settings fetches it from GitHub; sending feedback from About Flipic Lens sends what you wrote, the email you leave (optional) and the app and macOS versions, stored in pay.flipic.app’s feedback records so we can reply and improve the app. No photos or files are sent. So that the developer sees it promptly, what you wrote and the app and macOS versions are also sent to the developer’s phone through the Bark push notification service; your email is not. To stop spam we also keep a salted hash of the IP address, not the address itself. After an unexpected quit, the app asks on the next launch whether to send a crash report to the developer. Nothing is sent unless you click Send, you can read the full text first, and you can turn the question off in Settings. The report says where the app crashed, the app and macOS versions and the Mac model; user names, file names and paths are removed before sending and no photos are included. It is stored at pay.flipic.app with the same salted IP hash, and a short summary (crash location and versions) is pushed to the developer’s phone through Bark. The location map in the info panel does not load by default. Only after you click Show Map, or turn on showing it automatically in Settings, does the app request the map of the area where the photo was taken from Apple Maps, the same as looking up a place in the Maps app. Photos without a location never make that request.</p>
-<p>{store_short} is a paid download that includes everything, with no in-app purchases. It doesn’t check for updates; the App Store handles updates and payment, and the app itself doesn’t go online.</p>
+<p>{store_short} differs in a few ways. It doesn’t check for updates; the App Store handles them. It has no crash reports and no license keys, so it never contacts the activation server. It connects only for the things described above that you trigger (sending feedback, showing the location map, downloading the recognition model) and to talk to the App Store when you buy Pro in the app.</p>
 <h2>Buying Pro</h2>
 <p>On flipic.app, payment is handled by Stripe. Stripe collects your card details; we never see the full card number. After you pay, pay.flipic.app reads the order’s email address and order ID from Stripe and generates your license key. The key contains the email and order ID and is checked offline on your Mac. Order records stay in our Stripe account and are used to recover keys, handle refunds and keep accounts. On activation, Flipic Lens sends the key to pay.flipic.app for verification; the server stores only a hash of the order ID and a hash of this Mac’s device ID (no email or computer name), to limit each key to 2 Macs, and the app checks in again from time to time; the IP address is used only for rate limiting and is not stored. The payment confirmation page reports the order amount and Stripe order ID to Google Analytics to count purchases, without your email. See the <a href="{STRIPE_PRIVACY}">Stripe Privacy Policy</a>.</p>
 <p>When you recover a key, the email and last four card digits (or receipt number) you enter are used only to look up the order in Stripe and are not stored. To stop repeated guessing, the recovery page limits requests per minute by IP address; the address is not stored.</p>
-<p>On the App Store, Apple handles the payment and your account. We don’t receive your name, email or payment details. See the <a href="{APPLE_PRIVACY}">Apple Privacy Policy</a>.</p>
+<p>When you buy Pro in the App Store version (subscription or one-time), Apple handles payment, renewals and your account. We don’t receive your name, email or payment details; the app only learns from the App Store whether Pro is active. See the <a href="{APPLE_PRIVACY}">Apple Privacy Policy</a>.</p>
 <h2>The website</h2>
 <p>flipic.app is hosted on Cloudflare. Cloudflare keeps access logs (such as IP address and browser type) for security and operation.</p>
 <p>The website uses Google Analytics 4 to count visits and clicks on buttons such as download, buy and GitHub, so we can see where visitors come from and which pages help. Google Analytics stores cookies in your browser and records pages, referrers, approximate region and device type; it doesn’t record your full IP address or who you are, and we keep its advertising and personalization features off. Visits from the European Economic Area, the UK and Switzerland don’t get analytics cookies. The site has no ads and no third-party fonts. See the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>. The app itself contains no analytics.</p>
@@ -1778,13 +1785,13 @@ def legal_pages(lang):
 <h2>Free use</h2>
 <p>Flipic Lens’s source code is available under the <a href="https://opensource.org/license/mit">MIT License</a> on <a href="{GITHUB}">GitHub</a>. Viewing, ratings, marks, filtering, export and Cleanup Mode are free and need no account.</p>
 <h2>Pro</h2>
-<p>Pro is a one-time purchase, not a subscription. Once bought, the Pro features in later updates are included. Pro is for the buyer’s own use only: one key can be activated on up to 2 of the buyer’s own Macs. Activation binds the key to the Mac, and a third Mac can’t be activated.</p>
+<p>Pro bought on flipic.app is a one-time purchase, not a subscription. Once bought, the Pro features in later updates are included. Pro is for the buyer’s own use only: one key can be activated on up to 2 of the buyer’s own Macs. Activation binds the key to the Mac, and a third Mac can’t be activated.</p>
 <p>Please don’t share a license key from flipic.app publicly. Keys that are shared publicly, and keys for orders that were refunded or disputed, are revoked.</p>
 <h2>Refunds</h2>
 <p>Within {days} days of buying Pro on flipic.app, email {m} with the address you paid with and we’ll refund you in full, no reason needed. The key is revoked after the refund.</p>
 <p>For App Store purchases, refunds follow Apple’s rules; request one at <a href="{APPLE_REFUND}">reportaproblem.apple.com</a>.</p>
 <h2>App Store version</h2>
-<p>{store_short} obtained from the Mac App Store includes all Pro features with the purchase and is also subject to the <a href="{APPLE_EULA}">Apple Standard EULA</a>. Where the two differ, Apple’s agreement applies.</p>
+<p>{store_full} is a free download with the same free features as the website version. Pro is bought in the app as a monthly or yearly auto-renewing subscription, or as a one-time purchase. Subscriptions renew automatically within 24 hours before the end of each period unless cancelled; you can cancel any time in your App Store account settings and keep Pro until the period ends. Pro bought on the App Store and Pro bought on flipic.app are separate and don’t carry over. The App Store version is also subject to the <a href="{APPLE_EULA}">Apple Standard EULA</a>; where the two differ, Apple’s agreement applies.</p>
 <h2>Liability</h2>
 <p>The app is provided as is. Deleting, moving and batch-sorting photos changes your files; deleted photos go to the Trash first. Back up important photos before working on them. To the extent the law allows, we aren’t liable for data loss or other indirect damage from using the app.</p>
 <h2>Contact and changes</h2>

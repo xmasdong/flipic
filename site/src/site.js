@@ -74,6 +74,7 @@
       const href = a.getAttribute('href') || '';
       if (/\/download\/Flipic\.dmg$|\/releases\/(latest\/)?download\//.test(href)) send('download_click', { link_location: where(a), link_url: href });
       else if (href.startsWith('https://buy.stripe.com')) send('begin_checkout', { currency: a.dataset.currency, value: Number(a.dataset.value), link_location: where(a), items: [{ item_id: 'flipic_pro', item_name: 'Flipic Pro' }] });
+      else if (href.startsWith('https://apps.apple.com/')) send('app_store_click', { link_location: where(a), link_url: href });
       else if (href.startsWith('https://github.com/xmasdong/flipic')) send('github_click', { link_location: where(a), link_url: href });
       else if (href.includes('pay.flipic.app/recover')) send('recover_key_click', { link_location: where(a) });
       else if (a.classList.contains('lang')) send('language_switch', { to: a.getAttribute('hreflang') });

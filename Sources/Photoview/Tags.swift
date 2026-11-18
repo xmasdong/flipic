@@ -112,7 +112,7 @@ enum FinderTags {
 
     /// 信息面板里列的标签：颜色标签带颜色，自己建的标签（编辑常用来写「待修」「可发」）只有名字；挑片标记另有徽章，不列
     static func listing(of url: URL) -> [(name: String, color: TagColor?)] {
-        (freshNames(url) ?? []).filter { $0 != Marks.tagName }.map { n in
+        (freshNames(url) ?? []).filter { !Marks.markNames.contains($0) }.map { n in
             (n, nameToColor[n] ?? nameToColor[n.precomposedStringWithCanonicalMapping])
         }
     }

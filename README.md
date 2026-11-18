@@ -30,7 +30,7 @@
 
 <p align="center"><sub>Real-time screen recording, 34 RAW files from 34 different cameras. <a href="docs/media/flipic-lens-demo.mp4">Full-quality video</a></sub></p>
 
-After a shoot I wanted to go through the photos first, but Preview isn't built for flipping through hundreds of shots and Lightroom wants an import first. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is about 5 MB, there is no account, and photos are processed only on your Mac.
+After a shoot I wanted to go through the photos first, but Preview isn't built for flipping through hundreds of shots and Lightroom wants an import first. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is about 8 MB, there is no account, and photos are processed only on your Mac.
 
 
 ## Culling a shoot

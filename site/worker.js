@@ -215,6 +215,11 @@ export default {
     // 只判断中文首页，其他路径一律原样交给静态资源
     if (url.pathname !== "/") {
       const response = await env.ASSETS.fetch(request);
+      // 静态资源补斜杠、去 index.html 时给的是 307，改成永久的 301，搜索引擎才会把旧地址并到新地址上
+      if (response.status === 307 || response.status === 308) {
+        const location = response.headers.get("location");
+        if (location) return new Response(null, { status: 301, headers: { Location: location } });
+      }
       const kind = url.pathname === "/download/Flipic.dmg" ? "download" : url.pathname === "/version.json" ? "version" : "";
       if (kind === "download" ? isDownloadStart(request, response) : kind && request.method === "GET" && response.status === 200) {
         ctx.waitUntil(countHit(env, kind, request).catch(() => {}));

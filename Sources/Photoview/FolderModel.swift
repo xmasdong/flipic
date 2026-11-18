@@ -273,12 +273,16 @@ final class FolderModel {
     /// 有的软件存盘是先删再写，看到不见了先别急着拿，过一会儿再对一次
     func syncWithDisk(removing: Bool) -> (added: [URL], missing: Set<URL>) {
         guard let folderURL else { return ([], []) }
-        let onDisk = Set(Video.dropLiveCompanions(((try? FileManager.default.contentsOfDirectory(
-            at: folderURL, includingPropertiesForKeys: Self.resourceKeys, options: [.skipsHiddenFiles])) ?? [])
+        // 列不出目录（桌面、文稿还没获准访问，App Store 版只拿到这一个文件的权限）时什么都不动：
+        // 以前这里当成空目录，正在看的照片被认成「不见了」，0.8 秒后被拿掉，退回开始页
+        guard let listed = try? FileManager.default.contentsOfDirectory(
+            at: folderURL, includingPropertiesForKeys: Self.resourceKeys, options: [.skipsHiddenFiles]) else { return ([], []) }
+        let onDisk = Set(Video.dropLiveCompanions(listed
             .filter { Self.isListable($0.lastPathComponent) }
             .map { folderURL.appendingPathComponent($0.lastPathComponent) }))
         let known = Set(allItems.map(\.url))
-        let missing = known.subtracting(onDisk)
+        // 目录里没列出来、但按路径还在的（比如只拿到单个文件的权限）不算不见了
+        let missing = known.subtracting(onDisk).filter { !FileManager.default.fileExists(atPath: $0.path) }
         let added = onDisk.subtracting(known).sorted { $0.path < $1.path }
         if removing, !missing.isEmpty { remove(urls: missing) }
         if !added.isEmpty {
