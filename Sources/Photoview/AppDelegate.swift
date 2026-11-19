@@ -1067,6 +1067,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runDockTest(outDir: outDir, folderPath: dir)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--peekfullscreentest"), i + 1 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runPeekFullScreenTest(outDir: outDir)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--keyclosetest"), i + 1 < CommandLine.arguments.count {
             // --keyclosetest <工作文件夹>：⌘W、⌃Z、⌘Z 之后窗口去哪了，最后一行 KEYCLOSE summary
             let outDir = CommandLine.arguments[i + 1]

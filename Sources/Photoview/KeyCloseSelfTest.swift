@@ -108,3 +108,50 @@ extension ViewerViewController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { shoot() }
     }
 }
+
+
+/// `Flipic --peekfullscreentest <工作文件夹>`：贴合预览中点绿灯进全屏，预览要先结束，翻页不能再按照片比例改窗口。
+/// 测试进程进不了真全屏，这里发「将要进入全屏」通知走同一条处理。最后一行 PEEKFS summary
+extension ViewerViewController {
+    func runPeekFullScreenTest(outDir: String) {
+        var checks = 0, failures = 0
+        func check(_ ok: Bool, _ what: String) { checks += 1; if !ok { failures += 1 }; print("PEEKFS \(ok ? "ok  " : "FAIL") \(what)") }
+        let root = URL(fileURLWithPath: outDir).appendingPathComponent("photos")
+        try? FileManager.default.removeItem(at: root)
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        for (i, size) in [(1, NSSize(width: 3000, height: 2000)), (2, NSSize(width: 2000, height: 3000)), (3, NSSize(width: 3000, height: 2000))] {
+            let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width), pixelsHigh: Int(size.height), bitsPerSample: 8,
+                                       samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+            NSGraphicsContext.saveGraphicsState(); NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+            NSColor(hue: CGFloat(i) / 4, saturation: 0.6, brightness: 0.8, alpha: 1).setFill(); NSRect(origin: .zero, size: size).fill()
+            NSGraphicsContext.restoreGraphicsState()
+            try? rep.representation(using: .jpeg, properties: [:])?.write(to: root.appendingPathComponent("p\(i).jpg"))
+        }
+        open(url: root.appendingPathComponent("p1.jpg"))
+        guard let w = view.window else { exit(1) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [self] in
+            let normal = w.frame
+            imageView.enterPeek()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
+                check(imageView.isPeeking, "进入贴合预览，窗口 \(Int(w.frame.width))x\(Int(w.frame.height))（普通 \(Int(normal.width))x\(Int(normal.height))）")
+                NotificationCenter.default.post(name: NSWindow.willEnterFullScreenNotification, object: w)
+                check(!imageView.isPeeking && !isPeekingNow, "将要进入全屏：预览已结束")
+                let before = w.frame
+                navigateForward(nil)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [self] in
+                    check(w.frame == before, "翻到竖图：窗口大小没被改（\(Int(w.frame.width))x\(Int(w.frame.height))）")
+                    navigateForward(nil)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [self] in
+                        check(w.frame == before, "再翻一张：窗口大小没被改")
+                        NotificationCenter.default.post(name: NSWindow.didExitFullScreenNotification, object: w)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                            check(w.frame.size == normal.size, "退出全屏：回到预览前的普通大小 \(Int(w.frame.width))x\(Int(w.frame.height))")
+                            print("PEEKFS summary checks=\(checks) failures=\(failures)")
+                            exit(failures == 0 ? 0 : 1)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

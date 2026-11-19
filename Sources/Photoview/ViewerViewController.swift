@@ -322,6 +322,8 @@ final class ViewerViewController: NSViewController {
             imageView.ignoresDoubleClick = { [weak self] p in self?.liveText?.hasInteractiveItem(at: p) ?? false }
         }
 
+        NotificationCenter.default.addObserver(self, selector: #selector(windowWillEnterFullScreen(_:)),
+                                               name: NSWindow.willEnterFullScreenNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowDidExitFullScreen(_:)),
                                                name: NSWindow.didExitFullScreenNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(windowDidEnterFullScreen(_:)),
@@ -525,7 +527,12 @@ final class ViewerViewController: NSViewController {
         guard let window = view.window, let saved = peekSaved else { return }
         peekFromOpen = false
         peekSaved = nil
-        window.setFrame(saved.frame, display: true, animate: true)
+        if peekEndingForFullScreen {
+            // 点绿灯进全屏：窗口大小交给全屏，退出全屏后再回到预览前的普通大小
+            frameAfterFullScreen = saved.frame
+        } else {
+            window.setFrame(saved.frame, display: true, animate: true)
+        }
         window.minSize = saved.minSize
         filmstrip.isHidden = saved.filmstripHidden
         filmstripHeight.constant = saved.filmstripHidden ? 0 : FilmstripView.stripHeight
@@ -541,6 +548,7 @@ final class ViewerViewController: NSViewController {
     /// 刚进入预览时中心对准进入前的窗口；翻页时按设置对准当前窗口（用户拖过去的位置）或进入前的窗口
     private func wrapWindowToImage(keepingCurrent: Bool = false) {
         guard let window = view.window, let saved = peekSaved,
+              !window.styleMask.contains(.fullScreen),
               let screen = window.screen ?? NSScreen.main else { return }
         let px = imageView.pixelSize
         guard px.width > 0, px.height > 0 else { return }
@@ -2633,8 +2641,23 @@ final class ViewerViewController: NSViewController {
         flash(L10n.t("msg.slideshowOff", "已停止幻灯片放映"))
     }
 
+    /// 贴合照片比例预览时点了绿灯（从访达双击打开就是这种预览）：先结束预览再进全屏。
+    /// 以前预览没结束，翻页时还按照片比例去改窗口大小，全屏里就剩中间一块，四周全黑，文件名和工具条也跟着挤到中间（1.0.52 反馈）
+    @objc private func windowWillEnterFullScreen(_ note: Notification) {
+        guard (note.object as? NSWindow) === view.window, imageView.isPeeking else { return }
+        peekEndingForFullScreen = true
+        imageView.endPeek()
+        peekEndingForFullScreen = false
+    }
+    private var peekEndingForFullScreen = false
+    private var frameAfterFullScreen: NSRect?
+
     @objc private func windowDidExitFullScreen(_ note: Notification) {
         guard (note.object as? NSWindow) === view.window else { return }
+        if let f = frameAfterFullScreen {
+            frameAfterFullScreen = nil
+            view.window?.setFrame(f, display: true, animate: false)
+        }
         stopSlideshow()
         applyBackdropStyle()
         // 「只在全屏时铺满」：退出全屏回到整张放下

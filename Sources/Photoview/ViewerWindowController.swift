@@ -40,8 +40,6 @@ final class ViewerWindowController: NSWindowController {
         inFullScreenTransition = note.name == NSWindow.willEnterFullScreenNotification || note.name == NSWindow.willExitFullScreenNotification
     }
 
-    /// 记下普通窗口的大小和位置，下次打开沿用。全屏、最小化不记；
-    /// 贴合照片比例的预览也不记（进入预览前的大小在那之前已经记过了）
     /// 放到所在屏幕可用区域的正中：左右严格对称，上下也居中；窗口比屏幕大时先缩到放得下
     static func centerOnScreen(_ window: NSWindow) {
         guard let screen = window.screen ?? NSScreen.main else { return }
@@ -54,6 +52,8 @@ final class ViewerWindowController: NSWindowController {
         window.setFrame(f, display: false)
     }
 
+    /// 记下普通窗口的大小和位置，下次打开沿用。全屏、最小化不记；
+    /// 贴合照片比例的预览也不记（进入预览前的大小在那之前已经记过了）
     @objc private func rememberFrame(_ note: Notification) {
         guard let w = window, w.isVisible, !inFullScreenTransition, !w.styleMask.contains(.fullScreen), !w.isMiniaturized,
               viewerVC?.isPeeking != true else { return }
