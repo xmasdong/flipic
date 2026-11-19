@@ -135,7 +135,7 @@ extension ViewerViewController {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
                 check(imageView.isPeeking, "进入贴合预览，窗口 \(Int(w.frame.width))x\(Int(w.frame.height))（普通 \(Int(normal.width))x\(Int(normal.height))）")
                 NotificationCenter.default.post(name: NSWindow.willEnterFullScreenNotification, object: w)
-                check(!imageView.isPeeking && !isPeekingNow, "将要进入全屏：预览已结束")
+                check(!imageView.isPeeking, "将要进入全屏：预览已结束")
                 let before = w.frame
                 navigateForward(nil)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [self] in

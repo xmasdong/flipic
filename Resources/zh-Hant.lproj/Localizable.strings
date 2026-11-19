@@ -354,6 +354,10 @@ Return  重新命名目前圖片
 "ui.markedOnlyPill" = "只看已標記 · %1$d / %2$d";
 "set.toolbar" = "工具列：";
 "set.toolbarCheck" = "移動滑鼠時顯示底部工具列";
+"set.toolbar.edges" = "滑鼠移到邊緣時顯示";
+"set.toolbar.move" = "移動滑鼠就顯示";
+"set.toolbar.never" = "不顯示";
+"set.toolbarNote" = "看照片時工具列不會出現，滑鼠移到視窗底部才出現；上方的按鈕和兩側箭頭也一樣。";
 "menu.toolbar" = "工具列";
 "ui.marked" = "已標記";
 "menu.compare2" = "並排對比 2 張";
@@ -1287,3 +1291,5 @@ Return  重新命名目前圖片
 "menu.resize" = "調整尺寸…";
 "exp.resizeTitle" = "調整尺寸";
 "exp.resizeMessage" = "填長邊的像素數，匯出一份縮小後的副本，原圖不變";
+"set.fileNameCheck2" = "在左上角顯示檔名";
+"set.fitFillNote3" = "鋪滿按照片的長邊放大：橫圖左右鋪滿，比螢幕高的話上下裁掉一點；直圖上下鋪滿，兩邊留邊，不裁。適合全螢幕瀏覽、放幻燈片；挑片時要看整張，就選不鋪滿。裁切和拉直時照樣顯示整張。";

@@ -366,6 +366,10 @@ Esc  先关掉右上角的照片信息
 "ui.markedOnlyPill" = "只看已标记 · %1$d / %2$d";
 "set.toolbar" = "工具条：";
 "set.toolbarCheck" = "移动鼠标时显示底部工具条";
+"set.toolbar.edges" = "鼠标移到边上时显示";
+"set.toolbar.move" = "移动鼠标就显示";
+"set.toolbar.never" = "不显示";
+"set.toolbarNote" = "看照片时工具条不出来，鼠标移到窗口底部才出现；上边的按钮和两侧箭头也一样。";
 "menu.toolbar" = "工具条";
 "ui.marked" = "已标记";
 "menu.compare2" = "并排对比 2 张";
@@ -1299,3 +1303,5 @@ Esc  先关掉右上角的照片信息
 "menu.resize" = "调整尺寸…";
 "exp.resizeTitle" = "调整尺寸";
 "exp.resizeMessage" = "填长边的像素数，导出一份缩小后的副本，原图不变";
+"set.fileNameCheck2" = "在左上角显示文件名";
+"set.fitFillNote3" = "铺满按照片的长边放大：横图左右铺满，比屏幕高的话上下裁掉一点；竖图上下铺满，两边留边，不裁。适合全屏翻看、放幻灯片；挑片时要看整张，就选不铺满。裁剪和拉直时照样显示整张。";

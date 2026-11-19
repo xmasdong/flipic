@@ -819,7 +819,10 @@ final class ZoomableImageView: NSView {
         let c = contentSize
         guard image != nil, c.width > 0, c.height > 0, bounds.width > 1 else { return 1 }
         let sx = bounds.width / c.width, sy = bounds.height / c.height
-        return fillsNow ? max(sx, sy) : min(sx, sy)
+        guard fillsNow else { return min(sx, sy) }
+        // 铺满按照片的长边：横图让宽度铺满（太高的话上下裁一点），竖图让高度铺满（两边留边，不裁）。
+        // 以前按「盖满整个窗口」算，竖图在横屏上被裁掉一大半（用户反馈「按短边铺满了」）
+        return c.width >= c.height ? sx : sy
     }
 
     /// 设置里的「照片铺满」：0 不铺满（默认），1 只在全屏时铺满，2 始终铺满。铺满时按长边放大，比例不同时裁掉多出的边。

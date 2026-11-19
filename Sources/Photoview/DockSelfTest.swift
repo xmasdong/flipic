@@ -44,9 +44,14 @@ extension ViewerViewController {
             check(imageView.bounds.insetBy(dx: -1, dy: -1).contains(photoRect()),
                   "\(tag): photo \(r(photoRect())) inside image area \(r(imageView.bounds))")
         }
+        /// 铺满按长边：横图宽度正好铺满，竖图高度正好铺满（两边留边，不裁）
         func checkCovers(_ tag: String) {
-            check(photoRect().insetBy(dx: -1, dy: -1).contains(imageView.bounds),
-                  "\(tag): photo \(r(photoRect())) covers image area \(r(imageView.bounds))")
+            let p = photoRect(), b = imageView.bounds
+            if p.width >= p.height {
+                check(abs(p.width - b.width) <= 1.5, "\(tag): landscape width fills \(r(p)) in \(r(b))")
+            } else {
+                check(abs(p.height - b.height) <= 1.5 && p.width <= b.width + 1, "\(tag): portrait height fills, sides not cropped \(r(p)) in \(r(b))")
+            }
             check(imageView.isFit, "\(tag): fill counts as fit")
         }
         func notify(_ what: String) { SettingsWindowController.notify(what) }

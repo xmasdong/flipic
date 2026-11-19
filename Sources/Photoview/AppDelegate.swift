@@ -1088,6 +1088,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runFolderSyncTest(outDir: outDir)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--zonetest"), i + 1 < CommandLine.arguments.count {
+            // --zonetest <工作文件夹>：控件按鼠标所在区域出现、按键不叫出控件，最后一行 ZONE summary
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runZoneTest(outDir: outDir)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--hwheeltest"), i + 1 < CommandLine.arguments.count {
             // --hwheeltest <工作文件夹>：鼠标横向滚轮 / 侧键翻页自测，最后一行 HWHEEL summary
             let outDir = CommandLine.arguments[i + 1]

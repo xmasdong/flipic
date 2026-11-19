@@ -96,8 +96,6 @@ final class ViewerViewController: NSViewController {
     private var nextArrowContainer: NSView!
     private var prevArrowButton: ToolbarButton!
     private var nextArrowButton: ToolbarButton!
-    var controlsHideTimer: Timer?
-    private var controlsVisible = true
     var filmstripHeight: NSLayoutConstraint!
     /// 平时图片停在缩略图栏上方；幻灯片放映时图片铺到底，缩略图栏浮在上面，跟着控件一起自动隐藏
     private var imageAboveFilmstrip: NSLayoutConstraint!
@@ -220,7 +218,7 @@ final class ViewerViewController: NSViewController {
             guard let url = urls.first else { return }
             self?.open(url: url)
         }
-        dropView.onMouseMoved = { [weak self] in self?.pokeControls() }
+        dropView.onMouseMoved = { [weak self] p in self?.pointerMoved(to: p) }
         dropView.onMouseExited = { [weak self] in self?.scheduleControlsHide() }
         view = dropView
 
@@ -279,7 +277,7 @@ final class ViewerViewController: NSViewController {
             self?.folder.setCurrentPixelSize(size)
             self?.updateHUD()
         }
-        imageView.onActivity = { [weak self] in self?.pokeControls() }
+        // 滚轮、侧键、拖动、按键都不叫出控件：只有鼠标移到边上才出来（pointerMoved）
         imageView.onPeekBegin = { [weak self] in self?.beginPeek() ?? false }
         imageView.onPeekEnd = { [weak self] in self?.endPeek() }
         imageView.onEscape = { [weak self] in
@@ -442,37 +440,177 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 控件自动隐藏
 
+    /// 看照片时控件什么时候出来。按键（翻页、评分、标记……）从来不叫出控件，只看鼠标
+    enum ToolbarMode: String {
+        /// 鼠标移到照片区的边上，那一边的控件才出来（默认）
+        case edges
+        /// 鼠标一动，全部控件都出来（老样子）
+        case mouseMove
+        /// 底部工具条和右上角按钮不出来；文件名、两侧箭头照旧按边上的区域出来
+        case never
+    }
+
+    static var toolbarMode: ToolbarMode {
+        get {
+            if let s = UserDefaults.standard.string(forKey: "toolbarMode"), let m = ToolbarMode(rawValue: s) { return m }
+            // 老设置：关掉过「移动鼠标时显示底部工具条」的，算「不显示」
+            return UserDefaults.standard.bool(forKey: "toolbarHidden") ? .never : .edges
+        }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: "toolbarMode")
+            // 老版本只认这个键，退回老版本时设置也不乱
+            UserDefaults.standard.set(newValue == .never, forKey: "toolbarHidden")
+        }
+    }
+
+    /// 控件分四组，各管照片区的一条边
+    enum ControlZone: CaseIterable { case bottom, top, left, right }
+
+    /// 点 p 落在照片区 area 的哪些边上（同一坐标系，y 朝上）。
+    /// 底部 25%（至少 120 点）、顶部 18%（至少 80 点）、左右各 12% 宽（至少 80 点）；角落算上下，不算两侧
+    static func controlZones(at p: CGPoint, in area: NSRect) -> Set<ControlZone> {
+        guard area.width > 0, area.height > 0, area.contains(p) else { return [] }
+        if p.y < area.minY + max(area.height * 0.25, 120) { return [.bottom] }
+        if p.y > area.maxY - max(area.height * 0.18, 80) { return [.top] }
+        let side = max(area.width * 0.12, 80)
+        var z = Set<ControlZone>()
+        if p.x < area.minX + side { z.insert(.left) }
+        if p.x > area.maxX - side { z.insert(.right) }
+        return z
+    }
+
+    /// 这一组现在由哪些控件组成
+    private func zoneTargets(_ z: ControlZone) -> [NSView] {
+        switch z {
+        case .bottom:
+            var t: [NSView] = []
+            // 看视频时照片工具栏换成视频控制条
+            if Self.showToolbar && !video.isActive { t.append(toolbarView) }
+            if video.isActive { t.append(video.bar) }
+            if filmstripFloating && filmstripHeight.constant > 0 { t.append(filmstrip) }
+            return t
+        case .top:
+            var t: [NSView] = []
+            if Self.showToolbar { t.append(cornerBar) }
+            if Self.showFileName { t.append(fileNameBar) }
+            if liveMovie != nil { t.append(liveBadge) }
+            return t
+        case .left: return [prevArrowContainer]
+        case .right: return [nextArrowContainer]
+        }
+    }
+
+    /// 鼠标在 view 坐标 p 时算在哪些组里：照片区边上的区域，或者正指着那一组的控件（控件可能伸出照片区，比如贴边的信息面板上方的右上角按钮）
+    func controlZones(at p: CGPoint) -> Set<ControlZone> {
+        var z = Self.controlZones(at: p, in: imageView.frame)
+        for zone in ControlZone.allCases where pointerOverControls(zone, p) { z.insert(zone) }
+        return z
+    }
+
+    private func pointerOverControls(_ z: ControlZone, _ p: CGPoint) -> Bool {
+        zoneTargets(z).contains { $0.frame.insetBy(dx: -6, dy: -6).contains(p) }
+    }
+
+    /// 测试用：每组固定的那几个控件（底部工具条 / 右上角按钮和文件名 / 左箭头 / 右箭头）
+    func zoneViewsForTest(_ z: ControlZone) -> [NSView] {
+        switch z {
+        case .bottom: return [toolbarView]
+        case .top: return [cornerBar, fileNameBar]
+        case .left: return [prevArrowContainer]
+        case .right: return [nextArrowContainer]
+        }
+    }
+
+    /// 现在出来的是哪几组
+    private(set) var shownZones = Set<ControlZone>()
+    /// 底部工具条（或视频控制条）出来了：星级要让到它上面
+    private var bottomShown: Bool { shownZones.contains(.bottom) }
+    private var zoneTimers: [ControlZone: Timer] = [:]
+    /// 上一次鼠标移动时所在的位置和组；鼠标离开窗口后为 nil
+    private var lastPointer: CGPoint?
+    private var lastPointerZones = Set<ControlZone>()
+
+    /// 鼠标在窗口里移动（p 是 view 坐标）。滚轮、触控板轻扫、按键都不走这里
+    func pointerMoved(to p: CGPoint) {
+        guard peekSaved == nil, compareView == nil, folder.current != nil else { return }
+        // 按着键拖动（平移照片、拖窗口）时不闪控件
+        guard NSEvent.pressedMouseButtons == 0 else { return }
+        lastPointer = p
+        if Self.toolbarMode == .mouseMove {
+            lastPointerZones = []
+            pokeControls()
+            return
+        }
+        let inside = controlZones(at: p)
+        let left = lastPointerZones.subtracting(inside)
+        lastPointerZones = inside
+        setZones(shownZones.union(inside))
+        for z in inside {
+            // 指着控件时一直留着；在区域里但没指着控件，3 秒不动就收起
+            if pointerOverControls(z, p) { cancelZoneHide(z) } else { scheduleZoneHide(z, after: 3.0) }
+        }
+        // 刚离开区域：1 秒后收起
+        for z in left where shownZones.contains(z) { scheduleZoneHide(z, after: 1.0) }
+    }
+
+    /// 全部控件出来，3 秒后收起。鼠标移动在「移动鼠标就显示」时走这里；自测截图前也用它
     func pokeControls() {
         guard peekSaved == nil, compareView == nil else { return }
-        setControlsVisible(true)
-        controlsHideTimer?.invalidate()
-        let timer = Timer(timeInterval: 3.0, repeats: false) { [weak self] _ in
-            self?.setControlsVisible(false)
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        controlsHideTimer = timer
+        setZones(Set(ControlZone.allCases))
+        for z in ControlZone.allCases { scheduleZoneHide(z, after: 3.0) }
     }
 
+    /// 鼠标离开窗口：出来的控件 1 秒后收起
     private func scheduleControlsHide() {
-        controlsHideTimer?.invalidate()
-        let timer = Timer(timeInterval: 1.0, repeats: false) { [weak self] _ in
-            self?.setControlsVisible(false)
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        controlsHideTimer = timer
+        lastPointer = nil
+        lastPointerZones = []
+        for z in shownZones { scheduleZoneHide(z, after: 1.0) }
     }
 
+    func cancelControlsHide() {
+        for t in zoneTimers.values { t.invalidate() }
+        zoneTimers.removeAll()
+    }
+
+    private func cancelZoneHide(_ z: ControlZone) {
+        zoneTimers[z]?.invalidate()
+        zoneTimers[z] = nil
+    }
+
+    private func scheduleZoneHide(_ z: ControlZone, after seconds: TimeInterval) {
+        zoneTimers[z]?.invalidate()
+        let timer = Timer(timeInterval: seconds, repeats: false) { [weak self] _ in
+            guard let self else { return }
+            self.zoneTimers[z] = nil
+            // 鼠标停在控件上（比如正要点）时不收
+            if Self.toolbarMode != .mouseMove, let p = self.lastPointer, self.pointerOverControls(z, p),
+               self.peekSaved == nil, self.compareView == nil { return }
+            self.setZones(self.shownZones.subtracting([z]))
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        zoneTimers[z] = timer
+    }
+
+    /// 全部出来 / 全部收起（进出预览、对比等用）
     func setControlsVisible(_ visible: Bool) {
-        guard visible != controlsVisible else { return }
-        controlsVisible = visible
-        var targets: [NSView] = [prevArrowContainer!, nextArrowContainer!]
-        // 看视频时照片工具栏换成视频控制条
-        if Self.showToolbar { targets += video.isActive ? [cornerBar] : [toolbarView, cornerBar] }
-        if Self.showFileName { targets.append(fileNameBar) }
-        if liveMovie != nil { targets.append(liveBadge) }
-        if video.isActive { targets.append(video.bar) }
-        if visible { placeFileName() }
-        if filmstripFloating && filmstripHeight.constant > 0 { targets.append(filmstrip) }
+        cancelControlsHide()
+        if !visible { lastPointerZones = [] }
+        setZones(visible ? Set(ControlZone.allCases) : [])
+    }
+
+    /// 换成这几组出来：新出来的淡入，收起的淡出，动画和时长同原来一样
+    private func setZones(_ zones: Set<ControlZone>) {
+        let showing = zones.subtracting(shownZones), hiding = shownZones.subtracting(zones)
+        guard !showing.isEmpty || !hiding.isEmpty else { return }
+        shownZones = zones
+        if showing.contains(.top) { placeFileName() }
+        animateZones(showing, visible: true)
+        animateZones(hiding, visible: false)
+    }
+
+    private func animateZones(_ zones: Set<ControlZone>, visible: Bool) {
+        guard !zones.isEmpty else { return }
+        let targets = zones.flatMap { zoneTargets($0) }
         if visible {
             for t in targets where folder.current != nil { t.isHidden = false }
         }
@@ -482,7 +620,7 @@ final class ViewerViewController: NSViewController {
             for t in targets {
                 t.animator().alphaValue = visible ? 1 : 0
             }
-            ratingBadgeBottom?.animator().constant = ratingBadgeOffset(controls: visible)
+            if zones.contains(.bottom) { ratingBadgeBottom?.animator().constant = ratingBadgeOffset(controls: visible) }
         }, completionHandler: {
             for t in targets {
                 t.isHidden = t.alphaValue < 0.01
@@ -490,13 +628,29 @@ final class ViewerViewController: NSViewController {
         })
     }
 
-    func updateControlsPresence() {
+    /// 控件按现在该不该出来直接摆好（不叫出任何一组）：开了 / 关了照片、换了设置、开始放映时用
+    private func syncControls() {
         let present = folder.current != nil
-        for t in [toolbarView, cornerBar, fileNameBar, prevArrowContainer!, nextArrowContainer!] { t.isHidden = !present }
-        if !Self.showToolbar { toolbarView.isHidden = true; cornerBar.isHidden = true }
-        if !Self.showFileName { fileNameBar.isHidden = true }
+        for t in [toolbarView, cornerBar, fileNameBar, prevArrowContainer!, nextArrowContainer!] as [NSView] {
+            t.isHidden = true; t.alphaValue = 0
+        }
         if liveMovie == nil { liveBadge.isHidden = true }
-        if present { pokeControls() }
+        for z in ControlZone.allCases {
+            let on = present && shownZones.contains(z)
+            for t in zoneTargets(z) {
+                t.isHidden = !on
+                t.alphaValue = on ? 1 : 0
+            }
+        }
+        ratingBadgeBottom?.constant = ratingBadgeOffset(controls: bottomShown)
+    }
+
+    func updateControlsPresence() {
+        if folder.current == nil {
+            cancelControlsHide()
+            shownZones = []
+        }
+        syncControls()
     }
 
     // MARK: - 空格预览：窗口贴合图片比例（同访达空格预览）
@@ -506,7 +660,6 @@ final class ViewerViewController: NSViewController {
         guard let window = view.window, peekSaved == nil, folder.current != nil,
               !window.styleMask.contains(.fullScreen) else { return false }
         peekSaved = (window.frame, window.minSize, filmstrip.isHidden, exifPanel.isHidden)
-        controlsHideTimer?.invalidate()
         setControlsVisible(false)
         hudView.isHidden = true
         exifPanel.isHidden = true
@@ -540,7 +693,6 @@ final class ViewerViewController: NSViewController {
         if !saved.infoHidden { updateExifPanel() }
         updateHUD()
         updateRatingLabel()
-        pokeControls()
         imageView.fit()
     }
 
@@ -696,7 +848,7 @@ final class ViewerViewController: NSViewController {
         LivePhoto.check(url) { [weak self] mov in
             guard let self, self.folder.current?.url == url else { return }
             self.liveMovie = mov
-            self.liveBadge.isHidden = mov == nil || !self.controlsVisible || self.peekSaved != nil
+            self.liveBadge.isHidden = mov == nil || !self.shownZones.contains(.top) || self.peekSaved != nil
             self.liveBadge.alphaValue = self.liveBadge.isHidden ? 0 : 1
         }
     }
@@ -1334,10 +1486,10 @@ final class ViewerViewController: NSViewController {
             filmstripHeight.constant = FilmstripView.stripHeight
             filmstrip.scrollTo(index: folder.index)
         }
-        let showTools = controlsVisible && Self.showToolbar
+        let showTools = bottomShown && Self.showToolbar
         toolbarView.isHidden = video.isActive || !showTools
         toolbarView.alphaValue = toolbarView.isHidden ? 0 : 1
-        video.bar.isHidden = !video.isActive || !controlsVisible
+        video.bar.isHidden = !video.isActive || !bottomShown
         video.bar.alphaValue = video.bar.isHidden ? 0 : 1
     }
 
@@ -1349,12 +1501,10 @@ final class ViewerViewController: NSViewController {
         let code = event.keyCode
         if (code == 36 || code == 76), mods.isEmpty {
             video.toggle()
-            pokeControls()
             return true
         }
         if (code == 123 || code == 124), mods == .shift {
             video.seek(by: code == 123 ? -5 : 5)
-            pokeControls()
             return true
         }
         switch Shortcuts.action(for: event) {
@@ -2098,7 +2248,6 @@ final class ViewerViewController: NSViewController {
     @objc func toggleToolbar(_ sender: Any?) {
         Self.showToolbar.toggle()
         SettingsWindowController.notify("toolbar")
-        if Self.showToolbar { pokeControls() }
     }
 
     /// 到头了：照片朝按的方向挪一点再弹回来，并提示已是第一张 / 最后一张
@@ -2188,25 +2337,26 @@ final class ViewerViewController: NSViewController {
         case "fitFills":
             if imageView.isFit { imageView.fit() }
         case "toolbar":
-            let hideTools = !Self.showToolbar || folder.current == nil || !controlsVisible
-            toolbarView.isHidden = hideTools || video.isActive
+            let hideTools = !Self.showToolbar || folder.current == nil
+            toolbarView.isHidden = hideTools || video.isActive || !bottomShown
             toolbarView.alphaValue = toolbarView.isHidden ? 0 : 1
-            cornerBar.isHidden = hideTools
-            cornerBar.alphaValue = hideTools ? 0 : 1
+            cornerBar.isHidden = hideTools || !shownZones.contains(.top)
+            cornerBar.alphaValue = cornerBar.isHidden ? 0 : 1
+            ratingBadgeBottom.constant = ratingBadgeOffset(controls: bottomShown)
         case "videos":
             // 重新列一遍文件夹；正在看的视频被关掉了就回到文件夹开头
             guard let dir = folder.folderURL else { break }
             let cur = folder.current?.url
             open(url: cur.map { Video.isVideo($0) && !Video.enabled ? dir : $0 } ?? dir)
         case "fileName":
-            fileNameBar.isHidden = !Self.showFileName || folder.current == nil || !controlsVisible
+            fileNameBar.isHidden = !Self.showFileName || folder.current == nil || !shownZones.contains(.top)
             fileNameBar.alphaValue = fileNameBar.isHidden ? 0 : 1
-            ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible)
+            ratingBadgeBottom.constant = ratingBadgeOffset(controls: bottomShown)
         case "thumbs":
             // 缩略图大小变了：格子、栏高一起改，按新尺寸重新取缩略图
             filmstrip.applyThumbSize()
             if filmstripHeight.constant > 0 { filmstripHeight.constant = FilmstripView.stripHeight }
-            ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible)
+            ratingBadgeBottom.constant = ratingBadgeOffset(controls: bottomShown)
             filmstrip.collectionView.reloadData()
             syncFilmstripSelection()
             if imageView.isFit { imageView.fit() }
@@ -2622,11 +2772,20 @@ final class ViewerViewController: NSViewController {
             filmstrip.alphaValue = 1
             filmstrip.isHidden = filmstripHeight.constant == 0
         }
-        ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible)
+        ratingBadgeBottom.constant = ratingBadgeOffset(controls: bottomShown)
         updateInfoDock(layoutNow: false)
         view.layoutSubtreeIfNeeded()
         imageView.fit()
-        pokeControls()
+        // 开始放映不叫出控件：浮着的缩略图栏跟着底部那组，鼠标移到底部才出来
+        if floating && !bottomShown {
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.4
+                filmstrip.animator().alphaValue = 0
+            }, completionHandler: { [weak self] in
+                guard let self, self.filmstripFloating, !self.bottomShown else { return }
+                self.filmstrip.isHidden = true
+            })
+        }
     }
 
     func stopSlideshow() {
@@ -3001,10 +3160,12 @@ final class ViewerViewController: NSViewController {
     }
     private let ratingBadgeLabel = NSTextField(labelWithString: "")
 
-    /// 移动鼠标时显示底部工具条；关掉后只用快捷键和菜单，左右翻页箭头照常出现
+    /// 底部工具条和右上角按钮会不会出来（工具条设置不是「不显示」）；关掉后只用快捷键和菜单，文件名、左右翻页箭头照常按区域出现
     static var showToolbar: Bool {
-        get { !UserDefaults.standard.bool(forKey: "toolbarHidden") }
-        set { UserDefaults.standard.set(!newValue, forKey: "toolbarHidden") }
+        get { toolbarMode != .never }
+        set {
+            if !newValue { toolbarMode = .never } else if toolbarMode == .never { toolbarMode = .edges }
+        }
     }
 
     static var showRatingBadge: Bool {
@@ -3045,7 +3206,7 @@ final class ViewerViewController: NSViewController {
         ratingBadgeLabel.stringValue = String(repeating: "★", count: r)
         ratingBadge.isHidden = r == 0 || !badge || peekSaved != nil || cleanup != nil || compareView != nil
         // 刚出现时按当前工具条状态放，免得工具条正显示着却落在它下面
-        if !ratingBadge.isHidden { ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible) }
+        if !ratingBadge.isHidden { ratingBadgeBottom.constant = ratingBadgeOffset(controls: bottomShown) }
         // 标记固定在左下角，不随工具条移动，也不受「底部显示星级」开关影响
         markBadge.isHidden = !(folder.current?.marked ?? false) || peekSaved != nil || cleanup != nil || compareView != nil
         if compareView != nil { refreshCompareInfo() }
@@ -3615,7 +3776,6 @@ final class ViewerViewController: NSViewController {
             compareView = cv
             compareState = nil
             imageView.isHidden = true
-            controlsHideTimer?.invalidate()
             setControlsVisible(false)
         }
         // 已有的格子保持原样，新加的格子接着往后放还没出现过的照片
@@ -3664,7 +3824,6 @@ final class ViewerViewController: NSViewController {
         showImage(resetToFit: true)
         view.window?.makeFirstResponder(imageView)
         updateRatingLabel()
-        pokeControls()
     }
 
     private func configurePane(_ pane: ComparePane, at i: Int) {
@@ -4098,8 +4257,8 @@ final class ViewerViewController: NSViewController {
         let urls = actionURLs
         guard cleanup == nil, !urls.isEmpty else { return }
         let picker = NSSharingServicePicker(items: urls)
-        if let b = shareButton, !toolbarView.isHidden, toolbarView.alphaValue > 0, b.window != nil {
-            controlsHideTimer?.invalidate()
+        if let b = shareButton, !cornerBar.isHidden, cornerBar.alphaValue > 0, b.window != nil {
+            cancelControlsHide()
             picker.show(relativeTo: b.bounds, of: b, preferredEdge: .maxY)
         } else {
             let r = NSRect(x: view.bounds.midX - 1, y: view.bounds.midY - 1, width: 2, height: 2)
@@ -7786,7 +7945,7 @@ final class ToolbarButton: NSButton {
 
 private final class DropView: NSView {
     var onDrop: ([URL]) -> Void = { _ in }
-    var onMouseMoved: (() -> Void)?
+    var onMouseMoved: ((NSPoint) -> Void)?
     var onMouseExited: (() -> Void)?
     private var tracking: NSTrackingArea?
 
@@ -7808,7 +7967,7 @@ private final class DropView: NSView {
     }
 
     override func mouseMoved(with event: NSEvent) {
-        onMouseMoved?()
+        onMouseMoved?(convert(event.locationInWindow, from: nil))
     }
 
     override func mouseExited(with event: NSEvent) {

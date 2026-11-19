@@ -728,8 +728,17 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     private let hdrNote = note("")
     private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
     private let videosCheck = NSButton(checkboxWithTitle: L10n.t("set.videosCheck", "在文件夹里显示视频"), target: nil, action: nil)
-    private let toolbarCheck = NSButton(checkboxWithTitle: L10n.t("set.toolbarCheck", "移动鼠标时显示底部工具条"), target: nil, action: nil)
-    private let fileNameCheck = WrapCheckbox(title: L10n.t("set.fileNameCheck", "移动鼠标时在左上角显示文件名"))
+    private let toolbarPopup: NSPopUpButton = {
+        let p = NSPopUpButton()
+        for (mode, title) in [(ViewerViewController.ToolbarMode.edges, L10n.t("set.toolbar.edges", "鼠标移到边上时显示")),
+                              (.mouseMove, L10n.t("set.toolbar.move", "移动鼠标就显示")),
+                              (.never, L10n.t("set.toolbar.never", "不显示"))] {
+            p.addItem(withTitle: title)
+            p.lastItem?.representedObject = mode.rawValue
+        }
+        return p
+    }()
+    private let fileNameCheck = WrapCheckbox(title: L10n.t("set.fileNameCheck2", "在左上角显示文件名"))
     private let backdropPopup = NSPopUpButton()
     private let recentsCheck = NSButton(checkboxWithTitle: L10n.t("set.recentsCheck", "记录并显示最近打开的文件夹"), target: nil, action: nil)
     private let transparencyCheck = NSButton(checkboxWithTitle: L10n.t("set.transparencyGrid", "透明的地方显示棋盘格"), target: nil, action: nil)
@@ -770,15 +779,15 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         wrap.target = self; wrap.action = #selector(wrapChanged)
         escCloses.target = self; escCloses.action = #selector(escChanged)
         ratingBadge.target = self; ratingBadge.action = #selector(ratingBadgeChanged)
-        toolbarCheck.target = self; toolbarCheck.action = #selector(toolbarChanged)
+        toolbarPopup.target = self; toolbarPopup.action = #selector(toolbarChanged)
         videosCheck.target = self; videosCheck.action = #selector(videosChanged)
         fileNameCheck.target = self; fileNameCheck.action = #selector(fileNameChanged)
         hdr.target = self; hdr.action = #selector(hdrChanged)
         liveText.target = self; liveText.action = #selector(liveTextChanged)
-        let toolbarRow = NSStackView(views: [toolbarCheck, fileNameCheck])
-        toolbarRow.orientation = .vertical
-        toolbarRow.alignment = .leading
-        toolbarRow.spacing = 6
+        // 文件名的勾选单独一行；包一层 NSStackView，不当成说明行往上贴
+        let fileNameRow = NSStackView(views: [fileNameCheck])
+        fileNameRow.orientation = .vertical
+        fileNameRow.alignment = .leading
         for (t, title) in [(2, L10n.t("set.bg.photo", "照片色磨砂")), (1, L10n.t("set.bg.glass", "磨砂玻璃")), (0, L10n.t("set.bg.black", "纯黑"))] {
             backdropPopup.addItem(withTitle: title)
             backdropPopup.lastItem?.tag = t
@@ -812,10 +821,12 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.rating", "评分：")), ratingBadge],
             [label(L10n.t("set.infoDockLabel", "照片信息：")), infoDockCheck],
             [label(L10n.t("set.fitFillLabel", "适应窗口：")), fitFillPopup],
-            spacerRow(note(L10n.t("set.fitFillNote2", "照片和屏幕比例不一样时会留黑边。选铺满后照片放大到没有黑边，上下或左右多出来的一截看不到，适合全屏翻看、放幻灯片；挑片时要看整张，就选不铺满。裁剪和拉直时照样显示整张。"))),
+            spacerRow(note(L10n.t("set.fitFillNote3", "铺满按照片的长边放大：横图左右铺满，比屏幕高的话上下裁掉一点；竖图上下铺满，两边留边，不裁。适合全屏翻看、放幻灯片；挑片时要看整张，就选不铺满。裁剪和拉直时照样显示整张。"))),
             [label(L10n.t("set.videos", "视频：")), videosCheck],
             spacerRow(note(L10n.t("set.videosNote", "MP4、MOV、M4V 和照片一起列出，回车播放。只播系统自带能播的格式，不额外下载解码器。"))),
-            [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
+            [label(L10n.t("set.toolbar", "工具条：")), toolbarPopup],
+            spacerRow(note(L10n.t("set.toolbarNote", "看照片时工具条不出来，鼠标移到窗口底部才出现；上边的按钮和两侧箭头也一样。"))),
+            spacerRow(fileNameRow),
             [label(L10n.t("set.backdrop", "背景：")), backdropRow],
             [label(L10n.t("set.thumbs", "缩略图：")), thumbPopup],
             [label(L10n.t("set.rotSave", "保存修改：")), rotRow],
@@ -867,7 +878,9 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         intervalPopup.selectItem(withTag: ViewerViewController.slideshowIntervals.contains(sec) ? sec : 3)
         escCloses.state = ViewerViewController.escCloses ? .on : .off
         ratingBadge.state = ViewerViewController.showRatingBadge ? .on : .off
-        toolbarCheck.state = ViewerViewController.showToolbar ? .on : .off
+        if let item = toolbarPopup.itemArray.first(where: { ($0.representedObject as? String) == ViewerViewController.toolbarMode.rawValue }) {
+            toolbarPopup.select(item)
+        }
         videosCheck.state = Video.enabled ? .on : .off
         fileNameCheck.state = ViewerViewController.showFileName ? .on : .off
         backdropPopup.selectItem(withTag: ZoomableImageView.backdropStyle.rawValue)
@@ -979,7 +992,7 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     }
 
     @objc private func toolbarChanged() {
-        ViewerViewController.showToolbar = toolbarCheck.state == .on
+        ViewerViewController.toolbarMode = ViewerViewController.ToolbarMode(rawValue: toolbarPopup.selectedItem?.representedObject as? String ?? "") ?? .edges
         SettingsWindowController.notify("toolbar")
     }
 
