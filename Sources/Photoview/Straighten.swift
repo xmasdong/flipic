@@ -113,10 +113,10 @@ enum Straighten {
     }
 
     /// 另存的文件名：IMG_1234-旋转.jpg，裁过的是 IMG_1234-裁剪.jpg；重名就 IMG_1234-旋转 2.jpg
-    static func copyURL(for url: URL, ext: String, cropped: Bool = false) -> URL {
+    static func copyURL(for url: URL, ext: String, cropped: Bool = false, border: Bool = false) -> URL {
         let dir = url.deletingLastPathComponent()
         let base = url.deletingPathExtension().lastPathComponent
-            + (cropped ? L10n.t("rot.cropSuffix", "-裁剪") : L10n.t("rot.copySuffix", "-旋转"))
+            + (border ? L10n.t("border.suffix", "-边框") : cropped ? L10n.t("rot.cropSuffix", "-裁剪") : L10n.t("rot.copySuffix", "-旋转"))
         var n = 1
         while true {
             let name = n == 1 ? base : "\(base) \(n)"
@@ -142,11 +142,18 @@ enum Straighten {
     /// 把视图上的旋转和裁剪写进文件。overwrite = false 时另存一份，原图不动。
     /// 只转了 90° 的：能写方向标记的格式不动像素（无损）；裁剪或拉直过的要重新编码，JPEG/HEIC 用 0.95 质量，拍摄信息保留。
     /// maxLongEdge：另存时缩到长边不超过这么多像素（不放大，见 SaveSize）；覆盖原图不缩，给了也不管。要缩小就得重新编码，不走无损
-    static func save(url: URL, quarterTurns: Int, degrees: Double, crop: CropSpec? = nil, overwrite: Bool, maxLongEdge: Int? = nil) -> Outcome {
+    /// border：加边框，总是另存一份（IMG_1234-边框.jpg），尺寸按 border 里选的，不看 maxLongEdge
+    static func save(url: URL, quarterTurns: Int, degrees: Double, crop: CropSpec? = nil, overwrite: Bool, maxLongEdge: Int? = nil, border: BorderSpec? = nil) -> Outcome {
         beginSave()
         defer { endSave() }
         let turns = ((quarterTurns % 4) + 4) % 4
         let cropped = crop != nil
+        if let border {
+            let writable = !CleanupUnit.isRaw(url) && canOverwrite(url)
+            let out = copyURL(for: url, ext: writable ? url.pathExtension : "jpg", border: true)
+            let r = reencode(url: url, turns: turns, degrees: degrees, crop: crop, to: out, type: writable ? nil : UTType.jpeg.identifier, border: border)
+            return Outcome(result: r.result, url: r.result == .failed ? nil : out, pixelSize: r.size)
+        }
         let edge = overwrite ? nil : maxLongEdge
         // RAW 只转 90°：改方向标记，原图或副本都保持 RAW。改不了就退回另存 JPEG（另存要缩小时也直接存 JPEG）
         if CleanupUnit.isRaw(url), degrees == 0, !cropped, edge == nil, RawOrientation.canRotate(url) {
@@ -207,7 +214,7 @@ enum Straighten {
     }
 
     /// 解全分辨率（已按方向校正）→ 转 + 裁 → 按 type（nil = 原格式）编码，拍摄信息带过去，方向改成正常
-    private static func reencode(url: URL, turns: Int, degrees: Double, crop: CropSpec? = nil, to out: URL, type: String?, maxLongEdge: Int? = nil) -> (result: ImageLoader.RotationWriteResult, size: CGSize?) {
+    private static func reencode(url: URL, turns: Int, degrees: Double, crop: CropSpec? = nil, to out: URL, type: String?, maxLongEdge: Int? = nil, border: BorderSpec? = nil) -> (result: ImageLoader.RotationWriteResult, size: CGSize?) {
         let failed: (result: ImageLoader.RotationWriteResult, size: CGSize?) = (.failed, nil)
         // 点保存之前就在后台解好的全图（见 prewarm）：和下面自己解的是同一个调用，文件没动过才用
         let warmed = takeWarm(url)
@@ -216,7 +223,10 @@ enum Straighten {
               let full = warmed ?? stage("1.decode", { ImageLoader.decodedFull(url: url) }) else { return failed }
         guard var rendered = stage("2.render", { render(full, quarterTurns: turns, degrees: degrees, crop: scaledCrop(crop, full: full, turns: turns)) }) else { return failed }
         // 另存时选了尺寸：和导出的「长边不超过」同一个缩小（不放大）
-        if let e = maxLongEdge, e < max(rendered.width, rendered.height) {
+        if let border {
+            guard let b = border.render(rendered, choice: border.size) else { return failed }
+            rendered = b
+        } else if let e = maxLongEdge, e < max(rendered.width, rendered.height) {
             guard let s = stage("2b.scale", { ImageExporter.scaled(rendered, longEdge: e) }) else { return failed }
             rendered = s
         }

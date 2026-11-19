@@ -172,6 +172,8 @@ final class ZoomableImageView: NSView {
 
     /// 测试用：每次换图都先通知一下（图、是不是换了新照片）
     var debugOnSet: ((CGImage?, Bool) -> Void)?
+    /// 换完图（新照片、草图换清晰图）之后：加边框的预览跟着换
+    var onImageSet: (() -> Void)?
 
     /// resetToFit 时重置为适应窗口；isNew 标记换了新图（重置旋转角度）。
     /// logicalSize 是原图尺寸，newSrc 可以是它的降采样版本；不传则按 newSrc 本身尺寸。
@@ -223,6 +225,7 @@ final class ZoomableImageView: NSView {
         } else {
             apply()
         }
+        onImageSet?()
     }
 
     // MARK: - 磨砂底

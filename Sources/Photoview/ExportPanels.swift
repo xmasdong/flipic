@@ -12,6 +12,9 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
     private let sizeCheck = NSButton(checkboxWithTitle: L10n.t("exp.maxSize", "文件不超过"), target: nil, action: nil)
     private let sizeField = NSTextField(string: "")
     private let srgb = NSButton(checkboxWithTitle: L10n.t("exp.srgb", "转换为 sRGB"), target: nil, action: nil)
+    /// 加边框：用「照片 › 加边框…」上次的设置（预设里存的是自己的那份）
+    private let borderCheck = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+    private var borderSpec = BorderSpec.saved
     #if FLIPIC_PRO
     /// 胶片：无 + 十款（Pro）。effectToken 是现在选的那段文字，换款以外的参数（强度等）沿用传进来的
     private let filmPopup = NSPopUpButton(frame: .zero)
@@ -44,7 +47,11 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         let mb = o.maxBytes.map { Double($0) / 1_048_576 } ?? ExportOptions.savedSizeMB
         sizeField.stringValue = mb == mb.rounded() ? String(Int(mb)) : String(format: "%.2f", mb).replacingOccurrences(of: "0+$", with: "", options: .regularExpression)
         srgb.state = o.toSRGB ? .on : .off
-        for b in [keepMeta, stripGPS, longCheck, sizeCheck, srgb] { b.target = self; b.action = #selector(changed(_:)) }
+        if let b = o.border { borderSpec = b }
+        borderCheck.state = o.border != nil ? .on : .off
+        borderCheck.title = L10n.f("border.export", "加边框（%@）", borderSpec.summary)
+        borderCheck.toolTip = L10n.t("border.export.tip", "用「照片 › 加边框…」上次的设置")
+        for b in [keepMeta, stripGPS, longCheck, sizeCheck, srgb, borderCheck] { b.target = self; b.action = #selector(changed(_:)) }
         for f in [longField, sizeField] {
             f.alignment = .right
             f.delegate = self
@@ -65,7 +72,7 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         let longRow = NSStackView(views: [longCheck, longField, unit(L10n.t("exp.pixels", "像素"))])
         let sizeRow = NSStackView(views: [sizeCheck, sizeField, unit("MB")])
         for r in [longRow, sizeRow] { r.spacing = 6; r.alignment = .centerY }
-        for v in [keepMeta, gpsRow, longRow, sizeRow, srgb] { addArrangedSubview(v) }
+        for v in [keepMeta, gpsRow, longRow, sizeRow, srgb, borderCheck] { addArrangedSubview(v) }
         setCustomSpacing(10, after: gpsRow)
         #if FLIPIC_PRO
         filmPopup.addItems(withTitles: FilmExportUI.titles)
@@ -81,11 +88,11 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         filmRow.spacing = 8
         filmRow.alignment = .centerY
         addArrangedSubview(filmRow)
-        setCustomSpacing(10, after: srgb)
+        setCustomSpacing(10, after: borderCheck)
         #endif
         addArrangedSubview(watermarkRow)
         #if !FLIPIC_PRO
-        setCustomSpacing(10, after: srgb)
+        setCustomSpacing(10, after: borderCheck)
         #endif
         watermarkRow.onChange = { [weak self] in self?.onChange?() }
         watermarkRow.onLayout = { [weak self] in self?.onLayout?() }
@@ -136,6 +143,7 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         o.effect = FilmExportUI.token(forIndex: filmPopup.indexOfSelectedItem, initial: effectToken)
         #endif
         o.watermark = watermarkRow.job
+        o.border = borderCheck.state == .on ? borderSpec : nil
         return o
     }
 

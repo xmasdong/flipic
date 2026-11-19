@@ -20,6 +20,8 @@ struct ExportOptions: Equatable {
     /// 导出的副本上加水印：整份样式 + 这一次的文字（共用代码，免费功能）。nil = 不加。不记在偏好设置里；
     /// 原文件不会被改，水印只在导出、转换出来的副本里
     var watermark: WatermarkJob?
+    /// 导出的副本加边框（照片 › 加边框… 的设置）。nil = 不加；不记在偏好设置里
+    var border: BorderSpec?
 
     private static let d = UserDefaults.standard
 
@@ -91,7 +93,9 @@ enum ImageExporter {
         let hasStage = options.effect != nil || options.watermark != nil
         var base = image
         if !hasStage, options.toSRGB, let s = converted(base) { base = s }
-        if let edge = options.maxLongEdge, edge < max(base.width, base.height), let s = scaled(base, longEdge: edge) { base = s }
+        // 加边框：长边限制管的是整张画布
+        if let b = options.border, let r = b.render(base, choice: options.maxLongEdge.map { .preset($0) } ?? .original) { base = r }
+        else if let edge = options.maxLongEdge, edge < max(base.width, base.height), let s = scaled(base, longEdge: edge) { base = s }
         let plain = base
         let fileName = source?.deletingPathExtension().lastPathComponent
         var watermarkFailed = false
@@ -294,7 +298,7 @@ enum ImageExporter {
 
     // MARK: - 色彩与缩放
 
-    private static let ciContext = CIContext(options: [.cacheIntermediates: false])
+    static let ciContext = CIContext(options: [.cacheIntermediates: false])
 
     /// 已经是 sRGB 吗：命名的 sRGB，或描述文件里写着 sRGB（相机和软件嵌入的 sRGB IEC61966-2.1）
     static func isSRGB(_ cs: CGColorSpace?) -> Bool {

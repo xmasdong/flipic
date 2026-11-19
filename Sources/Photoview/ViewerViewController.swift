@@ -23,6 +23,8 @@ final class ViewerViewController: NSViewController {
     private var rotationJustSaved: URL?
     /// 正在后台写盘的保存对应的照片；非 nil 时翻页要等它写完，也不开始新的编辑
     private var savingURL: URL?
+    /// 加边框中（见 Border.swift）
+    var border: BorderSession?
     /// 保存写盘期间用户想翻页：等写完再翻（只留最后一个想做的）
     private var afterSave: (() -> Void)?
     private let hudStack = NSStackView()
@@ -266,7 +268,7 @@ final class ViewerViewController: NSViewController {
         imageView.onRename = { [weak self] in self?.renameCurrent(nil) }
         imageView.onKeyIntercept = { [weak self] event in
             guard let self else { return false }
-            return self.handleStraightenKey(event) || self.handleVideoKey(event)
+            return self.handleStraightenKey(event) || self.handleBorderKey(event) || self.handleVideoKey(event)
         }
         imageView.onCommand = { [weak self] action in self?.perform(action) }
         #if FLIPIC_PRO
@@ -1508,13 +1510,13 @@ final class ViewerViewController: NSViewController {
             return true
         }
         switch Shortcuts.action(for: event) {
-        case .rotateCW, .rotateCCW, .straighten, .zoomEye, .copyText, .saveRotation: return true
+        case .rotateCW, .rotateCCW, .straighten, .border, .zoomEye, .copyText, .saveRotation: return true
         default: return false
         }
     }
 
     /// 文件夹有变化：先换掉被改过的照片，再对一遍新增和不见了的
-    private func folderDidChange(removing: Bool = false) {
+    func folderDidChange(removing: Bool = false) {
         guard folder.folderURL != nil else { return }
         reloadChangedFiles()
         syncFolderWithDisk(removing: removing)
@@ -2279,6 +2281,7 @@ final class ViewerViewController: NSViewController {
         case .exportWatermarked: exportWithWatermark(nil)
         case .saveRotation: saveRotation(nil)
         case .straighten: straighten(nil)
+        case .border: addBorder(nil)
         case .infoLevel: toggleInfoLevel(nil)
         case .cleanup: if folder.count > 0 { toggleCleanup(nil) }
         case .batchConvert: batchConvert(nil)
@@ -2414,6 +2417,7 @@ final class ViewerViewController: NSViewController {
     // MARK: - 清理模式
 
     @objc func toggleCleanup(_ sender: Any?) {
+        closeBorder()
         exitCompare()
         video.clear()
         if let cleanup {
@@ -4639,6 +4643,7 @@ final class ViewerViewController: NSViewController {
             previous?()
             self?.rotationJustSaved = nil
             self?.updateRotationBar()
+            self?.borderImageChanged()
         }
     }
 
@@ -4657,11 +4662,13 @@ final class ViewerViewController: NSViewController {
 
     /// 裁剪时照片和手柄让开底部那条（窗口大小变了、缩略图栏开关后也要重算）
     func updateCropInset(layout: Bool = true) {
-        guard isStraightening else { return }
+        guard isStraightening || border != nil else { return }
         if layout { view.layoutSubtreeIfNeeded() }
         // 看图视图是翻转坐标：条的上沿到视图底边的距离
         let bar = imageView.convert(rotationBar.bounds, from: rotationBar)
-        imageView.cropBottomInset = max(0, imageView.bounds.maxY - bar.minY)
+        let inset = max(0, imageView.bounds.maxY - bar.minY)
+        if let border { border.preview.inset = inset; return }
+        imageView.cropBottomInset = inset
     }
 
     override func viewDidLayout() {
@@ -4679,8 +4686,8 @@ final class ViewerViewController: NSViewController {
             && (rotationAutoSaveFailed == nil || rotationAutoSaveFailed != folder.current?.url)
     }
 
-    private func updateRotationBar() {
-        guard !isStraightening else { return }
+    func updateRotationBar() {
+        guard !isStraightening, border == nil else { return }
         rotationAutoSave?.cancel()
         rotationAutoSave = nil
         let pending = imageView.hasPendingRotation && cleanup == nil
@@ -4709,7 +4716,7 @@ final class ViewerViewController: NSViewController {
 
     /// ⇧R：裁剪与拉直。拖裁剪框的手柄、选比例，滑块或 ← → 调角度；回车（或在框里双击）完成、Esc 取消
     @objc func straighten(_ sender: Any?) {
-        guard folder.current != nil, cleanup == nil, !isStraightening, savingURL == nil else { return }
+        guard folder.current != nil, cleanup == nil, !isStraightening, border == nil, savingURL == nil else { return }
         guard !currentIsVideo, imageView.canStraighten else {
             flash(L10n.t("msg.straightenUnavailable", "视频和动图不能裁剪或拉直"))
             return
@@ -8091,6 +8098,9 @@ extension ViewerViewController: NSMenuItemValidation {
             if menuItem.menu === imageView.menu {
                 menuItem.title = slideshowActive ? L10n.t("menu.slideshowStop", "停止幻灯片放映") : L10n.t("menu.slideshow", "幻灯片放映")
             }
+        } else if menuItem.action == #selector(addBorder(_:)) {
+            menuItem.state = border != nil ? .on : .off
+            return folder.current != nil && cleanup == nil && !currentIsVideo && imageView.canStraighten && !isStraightening
         } else if menuItem.action == #selector(copyAllText(_:)) {
             return folder.current != nil && imageView.debugHasImage && mainViewerActive
         }

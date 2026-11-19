@@ -71,7 +71,9 @@ final class SaveSizeRow: NSObject, NSTextFieldDelegate {
     /// 测试用：正在显示的那一行
     static weak var current: SaveSizeRow?
 
-    let native: CGSize
+    var native: CGSize { didSet { if native != oldValue { update() } } }
+    /// 选项或自定义的数变了（加边框的条用）
+    var onChange: (() -> Void)?
     let view = NSView()
     let popup = NSPopUpButton(frame: .zero, pullsDown: false)
     let field = NSTextField()
@@ -219,6 +221,7 @@ final class SaveSizeRow: NSObject, NSTextFieldDelegate {
             o.keyEquivalent = allowed ? "\r" : ""
             c.keyEquivalent = allowed ? "" : "\r"
         }
+        onChange?()
         if let r = rememberButton {
             // 「以后都这样保存」之后就不再弹框、只按原尺寸存，缩小时不让勾，免得以为以后都缩小
             if !allowed { r.state = .off }

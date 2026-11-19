@@ -19,6 +19,9 @@ final class RotationBar: NSVisualEffectView {
     private var straightenRow: NSStackView!
     private var cropRow: NSStackView!
     private var pendingRow: NSStackView!
+    private var outer: NSStackView!
+    /// 别的工具借这条用的一行（加边框）
+    private var extraRow: NSView?
     /// 比例选择：一个显示当前比例的按钮，点开是菜单（每个比例后面带一句淡淡的用途说明）
     private let aspectButton = NSButton()
     private var currentAspect = CropGeometry.Aspect.original
@@ -186,7 +189,7 @@ final class RotationBar: NSVisualEffectView {
             row.spacing = 8
         }
         // 几行放进同一个竖排的 stack：隐藏的行不占位置，条的宽度跟着当前最宽的那行走
-        let outer = NSStackView(views: [cropRow, straightenRow, pendingRow])
+        outer = NSStackView(views: [cropRow, straightenRow, pendingRow])
         outer.orientation = .vertical
         outer.alignment = .width
         outer.spacing = 8
@@ -203,14 +206,14 @@ final class RotationBar: NSVisualEffectView {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    private static func label(_ s: String, bold: Bool) -> NSTextField {
+    static func label(_ s: String, bold: Bool) -> NSTextField {
         let l = NSTextField(labelWithString: s)
         l.font = .systemFont(ofSize: 13, weight: bold ? .semibold : .regular)
         l.setContentCompressionResistancePriority(.required, for: .horizontal)
         return l
     }
 
-    private static func button(_ title: String, _ action: Selector, _ target: AnyObject) -> NSButton {
+    static func button(_ title: String, _ action: Selector, _ target: AnyObject) -> NSButton {
         let b = NSButton(title: title, target: target, action: action)
         b.bezelStyle = .rounded
         b.controlSize = .regular
@@ -219,6 +222,15 @@ final class RotationBar: NSVisualEffectView {
 
     /// 拉直中
     var isStraightening: Bool { !isHidden && !straightenRow.isHidden }
+
+    /// 整条换成 row（加边框）；nil = 拿掉、收起
+    func showExtra(_ row: NSView?) {
+        extraRow?.removeFromSuperview()
+        extraRow = row
+        if let row { outer.addArrangedSubview(row) }
+        for r in [straightenRow!, cropRow!, pendingRow!] { r.isHidden = true }
+        isHidden = row == nil
+    }
 
     func showStraighten(degrees: Double) {
         #if FLIPIC_PRO
@@ -233,6 +245,7 @@ final class RotationBar: NSVisualEffectView {
 
     /// pending = true 显示「修改还没保存」，否则整条收起
     func showPending(_ pending: Bool) {
+        guard extraRow == nil else { return }
         straightenRow.isHidden = true
         cropRow.isHidden = true
         pendingRow.isHidden = false
@@ -381,9 +394,12 @@ final class RotationBar: NSVisualEffectView {
 final class CustomRatioFields: NSView, NSTextFieldDelegate {
     let widthField = NSTextField(string: ""), heightField = NSTextField(string: "")
     private let onValid: (Bool) -> Void
+    private let parse: (String, String) -> (w: Int, h: Int)?
 
-    init(width: Int, height: Int, onValid: @escaping (Bool) -> Void) {
+    init(width: Int, height: Int, parse: @escaping (String, String) -> (w: Int, h: Int)? = { CropMemory.parseCustom(width: $0, height: $1) },
+         onValid: @escaping (Bool) -> Void) {
         self.onValid = onValid
+        self.parse = parse
         super.init(frame: NSRect(x: 0, y: 0, width: 230, height: 28))
         func label(_ s: String) -> NSTextField {
             let l = NSTextField(labelWithString: s)
@@ -414,7 +430,7 @@ final class CustomRatioFields: NSView, NSTextFieldDelegate {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    var value: (w: Int, h: Int)? { CropMemory.parseCustom(width: widthField.stringValue, height: heightField.stringValue) }
+    var value: (w: Int, h: Int)? { parse(widthField.stringValue, heightField.stringValue) }
 
     private func report() { onValid(value != nil) }
 

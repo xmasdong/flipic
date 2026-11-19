@@ -1076,6 +1076,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // --keyclosetest <工作文件夹>：⌘W、⌃Z、⌘Z 之后窗口去哪了，最后一行 KEYCLOSE summary
             let outDir = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.runKeyCloseTest(outDir: outDir) }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--bordertest"), i + 1 < CommandLine.arguments.count {
+            // --bordertest <工作文件夹>：加边框（比例、颜色、尺寸、元数据、预览截图），最后一行 BORDER summary
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runBorderTest(outDir: outDir)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--cropsizetest"), i + 1 < CommandLine.arguments.count {
             // --cropsizetest <工作文件夹>：保存修改时选尺寸（长边、自定义、不放大、缩小只能另存），最后一行 CROPSIZE summary
             let outDir = CommandLine.arguments[i + 1]
@@ -1487,6 +1493,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.rotateCW(_:)): .rotateCW,
         #selector(ViewerViewController.rotateCCW(_:)): .rotateCCW,
         #selector(ViewerViewController.straighten(_:)): .straighten,
+        #selector(ViewerViewController.addBorder(_:)): .border,
         #selector(ViewerViewController.toggleInfoPanel(_:)): .info,
         #selector(ViewerViewController.toggleInfoLevel(_:)): .infoLevel,
         #selector(ViewerViewController.toggleFilmstrip(_:)): .filmstrip,
@@ -1821,6 +1828,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.compare2", "并排对比 2 张"), #selector(ViewerViewController.toggleCompare(_:)))
             item(m, L10n.t("menu.compare4", "并排对比 4 张"), #selector(ViewerViewController.toggleCompare4(_:)))
             item(m, L10n.t("menu.compareSync", "对比时同步缩放和位置"), #selector(ViewerViewController.toggleCompareSync(_:)))
+            m.addItem(.separator())
+            item(m, L10n.t("menu.border", "加边框…"), #selector(ViewerViewController.addBorder(_:)))
             if TextRecognition.isAvailable {
                 m.addItem(.separator())
                 item(m, L10n.t("menu.copyText", "复制图中全部文字"), #selector(ViewerViewController.copyAllText(_:)))
