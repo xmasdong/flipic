@@ -59,7 +59,9 @@ enum LocationMap {
     private static func appleSnapshot(_ r: Request, _ completion: @escaping (NSImage?) -> Void) -> (() -> Void) {
         let options = MKMapSnapshotter.Options()
         let height = r.size.width > 0 ? spanMeters * Double(r.size.height / r.size.width) : spanMeters
-        options.region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: r.latitude, longitude: r.longitude),
+        // 照片里是 WGS-84，Apple 地图在中国大陆要 GCJ-02，换算后小红点才落在拍摄的地方
+        let c = ChinaCoordinate.forMap(latitude: r.latitude, longitude: r.longitude)
+        options.region = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: c.lat, longitude: c.lon),
                                             latitudinalMeters: height, longitudinalMeters: spanMeters)
         options.size = r.size
         options.appearance = r.appearance

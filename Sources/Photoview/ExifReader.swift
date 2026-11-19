@@ -416,7 +416,8 @@ enum ExifReader {
         guard let (gps, lat, lon) = coordinate(props) else { return nil }
         var text = String(format: "%.5f° %@, %.5f° %@", abs(lat), lat >= 0 ? "N" : "S", abs(lon), lon >= 0 ? "E" : "W")
         if altitude, let alt = altitudeText(gps) { text += " · " + alt }
-        let link = URL(string: String(format: "https://maps.apple.com/?ll=%.6f,%.6f&q=%.6f,%.6f", lat, lon, lat, lon))
+        // 在中国大陆要先换成地图用的坐标，不然「地图」里偏几百米（见 ChinaCoordinate）
+        let link = ChinaCoordinate.mapsURL(latitude: lat, longitude: lon)
         return ExifEntry(label: L10n.t("exif.location", "拍摄地点"), value: text, link: link, coordinate: (lat, lon))
     }
 

@@ -261,7 +261,20 @@ extension ViewerViewController {
         // 4 点地图：打开同一个网址
         at(0.1) { map?.debugClick() }
         at(0.1) {
-            T.check(opened.last?.absoluteString == "https://maps.apple.com/?ll=31.230400,121.473700&q=31.230400,121.473700", "click opens the maps.apple.com URL (\(opened.last?.absoluteString ?? "nothing"))")
+            // 上海在中国大陆：链接里是换算成地图坐标后的值
+            let expect = ChinaCoordinate.mapsURL(latitude: 31.2304, longitude: 121.4737)?.absoluteString
+            T.check(opened.last?.absoluteString == expect && expect?.contains("ll=31.2304") == false, "click opens the converted maps.apple.com URL (\(opened.last?.absoluteString ?? "nothing"))")
+            // 换算和区域边界：蛇口那张 iPhone 照片换算后应落在邮轮母港一带（约 22.4692, 113.9149）
+            let sk = ChinaCoordinate.forMap(latitude: 22.47223333333333, longitude: 113.9100333333333)
+            T.check(abs(sk.lat - 22.46918) < 0.0002 && abs(sk.lon - 113.91489) < 0.0002, String(format: "Shekou converts to %.5f, %.5f", sk.lat, sk.lon))
+            for (name, la, lo, mainland) in [("Shekou", 22.4722, 113.9100, true), ("Futian", 22.5400, 114.0500, true), ("Beijing", 39.9087, 116.3975, true),
+                                             ("HK Central", 22.2800, 114.1600, false), ("Tuen Mun", 22.3900, 113.9700, false), ("Lo Wu HK", 22.5200, 114.1100, false),
+                                             ("Macau", 22.1900, 113.5400, false), ("Taipei", 25.0330, 121.5654, false), ("Kinmen", 24.4400, 118.3200, false),
+                                             ("Tokyo", 35.6812, 139.7671, false), ("Paris", 48.8566, 2.3522, false)] {
+                T.check(ChinaCoordinate.inMainlandChina(latitude: la, longitude: lo) == mainland, "\(name) mainland=\(mainland)")
+            }
+            let paris = ChinaCoordinate.forMap(latitude: 48.8566, longitude: 2.3522)
+            T.check(paris.lat == 48.8566 && paris.lon == 2.3522, "outside China unchanged")
         }
 
         // 5 下一张有位置的照片自动加载
