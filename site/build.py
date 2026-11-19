@@ -295,7 +295,7 @@ HOME = {
              "<p>删哪些还是你说了算，点了「移到废纸篓」才会删，删错了 <kbd>⌘Z</kbd> 能撤回来。同名的 RAW 和 JPG 会一起处理。</p>"),
             ("exif.webp", "Flipic Lens 照片信息面板显示相机、镜头与拍摄参数", "参数按 I 才出来",
              "<p>平时画面上只有照片，想看参数就按 <kbd>I</kbd>，窗口右边会列出相机、镜头、快门、光圈、ISO 和拍摄时间，照片自动让到左边，不会被挡住，看完按 <kbd>Esc</kbd> 关掉。</p>"
-             "<p>带位置的照片下面有一块小地图，点「显示地图」才联网加载。在国内拍的照片会自动纠偏：照片里存的是国际通用的 GPS 坐标，国内地图用的是另一套坐标，直接放上去会偏几百米，Flipic Lens 先换算再标点，红点就落在实际拍摄的地方，点地图在「地图」App 里打开也一样。</p>"
+             "<p>带位置的照片下面有一块小地图，点「显示地图」才联网加载。在国内拍的照片也能对准国内地图：照片里存的是国际通用的 GPS 坐标，国内地图用的是另一套坐标，直接放上去会差几百米，Flipic Lens 先换算成地图用的坐标再标点，红点就落在实际拍摄的地方，点地图在「地图」App 里打开也一样。</p>"
              "<p>iPhone 拍的 HDR 照片也能按 HDR 显示，亮的地方比普通白色更亮，跟系统「预览」看到的一样。这个要在设置里打开，屏幕也得支持 HDR。</p>"),
         ],
         "film_feature": ("film.webp", "Flipic Lens 胶片滤镜面板：十款效果的缩略图和强度、颗粒、光晕滑块", "给照片套上胶片的颜色",
@@ -309,7 +309,7 @@ HOME = {
              "<p>⌘S 导出、批量转换格式和导出预设（Pro）里都能选，也可以从「文件 › 加水印导出…」直接进。原照片不会被改，视频和动图会跳过。水印能让别人不方便直接拿去用，但拦不住有心人，重要的东西别只靠它。</p>"),
         "more_title": "其他功能",
         "more": [
-            ("拍摄地点地图，国内照片自动纠偏", "按 I 打开照片信息，带位置的照片能看到拍在哪。国内拍的照片会先把 GPS 坐标换算成国内地图用的坐标，不会偏几百米；香港、澳门、台湾和国外的照片不用换算。地图点了才加载。"),
+            ("拍摄地点地图，国内照片不偏移", "按 I 打开照片信息，带位置的照片能看到拍在哪。国内拍的照片会先把 GPS 坐标换算成国内地图用的坐标，不会偏几百米；香港、澳门、台湾和国外的照片不用换算。地图点了才加载。"),
             ("一次看四张", "按 ⇧C 可以四张一起并排看，放大、拖动也是一起动。"),
             ("用后期软件打开", "按 ⌘E 用 Photoshop、Lightroom 或 Capture One 打开当前照片，有同名 RAW 时打开 RAW。"),
             ("RAW 和 JPG 当一张看（Pro）", "RAW 加 JPG 一起拍的话，同名的两个文件只显示一张，按 V 换着看。打星、标记、删除都只算一张。"),
@@ -352,7 +352,7 @@ HOME = {
             ("能代替 Lightroom 挑片吗？", "挑片可以用它。在 Flipic Lens 里翻一遍、打星、删掉废片，打的星 Lightroom 和 Capture One 都读得到。调色修图还是回原来的软件，按 ⌘E 就能把当前这张在那边打开。"),
             ("和 Bridge、Photo Mechanic、Lightroom 有什么不同？", "Bridge 更像素材和元数据工具，Photo Mechanic 强在拷卡、IPTC 和交付，Lightroom Classic 要先进目录再挑。Flipic Lens 只做打开文件夹、翻页、看焦点、打星、标记和清理这一段，挑完再把留下的导入后期。完整对比见 <a href=\"/compare/\">Mac 看图与挑片软件对比</a>。"),
             ("能看到照片里写的图说（IPTC）吗？", "能。按 I 打开照片信息，文件里写的标题（IPTC Headline）和说明（IPTC Description）显示在面板最上面，下面是作者、署名、版权、地名和关键词。文字可以选中复制，说明里的网址可以点开，按 ⇧I 能在「常用」和「全部」之间切换。说明的语言和界面语言不一样时，说明下面有「翻译」按钮，译文显示在原文下方，用的是 macOS 自带的翻译，在本机完成，文字不会发到服务器，需要 macOS 15 或更新。这些信息只能看，Flipic Lens 不编辑 IPTC 和其他元数据。具体步骤见 <a href=\"/guides/read-iptc-caption-mac/\">Mac 上怎么看照片里的说明</a>。"),
-            ("照片的拍摄地点在地图上偏了几百米，怎么回事？", "国内地图用的不是照片里存的国际通用 GPS 坐标，直接放上去会偏几百米。Flipic Lens 会先把在中国大陆拍的照片纠偏，换算成地图用的坐标再标点，iPhone 拍的照片会落在实际拍摄的地方，点开「地图」App 也一样。面板上显示的坐标数字还是照片里的原值。"),
+            ("照片的拍摄地点在地图上偏了几百米，怎么回事？", "国内地图用的不是照片里存的国际通用 GPS 坐标，直接放上去会偏几百米。在中国大陆拍的照片，Flipic Lens 会先换算成地图用的坐标再标点，iPhone 拍的照片会落在实际拍摄的地方，点开「地图」App 也一样。面板上显示的坐标数字还是照片里的原值。"),
             ("Mac 上怎么看下一张图片？", "用 Flipic Lens 双击任意一张图片，按右方向键就是下一张，左方向键是上一张，同一个文件夹里的图片都能翻到。"),
             ("怎么设为默认看图软件？", "打开 Flipic Lens 的设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 一次设好。"),
             ("能不能一次看很多张，像宫格那样？", "免费版翻片时，底部有缩略图栏，同一个文件夹的照片都列在那里；Pro 的工作台（⌥⌘B）把每场拍摄当一个项目，中间宫格里打星、标记、删除，右边是大图、拍摄参数和直方图。工作台是 Pro 功能，下载后可以先试用 7 天。"),
@@ -386,7 +386,7 @@ HOME = {
              "<p>You decide what goes. Nothing is deleted until you click Move to Trash, and <kbd>⌘Z</kbd> undoes it. RAW and JPG files with the same name are handled together.</p>"),
             ("exif.webp", "Flipic Lens photo info panel with camera, lens and exposure", "Shooting details when you need them",
              "<p>Normally the window shows only the photo. Press <kbd>I</kbd> to see the camera, lens, shutter speed, aperture, ISO and date taken along the right side of the window; the photo moves over so nothing is covered. Press <kbd>Esc</kbd> to close it.</p>"
-             "<p>Photos with a location get a small map, which loads only when you click Show Map. Photos taken in mainland China are corrected first: they store standard GPS coordinates, but maps there use a different coordinate system and would put the pin a few hundred metres off, so Flipic Lens converts them and the pin lands where you stood. The same goes for the place it opens in Maps.</p>"
+             "<p>Photos with a location get a small map, which loads only when you click Show Map. Photos taken in mainland China line up with the map there: they store standard GPS coordinates, but maps there use a different coordinate system and would put the pin a few hundred metres off, so Flipic Lens converts them and the pin lands where you stood. The same goes for the place it opens in Maps.</p>"
              "<p>HDR photos from an iPhone can be shown in HDR, with highlights brighter than normal white, the same as in Preview. Turn it on in Settings; your display needs to support HDR.</p>"),
         ],
         "film_feature": ("film-en.webp", "Flipic Lens Film Looks panel: ten swatches of the current photo with Strength, Grain and Halation sliders", "Give photos the color of film",
@@ -400,7 +400,7 @@ HOME = {
              "<p>Pick one in Export (⌘S), Batch Convert Format and, with Pro, export presets, or go straight to File › Export with Watermark…. Originals are never changed, and videos and animated images are skipped. A watermark makes reuse harder but does not prevent it, so don’t rely on it alone for anything important.</p>"),
         "more_title": "More features",
         "more": [
-            ("Location map, corrected in China", "Press I and photos with a location show where they were taken. Photos from mainland China are converted to the coordinates maps there use, so the pin isn’t a few hundred metres off; Hong Kong, Macau, Taiwan and the rest of the world need no conversion. The map loads only when you ask for it."),
+            ("Location map that lines up in China", "Press I and photos with a location show where they were taken. Photos from mainland China are converted to the coordinates maps there use, so the pin isn’t a few hundred metres off; Hong Kong, Macau, Taiwan and the rest of the world need no conversion. The map loads only when you ask for it."),
             ("Four at once", "Press ⇧C to put four frames of a burst side by side; zooming and dragging move them together."),
             ("Open in your editor", "⌘E opens the current photo in Photoshop, Lightroom or Capture One, or its RAW file if there is one with the same name."),
             ("RAW and JPG as one (Pro)", "If you shoot RAW + JPG, the two files with the same name show as one photo; press V to switch between them. Ratings, marks and deletes count once."),
