@@ -1275,3 +1275,8 @@ Drop a folder or image to open";
 "hwheel.navigate" = "Previous / Next Photo";
 "hwheel.pan" = "Move the photo left and right";
 "set.hwheelNote" = "Applies to a mouse's horizontal wheel (such as the thumb wheel on a Logitech MX Master). The mouse side buttons (back / forward) always go to the previous / next photo.";
+"set.infoDockLabel" = "Photo info:";
+"set.infoDock" = "Dock photo info on the right edge so it doesn’t cover the photo";
+"set.fitFillLabel" = "Fit to window:";
+"set.fitFill" = "Fill the window (crop the edges when the shape differs)";
+"set.fitFillNote" = "When the photo and the window have different shapes, the photo is enlarged until there are no bars, so a strip at the top and bottom or the sides is hidden. Nice for slideshows and casual browsing; leave it off when culling, since you need to see the whole frame. Cropping and straightening always show the whole photo.";

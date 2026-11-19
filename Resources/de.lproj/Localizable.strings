@@ -1263,3 +1263,8 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "hwheel.navigate" = "Vorheriges / nächstes Foto";
 "hwheel.pan" = "Foto nach links und rechts verschieben";
 "set.hwheelNote" = "Gilt für das horizontale Rad einer Maus (etwa das Daumenrad der Logitech MX Master). Die Seitentasten der Maus (zurück / vor) wechseln immer zum vorherigen / nächsten Foto.";
+"set.infoDockLabel" = "Fotoinfos:";
+"set.infoDock" = "Fotoinfos am rechten Fensterrand andocken, damit sie das Foto nicht verdecken";
+"set.fitFillLabel" = "An Fenster anpassen:";
+"set.fitFill" = "Fenster ausfüllen (Ränder abschneiden, wenn das Seitenverhältnis abweicht)";
+"set.fitFillNote" = "Haben Foto und Fenster ein anderes Seitenverhältnis, wird das Foto vergrößert, bis keine Balken mehr da sind; oben und unten oder links und rechts fehlt dann ein Streifen. Gut für Diashows und zum Durchblättern; beim Aussortieren besser aus lassen, da man dort das ganze Bild sehen muss. Beim Zuschneiden und Ausrichten wird immer das ganze Foto gezeigt.";

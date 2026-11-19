@@ -102,6 +102,14 @@ final class ViewerViewController: NSViewController {
     /// 平时图片停在缩略图栏上方；幻灯片放映时图片铺到底，缩略图栏浮在上面，跟着控件一起自动隐藏
     private var imageAboveFilmstrip: NSLayoutConstraint!
     private var imageToBottom: NSLayoutConstraint!
+    private var imageTrailing: NSLayoutConstraint!
+    private var infoFloatingConstraints: [NSLayoutConstraint] = []
+    private var infoDockedConstraints: [NSLayoutConstraint] = []
+    /// 照片信息面板现在是不是贴在右边（照片区让出了它的宽度）
+    private(set) var infoDocked = false
+    /// 测试用
+    var nextArrowContainerForTest: NSView { nextArrowContainer }
+    var toolbarForTest: NSView { toolbarView }
     private var generation = 0
     private var slideshowTimer: Timer?
     var isProcessing = false
@@ -241,6 +249,7 @@ final class ViewerViewController: NSViewController {
         }
 
         imageView.allowsBackdrop = true
+        imageView.allowsFill = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.onZoomChange = { [weak self] _ in self?.updateHUD() }
         imageView.onNeedsDetail = { [weak self] in self?.loadFullResolution() }
@@ -357,6 +366,22 @@ final class ViewerViewController: NSViewController {
         filmstripHeight = filmstrip.heightAnchor.constraint(equalToConstant: FilmstripView.stripHeight)
         imageAboveFilmstrip = imageView.bottomAnchor.constraint(equalTo: filmstrip.topAnchor)
         imageToBottom = imageView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        // 照片信息贴在右边时，照片区让出面板的宽度
+        imageTrailing = imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+        // 浮动：卡片在右上角，叠在照片上
+        infoFloatingConstraints = [
+            // 让开右上角的置顶、分享
+            exifPanel.topAnchor.constraint(equalTo: view.topAnchor, constant: 46),
+            exifPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            // 「全部」里内容比窗口高：面板最多到缩略图栏上方，里面滚动
+            exifPanel.bottomAnchor.constraint(lessThanOrEqualTo: filmstrip.topAnchor, constant: -12),
+        ]
+        // 贴边：从窗口顶到缩略图栏，靠右，不挡照片
+        infoDockedConstraints = [
+            exifPanel.topAnchor.constraint(equalTo: view.topAnchor),
+            exifPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            exifPanel.bottomAnchor.constraint(equalTo: filmstrip.topAnchor),
+        ]
 
         NSLayoutConstraint.activate([
             filmstrip.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -366,34 +391,28 @@ final class ViewerViewController: NSViewController {
 
             imageView.topAnchor.constraint(equalTo: view.topAnchor),
             imageView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            imageView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            imageTrailing,
             imageAboveFilmstrip,
 
             hudView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             hudView.topAnchor.constraint(equalTo: view.topAnchor, constant: 44),
 
-            // 让开右上角的置顶、分享
-            exifPanel.topAnchor.constraint(equalTo: view.topAnchor, constant: 46),
-            exifPanel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            // 「全部」里内容比窗口高：面板最多到缩略图栏上方，里面滚动
-            exifPanel.bottomAnchor.constraint(lessThanOrEqualTo: filmstrip.topAnchor, constant: -12),
-
-            ratingBadge.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            ratingBadge.centerXAnchor.constraint(equalTo: imageView.centerXAnchor),
             ratingBadgeBottom,
 
-            toolbarView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            toolbarView.centerXAnchor.constraint(equalTo: imageView.centerXAnchor),
             toolbarView.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: -8),
-            video.bar.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            video.bar.centerXAnchor.constraint(equalTo: imageView.centerXAnchor),
             video.bar.bottomAnchor.constraint(equalTo: filmstrip.topAnchor, constant: -8),
 
             prevArrowContainer.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
             prevArrowContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            nextArrowContainer.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+            nextArrowContainer.trailingAnchor.constraint(equalTo: imageView.trailingAnchor, constant: -12),
             nextArrowContainer.centerYAnchor.constraint(equalTo: view.centerYAnchor),
 
             emptyState.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             emptyState.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -30),
-        ])
+        ] + infoFloatingConstraints)
         setupRotationBar()
     }
 
@@ -604,6 +623,7 @@ final class ViewerViewController: NSViewController {
             self?.infoButton?.image = NSImage(systemSymbolName: on ? "info.circle.fill" : "info.circle", accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: 15, weight: .medium))
             self?.infoButton?.contentTintColor = on ? .controlAccentColor : .labelColor
+            self?.updateInfoDock()
         }
 
         fileNameLabel.font = .systemFont(ofSize: 12, weight: .medium)
@@ -2029,6 +2049,30 @@ final class ViewerViewController: NSViewController {
         if !exifPanel.isHidden { updateExifPanel() }
     }
 
+    /// 照片信息贴在窗口右边、照片让到左边，不挡住照片。默认开；关掉就是原来浮在右上角的卡片
+    static var infoPanelDocked: Bool {
+        get { UserDefaults.standard.object(forKey: "infoPanelDocked") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "infoPanelDocked") }
+    }
+    /// 贴边后照片区至少留这么宽，窗口再窄就还是浮在照片上
+    static let dockMinImageWidth: CGFloat = 360
+
+    /// 面板开关、窗口大小、幻灯片、设置变了都来对一遍：该贴边就让照片区让出面板的宽度，照片重新放进剩下的地方
+    /// （适应窗口时重新适应，放大时 ZoomableImageView 自己保持画面中心看的还是同一处）
+    func updateInfoDock(layoutNow: Bool = true) {
+        guard imageTrailing != nil else { return }
+        let want = Self.infoPanelDocked && !exifPanel.isHidden && !filmstripFloating && peekSaved == nil
+            && view.bounds.width - InfoPanelView.width >= Self.dockMinImageWidth
+        guard want != infoDocked else { return }
+        infoDocked = want
+        NSLayoutConstraint.deactivate(want ? infoFloatingConstraints : infoDockedConstraints)
+        NSLayoutConstraint.activate(want ? infoDockedConstraints : infoFloatingConstraints)
+        imageTrailing.constant = want ? -InfoPanelView.width : 0
+        exifPanel.docked = want
+        stopLivePhoto()
+        if layoutNow { view.layoutSubtreeIfNeeded() }
+    }
+
     /// 照片信息在「常用」和「全部」之间切换；面板关着就先打开
     @objc func toggleInfoLevel(_ sender: Any?) {
         InfoLevel.current = InfoLevel.current == .all ? .common : .all
@@ -2131,6 +2175,10 @@ final class ViewerViewController: NSViewController {
             if slideshowTimer != nil { scheduleSlideshowTimer() }
         case "rating":
             updateRatingLabel()
+        case "infoDock":
+            updateInfoDock()
+        case "fitFills":
+            if imageView.isFit { imageView.fit() }
         case "toolbar":
             let hideTools = !Self.showToolbar || folder.current == nil || !controlsVisible
             toolbarView.isHidden = hideTools || video.isActive
@@ -2567,6 +2615,7 @@ final class ViewerViewController: NSViewController {
             filmstrip.isHidden = filmstripHeight.constant == 0
         }
         ratingBadgeBottom.constant = ratingBadgeOffset(controls: controlsVisible)
+        updateInfoDock(layoutNow: false)
         view.layoutSubtreeIfNeeded()
         imageView.fit()
         pokeControls()
@@ -3251,7 +3300,7 @@ final class ViewerViewController: NSViewController {
             stack.trailingAnchor.constraint(equalTo: markedOnlyPill.trailingAnchor, constant: -10),
             stack.topAnchor.constraint(equalTo: markedOnlyPill.topAnchor, constant: 5),
             stack.bottomAnchor.constraint(equalTo: markedOnlyPill.bottomAnchor, constant: -5),
-            markedOnlyPill.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            markedOnlyPill.centerXAnchor.constraint(equalTo: imageView.centerXAnchor),
             markedOnlyPill.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
         ])
     }
@@ -3814,7 +3863,7 @@ final class ViewerViewController: NSViewController {
             stack.bottomAnchor.constraint(equalTo: banner.bottomAnchor),
             stack.leadingAnchor.constraint(equalTo: banner.leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: banner.trailingAnchor),
-            banner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            banner.centerXAnchor.constraint(equalTo: imageView.centerXAnchor),
             banner.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
         ])
         updateBanner = banner
@@ -3920,15 +3969,15 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - ⌘W：打开的是文件夹时先回开始页，再关窗口
 
-    /// 打开文件夹看照片时按 ⌘W 回到开始页，换个文件夹不用关窗口；已经在开始页时才关窗口。
-    /// 直接打开的照片（从访达双击、多选打开）当快速查看用，⌘W 一次就关
+    /// 看照片时按 ⌘W 回到开始页，换个文件夹不用关窗口；已经在开始页时才关窗口。
+    /// 从访达双击打开的也一样：以前这种情况 ⌘W 直接关窗口，用户以为软件退出了（1.0.48 反馈）。想一下关掉用 Esc
     @objc func closePhotosOrWindow(_ sender: Any?) {
         guard let w = view.window else { return }
         if let cleanup {
             cleanup.finish(nil)
             return
         }
-        guard folder.totalCount > 0, !openedFile else {
+        guard folder.totalCount > 0 else {
             w.performClose(nil)
             return
         }
@@ -4364,7 +4413,7 @@ final class ViewerViewController: NSViewController {
     private func setupRotationBar() {
         view.addSubview(rotationBar)
         NSLayoutConstraint.activate([
-            rotationBar.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            rotationBar.centerXAnchor.constraint(equalTo: imageView.centerXAnchor),
             rotationBar.bottomAnchor.constraint(equalTo: toolbarView.topAnchor, constant: -10),
             rotationBar.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 12),
         ])
@@ -4416,6 +4465,8 @@ final class ViewerViewController: NSViewController {
 
     override func viewDidLayout() {
         super.viewDidLayout()
+        // 窗口拖窄到放不下面板旁边的照片时改回浮动，拖宽了再贴回去
+        updateInfoDock(layoutNow: false)
         updateCropInset(layout: false)
     }
 

@@ -1263,3 +1263,8 @@ Trascina una cartella o un'immagine per aprire";
 "hwheel.navigate" = "Foto precedente / successiva";
 "hwheel.pan" = "Sposta la foto a sinistra e a destra";
 "set.hwheelNote" = "Vale per la rotella orizzontale del mouse (come la rotella del pollice del Logitech MX Master). I tasti laterali del mouse (indietro / avanti) passano sempre alla foto precedente / successiva.";
+"set.infoDockLabel" = "Info foto:";
+"set.infoDock" = "Fissa le info foto sul bordo destro, senza coprire la foto";
+"set.fitFillLabel" = "Adatta alla finestra:";
+"set.fitFill" = "Riempi la finestra (taglia i bordi se le proporzioni sono diverse)";
+"set.fitFillNote" = "Quando la foto e la finestra hanno proporzioni diverse, la foto viene ingrandita finché non ci sono bande, e una striscia in alto e in basso o ai lati resta nascosta. Comodo per le presentazioni e per sfogliare; lascialo disattivato quando selezioni le foto, perché serve vedere l’inquadratura intera. Ritaglio e raddrizzamento mostrano sempre la foto intera.";

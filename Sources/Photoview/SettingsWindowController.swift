@@ -738,6 +738,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     private let rotRemind = WrapCheckbox(title: L10n.t("set.rotRemind", "翻到别的照片时，提醒没保存的修改"))
     private let autoTranslate = WrapCheckbox(title: L10n.t("set.autoTranslate", "自动翻译照片说明"))
     private let infoMapCheck = WrapCheckbox(title: L10n.t("set.infoMap", "在信息面板里显示位置地图"))
+    private let infoDockCheck = WrapCheckbox(title: L10n.t("set.infoDock", "照片信息贴在窗口右边，不挡住照片"))
+    private let fitFillCheck = WrapCheckbox(title: L10n.t("set.fitFill", "照片铺满窗口（比例不同时裁掉多出的边）"))
 
     override func loadView() {
         for sec in ViewerViewController.slideshowIntervals {
@@ -802,6 +804,9 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         var rows: [[NSView]] = [
             [label(L10n.t("set.paging", "翻页：")), pagingRow],
             [label(L10n.t("set.rating", "评分：")), ratingBadge],
+            [label(L10n.t("set.infoDockLabel", "照片信息：")), infoDockCheck],
+            [label(L10n.t("set.fitFillLabel", "适应窗口：")), fitFillCheck],
+            spacerRow(note(L10n.t("set.fitFillNote", "照片和窗口比例不一样时，放大到没有黑边，上下或左右多出来的一截看不到。适合放幻灯片、随便翻翻；挑片时要看整张，就别勾。裁剪和拉直时照样显示整张。"))),
             [label(L10n.t("set.videos", "视频：")), videosCheck],
             spacerRow(note(L10n.t("set.videosNote", "MP4、MOV、M4V 和照片一起列出，回车播放。只播系统自带能播的格式，不额外下载解码器。"))),
             [label(L10n.t("set.toolbar", "工具条：")), toolbarRow],
@@ -827,6 +832,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             ], at: rows.firstIndex { ($0.first as? NSTextField)?.stringValue == L10n.t("set.recents", "最近打开：") } ?? rows.count)
         }
         infoMapCheck.target = self; infoMapCheck.action = #selector(infoMapChanged)
+        infoDockCheck.target = self; infoDockCheck.action = #selector(infoDockChanged)
+        fitFillCheck.target = self; fitFillCheck.action = #selector(fitFillChanged)
         rows.insert(contentsOf: [
             [label(L10n.t("set.infoMapLabel", "位置地图：")), infoMapCheck],
             spacerRow(note(L10n.t("set.infoMapNote", "地图来自 Apple 地图，和系统「地图」App 一样需要联网加载这一带的地图。关闭时，信息面板里只显示一个「显示地图」按钮，点了才加载。没有位置信息的照片不会加载地图。"))),
@@ -878,6 +885,18 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         rotRemind.state = Straighten.remindUnsaved ? .on : .off
         autoTranslate.state = CaptionTranslation.autoTranslate ? .on : .off
         infoMapCheck.state = LocationMap.autoShow ? .on : .off
+        infoDockCheck.state = ViewerViewController.infoPanelDocked ? .on : .off
+        fitFillCheck.state = ZoomableImageView.fitFills ? .on : .off
+    }
+
+    @objc private func infoDockChanged() {
+        ViewerViewController.infoPanelDocked = infoDockCheck.state == .on
+        SettingsWindowController.notify("infoDock")
+    }
+
+    @objc private func fitFillChanged() {
+        ZoomableImageView.fitFills = fitFillCheck.state == .on
+        SettingsWindowController.notify("fitFills")
     }
 
     @objc private func infoMapChanged() {

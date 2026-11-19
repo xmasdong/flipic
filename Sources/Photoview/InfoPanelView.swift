@@ -70,6 +70,18 @@ final class InfoPanelView: NSVisualEffectView {
         override var isFlipped: Bool { true }
     }
 
+    /// 贴在窗口右边时：不要圆角，左边一条细线和照片分开，标题往下让开右上角的按钮
+    var docked = false {
+        didSet {
+            guard docked != oldValue else { return }
+            layer?.cornerRadius = docked ? 0 : 12
+            titleTop?.constant = docked ? 52 : 14
+            edgeLine.isHidden = !docked
+        }
+    }
+    private var titleTop: NSLayoutConstraint?
+    private let edgeLine = NSView()
+
     override init(frame: NSRect) {
         super.init(frame: frame)
         material = .hudWindow
@@ -115,6 +127,13 @@ final class InfoPanelView: NSVisualEffectView {
         addSubview(titleLabel)
         addSubview(levelControl)
         addSubview(scroll)
+        edgeLine.wantsLayer = true
+        edgeLine.layer?.backgroundColor = NSColor(calibratedWhite: 1, alpha: 0.1).cgColor
+        edgeLine.translatesAutoresizingMaskIntoConstraints = false
+        edgeLine.isHidden = true
+        addSubview(edgeLine)
+        let titleTop = titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 14)
+        self.titleTop = titleTop
 
         // 内容多高面板就多高；外面把面板底边限制在窗口里，放不下时这一条让步，内容改成滚动
         let fit = scroll.heightAnchor.constraint(equalTo: document.heightAnchor)
@@ -122,7 +141,11 @@ final class InfoPanelView: NSVisualEffectView {
         fit.priority = .dragThatCannotResizeWindow
         NSLayoutConstraint.activate([
             widthAnchor.constraint(equalToConstant: Self.width),
-            titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 14),
+            titleTop,
+            edgeLine.leadingAnchor.constraint(equalTo: leadingAnchor),
+            edgeLine.topAnchor.constraint(equalTo: topAnchor),
+            edgeLine.bottomAnchor.constraint(equalTo: bottomAnchor),
+            edgeLine.widthAnchor.constraint(equalToConstant: 1),
             titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Self.inset),
             levelControl.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
             levelControl.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -Self.inset),

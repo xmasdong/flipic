@@ -1263,3 +1263,8 @@ Déposez un dossier ou une image pour ouvrir";
 "hwheel.navigate" = "Photo précédente / suivante";
 "hwheel.pan" = "Déplacer la photo à gauche et à droite";
 "set.hwheelNote" = "S'applique à la molette horizontale d'une souris (comme la molette pour le pouce de la Logitech MX Master). Les boutons latéraux de la souris (précédent / suivant) passent toujours à la photo précédente / suivante.";
+"set.infoDockLabel" = "Infos photo :";
+"set.infoDock" = "Fixer les infos photo sur le bord droit pour ne pas couvrir la photo";
+"set.fitFillLabel" = "Adapter à la fenêtre :";
+"set.fitFill" = "Remplir la fenêtre (rogner les bords si les proportions diffèrent)";
+"set.fitFillNote" = "Quand la photo et la fenêtre n’ont pas les mêmes proportions, la photo est agrandie jusqu’à supprimer les bandes, et une partie en haut et en bas ou sur les côtés est masquée. Pratique pour les diaporamas et la consultation ; laissez décoché pour le tri, où il faut voir l’image entière. Le recadrage et le redressement affichent toujours la photo entière.";

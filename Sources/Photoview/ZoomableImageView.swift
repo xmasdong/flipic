@@ -818,8 +818,19 @@ final class ZoomableImageView: NSView {
     private var fitScale: CGFloat {
         let c = contentSize
         guard image != nil, c.width > 0, c.height > 0, bounds.width > 1 else { return 1 }
-        return min(bounds.width / c.width, bounds.height / c.height)
+        let sx = bounds.width / c.width, sy = bounds.height / c.height
+        return fillsNow ? max(sx, sy) : min(sx, sy)
     }
+
+    /// 设置里的「照片铺满窗口」：适应窗口时按长边铺满，比例不同时裁掉多出的边。默认关
+    static var fitFills: Bool {
+        get { UserDefaults.standard.bool(forKey: "fitFills") }
+        set { UserDefaults.standard.set(newValue, forKey: "fitFills") }
+    }
+    /// 只有看图主窗口跟着「铺满」走；对比格子、工作台、前后对比照旧整张放下
+    var allowsFill = false
+    /// 现在适应窗口是不是铺满：裁剪、拉直时照旧整张放下，四个角都看得到
+    var fillsNow: Bool { allowsFill && Self.fitFills && !isCropping }
 
     func fit(animate: Bool = false) {
         if isCropping { mode = .fit; layoutCrop(); return }

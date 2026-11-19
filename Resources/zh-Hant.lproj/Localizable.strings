@@ -1268,3 +1268,8 @@ Return  重新命名目前圖片
 "hwheel.navigate" = "切換上一張 / 下一張";
 "hwheel.pan" = "左右移動圖片";
 "set.hwheelNote" = "適用於滑鼠的橫向滾輪（如羅技 MX Master 的拇指滾輪）。滑鼠側鍵的後退 / 前進一律是上一張 / 下一張。";
+"set.infoDockLabel" = "照片資訊：";
+"set.infoDock" = "照片資訊貼在視窗右邊，不擋住照片";
+"set.fitFillLabel" = "符合視窗：";
+"set.fitFill" = "照片填滿視窗（比例不同時裁掉多出的邊）";
+"set.fitFillNote" = "照片和視窗比例不一樣時，放大到沒有黑邊，上下或左右多出來的一截看不到。適合放幻燈片、隨意瀏覽；挑片時要看整張，就別勾。裁切和拉直時照樣顯示整張。";

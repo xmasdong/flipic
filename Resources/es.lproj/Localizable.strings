@@ -1263,3 +1263,8 @@ Arrastra una carpeta o imagen para abrir";
 "hwheel.navigate" = "Foto anterior / siguiente";
 "hwheel.pan" = "Mover la foto a izquierda y derecha";
 "set.hwheelNote" = "Se aplica a la rueda horizontal del ratón (como la rueda del pulgar del Logitech MX Master). Los botones laterales del ratón (atrás / adelante) siempre pasan a la foto anterior / siguiente.";
+"set.infoDockLabel" = "Info de la foto:";
+"set.infoDock" = "Fijar la info de la foto en el borde derecho para que no tape la foto";
+"set.fitFillLabel" = "Ajustar a la ventana:";
+"set.fitFill" = "Llenar la ventana (recortar los bordes si la proporción es distinta)";
+"set.fitFillNote" = "Cuando la foto y la ventana tienen proporciones distintas, la foto se amplía hasta que no quedan franjas, y se oculta una parte arriba y abajo o a los lados. Va bien para presentaciones y para hojear; déjalo desactivado al seleccionar fotos, porque necesitas ver el encuadre completo. Al recortar y enderezar siempre se ve la foto entera.";

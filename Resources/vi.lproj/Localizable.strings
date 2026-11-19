@@ -1263,3 +1263,8 @@ Kéo thư mục hoặc ảnh vào để mở";
 "hwheel.navigate" = "Ảnh trước / sau";
 "hwheel.pan" = "Di chuyển ảnh sang trái và phải";
 "set.hwheelNote" = "Áp dụng cho con lăn ngang của chuột (như con lăn ngón cái của Logitech MX Master). Các nút bên của chuột (lùi / tiến) luôn chuyển về ảnh trước / sau.";
+"set.infoDockLabel" = "Thông tin ảnh:";
+"set.infoDock" = "Gắn thông tin ảnh vào cạnh phải cửa sổ, không che ảnh";
+"set.fitFillLabel" = "Vừa cửa sổ:";
+"set.fitFill" = "Lấp đầy cửa sổ (cắt phần thừa ở mép khi tỉ lệ khác nhau)";
+"set.fitFillNote" = "Khi ảnh và cửa sổ có tỉ lệ khác nhau, ảnh được phóng to đến khi hết viền đen, nên một phần ở trên dưới hoặc hai bên sẽ bị khuất. Hợp khi trình chiếu hay xem lướt; khi lọc ảnh cần thấy trọn khung hình thì nên tắt. Khi cắt và chỉnh thẳng, ảnh luôn hiện đầy đủ.";

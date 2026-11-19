@@ -1263,3 +1263,8 @@ Açmak için klasör veya resim sürükleyin";
 "hwheel.navigate" = "Önceki / sonraki fotoğraf";
 "hwheel.pan" = "Fotoğrafı sola ve sağa kaydır";
 "set.hwheelNote" = "Farenin yatay tekerleği için geçerlidir (Logitech MX Master'ın başparmak tekerleği gibi). Farenin yan tuşları (geri / ileri) her zaman önceki / sonraki fotoğrafa geçer.";
+"set.infoDockLabel" = "Fotoğraf bilgisi:";
+"set.infoDock" = "Fotoğraf bilgisini pencerenin sağ kenarına sabitle, fotoğrafı örtmesin";
+"set.fitFillLabel" = "Pencereye sığdır:";
+"set.fitFill" = "Pencereyi doldur (oran farklıysa taşan kenarları kırp)";
+"set.fitFillNote" = "Fotoğraf ile pencerenin oranı farklıysa fotoğraf, boş şerit kalmayana kadar büyütülür; üstten ve alttan ya da yanlardan bir kısım görünmez. Slayt gösterisi ve göz gezdirmek için uygundur; fotoğraf seçerken kareyi tümüyle görmeniz gerektiğinden kapalı bırakın. Kırpma ve düzeltme sırasında fotoğrafın tamamı her zaman görünür.";

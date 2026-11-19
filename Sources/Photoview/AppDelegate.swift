@@ -1055,6 +1055,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runWatermarkTest(outDir: outDir)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--fillshot"), i + 2 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1], dir = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runFillShot(outDir: outDir, folderPath: dir)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--docktest"), i + 2 < CommandLine.arguments.count {
+            // --docktest <工作文件夹> <照片文件夹>：照片信息贴边、照片铺满窗口的截图和检查，最后一行 DOCK summary
+            let outDir = CommandLine.arguments[i + 1], dir = CommandLine.arguments[i + 2]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runDockTest(outDir: outDir, folderPath: dir)
+            }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--keyclosetest"), i + 1 < CommandLine.arguments.count {
+            // --keyclosetest <工作文件夹>：⌘W、⌃Z、⌘Z 之后窗口去哪了，最后一行 KEYCLOSE summary
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.runKeyCloseTest(outDir: outDir) }
         } else if let i = CommandLine.arguments.firstIndex(of: "--foldersynctest"), i + 1 < CommandLine.arguments.count {
             // --foldersynctest <工作文件夹>：列不出目录时正在看的照片不被拿掉，最后一行 FOLDERSYNC summary
             let outDir = CommandLine.arguments[i + 1]

@@ -1263,3 +1263,8 @@ Arraste uma pasta ou imagem para abrir";
 "hwheel.navigate" = "Foto anterior / seguinte";
 "hwheel.pan" = "Mover a foto para a esquerda e a direita";
 "set.hwheelNote" = "Vale para a roda horizontal do mouse (como a roda do polegar do Logitech MX Master). Os botões laterais do mouse (voltar / avançar) sempre passam para a foto anterior / seguinte.";
+"set.infoDockLabel" = "Info da foto:";
+"set.infoDock" = "Fixar as informações da foto na borda direita, sem cobrir a foto";
+"set.fitFillLabel" = "Ajustar à janela:";
+"set.fitFill" = "Preencher a janela (cortar as bordas quando a proporção é diferente)";
+"set.fitFillNote" = "Quando a foto e a janela têm proporções diferentes, a foto é ampliada até não sobrar faixas, e uma parte em cima e embaixo ou nas laterais fica escondida. Bom para apresentações e para folhear; deixe desligado ao selecionar fotos, porque é preciso ver o quadro inteiro. Ao recortar e endireitar, a foto inteira sempre aparece.";
