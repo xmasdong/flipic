@@ -18,8 +18,10 @@ final class ViewerWindowController: NSWindowController {
         self.init(window: window)
         shouldCascadeWindows = false
         contentViewController = ViewerViewController()
-        // 用上次的大小和位置；第一次打开才居中。要放在装内容之后：装内容时窗口会按内容视图的默认大小重设一次
-        if !window.setFrameUsingName(Self.frameName) { window.center() }
+        // 用上次的大小，位置每次都放在屏幕正中（左右对称最要紧）。系统的 center() 会偏上三分之一，用户觉得不正。
+        // 要放在装内容之后：装内容时窗口会按内容视图的默认大小重设一次
+        _ = window.setFrameUsingName(Self.frameName)
+        Self.centerOnScreen(window)
         // 自己存，不用系统的自动保存：一个名字同一时间只归一个窗口，关掉的窗口没释放前名字还占着，
         // 后开的窗口（访达里每双击一张就新开一个）改了大小也存不下来，下次双击又是默认大小
         let nc = NotificationCenter.default
@@ -40,6 +42,18 @@ final class ViewerWindowController: NSWindowController {
 
     /// 记下普通窗口的大小和位置，下次打开沿用。全屏、最小化不记；
     /// 贴合照片比例的预览也不记（进入预览前的大小在那之前已经记过了）
+    /// 放到所在屏幕可用区域的正中：左右严格对称，上下也居中；窗口比屏幕大时先缩到放得下
+    static func centerOnScreen(_ window: NSWindow) {
+        guard let screen = window.screen ?? NSScreen.main else { return }
+        let v = screen.visibleFrame
+        var f = window.frame
+        f.size.width = min(f.width, v.width)
+        f.size.height = min(f.height, v.height)
+        f.origin.x = (v.midX - f.width / 2).rounded()
+        f.origin.y = (v.midY - f.height / 2).rounded()
+        window.setFrame(f, display: false)
+    }
+
     @objc private func rememberFrame(_ note: Notification) {
         guard let w = window, w.isVisible, !inFullScreenTransition, !w.styleMask.contains(.fullScreen), !w.isMiniaturized,
               viewerVC?.isPeeking != true else { return }

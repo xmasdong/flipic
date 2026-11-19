@@ -27,13 +27,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     var activeViewer: ViewerViewController? { activeController?.contentViewController as? ViewerViewController }
 
-    /// 新开一个看图窗口：从当前窗口错开一点叠在上面，第一个窗口沿用记住的位置
+    /// 新开一个看图窗口：沿用记住的大小，放在屏幕正中
     @discardableResult
     func newViewerWindow() -> ViewerWindowController {
         let wc = ViewerWindowController()
         if let ref = activeController?.window, ref.isVisible, let w = wc.window {
+            // 和当前窗口一样大，也放在屏幕正中（以前往右下错开，越开越偏）
             w.setFrame(ref.frame, display: false)
-            w.setFrameTopLeftPoint(w.cascadeTopLeft(from: NSPoint(x: ref.frame.minX, y: ref.frame.maxY)))
+            ViewerWindowController.centerOnScreen(w)
         }
         controllers.append(wc)
         NotificationCenter.default.addObserver(self, selector: #selector(viewerWindowWillClose(_:)),
@@ -1070,6 +1071,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // --keyclosetest <工作文件夹>：⌘W、⌃Z、⌘Z 之后窗口去哪了，最后一行 KEYCLOSE summary
             let outDir = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.runKeyCloseTest(outDir: outDir) }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--cropsizetest"), i + 1 < CommandLine.arguments.count {
+            // --cropsizetest <工作文件夹>：保存修改时选尺寸（长边、自定义、不放大、缩小只能另存），最后一行 CROPSIZE summary
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runCropSizeTest(outDir: outDir)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--foldersynctest"), i + 1 < CommandLine.arguments.count {
             // --foldersynctest <工作文件夹>：列不出目录时正在看的照片不被拿掉，最后一行 FOLDERSYNC summary
             let outDir = CommandLine.arguments[i + 1]
@@ -1680,6 +1687,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.close", "关闭窗口"), #selector(AppDelegate.closePhotosOrWindow(_:)), "w")
             m.addItem(.separator())
             item(m, L10n.t("menu.exportAs", "导出为…"), #selector(ViewerViewController.exportAs(_:)))
+            item(m, L10n.t("menu.resize", "调整尺寸…"), #selector(ViewerViewController.resizeAs(_:)))
             item(m, L10n.t("menu.exportWatermarked", "加水印导出…"), #selector(ViewerViewController.exportWithWatermark(_:)))
             item(m, L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(ViewerViewController.exportToFolder(_:)))
             #if FLIPIC_PRO

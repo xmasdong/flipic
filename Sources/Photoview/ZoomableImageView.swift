@@ -822,15 +822,32 @@ final class ZoomableImageView: NSView {
         return fillsNow ? max(sx, sy) : min(sx, sy)
     }
 
-    /// 设置里的「照片铺满窗口」：适应窗口时按长边铺满，比例不同时裁掉多出的边。默认关
+    /// 设置里的「照片铺满」：0 不铺满（默认），1 只在全屏时铺满，2 始终铺满。铺满时按长边放大，比例不同时裁掉多出的边。
+    /// 老版本存的是开关 fitFills，开着的当作「始终」
+    static var fillMode: Int {
+        get {
+            let d = UserDefaults.standard
+            if let v = d.object(forKey: "fitFillMode") as? Int { return min(max(v, 0), 2) }
+            return d.bool(forKey: "fitFills") ? 2 : 0
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "fitFillMode") }
+    }
+    /// 自测和旧代码用：true = 始终铺满，false = 不铺满
     static var fitFills: Bool {
-        get { UserDefaults.standard.bool(forKey: "fitFills") }
-        set { UserDefaults.standard.set(newValue, forKey: "fitFills") }
+        get { fillMode == 2 }
+        set { fillMode = newValue ? 2 : 0 }
     }
     /// 只有看图主窗口跟着「铺满」走；对比格子、工作台、前后对比照旧整张放下
     var allowsFill = false
     /// 现在适应窗口是不是铺满：裁剪、拉直时照旧整张放下，四个角都看得到
-    var fillsNow: Bool { allowsFill && Self.fitFills && !isCropping }
+    var fillsNow: Bool {
+        guard allowsFill, !isCropping else { return false }
+        switch Self.fillMode {
+        case 2: return true
+        case 1: return window?.styleMask.contains(.fullScreen) == true
+        default: return false
+        }
+    }
 
     func fit(animate: Bool = false) {
         if isCropping { mode = .fit; layoutCrop(); return }

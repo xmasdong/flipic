@@ -30,6 +30,10 @@ extension AppDelegate {
             let v = viewers()
             let desc = v.map { "[\($0.folder.current?.url.lastPathComponent ?? "-") start=\(!$0.emptyState.isHidden)]" }.joined()
             print("KEYCLOSE \(tag): windows=\(v.count) \(desc)")
+            if let w = v.first?.view.window, let sc = w.screen ?? NSScreen.main {
+                let vf = sc.visibleFrame
+                print(String(format: "KEYCLOSE   center dx=%.1f dy=%.1f (window %.0fx%.0f)", w.frame.midX - vf.midX, w.frame.midY - vf.midY, w.frame.width, w.frame.height))
+            }
         }
         func key(_ chars: String, _ code: UInt16, _ mods: NSEvent.ModifierFlags) {
             guard let w = viewers().first?.view.window else { print("KEYCLOSE   (no window to send to)"); return }
@@ -83,13 +87,19 @@ extension ViewerViewController {
     func runFillShot(outDir: String, folderPath: String) {
         open(url: URL(fileURLWithPath: folderPath))
         guard let w = view.window, let screen = w.screen ?? NSScreen.main else { exit(1) }
-        w.setFrame(screen.visibleFrame, display: true)
+        // FILLMODE=zoom：点绿灯旁「缩放」那样最大化；fullscreen：进全屏；默认直接设成屏幕可用区域大小
+        switch ProcessInfo.processInfo.environment["FILLMODE"] {
+        case "zoom": w.zoom(nil)
+        case "fullscreen": w.toggleFullScreen(nil)
+        default: w.setFrame(screen.visibleFrame, display: true)
+        }
         var n = 0
         func shoot() {
             n += 1
             let name = folder.current?.url.lastPathComponent ?? "-"
             captureWindow(to: "\(outDir)/\(n)-\(name).png", raw: true)
-            print("FILLSHOT \(n) \(name) window=\(Int(w.frame.width))x\(Int(w.frame.height)) view=\(Int(imageView.bounds.width))x\(Int(imageView.bounds.height))")
+            let m = imageView.debugImageTransform
+            print("FILLSHOT \(n) \(name) window=\(Int(w.frame.width))x\(Int(w.frame.height)) full=\(w.styleMask.contains(.fullScreen)) view=\(Int(imageView.bounds.width))x\(Int(imageView.bounds.height)) fit=\(imageView.isFit) scaleX=\(String(format: "%.3f", m.a)) layer=\(imageView.debugImageFrame)")
             if n < min(folder.count, 4) {
                 navigateForward(nil)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 2) { shoot() }

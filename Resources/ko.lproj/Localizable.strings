@@ -856,6 +856,13 @@ Return  현재 이미지 이름 변경
 "rot.overwrite" = "원본 덮어쓰기";
 "rot.copy" = "사본으로 저장";
 "rot.ask.remember" = "앞으로 이렇게 저장하고 다시 묻지 않기";
+"rot.size.label" = "크기:";
+"rot.size.original" = "원래 크기";
+"rot.size.long" = "긴 변 %@";
+"rot.size.custom" = "사용자 지정…";
+"rot.size.result" = "저장 크기 %@";
+"rot.size.noUpscale" = ", 확대하지 않음";
+"rot.size.copyOnly" = "줄인 크기는 사본으로만 저장할 수 있으며, 원본은 원래 크기로 유지됩니다.";
 "msg.straightenUnavailable" = "동영상과 움직이는 이미지는 자르거나 수평을 맞출 수 없습니다";
 "msg.rotSavedAs" = "%@(으)로 저장했습니다";
 "msg.rotSavedAsJPEG" = "RAW는 바꿀 수 없어 %@(으)로 저장했습니다";
@@ -1268,3 +1275,10 @@ Return  현재 이미지 이름 변경
 "set.fitFillLabel" = "윈도우에 맞추기:";
 "set.fitFill" = "윈도우를 가득 채우기(비율이 다르면 넘치는 가장자리를 자름)";
 "set.fitFillNote" = "사진과 윈도우의 비율이 다르면 검은 여백이 없어질 때까지 확대하므로 위아래나 좌우 가장자리가 보이지 않습니다. 슬라이드쇼나 가볍게 넘겨 볼 때 좋습니다. 사진을 고를 때는 전체를 봐야 하니 꺼 두세요. 자르기와 수평 맞추기 중에는 항상 전체를 보여 줍니다.";
+"set.fill.off" = "채우지 않음(사진 전체 표시)";
+"set.fill.fullscreen" = "전체 화면에서만 채우기";
+"set.fill.always" = "항상 채우기";
+"set.fitFillNote2" = "사진과 화면 비율이 다르면 빈 여백이 생깁니다. 채우기를 고르면 여백이 없어질 때까지 확대되어 위아래나 좌우 일부가 잘려 보이지 않습니다. 전체 화면 감상이나 슬라이드쇼에 적합합니다. 셀렉할 때는 사진 전체를 봐야 하니 ‘채우지 않음’을 고르세요. 자르기와 수평 맞추기에서는 항상 전체를 표시합니다.";
+"menu.resize" = "크기 조정…";
+"exp.resizeTitle" = "크기 조정";
+"exp.resizeMessage" = "긴 변의 픽셀 수를 입력하면 줄인 사본을 내보냅니다. 원본은 바뀌지 않습니다.";

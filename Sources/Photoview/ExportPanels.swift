@@ -166,6 +166,17 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
 
     func controlTextDidChange(_ obj: Notification) { onChange?() }
 
+    /// 「调整尺寸…」进来：勾上长边限制，光标放在像素数上，直接改数字
+    func focusLongEdge() {
+        longCheck.state = .on
+        sync()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let w = self.longField.window else { return }
+            w.makeFirstResponder(self.longField)
+            self.longField.currentEditor()?.selectAll(nil)
+        }
+    }
+
     /// 自测用：直接设各项
     func debugSet(long: Int, megabytes: Double, srgb on: Bool, strip: Bool) {
         longCheck.state = .on; longField.stringValue = String(long)

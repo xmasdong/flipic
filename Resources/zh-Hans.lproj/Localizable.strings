@@ -873,6 +873,13 @@ Esc  先关掉右上角的照片信息
 "rot.overwrite" = "覆盖原图";
 "rot.copy" = "另存一份";
 "rot.ask.remember" = "以后都这样保存，不再询问";
+"rot.size.label" = "尺寸：";
+"rot.size.original" = "原尺寸";
+"rot.size.long" = "长边 %@";
+"rot.size.custom" = "自定义…";
+"rot.size.result" = "导出 %@";
+"rot.size.noUpscale" = "，不放大";
+"rot.size.copyOnly" = "缩小尺寸只能另存一份，原图保持原尺寸";
 "msg.straightenUnavailable" = "视频和动图不能裁剪或拉直";
 "msg.rotSavedAs" = "已另存为 %@";
 "msg.rotSavedAsJPEG" = "RAW 不能直接改，已另存为 %@";
@@ -1285,3 +1292,10 @@ Esc  先关掉右上角的照片信息
 "set.fitFillLabel" = "适应窗口：";
 "set.fitFill" = "照片铺满窗口（比例不同时裁掉多出的边）";
 "set.fitFillNote" = "照片和窗口比例不一样时，放大到没有黑边，上下或左右多出来的一截看不到。适合放幻灯片、随便翻翻；挑片时要看整张，就别勾。裁剪和拉直时照样显示整张。";
+"set.fill.off" = "不铺满，整张放下";
+"set.fill.fullscreen" = "只在全屏时铺满";
+"set.fill.always" = "始终铺满";
+"set.fitFillNote2" = "照片和屏幕比例不一样时会留黑边。选铺满后照片放大到没有黑边，上下或左右多出来的一截看不到，适合全屏翻看、放幻灯片；挑片时要看整张，就选不铺满。裁剪和拉直时照样显示整张。";
+"menu.resize" = "调整尺寸…";
+"exp.resizeTitle" = "调整尺寸";
+"exp.resizeMessage" = "填长边的像素数，导出一份缩小后的副本，原图不变";

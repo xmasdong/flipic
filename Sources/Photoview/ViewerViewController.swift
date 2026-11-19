@@ -2637,12 +2637,15 @@ final class ViewerViewController: NSViewController {
         guard (note.object as? NSWindow) === view.window else { return }
         stopSlideshow()
         applyBackdropStyle()
+        // 「只在全屏时铺满」：退出全屏回到整张放下
+        if ZoomableImageView.fillMode == 1, imageView.isFit { imageView.fit() }
     }
 
     /// 进入全屏完成后再换底：在「将要进入」时换，进入失败（被取消）窗口就一直是不透明的
     @objc private func windowDidEnterFullScreen(_ note: Notification) {
         guard (note.object as? NSWindow) === view.window else { return }
         applyBackdropStyle(fullScreen: true)
+        if ZoomableImageView.fillMode == 1, imageView.isFit { imageView.fit() }
     }
 
     @objc private func windowWillClose(_ note: Notification) {
@@ -4281,8 +4284,18 @@ final class ViewerViewController: NSViewController {
         }
     }
 
+    /// 文件 › 调整尺寸…：就是导出，只是一打开就勾好「长边不超过」，标题和文件名写明是改尺寸。
+    /// 用户反馈找不到改分辨率的地方，原来藏在导出的选项里
+    @objc func resizeAs(_ sender: Any?) {
+        exportForResize = true
+        exportAs(sender)
+    }
+    private var exportForResize = false
+
     /// ⌘S：导出压缩副本（保存面板交给用户选择位置、文件名、格式与质量）
     @objc func exportAs(_ sender: Any?) {
+        let forResize = exportForResize
+        exportForResize = false
         guard let item = folder.current, !Video.isVideo(item.url), !isProcessing, let window = view.window else { return }
         // 正在裁剪：先按现在的框定下来，导出的就是看到的样子
         if isStraightening { finishStraighten(apply: true) }
@@ -4303,6 +4316,12 @@ final class ViewerViewController: NSViewController {
         acc.setPhoto(url: item.url, turns: imageView.rotationTurns, degrees: imageView.fineDegrees, crop: imageView.cropSpec)
         exportAccessory = acc
         exportSavePanel = panel
+        if forResize {
+            panel.title = L10n.t("exp.resizeTitle", "调整尺寸")
+            panel.message = L10n.t("exp.resizeMessage", "填长边的像素数，导出一份缩小后的副本，原图不变")
+            panel.nameFieldStringValue = item.url.deletingPathExtension().lastPathComponent + "-resized.jpg"
+            acc.options.focusLongEdge()
+        }
 
         syncExportOptions()
         scheduleExportEstimate()
@@ -4638,16 +4657,17 @@ final class ViewerViewController: NSViewController {
             return
         }
         let url = item.url
-        let go: (Bool) -> Void = { [weak self] overwrite in
-            self?.performRotationSave(url: url, turns: turns, degrees: degrees, crop: crop, overwrite: overwrite, then: then)
+        // edge：另存时缩到的长边（对话框里选的尺寸）；不弹框的保存一律原尺寸
+        let go: (Bool, Int?) -> Void = { [weak self] overwrite, edge in
+            self?.performRotationSave(url: url, turns: turns, degrees: degrees, crop: crop, overwrite: overwrite, maxLongEdge: overwrite ? nil : edge, then: then)
         }
-        guard Straighten.canOverwrite(url, degrees: degrees, cropped: crop != nil) else { go(false); return }
+        guard Straighten.canOverwrite(url, degrees: degrees, cropped: crop != nil) else { go(false, nil); return }
         // 裁剪过的不会不问就覆盖原图：记住的是「覆盖原图」时，这一次照样问（「另存一份」不动原图，照记住的办）
         let remembered = Straighten.saveTarget
         let cropNeedsAsking = crop != nil && remembered == .overwrite
         switch cropNeedsAsking ? .ask : remembered {
-        case .overwrite: go(true)
-        case .copy: go(false)
+        case .overwrite: go(true, nil)
+        case .copy: go(false, nil)
         case .ask:
             guard let window = view.window else { return }
             let a = NSAlert()
@@ -4664,14 +4684,20 @@ final class ViewerViewController: NSViewController {
             // 已经记住「覆盖原图」、只是因为裁剪才问的这一次：不再给「以后都这样」，勾了也不会让裁剪不问
             a.showsSuppressionButton = !cropNeedsAsking
             a.suppressionButton?.title = L10n.t("rot.ask.remember", "以后都这样保存，不再询问")
+            // 尺寸：只用于另存一份。选了会缩小的尺寸时覆盖原图点不了、「以后都这样」勾不了
+            let size = SaveSizeRow(native: imageView.pixelSize)
+            size.attach(to: a, overwrite: a.buttons[0], copy: a.buttons[1])
             a.beginSheetModal(for: window) { r in
                 guard r == .alertFirstButtonReturn || r == .alertSecondButtonReturn else { return }
                 let overwrite = r == .alertFirstButtonReturn
+                // 测试直接 endSheet 时不经过按钮：点不了的「覆盖原图」也不能当成覆盖
+                if overwrite && !size.overwriteAllowed { return }
+                size.remember()
                 if a.suppressionButton?.state == .on {
                     Straighten.saveTarget = overwrite ? .overwrite : .copy
                     SettingsWindowController.notify("rotation")
                 }
-                go(overwrite)
+                go(overwrite, size.shrinkEdge)
             }
         }
     }
@@ -4679,7 +4705,7 @@ final class ViewerViewController: NSViewController {
     /// 写盘在后台线程（解码、渲染、编码、临时文件换原图），主线程不卡；写的时候屏幕上已经是裁好的样子，
     /// 底部只有一行「保存中…」。写完直接把屏幕上这张图当成新文件的内容，不再重新载入，
     /// 清晰度不够的话再在后台解一张清晰预览原位换上。写的过程中翻页要等写完，退出也等（见 AppDelegate）
-    func performRotationSave(url: URL, turns: Int, degrees: Double, crop: Straighten.CropSpec?, overwrite: Bool, then: (() -> Void)?) {
+    func performRotationSave(url: URL, turns: Int, degrees: Double, crop: Straighten.CropSpec?, overwrite: Bool, maxLongEdge: Int? = nil, then: (() -> Void)?) {
         if CommandLine.arguments.contains("--cropspeedtest") { NSLog("STRAIGHTEN save begin url=%@ turns=%d deg=%f crop=%@", url.lastPathComponent, turns, degrees, "\(String(describing: crop))") }
         isProcessing = true
         savingURL = url
@@ -4689,7 +4715,7 @@ final class ViewerViewController: NSViewController {
         let srcIsRaw = CleanupUnit.isRaw(url)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             Straighten.profile?("at.2bgStart", 0)
-            let out = Straighten.save(url: url, quarterTurns: turns, degrees: degrees, crop: crop, overwrite: overwrite)
+            let out = Straighten.save(url: url, quarterTurns: turns, degrees: degrees, crop: crop, overwrite: overwrite, maxLongEdge: maxLongEdge)
             Straighten.profile?("file.done", 0)
             DispatchQueue.main.async {
                 guard let self else { return }
