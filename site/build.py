@@ -61,6 +61,7 @@ PAIRS = {
     "/guides/fastrawviewer-mac/": "/en/guides/fastrawviewer-alternative-mac/",
     "/compare/": "/en/compare/",
     "/guides/read-iptc-caption-mac/": "/en/guides/read-iptc-caption-mac/",
+    "/guides/mac-view-raw/": "/en/guides/view-raw-files-mac/",
 }
 
 # Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
@@ -548,20 +549,21 @@ guide("zh", "/guides/cull-event-photos/", "Mac 上怎么挑活动照片",
       howto=["用 Flipic Lens 打开整个文件夹，按 ⇧⌘K 进入清理模式", "确认要删的连拍、闭眼、模糊照片，移到废纸篓", "翻看剩下的照片，按 1–5 打星", "按 ⌘E 把选中的照片交给 Lightroom 或 Photoshop"], updated="2026-11-07")
 
 guide("en", "/en/guides/mac-preview-next-image/", "How to go to the next photo on a Mac (Preview arrow keys)",
-      "Next photo in Mac Preview",
+      "How to go to the next photo on a Mac",
       "Preview only pages through the photos you opened together, so the arrow keys stop after one. Three ways to page a whole folder: one Finder shortcut, Quick Look, or a viewer.",
       "Why the arrows stop, and how to page a whole folder",
       f"""<p>Preview opens only the file you double-clicked, so the arrow keys have nothing to move to. The direct fix is to open the folder's photos as a set: select them in Finder, press <kbd>⌘↓</kbd>, and the arrows work inside that Preview window. If you would rather start from one photo and keep paging, double-click it in Flipic Lens and press <kbd>→</kbd>.</p>
-<h2>Next image in the same folder</h2>
-<p>Open the folder in Finder, press <kbd>⌘A</kbd> to select everything, then <kbd>⌘↓</kbd> to open the files in one Preview window. The sidebar lists the set, and the arrow keys or <kbd>Page Down</kbd> move through it. This works, but opening hundreds of RAW files just to look at one is slow, and you make the trip back to Finder every time.</p>
-<h2>Arrow keys: Preview, Quick Look, or a folder viewer</h2>
+<h2>How to go to the next picture in Preview</h2>
+<ol><li>Open the folder in Finder.</li><li>Press <kbd>⌘A</kbd> to select every photo (or ⌘-click the ones you want).</li><li>Press <kbd>⌘↓</kbd>. The photos open in one Preview window, listed in the sidebar.</li><li>Press <kbd>→</kbd> or <kbd>Page Down</kbd> for the next picture and <kbd>←</kbd> or <kbd>Page Up</kbd> for the previous one.</li></ol>
+<p>This works, but opening hundreds of RAW files just to look at one is slow, and you make the trip back to Finder every time.</p>
+<h2>Why the arrow keys don't go to the next photo in Preview</h2>
 <p>If <kbd>←</kbd> <kbd>→</kbd> still do nothing, check what Preview has open: one document has no next image inside it. Apple's shortcut list sends the Up and Down arrows to the sidebar and <kbd>Page Down</kbd> to the next image in the window, so the keys only move inside a set that is already open (<a href="https://support.apple.com/guide/preview/cpprvw0003/mac">Apple Preview shortcuts</a>). Quick Look and a folder viewer take a different route.</p>
-<h2>Quick Look: Space, then the arrow keys</h2>
+<h2>How to see the next photo without opening Preview (Quick Look)</h2>
 <p>Quick Look is built into macOS and needs no extra app. Select one or more files in Finder and press <kbd>Space</kbd>; Apple's guide says the window shows a full-size preview without opening the file, and with several items selected the Left and Right arrow keys move between them (<a href="https://support.apple.com/guide/mac-help/view-and-edit-files-with-quick-look-mh14119/mac">Apple Quick Look guide</a>). MacMost makes the same case for viewing files rather than editing them (<a href="https://macmost.com/use-quick-look-instead-of-preview-to-view-files.html">MacMost</a>). It is a preview window tied to the Finder selection, not a folder browser, and closing it ends the session.</p>
-<h2>MacBook trackpad: swipe left for the next photo</h2>
+<h2>How to go to the next photo on a MacBook trackpad</h2>
 <p>In Flipic Lens, two fingers on the trackpad do what the arrow keys do. Swipe left or right to change photos, and left goes to the next one. Pinch to zoom, or double-click to switch between fit and 100%. The recording below is the real app, paging, zooming to 100% and rating in real time.</p>
 <figure>{shot('demo-paging.webp', 'Flipic Lens paging through 34 RAW files from 34 different cameras', 960, 540)}<figcaption>Real-time screen recording: 34 RAW files from 34 different cameras.</figcaption></figure>
-<h2>Like the Windows photo viewer: double-click, then page</h2>
+<h2>How to go to the next photo in a folder from one double-click</h2>
 <p>In the Windows Photos viewer the loop is one double-click, arrows through the folder, wheel to zoom and Delete to reject. Preview does not do that from one file. Flipic Lens, which is free and open source, does: double-click any photo in the folder, press <kbd>←</kbd> <kbd>→</kbd> to page, use the wheel or a pinch to zoom, and <kbd>⌘⌫</kbd> to move a photo to the Trash (the Delete key alone does not). Hold <kbd>0</kbd> to check focus at 100% and let go to fit.</p>
 <h3>Make it the viewer that opens on a double-click</h3>
 <p>Open Settings (<kbd>⌘,</kbd>) and click Make Default Viewer under General; common image formats and camera RAW are set in one go. You can also Control-click a photo in Finder, hold <kbd>⌥</kbd> and choose Always Open With › Flipic Lens. After that, select a photo, press <kbd>⌘↓</kbd>, page with the arrows and press <kbd>Esc</kbd> to go back to Finder (turn on Esc Closes Window in Settings first).</p>
@@ -655,7 +657,7 @@ guide("en", "/en/guides/cull-photos-on-mac/", "How to cull hundreds of event pho
 <figure>{shot('cleanup-en.webp', 'Flipic Lens Cleanup Mode grouping bursts and suggesting a keeper', 1440, 967)}<figcaption>Faces flagged for closed eyes are outlined; Space zooms in to check.</figcaption></figure>
 <p>Nothing is deleted until you press Move to Trash, and <kbd>⌘Z</kbd> undoes it. Detection can be wrong, so look before you delete.</p>
 <h2>2. Page through and rate</h2>
-<p>Press <kbd>→</kbd> through what's left and <kbd>1</kbd>–<kbd>5</kbd> to rate. Rest the pointer on a face and press <kbd>0</kbd> to check focus at 100%. Or run a slideshow, click to pause on a good one, rate it, click to resume.</p>
+<p>Press <kbd>→</kbd> through what's left and <kbd>1</kbd>–<kbd>5</kbd> to rate (if the arrow keys stop after one photo in Preview, see <a href="/en/guides/mac-preview-next-image/">how to go to the next photo on a Mac</a>). Rest the pointer on a face and press <kbd>0</kbd> to check focus at 100%. Or run a slideshow, click to pause on a good one, rate it, click to resume.</p>
 <p>Ratings are standard XMP: inside JPEG and HEIC files, in a same-name .xmp sidecar for proprietary RAW, leaving the RAW untouched.</p>
 <h2>3. Hand the keepers to your editor</h2>
 <p>Choose Lightroom, Photoshop or Capture One in Settings and press <kbd>⌘E</kbd> on a photo to open it there, the RAW if one sits next to the JPEG. Lightroom picks up the star ratings on import, so you can filter by them right away.</p>
@@ -862,7 +864,7 @@ guide("en", "/en/guides/view-raw-files-mac/", "How to quickly view RAW files on 
 <h2>Quick Look or a folder viewer</h2>
 <p>Quick Look is a quick way to glance at a few files: select them in Finder, press <kbd>Space</kbd>, and use the arrow keys to browse the selection. It is useful when you already know which files you want. The limit is that you are browsing a selection, not the whole folder.</p>
 <p>Quick Look is also temporary: close the window and the selection is gone. A folder viewer keeps the folder open, so you can come back to the same place after a break.</p>
-<p>A folder viewer fits when you want to start at one photo and keep going. Flipic Lens reads the folder as it is, so the next photo is whatever comes next in the folder, not the next item you happened to select. You can sort by name, date taken, date modified or file size.</p>
+<p>A folder viewer fits when you want to start at one photo and keep going. Flipic Lens reads the folder as it is, so the next photo is whatever comes next in the folder, not the next item you happened to select (the Preview and Quick Look routes are in <a href="/en/guides/mac-preview-next-image/">how to go to the next photo on a Mac</a>). You can sort by name, date taken, date modified or file size.</p>
 <h2>Check focus before you rate</h2>
 <p>Point at the eyes or another detail and hold <kbd>0</kbd> to zoom to 100% there. Let go to fit the photo. Press <kbd>I</kbd> for the camera, lens, shutter speed, aperture, ISO and date taken. When two frames look close, press <kbd>C</kbd> to compare two side by side, or <kbd>⇧C</kbd> for four.</p>
 <p>If you shoot bursts, comparing two frames saves going back and forth between them and trying to remember the last. The compare view keeps the same zoom and position, which is exactly what you need for eyes and expressions.</p>
