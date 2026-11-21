@@ -1304,3 +1304,4 @@ Arraste uma pasta ou imagem para abrir";
 "border.export" = "Adicionar borda (%@)";
 "border.export.tip" = "Usa as últimas configurações de Foto › Adicionar borda…";
 "bc.sum.skippedMotion2" = "%d vídeos ou imagens animadas ignorados (não aceitam marca d’água nem borda)";
+"sort.added" = "Data de adição";

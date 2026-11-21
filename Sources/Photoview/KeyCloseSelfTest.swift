@@ -155,3 +155,48 @@ extension ViewerViewController {
         }
     }
 }
+
+/// `Flipic --sortaddedtest <工作文件夹>`：按「添加时间」排序用的是放进文件夹的先后，不是修改时间。最后一行 SORTADDED summary
+extension ViewerViewController {
+    func runSortAddedTest(outDir: String) {
+        var checks = 0, failures = 0
+        func check(_ ok: Bool, _ what: String) { checks += 1; if !ok { failures += 1 }; print("SORTADDED \(ok ? "ok  " : "FAIL") \(what)") }
+        let fm = FileManager.default
+        let base = URL(fileURLWithPath: outDir)
+        let stage = base.appendingPathComponent("stage"), dir = base.appendingPathComponent("photos")
+        for d in [stage, dir] { try? fm.removeItem(at: d); try? fm.createDirectory(at: d, withIntermediateDirectories: true) }
+        let names = ["c.jpg", "a.jpg", "b.jpg"]   // 放进去的先后：c、a、b
+        for (i, n) in names.enumerated() {
+            let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 64, pixelsHigh: 64, bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+                                       isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+            let u = stage.appendingPathComponent(n)
+            try? rep.representation(using: .jpeg, properties: [:])?.write(to: u)
+            // 修改时间反过来：先放进去的修改时间最新
+            try? fm.setAttributes([.modificationDate: Date(timeIntervalSinceNow: Double(-1000 * i))], ofItemAtPath: u.path)
+        }
+        let sorted = folder.sortKey, reversed = folder.sortReversed
+        var k = 0
+        func moveNext() {
+            guard k < names.count else { verify(); return }
+            try? fm.moveItem(at: stage.appendingPathComponent(names[k]), to: dir.appendingPathComponent(names[k]))
+            k += 1
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { moveNext() }   // 添加时间精确到秒，隔开一点
+        }
+        func verify() {
+            open(url: dir)
+            folder.sortKey = .added; folder.sortReversed = false
+            folder.resort(keeping: nil)
+            let byAdded = folder.items.map(\.url.lastPathComponent)
+            check(byAdded == ["b.jpg", "a.jpg", "c.jpg"], "添加时间：新放进来的在前 \(byAdded)")
+            check(folder.items.allSatisfy { $0.added != nil }, "每张都读到了添加时间")
+            folder.sortKey = .modified; folder.resort(keeping: nil)
+            let byModified = folder.items.map(\.url.lastPathComponent)
+            check(byModified == ["c.jpg", "a.jpg", "b.jpg"], "修改时间排序和添加时间不同 \(byModified)")
+            check(SortKey.menuOrder.count == SortKey.allCases.count && Set(SortKey.menuOrder) == Set(SortKey.allCases), "菜单里每种排序都有")
+            folder.sortKey = sorted; folder.sortReversed = reversed
+            print("SORTADDED summary checks=\(checks) failures=\(failures)")
+            exit(failures == 0 ? 0 : 1)
+        }
+        moveNext()
+    }
+}

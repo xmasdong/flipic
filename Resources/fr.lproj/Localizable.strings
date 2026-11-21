@@ -1304,3 +1304,4 @@ Déposez un dossier ou une image pour ouvrir";
 "border.export" = "Ajouter une bordure (%@)";
 "border.export.tip" = "Reprend les derniers réglages de Photo › Ajouter une bordure…";
 "bc.sum.skippedMotion2" = "%d vidéos ou images animées ignorées (impossible d’y ajouter un filigrane ou un cadre)";
+"sort.added" = "Date d’ajout";

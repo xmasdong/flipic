@@ -1304,3 +1304,4 @@ Açmak için klasör veya resim sürükleyin";
 "border.export" = "Çerçeve ekle (%@)";
 "border.export.tip" = "Fotoğraf › Çerçeve ekle… menüsündeki son ayarları kullanır";
 "bc.sum.skippedMotion2" = "%d video veya hareketli görsel atlandı (filigran ve çerçeve eklenemez)";
+"sort.added" = "Eklenme tarihi";

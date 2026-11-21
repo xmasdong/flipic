@@ -1321,3 +1321,4 @@ Esc  先关掉右上角的照片信息
 "border.export" = "加边框（%@）";
 "border.export.tip" = "用「照片 › 加边框…」上次的设置";
 "bc.sum.skippedMotion2" = "跳过 %d 个视频或动图（加不了水印和边框）";
+"sort.added" = "添加时间";

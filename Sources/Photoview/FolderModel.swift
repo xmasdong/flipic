@@ -15,6 +15,8 @@ struct ImageItem {
     var rating: Int?
     /// 访达颜色标签（红橙黄绿蓝紫灰），和挑片标记、星级各管各的
     var tagColors = TagColorSet()
+    /// 放进这个文件夹的时间（访达的「添加日期」）；拷卡、下载、拖进来的时间，和拍摄、修改时间都不一样
+    var added: Date?
 }
 
 /// 「只看」筛选：已标记，或某个星级以上
@@ -41,7 +43,11 @@ enum PhotoFilter: Equatable {
 }
 
 enum SortKey: Int, CaseIterable {
-    case name, captureDate, modified, created, size
+    // 原始值存在偏好设置里，新加的只能往后排；菜单里的顺序看 menuOrder
+    case name, captureDate, modified, created, size, added
+
+    /// 菜单和设置里的顺序：「添加时间」跟在「创建时间」后面
+    static let menuOrder: [SortKey] = [.name, .captureDate, .modified, .created, .added, .size]
 
     /// 各排序方式的自然方向（与 Finder 一致）：名称 A→Z，时间新的在前，大小大的在前
     var largestFirst: Bool { self != .name }
@@ -53,6 +59,7 @@ enum SortKey: Int, CaseIterable {
         case .modified: return L10n.t("sort.modified", "修改时间")
         case .created: return L10n.t("sort.created", "创建时间")
         case .size: return L10n.t("sort.size", "文件大小")
+        case .added: return L10n.t("sort.added", "添加时间")
         }
     }
 }
@@ -222,7 +229,7 @@ final class FolderModel {
         sortKey == .captureDate && items.contains { $0.captureDate == nil }
     }
 
-    private static let resourceKeys: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .fileSizeKey, .tagNamesKey]
+    private static let resourceKeys: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .fileSizeKey, .tagNamesKey, .addedToDirectoryDateKey]
 
     /// 传文件夹则列出其中全部图片；传文件则打开其所在文件夹并定位到该文件
     @discardableResult
@@ -265,7 +272,7 @@ final class FolderModel {
         return ImageItem(url: u, pixelSize: nil, modified: v?.contentModificationDate,
                          created: v?.creationDate, fileSize: v?.fileSize ?? 0,
                          marked: Marks.isMarked(tagNames: v?.tagNames) || (card?.contains(CardMarks.normalized(u.lastPathComponent)) ?? false),
-                         tagColors: FinderTags.colors(fromTagNames: v?.tagNames))
+                         tagColors: FinderTags.colors(fromTagNames: v?.tagNames), added: v?.addedToDirectoryDate)
     }
 
     /// 和磁盘对一遍：别处新放进来的照片按当前排序插进列表，当前这张不动。
@@ -322,6 +329,7 @@ final class FolderModel {
             case .modified: return ordered(a.modified ?? .distantPast, b.modified ?? .distantPast, a, b)
             case .created: return ordered(a.created ?? .distantPast, b.created ?? .distantPast, a, b)
             case .size: return ordered(a.fileSize, b.fileSize, a, b)
+            case .added: return ordered(a.added ?? a.created ?? .distantPast, b.added ?? b.created ?? .distantPast, a, b)
             }
         }
         items.sort { desc ? less($1, $0) : less($0, $1) }
@@ -399,7 +407,7 @@ final class FolderModel {
             item = ImageItem(url: item.url.deletingLastPathComponent().appendingPathComponent(newName),
                              pixelSize: item.pixelSize, modified: item.modified, created: item.created,
                              fileSize: item.fileSize, captureDate: item.captureDate, marked: item.marked, rating: item.rating,
-                             tagColors: item.tagColors)
+                             tagColors: item.tagColors, added: item.added)
         }
     }
 

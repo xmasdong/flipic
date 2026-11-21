@@ -1304,3 +1304,4 @@ Return  表示中の画像を名称変更
 "border.export" = "枠を付ける（%@）";
 "border.export.tip" = "「写真 › 枠を付ける…」で最後に使った設定を使います";
 "bc.sum.skippedMotion2" = "%d 件の動画またはアニメーション画像をスキップしました（透かしや枠は付けられません）";
+"sort.added" = "追加日";

@@ -574,7 +574,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private lazy var makeDefault = pillButton(L10n.t("set.makeDefault", "设为默认看图软件"), self, #selector(makeDefaultViewer))
 
     override func loadView() {
-        for key in SortKey.allCases { sortPopup.addItem(withTitle: key.title); sortPopup.lastItem?.tag = key.rawValue }
+        for key in SortKey.menuOrder { sortPopup.addItem(withTitle: key.title); sortPopup.lastItem?.tag = key.rawValue }
         sortPopup.target = self; sortPopup.action = #selector(sortChanged)
         descending.target = self; descending.action = #selector(sortChanged)
         keepRunning.target = self; keepRunning.action = #selector(keepRunningChanged)

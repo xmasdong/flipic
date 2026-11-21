@@ -1309,3 +1309,4 @@ Return  重新命名目前圖片
 "border.export" = "加邊框（%@）";
 "border.export.tip" = "使用「照片 › 加邊框…」上次的設定";
 "bc.sum.skippedMotion2" = "略過 %d 個影片或動圖（加不了浮水印和邊框）";
+"sort.added" = "加入時間";

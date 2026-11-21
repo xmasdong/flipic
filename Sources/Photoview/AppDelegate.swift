@@ -1072,6 +1072,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runPeekFullScreenTest(outDir: outDir)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--sortaddedtest"), i + 1 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runSortAddedTest(outDir: outDir)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--keyclosetest"), i + 1 < CommandLine.arguments.count {
             // --keyclosetest <工作文件夹>：⌘W、⌃Z、⌘Z 之后窗口去哪了，最后一行 KEYCLOSE summary
             let outDir = CommandLine.arguments[i + 1]
@@ -1765,7 +1770,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")
             let sortMenu = NSMenu(title: sortItem.title)
-            for key in SortKey.allCases {
+            for key in SortKey.menuOrder {
                 item(sortMenu, key.title, #selector(ViewerViewController.setSortKey(_:))).tag = key.rawValue
             }
             sortMenu.addItem(.separator())
