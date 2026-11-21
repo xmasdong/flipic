@@ -1753,9 +1753,16 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 排序
 
+    /// tag 是 SortKey 的原始值；-1 是「跟随访达」
     @objc func setSortKey(_ sender: NSMenuItem) {
-        guard let key = SortKey(rawValue: sender.tag), key != folder.sortKey else { return }
-        folder.sortKey = key
+        if sender.tag == -1 {
+            guard !FolderModel.followsFinder else { return }
+            FolderModel.followsFinder = true
+            folder.refreshFinderSort()
+        } else {
+            guard let key = SortKey(rawValue: sender.tag), key != folder.sortKey || FolderModel.followsFinder else { return }
+            folder.sortKey = key
+        }
         applySort()
         loadCaptureDatesIfNeeded()
     }
@@ -2329,6 +2336,7 @@ final class ViewerViewController: NSViewController {
     @objc private func settingsDidChange(_ note: Notification) {
         switch note.userInfo?["what"] as? String {
         case "sort":
+            folder.refreshFinderSort()
             applySort()
             loadCaptureDatesIfNeeded()
         case "slideshow":
@@ -8019,7 +8027,10 @@ extension ViewerViewController: NSMenuItemValidation {
             return Self.canRestoreTrash && !isProcessing
         }
         if menuItem.action == #selector(setSortKey(_:)) {
-            menuItem.state = menuItem.tag == folder.sortKey.rawValue ? .on : .off
+            // 跟随访达时打勾的是「跟随访达」，访达里实际用的那种排序标一条短横
+            let follows = FolderModel.followsFinder
+            menuItem.state = menuItem.tag == -1 ? (follows ? .on : .off)
+                : menuItem.tag != folder.sortKey.rawValue ? .off : follows ? .mixed : .on
         } else if menuItem.action == #selector(toggleInfoLevel(_:)) {
             menuItem.state = InfoLevel.current == .all ? .on : .off
         } else if menuItem.action == #selector(toggleEscCloses(_:)) {

@@ -76,14 +76,41 @@ final class FolderModel {
     /// 打开的文件夹；照片全被删光了也还记着，别处再放进来能接着显示
     private(set) var folderURL: URL?
 
-    /// 排序方式与方向，跨启动记住；sortReversed 是在该方式自然方向上反过来
+    /// 排序方式与方向，跨启动记住；sortReversed 是在该方式自然方向上反过来。
+    /// 跟随访达时用 finderSort，不动记住的那个；指定一种排序方式就不再跟随访达
     var sortKey: SortKey {
-        get { SortKey(rawValue: UserDefaults.standard.integer(forKey: "sortKey")) ?? .name }
-        set { UserDefaults.standard.set(newValue.rawValue, forKey: "sortKey") }
+        get { activeFinder?.key ?? SortKey(rawValue: UserDefaults.standard.integer(forKey: "sortKey")) ?? .name }
+        set {
+            UserDefaults.standard.set(newValue.rawValue, forKey: "sortKey")
+            Self.followsFinder = false
+            finderSort = nil
+        }
     }
+    /// 跟随访达时点「倒序」只对这个文件夹有效，下次打开文件夹又按访达的
     var sortReversed: Bool {
-        get { UserDefaults.standard.bool(forKey: "sortReversed") }
-        set { UserDefaults.standard.set(newValue, forKey: "sortReversed") }
+        get { activeFinder?.reversed ?? UserDefaults.standard.bool(forKey: "sortReversed") }
+        set {
+            if activeFinder != nil { finderSort?.reversed = newValue }
+            else { UserDefaults.standard.set(newValue, forKey: "sortReversed") }
+        }
+    }
+
+    /// 跟随访达的排序：从没选过排序方式的默认跟随，选过的照旧
+    static var followsFinder: Bool {
+        get {
+            let d = UserDefaults.standard
+            return d.object(forKey: "sortFollowsFinder") as? Bool ?? (d.object(forKey: "sortKey") == nil)
+        }
+        set { UserDefaults.standard.set(newValue, forKey: "sortFollowsFinder") }
+    }
+    /// 跟随访达时，当前文件夹在访达里的排序
+    private(set) var finderSort: FinderSort.Order?
+    /// 别的窗口里改成了指定排序时，这个窗口也不再按访达的
+    private var activeFinder: FinderSort.Order? { finderSort.flatMap { Self.followsFinder ? $0 : nil } }
+
+    /// 打开文件夹、改了设置时重新读一次访达的排序
+    func refreshFinderSort() {
+        finderSort = Self.followsFinder ? folderURL.map(FinderSort.resolve) : nil
     }
 
     var count: Int { items.count }
@@ -240,7 +267,11 @@ final class FolderModel {
         let std = url.standardizedFileURL
         let folderURL = isDir.boolValue ? std : std.deletingLastPathComponent()
         let target: URL? = isDir.boolValue ? nil : std
+        // 同一个文件夹重新列（批量改名后）时，跟随访达下手动点的倒序留着
+        let previous = self.folderURL == folderURL ? finderSort : nil
         self.folderURL = folderURL
+        refreshFinderSort()
+        if let previous, finderSort?.key == previous.key { finderSort = previous }
 
         // 列目录时一并取回时间与大小，排序不再逐个 stat
         var urls = ((try? FileManager.default.contentsOfDirectory(

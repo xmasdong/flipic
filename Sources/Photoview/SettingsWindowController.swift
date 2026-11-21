@@ -574,6 +574,9 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     private lazy var makeDefault = pillButton(L10n.t("set.makeDefault", "设为默认看图软件"), self, #selector(makeDefaultViewer))
 
     override func loadView() {
+        sortPopup.addItem(withTitle: L10n.t("sort.finder", "跟随访达")); sortPopup.lastItem?.tag = -1
+        let sep = NSMenuItem.separator(); sep.tag = -2   // 分隔线默认 tag 0，会和「文件名」撞
+        sortPopup.menu?.addItem(sep)
         for key in SortKey.menuOrder { sortPopup.addItem(withTitle: key.title); sortPopup.lastItem?.tag = key.rawValue }
         sortPopup.target = self; sortPopup.action = #selector(sortChanged)
         descending.target = self; descending.action = #selector(sortChanged)
@@ -616,6 +619,7 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [NSGridCell.emptyContentView, peekRow],
             spacerRow(note(L10n.t("set.openPeekNote", "从访达双击照片打开时，窗口直接收成照片的比例；按空格或 Esc 回到普通窗口。打开文件夹时还是普通窗口。"))),
             [label(L10n.t("set.sort", "排序方式：")), sortRow],
+            spacerRow(note(L10n.t("set.sortFinderNote", "跟随访达：打开文件夹时，按它在访达里的排序方式翻页。"))),
             [label(L10n.t("set.editor", "后期软件：")), editorRow],
             spacerRow(note(L10n.t("set.editorNote", "「在后期软件中编辑」用它打开当前照片，同名 RAW 也在时打开 RAW。"))),
             [label(L10n.t("set.appearance", "外观：")), themePopup],
@@ -628,8 +632,8 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.crash", "崩溃报告：")), crashAsk],
             spacerRow(note(L10n.t("set.crashNote", "只有你点「发送」才会发出，不会自动上传。内容是崩在哪里、软件和系统版本、Mac 型号，不含照片、文件名和路径，发送前可以先看到完整内容。"))),
         ])
-        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 后期软件 7 说明 8 外观 9 说明 10 后台 11 删除 12 说明 13 更新 14 说明 15 崩溃报告 16 说明
-        for r in [1, 4, 7, 9, 12, 14, 16] { g.row(at: r).topPadding = -4 }
+        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 说明 7 后期软件 8 说明 9 外观 10 说明 11 后台 12 删除 13 说明 14 更新 15 说明 16 崩溃报告 17 说明
+        for r in [1, 4, 6, 8, 10, 13, 15, 17] { g.row(at: r).topPadding = -4 }
         view = host(g)
         reload()
     }
@@ -639,8 +643,10 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     }
 
     func reload() {
-        sortPopup.selectItem(withTag: UserDefaults.standard.integer(forKey: "sortKey"))
+        let follows = FolderModel.followsFinder
+        sortPopup.selectItem(withTag: follows ? -1 : UserDefaults.standard.integer(forKey: "sortKey"))
         descending.state = UserDefaults.standard.bool(forKey: "sortReversed") ? .on : .off
+        descending.isEnabled = !follows   // 跟随访达时方向也跟访达
         keepRunning.state = AppDelegate.keepRunning ? .on : .off
         trashLocal.state = Trash.copyExternalToLocal ? .on : .off
         themePopup.selectItem(withTag: Theme.mode.rawValue)
@@ -673,8 +679,13 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     }
 
     @objc private func sortChanged() {
-        UserDefaults.standard.set(sortPopup.selectedTag(), forKey: "sortKey")
-        UserDefaults.standard.set(descending.state == .on, forKey: "sortReversed")
+        let tag = sortPopup.selectedTag()
+        FolderModel.followsFinder = tag == -1
+        if tag >= 0 {
+            UserDefaults.standard.set(tag, forKey: "sortKey")
+            UserDefaults.standard.set(descending.state == .on, forKey: "sortReversed")
+        }
+        descending.isEnabled = tag != -1
         SettingsWindowController.notify("sort")
     }
 

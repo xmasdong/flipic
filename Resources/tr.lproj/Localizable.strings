@@ -1305,3 +1305,5 @@ Açmak için klasör veya resim sürükleyin";
 "border.export.tip" = "Fotoğraf › Çerçeve ekle… menüsündeki son ayarları kullanır";
 "bc.sum.skippedMotion2" = "%d video veya hareketli görsel atlandı (filigran ve çerçeve eklenemez)";
 "sort.added" = "Eklenme tarihi";
+"sort.finder" = "Finder ile aynı";
+"set.sortFinderNote" = "Finder ile aynı: Her klasör, Finder’da sıralandığı düzende gezilir.";

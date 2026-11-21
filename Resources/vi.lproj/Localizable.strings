@@ -1305,3 +1305,5 @@ Kéo thư mục hoặc ảnh vào để mở";
 "border.export.tip" = "Dùng cài đặt lần trước trong Ảnh › Thêm viền…";
 "bc.sum.skippedMotion2" = "Đã bỏ qua %d video hoặc ảnh động (không thể thêm hình mờ và viền)";
 "sort.added" = "Ngày thêm";
+"sort.finder" = "Giống Finder";
+"set.sortFinderNote" = "Giống Finder: mỗi thư mục được lật theo đúng thứ tự sắp xếp trong Finder.";

@@ -1305,3 +1305,5 @@ Arrastra una carpeta o imagen para abrir";
 "border.export.tip" = "Usa los últimos ajustes de Foto › Añadir borde…";
 "bc.sum.skippedMotion2" = "Se omitieron %d vídeos o imágenes animadas (no admiten marca de agua ni borde)";
 "sort.added" = "Fecha de adición";
+"sort.finder" = "Igual que en el Finder";
+"set.sortFinderNote" = "Igual que en el Finder: cada carpeta se recorre en el orden en que está ordenada en el Finder.";

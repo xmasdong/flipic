@@ -1305,3 +1305,5 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "border.export.tip" = "Verwendet die letzten Einstellungen aus Foto › Rahmen hinzufügen …";
 "bc.sum.skippedMotion2" = "%d Videos oder animierte Bilder übersprungen (Wasserzeichen und Rahmen sind dort nicht möglich)";
 "sort.added" = "Hinzugefügt am";
+"sort.finder" = "Wie im Finder";
+"set.sortFinderNote" = "Wie im Finder: Jeder Ordner wird in der Reihenfolge geblättert, in der er im Finder sortiert ist.";

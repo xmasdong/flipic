@@ -1305,3 +1305,5 @@ Déposez un dossier ou une image pour ouvrir";
 "border.export.tip" = "Reprend les derniers réglages de Photo › Ajouter une bordure…";
 "bc.sum.skippedMotion2" = "%d vidéos ou images animées ignorées (impossible d’y ajouter un filigrane ou un cadre)";
 "sort.added" = "Date d’ajout";
+"sort.finder" = "Comme dans le Finder";
+"set.sortFinderNote" = "Comme dans le Finder : chaque dossier défile dans l’ordre de tri du Finder.";

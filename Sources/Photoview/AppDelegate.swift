@@ -1072,6 +1072,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runPeekFullScreenTest(outDir: outDir)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--findersorttest"), i + 1 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runFinderSortTest(outDir: outDir)
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--sortaddedtest"), i + 1 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
@@ -1770,6 +1775,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")
             let sortMenu = NSMenu(title: sortItem.title)
+            item(sortMenu, L10n.t("sort.finder", "跟随访达"), #selector(ViewerViewController.setSortKey(_:))).tag = -1
+            sortMenu.addItem(.separator())
             for key in SortKey.menuOrder {
                 item(sortMenu, key.title, #selector(ViewerViewController.setSortKey(_:))).tag = key.rawValue
             }

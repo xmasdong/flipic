@@ -1317,3 +1317,5 @@ Drop a folder or image to open";
 "border.export.tip" = "Uses the last settings from Photo › Add Border…";
 "bc.sum.skippedMotion2" = "Skipped %d videos or animated images (they can't take a watermark or border)";
 "sort.added" = "Date Added";
+"sort.finder" = "Same as Finder";
+"set.sortFinderNote" = "Same as Finder: each folder pages in the order it is sorted in Finder.";
