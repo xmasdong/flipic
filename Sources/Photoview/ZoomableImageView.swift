@@ -38,6 +38,12 @@ final class ZoomableImageView: NSView {
     private enum Mode { case fit, free }
 
     private let imageLayer = CALayer()
+    /// 过曝/死黑警示与焦点峰值叠加层（贴在 imageLayer 正上方，缩放平移自动同步）
+    private let inspectLayer = CALayer()
+    /// 相机对焦框取景器角标（暗底描边 + 亮绿前景，任何背景都清晰）
+    private let afShadowLayer = CAShapeLayer()
+    private let afLayer = CAShapeLayer()
+    private var afBoxes: [CGRect] = []
     /// 照片没铺满时露出来的底：这张照片缩成几十像素再模糊、压暗后铺满整个视图
     private let backdropLayer = CALayer()
     private var backdropGeneration = 0
@@ -108,6 +114,18 @@ final class ZoomableImageView: NSView {
         layer?.addSublayer(backdropLayer)
         layer?.addSublayer(imageLayer)
         imageLayer.isHidden = true
+        inspectLayer.contentsGravity = .resize
+        inspectLayer.isHidden = true
+        imageLayer.addSublayer(inspectLayer)
+        for (l, color, lw) in [(afShadowLayer, NSColor.black.withAlphaComponent(0.65).cgColor, CGFloat(3.5)),
+                               (afLayer, NSColor(srgbRed: 0.20, green: 0.92, blue: 0.48, alpha: 0.95).cgColor, CGFloat(1.8))] {
+            l.fillColor = nil
+            l.strokeColor = color
+            l.lineWidth = lw
+            l.lineCap = .square
+            l.isHidden = true
+            imageLayer.addSublayer(l)
+        }
         NotificationCenter.default.addObserver(self, selector: #selector(settingsDidChange(_:)),
                                                name: SettingsWindowController.didChange, object: nil)
         imageLayer.magnificationFilter = .trilinear
@@ -190,6 +208,8 @@ final class ZoomableImageView: NSView {
             cropAspectSwapped = false
             removeCropOverlay()
             detailRequested = false
+            setInspectMask(nil)
+            setAFBoxes([])
         }
         let displayed = newSrc.flatMap { self.displayed(from: $0) }
         if let newSrc {
@@ -899,6 +919,65 @@ final class ZoomableImageView: NSView {
     var debugImageFrame: CGRect { imageLayer.frame }
     /// 照片在视图里的位置（翻转坐标，左上原点）
     var imageFrame: CGRect { imageLayer.frame }
+    var debugInspectHasMask: Bool { !inspectLayer.isHidden && inspectLayer.contents != nil }
+    var debugAFVisible: Bool { !afLayer.isHidden && !afBoxes.isEmpty }
+    var debugAFBounds: CGRect { afLayer.path?.boundingBoxOfPath ?? .zero }
+
+    /// 设过曝/死黑与焦点峰值遮罩（nil = 隐藏）
+    func setInspectMask(_ mask: CGImage?) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        inspectLayer.contents = mask
+        inspectLayer.isHidden = (mask == nil)
+        inspectLayer.frame = imageLayer.bounds
+        CATransaction.commit()
+    }
+
+    /// 设相机对焦框（归一化左上原点坐标，空数组 = 隐藏）
+    func setAFBoxes(_ boxes: [CGRect]) {
+        afBoxes = boxes
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        syncInspectOverlays()
+        CATransaction.commit()
+    }
+
+    private func syncInspectOverlays() {
+        let b = imageLayer.bounds
+        inspectLayer.frame = b
+        afShadowLayer.frame = b
+        afLayer.frame = b
+        guard !afBoxes.isEmpty, b.width > 8, b.height > 8 else {
+            afShadowLayer.isHidden = true
+            afLayer.isHidden = true
+            return
+        }
+        let path = CGMutablePath()
+        for raw in afBoxes {
+            let r = AFPointReader.rotated(raw, quarterTurns: quarterTurns)
+            // ZoomableImageView isFlipped = true，sublayer 继承翻转坐标（y 朝下，左上原点），直接映射并居中
+            let bw = max(18, r.width * b.width), bh = max(18, r.height * b.height)
+            let cx = r.midX * b.width, cy = r.midY * b.height
+            let box = CGRect(x: cx - bw / 2, y: cy - bh / 2, width: bw, height: bh)
+            let arm = max(6, min(box.width, box.height) * 0.28)
+            let corners: [(CGPoint, CGPoint, CGPoint)] = [
+                (CGPoint(x: box.minX, y: box.minY + arm), CGPoint(x: box.minX, y: box.minY), CGPoint(x: box.minX + arm, y: box.minY)),
+                (CGPoint(x: box.maxX - arm, y: box.minY), CGPoint(x: box.maxX, y: box.minY), CGPoint(x: box.maxX, y: box.minY + arm)),
+                (CGPoint(x: box.maxX, y: box.maxY - arm), CGPoint(x: box.maxX, y: box.maxY), CGPoint(x: box.maxX - arm, y: box.maxY)),
+                (CGPoint(x: box.minX + arm, y: box.maxY), CGPoint(x: box.minX, y: box.maxY), CGPoint(x: box.minX, y: box.maxY - arm)),
+            ]
+            for (p1, p2, p3) in corners {
+                path.move(to: p1); path.addLine(to: p2); path.addLine(to: p3)
+            }
+            let cross: CGFloat = 4
+            path.move(to: CGPoint(x: box.midX - cross, y: box.midY)); path.addLine(to: CGPoint(x: box.midX + cross, y: box.midY))
+            path.move(to: CGPoint(x: box.midX, y: box.midY - cross)); path.addLine(to: CGPoint(x: box.midX, y: box.midY + cross))
+        }
+        afShadowLayer.path = path
+        afLayer.path = path
+        afShadowLayer.isHidden = false
+        afLayer.isHidden = false
+    }
     var debugGhostPresentation: Float { fadeGhost?.presentation()?.opacity ?? -1 }
     var debugImagePresentationOpacity: Float { imageLayer.presentation()?.opacity ?? imageLayer.opacity }
 
@@ -977,6 +1056,7 @@ final class ZoomableImageView: NSView {
             CATransaction.setDisableActions(true)
         }
         imageLayer.frame = CGRect(origin: origin, size: CGSize(width: w, height: h))
+        syncInspectOverlays()
         CATransaction.commit()
         onImageFrameChange?()
         onZoomChange?(scale)

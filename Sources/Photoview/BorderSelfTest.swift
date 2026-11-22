@@ -33,18 +33,30 @@ extension ViewerViewController {
         }
         let date = "2024:05:06 07:08:09"
         let srgb = CGColorSpace(name: CGColorSpace.sRGB)!
-        // 照片是一块蓝色 (51,128,204)
-        func make(_ name: String, _ w: Int, _ h: Int) -> URL {
+        // 照片是一块蓝色 (51,128,204)，带上完整相机 EXIF 给参数相框测试用
+        func make(_ name: String, _ w: Int, _ h: Int, withCamera: Bool = true) -> URL {
             let u = dir.appendingPathComponent(name)
             let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: srgb, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
             ctx.setFillColor(CGColor(srgbRed: 0.2, green: 0.5, blue: 0.8, alpha: 1))
             ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
-            let props: [String: Any] = [
-                kCGImagePropertyExifDictionary as String: [kCGImagePropertyExifDateTimeOriginal as String: date],
+            var exifDict: [String: Any] = [kCGImagePropertyExifDateTimeOriginal as String: date]
+            var props: [String: Any] = [
                 kCGImagePropertyGPSDictionary as String: [kCGImagePropertyGPSLatitude as String: 31.23, kCGImagePropertyGPSLatitudeRef as String: "N",
                                                           kCGImagePropertyGPSLongitude as String: 121.47, kCGImagePropertyGPSLongitudeRef as String: "E"],
                 kCGImageDestinationLossyCompressionQuality as String: 0.9,
             ]
+            if withCamera {
+                exifDict[kCGImagePropertyExifLensModel as String] = "FE 35mm F1.4 GM"
+                exifDict[kCGImagePropertyExifFocalLength as String] = 35.0
+                exifDict[kCGImagePropertyExifFNumber as String] = 1.4
+                exifDict[kCGImagePropertyExifExposureTime as String] = 0.004
+                exifDict[kCGImagePropertyExifISOSpeedRatings as String] = [100]
+                props[kCGImagePropertyTIFFDictionary as String] = [
+                    kCGImagePropertyTIFFMake as String: "SONY",
+                    kCGImagePropertyTIFFModel as String: "ILCE-7M4",
+                ]
+            }
+            props[kCGImagePropertyExifDictionary as String] = exifDict
             let d = CGImageDestinationCreateWithURL(u as CFURL, UTType.jpeg.identifier as CFString, 1, nil)!
             CGImageDestinationAddImage(d, ctx.makeImage()!, props as CFDictionary)
             CGImageDestinationFinalize(d)
@@ -52,6 +64,15 @@ extension ViewerViewController {
         }
         let src = make("big.jpg", 9600, 5400)
         let tall = make("tall.jpg", 3000, 4000)
+        let noExif = dir.appendingPathComponent("noexif.png")
+        do {
+            let ctx = CGContext(data: nil, width: 800, height: 600, bitsPerComponent: 8, bytesPerRow: 0, space: srgb, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+            ctx.setFillColor(CGColor(srgbRed: 0.2, green: 0.5, blue: 0.8, alpha: 1))
+            ctx.fill(CGRect(x: 0, y: 0, width: 800, height: 600))
+            let d = CGImageDestinationCreateWithURL(noExif as CFURL, UTType.png.identifier as CFString, 1, nil)!
+            CGImageDestinationAddImage(d, ctx.makeImage()!, nil)
+            CGImageDestinationFinalize(d)
+        }
         let original = try? Data(contentsOf: src)
 
         func image(_ u: URL) -> CGImage? { CGImageSourceCreateWithURL(u as CFURL, nil).flatMap { CGImageSourceCreateImageAtIndex($0, 0, nil) } }
@@ -79,7 +100,8 @@ extension ViewerViewController {
             let out = Straighten.save(url: u, quarterTurns: 0, degrees: 0, crop: nil, overwrite: false, border: s)
             guard let f = out.url, let img = image(f) else { check(false, "\(tag): 没存出来"); return nil }
             made.append(f)
-            check(f.lastPathComponent.hasPrefix(u.deletingPathExtension().lastPathComponent + L10n.t("border.suffix", "-边框")) && f.pathExtension == "jpg",
+            let expectExt = CleanupUnit.isRaw(u) ? "jpg" : u.pathExtension
+            check(f.lastPathComponent.hasPrefix(u.deletingPathExtension().lastPathComponent + L10n.t("border.suffix", "-边框")) && f.pathExtension == expectExt,
                   "\(tag): 文件名 \(f.lastPathComponent)")
             return img
         }
@@ -145,6 +167,54 @@ extension ViewerViewController {
         let sum = BatchConvert.run([src], settings: .init(uti: UTType.jpeg.identifier, ext: "jpg", quality: 90, options: o, outDir: bdir))
         let bimg = sum.outputs.first.flatMap(image)
         check(sum.converted == 1 && bimg?.width == 1152 && bimg?.height == 1440, "批量转换带边框：\(bimg?.width ?? 0)×\(bimg?.height ?? 0)")
+        // ---- 7b. EXIF 摄影参数相框：解析、旧版 JSON 兼容、白底深字、黑底浅字、无 EXIF 容错
+        let parsedExif = BorderExif.read(url: src)
+        check(parsedExif.camera == "SONY ILCE-7M4" && parsedExif.lens == "FE 35mm F1.4 GM"
+              && parsedExif.shot == "35mm · ƒ/1.4 · 1/250s · ISO 100" && parsedExif.date == "2024-05-06",
+              "EXIF 相框解析：\(parsedExif)")
+        let legacyJSON = Data(#"{"w":4,"h":5,"pixels":false,"fill":0,"rgb":16777215,"equalPercent":5,"fitPercent":0,"edge":0,"customEdge":false}"#.utf8)
+        let decodedLegacy = try? JSONDecoder().decode(BorderSpec.self, from: legacyJSON)
+        check(decodedLegacy?.showExif == false && decodedLegacy?.w == 4 && decodedLegacy?.h == 5, "旧版 BorderSpec JSON 向后兼容")
+
+        func countInk(_ img: CGImage, yRange: Range<Int>, expectDark: Bool) -> Int {
+            var hits = 0
+            for y in stride(from: yRange.lowerBound, to: yRange.upperBound, by: 2) {
+                for x in stride(from: 20, to: img.width - 20, by: 4) {
+                    let p = px(img, x, y)
+                    if expectDark { if p[0] < 180 && p[1] < 180 && p[2] < 180 { hits += 1 } }
+                    else { if p[0] > 80 && p[1] > 80 && p[2] > 80 { hits += 1 } }
+                }
+            }
+            return hits
+        }
+        var exifWhite = BorderSpec(w: 0, h: 0, fill: .white, showExif: true); exifWhite.percent = 5; exifWhite.size = .preset(1600)
+        if let img = save(src, exifWhite, "exif-white") {
+            let g = exifWhite.geometry(CGSize(width: 9600, height: 5400))
+            check(g.footer.height > g.photo.minY, "EXIF 白框底栏高于顶边")
+            let ink = countInk(img, yRange: Int(Double(img.height) * 0.87)..<img.height, expectDark: true)
+            check(ink > 30, "EXIF 白框底部有深色文字像素（hits=\(ink)）")
+            if let f = made.last { try? fm.copyItem(at: f, to: URL(fileURLWithPath: "\(outDir)/exif-frame-white-\(lang).jpg")) }
+        }
+        var exifBlack = BorderSpec(w: 4, h: 5, fill: .black, showExif: true); exifBlack.percent = 3; exifBlack.size = .preset(1440)
+        if let img = save(src, exifBlack, "exif-black") {
+            let ink = countInk(img, yRange: Int(Double(img.height) * 0.89)..<img.height, expectDark: false)
+            check(ink > 20, "EXIF 黑框底部有浅色反色文字像素（hits=\(ink)）")
+            if let f = made.last { try? fm.copyItem(at: f, to: URL(fileURLWithPath: "\(outDir)/exif-frame-black-\(lang).jpg")) }
+        }
+        // 无 EXIF 图片：不崩溃且底栏纯净无杂字
+        if let img = save(noExif, exifWhite, "exif-none") {
+            let ink = countInk(img, yRange: Int(Double(img.height) * 0.88)..<img.height, expectDark: true)
+            check(ink == 0, "无 EXIF 图片底栏无杂像素（hits=\(ink)）")
+        }
+        // 导出带 EXIF 相框
+        var oExif = ExportOptions(); oExif.maxLongEdge = 1440; oExif.border = exifWhite
+        if let full = ImageLoader.decodedFull(url: src),
+           let out = ImageExporter.encode(full, source: src, uti: UTType.jpeg.identifier, quality: 90, options: oExif),
+           let outImg = CGImageSourceCreateWithData(out.data as CFData, nil).flatMap({ CGImageSourceCreateImageAtIndex($0, 0, nil) }) {
+            let ink = countInk(outImg, yRange: Int(Double(outImg.height) * 0.87)..<outImg.height, expectDark: true)
+            check(ink > 20, "导出带 EXIF 相框文字正常渲染（hits=\(ink)）")
+        } else { check(false, "导出带 EXIF 相框失败") }
+
         try? fm.removeItem(at: bdir)
         for f in made { try? fm.removeItem(at: f) }
 
@@ -188,6 +258,15 @@ extension ViewerViewController {
         }
         at(1.0) {
             self.captureWindow(to: "\(outDir)/\(lang)-border-45-blur.png", raw: true)
+            var ew = BorderSpec(w: 0, h: 0, fill: .white, showExif: true); ew.percent = 5; ew.size = .preset(1600)
+            self.border?.debugSet(ew)
+        }
+        at(0.6) {
+            check(self.border?.preview.debugCaptionVisible == true, "预览 EXIF 参数底栏可见")
+            self.captureWindow(to: "\(outDir)/\(lang)-border-exif-white.png", raw: true)
+            self.border?.debugSet(spec(4, 5, .blur, pct: 4, size: .preset(1440)))
+        }
+        at(0.6) {
             before = listing()
             key(36, "\r")
         }

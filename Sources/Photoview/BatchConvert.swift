@@ -64,6 +64,7 @@ enum BatchConvert {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
               let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] else { return true }
         if o.stripGPS, props[kCGImagePropertyGPSDictionary as String] != nil { return true }
+        if o.stripSerial { return true }
         if let edge = o.maxLongEdge {
             let w = props[kCGImagePropertyPixelWidth as String] as? Int ?? 0, h = props[kCGImagePropertyPixelHeight as String] as? Int ?? 0
             if max(w, h) > edge { return true }
@@ -128,7 +129,7 @@ enum BatchConvert {
                     return
                 }
                 guard let img = ImageLoader.decodedFull(url: url),
-                      let out = ImageExporter.encode(img, source: url, uti: s.uti, quality: s.quality, options: s.options, cancelled: isCancelled) else {
+                      let out = ImageExporter.encode(img, source: url, uti: s.uti, quality: s.quality, options: s.options, batchIndex: sum.converted + 1, cancelled: isCancelled) else {
                     if isCancelled() { sum.cancelled = true } else { sum.failed += 1; sum.failedNames.append(url.lastPathComponent) }
                     return
                 }

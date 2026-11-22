@@ -26,25 +26,30 @@ enum EmbeddedPreview {
     /// 文件改过（比如无损转了方向）后丢掉缓存的结果
     static func forget(_ url: URL) { cache.removeObject(forKey: url as NSURL) }
 
-    /// 解出内嵌 JPEG，按 RAW 记录的方向转正；maxPixel 给出时最长边不超过它
+    /// 解出内嵌 JPEG，按 RAW 记录的方向转正；maxPixel 给出时最长边不超过它。
+    /// 外接慢盘上只从 offset 开始读最多 16 MB，不再把整张 60–100 MB RAW 全映射进内存
     static func image(_ url: URL, maxPixel: CGFloat? = nil) -> CGImage? {
-        guard let f = locate(url),
-              let data = try? Data(contentsOf: url, options: .alwaysMapped), f.offset < data.count else { return nil }
-        return data.withUnsafeBytes { raw -> CGImage? in
-            guard let base = raw.baseAddress else { return nil }
-            let slice = Data(bytesNoCopy: UnsafeMutableRawPointer(mutating: base + f.offset), count: raw.count - f.offset, deallocator: .none)
-            guard let src = CGImageSourceCreateWithData(slice as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
-            let side = max(f.size.width, f.size.height)
-            // 立即解码：出了这个闭包，映射的内存就不能再用了
-            let options: [CFString: Any] = [
-                kCGImageSourceCreateThumbnailFromImageAlways: true,
-                kCGImageSourceCreateThumbnailWithTransform: false,
-                kCGImageSourceThumbnailMaxPixelSize: min(maxPixel ?? side, side),
-                kCGImageSourceShouldCacheImmediately: true,
-            ]
-            guard let img = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
-            return oriented(img, f.orientation)
+        guard let f = locate(url) else { return nil }
+        let sliceData: Data
+        if let fh = try? FileHandle(forReadingFrom: url) {
+            defer { try? fh.close() }
+            try? fh.seek(toOffset: UInt64(f.offset))
+            guard let chunk = try? fh.read(upToCount: 16 << 20), !chunk.isEmpty else { return nil }
+            sliceData = chunk
+        } else {
+            guard let data = try? Data(contentsOf: url, options: .alwaysMapped), f.offset < data.count else { return nil }
+            sliceData = data.subdata(in: f.offset..<min(data.count, f.offset + (16 << 20)))
         }
+        guard let src = CGImageSourceCreateWithData(sliceData as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
+        let side = max(f.size.width, f.size.height)
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: false,
+            kCGImageSourceThumbnailMaxPixelSize: min(maxPixel ?? side, side),
+            kCGImageSourceShouldCacheImmediately: true,
+        ]
+        guard let img = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
+        return oriented(img, f.orientation)
     }
 
     /// 测试用：这个文件是否走过内嵌预览
@@ -54,29 +59,19 @@ enum EmbeddedPreview {
 
     /// 最多试这么多个疑似 JPEG 开头：压缩过的 RAW 数据里偶尔会碰巧出现 FF D8 FF
     private static let maxCandidates = 400
+    /// 快速前缀扫描上限（4 MB）：绝大多数相机 RAW 的全尺寸内嵌 JPEG 预览都在前 4 MB 内，命中直接停，免去在慢盘上读完整个 60 MB 文件
+    private static let fastPrefixBytes = 4 << 20
 
-    private static func scan(_ url: URL) -> Found? {
-        guard let data = try? Data(contentsOf: url, options: .alwaysMapped), data.count > 16 else { return nil }
-        // RAW 自己的方向（TIFF 类 RAW 的 IFD0、CR3 的 CMT1）：ImageIO 解不了像素时通常还读得出元数据
-        var rawOrientation: Int?
-        if !RawOrientation.forceUnrecognised,
-           let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
-           let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] {
-            rawOrientation = props[kCGImagePropertyOrientation as String] as? Int
-        }
-        // 系统不认识这台相机时 ImageIO 读不出方向：改读文件自己的方向标记（无损转向写的就是它）
-        if rawOrientation == nil { rawOrientation = RawOrientation.fileOrientation(url) }
-        return data.withUnsafeBytes { raw -> Found? in
+    private static func scanBytes(_ data: Data) -> (offset: Int, w: Int, h: Int, orientation: Int?)? {
+        data.withUnsafeBytes { raw -> (offset: Int, w: Int, h: Int, orientation: Int?)? in
             guard let base = raw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return nil }
             let n = raw.count
             var best: (offset: Int, w: Int, h: Int, orientation: Int?)?
             var tried = 0
             var i = 0
             while i < n - 4, tried < maxCandidates {
-                // memchr 找 0xFF 比逐字节比较快得多，几十 MB 的文件也只要几毫秒
                 guard let p = memchr(base + i, 0xFF, n - 4 - i) else { break }
                 i = UnsafeRawPointer(p).assumingMemoryBound(to: UInt8.self) - base
-                // JPEG 开头：FF D8，紧跟一个段标记（APPn、DQT、DHT、SOF、COM）
                 if base[i + 1] == 0xD8, base[i + 2] == 0xFF,
                    (0xE0...0xEF).contains(base[i + 3]) || [0xDB, 0xC4, 0xC0, 0xFE].contains(base[i + 3]) {
                     tried += 1
@@ -92,14 +87,40 @@ enum EmbeddedPreview {
                 }
                 i += 1
             }
-            guard let best else { return nil }
-            // 方向以 RAW 自己记的为准；内嵌 JPEG 多半不写方向
-            let o = rawOrientation ?? best.orientation ?? 1
-            let swapped = (5...8).contains(o)
-            return Found(offset: best.offset,
-                         size: swapped ? CGSize(width: best.h, height: best.w) : CGSize(width: best.w, height: best.h),
-                         orientation: o)
+            return best
         }
+    }
+
+    private static func scan(_ url: URL) -> Found? {
+        // RAW 自己的方向（TIFF 类 RAW 的 IFD0、CR3 的 CMT1）：ImageIO 解不了像素时通常还读得出元数据
+        var rawOrientation: Int?
+        if !RawOrientation.forceUnrecognised,
+           let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
+           let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] {
+            rawOrientation = props[kCGImagePropertyOrientation as String] as? Int
+        }
+        if rawOrientation == nil { rawOrientation = RawOrientation.fileOrientation(url) }
+
+        // 先扫前 4 MB：如果已经找到清晰大图（≥ 1024px），不用把整张几十 MB 的 RAW 从外接盘读一遍
+        var best: (offset: Int, w: Int, h: Int, orientation: Int?)?
+        if let fh = try? FileHandle(forReadingFrom: url) {
+            let prefix = (try? fh.read(upToCount: fastPrefixBytes)) ?? Data()
+            try? fh.close()
+            if prefix.count > 16 {
+                let candidate = scanBytes(prefix)
+                if let candidate, max(candidate.w, candidate.h) >= 1024 { best = candidate }
+                else if prefix.count < fastPrefixBytes { best = candidate }
+            }
+        }
+        if best == nil, let data = try? Data(contentsOf: url, options: .alwaysMapped), data.count > 16 {
+            best = scanBytes(data)
+        }
+        guard let best else { return nil }
+        let o = rawOrientation ?? best.orientation ?? 1
+        let swapped = (5...8).contains(o)
+        return Found(offset: best.offset,
+                     size: swapped ? CGSize(width: best.h, height: best.w) : CGSize(width: best.w, height: best.h),
+                     orientation: o)
     }
 
     /// EXIF 方向转正：相机只会写 1、3、6、8（不翻转）；其余按不转处理

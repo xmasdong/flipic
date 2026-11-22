@@ -160,7 +160,7 @@ final class ImageLoader {
         infoCache.object(forKey: url as NSURL)?.info
     }
 
-    /// 只读文件头拿原图尺寸与动图标记，不解码像素
+    /// 只读文件头拿原图尺寸与动图标记，不解码像素；慢速外接盘优先从本机 SSD 缓存 20 字节头恢复，免去触碰外接盘
     func info(for url: URL) -> ImageInfo? {
         if let hit = infoCache.object(forKey: url as NSURL) { return hit.info }
         if Video.isVideo(url) {
@@ -168,6 +168,10 @@ final class ImageLoader {
             let info = ImageInfo(pixelSize: m.size, isAnimated: false)
             infoCache.setObject(InfoBox(info), forKey: url as NSURL)
             return info
+        }
+        if let cached = ExtDiskCache.shared.readInfo(for: url) {
+            infoCache.setObject(InfoBox(cached), forKey: url as NSURL)
+            return cached
         }
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else {
             return embeddedInfo(for: url)
@@ -205,11 +209,28 @@ final class ImageLoader {
         return nil
     }
 
-    /// 适配窗口用的快速预览图
+    /// 适配窗口用的快速预览图；慢速外接盘优先命中本机 SSD 持久缓存（0 外接盘 I/O），未命中时解完异步回写本机 SSD
     func preview(for url: URL, maxPixel: CGFloat) -> CGImage? {
         if let hit = cachedPreview(for: url, maxPixel: maxPixel) { return hit }
+        let slow = Volumes.isSlowStorage(url)
+        if slow, !Video.isVideo(url),
+           let disk = ExtDiskCache.shared.load(for: url, kind: .preview, minLongEdge: min(maxPixel, ExtDiskCache.maxPreviewEdge)) {
+            infoCache.setObject(InfoBox(disk.info), forKey: url as NSURL)
+            let img = Self.displayReady(disk.image, transparent: false)
+            let storedPx = max(CGFloat(max(img.width, img.height)), min(maxPixel, ExtDiskCache.maxPreviewEdge))
+            previewCache.set(CGBox(image: img, px: storedPx), for: url, cost: pixelBytes(img))
+            draftCache.remove(url)
+            return img
+        }
         guard let decoded = Self.rawEmbeddedPreview(url: url, maxPixel: maxPixel)
                 ?? Self.renderThumbnail(url: url, maxPixel: maxPixel, hdr: Self.hdrActive) else { return nil }
+        if slow, !Video.isVideo(url) {
+            let meta = cachedInfo(for: url) ?? info(for: url)
+            if meta?.isAnimated != true {
+                let orig = meta?.pixelSize ?? CGSize(width: decoded.width, height: decoded.height)
+                ExtDiskCache.shared.store(decoded, origSize: orig, for: url, kind: .preview)
+            }
+        }
         let img = Self.displayReady(decoded)
         previewCache.set(CGBox(image: img, px: CGFloat(max(img.width, img.height))), for: url, cost: pixelBytes(img))
         draftCache.remove(url)
@@ -272,21 +293,35 @@ final class ImageLoader {
     }
 
     /// RAW 先用相机内嵌的 JPEG 预览：4000 万像素的 RAF 冷启动解码要 4 秒，内嵌预览不到 0.1 秒。
-    /// 内嵌预览太小（有的相机只存几百像素）就不用，照常解码 RAW；放大到需要细节时由 fullImage 解码 RAW 原图
+    /// 若系统只返回 160px 小缩略图（常见于 ARW/NEF/DNG），再试 4 MB 前缀快扫取大图内嵌预览，避免在外接慢盘上回退到整张 60 MB RAW 解码；
+    /// 放大到需要细节时仍由 fullImage 解码 RAW 原图
     static func rawEmbeddedPreview(url: URL, maxPixel: CGFloat) -> CGImage? {
-        guard CleanupUnit.isRaw(url),
-              let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
-        let options: [CFString: Any] = [
-            kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
-            kCGImageSourceCreateThumbnailWithTransform: true,
-            kCGImageSourceThumbnailMaxPixelSize: maxPixel,
-            kCGImageSourceShouldCacheImmediately: true,
-        ]
-        guard let img = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
-        let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any]
-        let full = CGFloat(max(props?["PixelWidth"] as? Int ?? 0, props?["PixelHeight"] as? Int ?? 0))
-        let need = min(maxPixel, full > 0 ? full : maxPixel)
-        return CGFloat(max(img.width, img.height)) >= need * 0.9 ? img : nil
+        guard CleanupUnit.isRaw(url) else { return nil }
+        let slow = Volumes.isSlowStorage(url)
+        var full: CGFloat = 0
+        if let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary) {
+            let options: [CFString: Any] = [
+                kCGImageSourceCreateThumbnailFromImageIfAbsent: true,
+                kCGImageSourceCreateThumbnailWithTransform: true,
+                kCGImageSourceThumbnailMaxPixelSize: maxPixel,
+                kCGImageSourceShouldCacheImmediately: true,
+            ]
+            let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any]
+            full = CGFloat(max(props?["PixelWidth"] as? Int ?? 0, props?["PixelHeight"] as? Int ?? 0))
+            let need = min(maxPixel, full > 0 ? full : maxPixel)
+            if let img = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary),
+               CGFloat(max(img.width, img.height)) >= need * 0.9 {
+                return img
+            }
+        }
+        // 慢存储上优先用 4 MB 前缀内嵌 JPEG（≥ 1000 px 或满足需求即可），避免 USB 上 5–10 秒的 RawCamera 全图解马赛克
+        if let emb = EmbeddedPreview.image(url, maxPixel: maxPixel) {
+            let side = CGFloat(max(emb.width, emb.height))
+            let need = min(maxPixel, full > 0 ? full : maxPixel)
+            let floorPx: CGFloat = slow ? min(1000, need * 0.85) : need * 0.9
+            if side >= floorPx { return emb }
+        }
+        return nil
     }
 
     /// 全分辨率解码（带 EXIF 方向校正），不写缓存；maxPixel 给出时最长边不超过它
@@ -467,11 +502,22 @@ final class ImageLoader {
     func thumb(for url: URL) -> CGImage? {
         if let hit = cachedThumb(for: url) { return hit }
         let px = FilmstripView.thumbPixel
+        let slow = Volumes.isSlowStorage(url)
+        if slow, !Video.isVideo(url),
+           let disk = ExtDiskCache.shared.load(for: url, kind: .thumb, minLongEdge: px) {
+            infoCache.setObject(InfoBox(disk.info), forKey: url as NSURL)
+            thumbCache.set(CGBox(image: disk.image, px: px), for: url, cost: pixelBytes(disk.image))
+            return disk.image
+        }
         // RAW 不管多大的格子都先用相机内嵌的预览（只读文件里那一段）；太小才整张解码 RAW
         guard let img = Self.rawEmbeddedPreview(url: url, maxPixel: px)
-                ?? Self.renderThumbnail(url: url, maxPixel: px, allowEmbedded: px <= 160) else { return nil }
+                ?? Self.renderThumbnail(url: url, maxPixel: px, allowEmbedded: px <= 160 || slow) else { return nil }
         // 顺带读文件头：快速连翻时缩略图能先顶上去，要知道原图尺寸才摆得对
-        _ = info(for: url)
+        let meta = info(for: url)
+        if slow, !Video.isVideo(url), meta?.isAnimated != true {
+            let orig = meta?.pixelSize ?? CGSize(width: img.width, height: img.height)
+            ExtDiskCache.shared.store(img, origSize: orig, for: url, kind: .thumb)
+        }
         thumbCache.set(CGBox(image: img, px: px), for: url, cost: pixelBytes(img))
         return img
     }
@@ -561,6 +607,7 @@ final class ImageLoader {
     func evict(url: URL) {
         Video.forget(url)
         EmbeddedPreview.forget(url)
+        ExtDiskCache.shared.invalidate(url: url)
         previewCache.remove(url)
         fullCache.remove(url)
         thumbCache.remove(url)

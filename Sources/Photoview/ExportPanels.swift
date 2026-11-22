@@ -7,6 +7,7 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
     var onLayout: (() -> Void)?
     private let keepMeta = NSButton(checkboxWithTitle: L10n.t("exp.keepMeta", "保留拍摄信息、说明和版权"), target: nil, action: nil)
     private let stripGPS = NSButton(checkboxWithTitle: L10n.t("exp.stripGPS", "去掉位置信息"), target: nil, action: nil)
+    private let stripSerial = NSButton(checkboxWithTitle: L10n.t("exp.stripSerial", "去掉相机和镜头序列号"), target: nil, action: nil)
     private let longCheck = NSButton(checkboxWithTitle: L10n.t("exp.longEdge", "长边不超过"), target: nil, action: nil)
     private let longField = NSTextField(string: "")
     private let sizeCheck = NSButton(checkboxWithTitle: L10n.t("exp.maxSize", "文件不超过"), target: nil, action: nil)
@@ -41,6 +42,7 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         spacing = 6
         keepMeta.state = o.keepMetadata ? .on : .off
         stripGPS.state = o.stripGPS ? .on : .off
+        stripSerial.state = o.stripSerial ? .on : .off
         longCheck.state = o.maxLongEdge != nil ? .on : .off
         longField.stringValue = String(o.maxLongEdge ?? ExportOptions.savedLongEdge)
         sizeCheck.state = o.maxBytes != nil ? .on : .off
@@ -51,7 +53,7 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         borderCheck.state = o.border != nil ? .on : .off
         borderCheck.title = L10n.f("border.export", "加边框（%@）", borderSpec.summary)
         borderCheck.toolTip = L10n.t("border.export.tip", "用「照片 › 加边框…」上次的设置")
-        for b in [keepMeta, stripGPS, longCheck, sizeCheck, srgb, borderCheck] { b.target = self; b.action = #selector(changed(_:)) }
+        for b in [keepMeta, stripGPS, stripSerial, longCheck, sizeCheck, srgb, borderCheck] { b.target = self; b.action = #selector(changed(_:)) }
         for f in [longField, sizeField] {
             f.alignment = .right
             f.delegate = self
@@ -64,6 +66,11 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         indent.widthAnchor.constraint(equalToConstant: 18).isActive = true
         let gpsRow = NSStackView(views: [indent, stripGPS])
         gpsRow.spacing = 0
+        let indent2 = NSView()
+        indent2.translatesAutoresizingMaskIntoConstraints = false
+        indent2.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        let serialRow = NSStackView(views: [indent2, stripSerial])
+        serialRow.spacing = 0
         let unit: (String) -> NSTextField = { t in
             let l = NSTextField(labelWithString: t)
             l.font = .systemFont(ofSize: 13)
@@ -72,8 +79,8 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         let longRow = NSStackView(views: [longCheck, longField, unit(L10n.t("exp.pixels", "像素"))])
         let sizeRow = NSStackView(views: [sizeCheck, sizeField, unit("MB")])
         for r in [longRow, sizeRow] { r.spacing = 6; r.alignment = .centerY }
-        for v in [keepMeta, gpsRow, longRow, sizeRow, srgb, borderCheck] { addArrangedSubview(v) }
-        setCustomSpacing(10, after: gpsRow)
+        for v in [keepMeta, gpsRow, serialRow, longRow, sizeRow, srgb, borderCheck] { addArrangedSubview(v) }
+        setCustomSpacing(10, after: serialRow)
         #if FLIPIC_PRO
         filmPopup.addItems(withTitles: FilmExportUI.titles)
         effectToken = o.effect
@@ -124,6 +131,7 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
 
     private func sync() {
         stripGPS.isEnabled = keepMeta.state == .on
+        stripSerial.isEnabled = keepMeta.state == .on
         longField.isEnabled = longCheck.state == .on
         sizeCheck.isEnabled = !isPNG
         sizeField.isEnabled = sizeCheck.state == .on && !isPNG
@@ -133,6 +141,7 @@ final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
         var o = ExportOptions()
         o.keepMetadata = keepMeta.state == .on
         o.stripGPS = o.keepMetadata && stripGPS.state == .on
+        o.stripSerial = o.keepMetadata && stripSerial.state == .on
         if longCheck.state == .on, let v = Int(longField.stringValue.trimmingCharacters(in: .whitespaces)), v >= 64 { o.maxLongEdge = v }
         if sizeCheck.state == .on, !isPNG,
            let mb = Double(sizeField.stringValue.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")), mb >= 0.05 {

@@ -25,6 +25,8 @@ final class ViewerViewController: NSViewController {
     private var savingURL: URL?
     /// 加边框中（见 Border.swift）
     var border: BorderSession?
+    /// 摄影质检层：直方图 / 过曝死黑 / 焦点峰值 / 对焦框（见 ViewerInspect.swift）
+    let inspect = ViewerInspectState()
     /// 保存写盘期间用户想翻页：等写完再翻（只留最后一个想做的）
     private var afterSave: (() -> Void)?
     private let hudStack = NSStackView()
@@ -58,6 +60,8 @@ final class ViewerViewController: NSViewController {
     var pendingPageZoom: ZoomableImageView.ViewState?
     /// 按内容查找的搜索框和这个文件夹的索引（Pro）
     var contentSearch: ContentSearchUI?
+    /// 按文件名清单挑图的弹出层（Pro）
+    var activeNameMatchSheet: NameMatchSheet?
     /// 胶片滤镜：显示这一环、面板、徽标、工具条按钮（Pro）
     lazy var filmDisplay = FilmDisplay(viewer: self)
     let filmUI = FilmUIRefs()
@@ -127,6 +131,10 @@ final class ViewerViewController: NSViewController {
         ("JPEG", .jpeg, "jpg"), ("PNG", .png, "png"), ("HEIC", .heic, "heic"),
     ]
     private var warmupGeneration = 0
+    /// 当前文件夹是否位于外接慢速存储（机械硬盘 / 存储卡 / 网络卷）：切单通道顺序读、延迟后台预热
+    private var currentFolderSlow = false
+    /// 慢速盘打开文件夹时，等首图清晰上屏再启动缩略图预热和拍摄时间扫描，不抢 USB 带宽
+    private var pendingSlowBackground: DispatchWorkItem?
     var prefetchedURLs = Set<URL>()
     var lastNavDirection = 1
     private var fullRequested = false
@@ -311,13 +319,14 @@ final class ViewerViewController: NSViewController {
         }
         imageView.menu = buildContextMenu()
         view.addSubview(imageView)
+        imageView.onRotate = { [weak self] in
+            self?.liveText?.reset()
+            self?.scheduleLiveText(restart: true)
+            self?.refreshInspectOverlays()
+        }
         if TextRecognition.liveTextSupported {
             liveText = LiveTextController(imageView: imageView)
             imageView.onImageFrameChange = { [weak self] in self?.liveText?.imageFrameChanged() }
-            imageView.onRotate = { [weak self] in
-                self?.liveText?.reset()
-                self?.scheduleLiveText(restart: true)
-            }
             imageView.onMouseDown = { [weak self] in self?.liveText?.clearSelection() }
             imageView.ignoresDoubleClick = { [weak self] p in self?.liveText?.hasInteractiveItem(at: p) ?? false }
         }
@@ -416,6 +425,7 @@ final class ViewerViewController: NSViewController {
             emptyState.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -30),
         ] + infoFloatingConstraints)
         setupRotationBar()
+        setupInspectOverlay()
     }
 
     // 左右两侧的翻页大箭头
@@ -1194,6 +1204,8 @@ final class ViewerViewController: NSViewController {
         contentSearchFolderWillChange()
         #endif
         prefetchedURLs.removeAll()
+        pendingSlowBackground?.cancel()
+        pendingSlowBackground = nil
         decodeQueue.cancelAllOperations()
         prefetchQueue.cancelAllOperations()
         draftQueue.cancelAllOperations()
@@ -1209,7 +1221,20 @@ final class ViewerViewController: NSViewController {
         showFirstAfterResort = isDir.boolValue
         openedFile = !isDir.boolValue
         peekOnFirstImage = !isDir.boolValue && Self.openInPeek && !CommandLine.arguments.contains(where: { $0.hasPrefix("--") && !["--peekopentest", "--press-esc", "--press-next"].contains($0) })
+        let slow = Volumes.isSlowStorage(url)
+        currentFolderSlow = slow
+        // 外接慢速机械盘最怕多线程抢磁头寻道：切单通道顺序读反而快 2–4 倍；内置 SSD 照旧并发拉满
+        decodeQueue.maxConcurrentOperationCount = slow ? 1 : 2
+        draftQueue.maxConcurrentOperationCount = slow ? 1 : 3
+        thumbQueue.maxConcurrentOperationCount = slow ? 1 : 2
+        // 外接慢盘双击单张图时，在列目录之前就先把这张图投进预解码队列（不与 showImage 的 decodeQueue 互相取消），目录列完时图已在缓存里或快解好了
+        if !isDir.boolValue, slow {
+            let target = url.standardizedFileURL
+            let px = previewPixelTarget
+            prefetchQueue.addOperation { [loader] in _ = loader.preview(for: target, maxPixel: px) }
+        }
         let ok = folder.open(url: url)
+        if ok { ExtDiskCache.shared.register(items: folder.allItems) }
         #if FLIPIC_PRO
         if ok { applyMergePairs(keep: isDir.boolValue ? nil : url.standardizedFileURL) }
         #endif
@@ -1217,6 +1242,7 @@ final class ViewerViewController: NSViewController {
         updateControlsPresence()
         if !ok {
             imageView.set(image: nil, resetToFit: true, isNew: true)
+            refreshInspectOverlays()
             emptyHint.stringValue = L10n.t("ui.noImages", "这里没有可识别的图片文件")
         }
         filmstrip.collectionView.reloadData()
@@ -1226,8 +1252,21 @@ final class ViewerViewController: NSViewController {
         if ok {
             view.window?.makeFirstResponder(imageView)
             showImage(resetToFit: true)
-            startFolderWarmup()
-            loadCaptureDatesIfNeeded()
+            if slow && shown != .sharp {
+                // 慢速盘首图还在解码：把后台缩略图预热和 EXIF 扫描延迟到首图清晰上屏后（或最多 1.5s 兜底），把全部 USB 带宽留给首图
+                let gen = folderGeneration
+                let work = DispatchWorkItem { [weak self] in
+                    guard let self, self.folderGeneration == gen else { return }
+                    self.pendingSlowBackground = nil
+                    self.startFolderWarmup()
+                    self.loadCaptureDatesIfNeeded()
+                }
+                pendingSlowBackground = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+            } else {
+                startFolderWarmup()
+                loadCaptureDatesIfNeeded()
+            }
             showCleanupHintIfNeeded()
             #if FLIPIC_PRO
             // 用过按内容查找的：闲下来后在后台先把这个文件夹分析好
@@ -1268,6 +1307,7 @@ final class ViewerViewController: NSViewController {
         fileNameLabel.stringValue = url.lastPathComponent
         updateLivePhoto(for: url)
         video.show(mainViewerActive && cleanup == nil ? url : nil)
+        if currentIsVideo { refreshInspectOverlays() }
         decodeQueue.cancelAllOperations()
         draftQueue.cancelAllOperations()
         updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)
@@ -1537,6 +1577,7 @@ final class ViewerViewController: NSViewController {
         }
         let removed = removing ? r.missing : []
         guard !r.added.isEmpty || !removed.isEmpty else { return }
+        if !r.added.isEmpty { ExtDiskCache.shared.register(items: folder.allItems) }
         for u in removed { loader.evict(url: u); prefetchedURLs.remove(u) }
         #if FLIPIC_PRO
         if !r.added.isEmpty { applyMergePairs(keep: folder.current?.url) }
@@ -1624,7 +1665,18 @@ final class ViewerViewController: NSViewController {
         imageView.set(image: image, logicalSize: logicalSize, resetToFit: resetToFit, isNew: isNew, draft: draft)
         if isNew { BenchProbe.adopted() } else if !draft { BenchProbe.fullWidth = image.width }
         if !draft { BenchProbe.sharpShown() }
-        if !draft { scheduleLiveText() }
+        if !draft {
+            scheduleLiveText()
+            if let work = pendingSlowBackground {
+                work.cancel()
+                pendingSlowBackground = nil
+                DispatchQueue.main.async { [weak self] in
+                    self?.startFolderWarmup()
+                    self?.loadCaptureDatesIfNeeded()
+                }
+            }
+        }
+        if !draft || isNew { refreshInspectOverlays() }
         #if FLIPIC_PRO
         // 贴合预览里窗口随照片变形，放大倍数是相对旧窗口算的，搬到新窗口上会一次比一次小；预览中翻页一律回到适应窗口
         if isNew { if peekSaved == nil { restoreZoomAfterPaging() } else { pendingPageZoom = nil } }
@@ -1877,8 +1929,10 @@ final class ViewerViewController: NSViewController {
         guard prefetch else { return }
         // 不在快速连翻了：草图交给清晰预览，只留当前这张的（它的清晰图可能还在解）
         loader.trimDrafts(keeping: [folder.items[i].url])
-        let ahead = lastNavDirection >= 0 ? CachePolicy.previewAhead : CachePolicy.previewBehind
-        let behind = lastNavDirection >= 0 ? CachePolicy.previewBehind : CachePolicy.previewAhead
+        let aheadMax = currentFolderSlow ? 2 : CachePolicy.previewAhead
+        let behindMax = currentFolderSlow ? 1 : CachePolicy.previewBehind
+        let ahead = lastNavDirection >= 0 ? aheadMax : behindMax
+        let behind = lastNavDirection >= 0 ? behindMax : aheadMax
         var order: [URL] = []
         for step in 1...max(ahead, behind) {
             if step <= ahead { order.append(folder.items[(i + step) % n].url) }
@@ -2289,6 +2343,10 @@ final class ViewerViewController: NSViewController {
         case .saveRotation: saveRotation(nil)
         case .straighten: straighten(nil)
         case .border: addBorder(nil)
+        case .histogram: toggleHistogram(nil)
+        case .clipping: toggleClipping(nil)
+        case .focusPeaking: toggleFocusPeaking(nil)
+        case .afPoint: toggleAFPoint(nil)
         case .infoLevel: toggleInfoLevel(nil)
         case .cleanup: if folder.count > 0 { toggleCleanup(nil) }
         case .batchConvert: batchConvert(nil)
@@ -2453,6 +2511,7 @@ final class ViewerViewController: NSViewController {
             c.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
         cleanup = c
+        refreshInspectOverlays()
         view.window?.makeFirstResponder(c.grid)
     }
 
@@ -2466,6 +2525,8 @@ final class ViewerViewController: NSViewController {
             let cur = folder.current?.url
             let keep = cur.flatMap { FileManager.default.fileExists(atPath: $0.path) ? $0 : nil }
             open(url: keep ?? folderURL)
+        } else {
+            refreshInspectOverlays()
         }
         view.window?.makeFirstResponder(imageView)
     }
@@ -3107,11 +3168,18 @@ final class ViewerViewController: NSViewController {
         if ratingCache[url] != nil { updateRatingLabel(); return }
         updateRatingLabel()
         ratingQueue.async { [weak self] in
-            let r = Rating.read(url)
+            let (r, label) = Rating.readBoth(url)
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.ratingCache[url] = r
                 self.folder.setRating(r, url: url)
+                if let label {
+                    let cur = self.folder.tagColors(for: [url])[url] ?? TagColorSet()
+                    if !cur.contains(label) {
+                        self.folder.setTagColors(cur.with(label, on: true), url: url)
+                        self.refreshTags()
+                    }
+                }
                 if self.folder.current?.url == url { self.updateRatingLabel() }
             }
         }
@@ -3439,23 +3507,32 @@ final class ViewerViewController: NSViewController {
         if missing.count > 40 { flash(L10n.t("msg.readingRatings", "正在读取评分…"), seconds: 5) }
         let gen = folderGeneration
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            var values = [Int](repeating: 0, count: missing.count)
+            var values = [(Int, TagColor?)](repeating: (0, nil), count: missing.count)
             values.withUnsafeMutableBufferPointer { buf in
-                DiskIO.forEach(missing) { i in buf[i] = Rating.read(missing[i]) }
+                DiskIO.forEach(missing) { i in buf[i] = Rating.readBoth(missing[i]) }
             }
             DispatchQueue.main.async {
                 guard let self, self.folderGeneration == gen else { return }
-                for (u, r) in zip(missing, values) {
+                var tagChanged = false
+                for (u, (r, label)) in zip(missing, values) {
                     self.folder.setRating(r, url: u)
                     self.ratingCache[u] = r
+                    if let label {
+                        let cur = self.folder.tagColors(for: [u])[u] ?? TagColorSet()
+                        if !cur.contains(label) {
+                            self.folder.setTagColors(cur.with(label, on: true), url: u)
+                            tagChanged = true
+                        }
+                    }
                 }
+                if tagChanged { self.refreshTags() }
                 then()
             }
         }
     }
 
     /// 标记变了以后刷新底部徽章、缩略图上的勾和顶部计数，不重建缩略图栏
-    private func refreshMarks() {
+    func refreshMarks() {
         updateRatingLabel()
         for case let cell as FilmstripItem in filmstrip.collectionView.visibleItems()
         where folder.items.indices.contains(cell.itemIndex) {
@@ -3526,6 +3603,15 @@ final class ViewerViewController: NSViewController {
             markedOnlyPillIcon.isHidden = true
             markedOnlyLabel.stringValue = L10n.f("ui.ratingPill", "只看%1$@及以上 · %2$d / %3$d",
                                                  String(repeating: "★", count: n), folder.matchingCount, folder.totalCount)
+        #if FLIPIC_PRO
+        case .nameList:
+            markedOnlyPillIcon.isHidden = false
+            markedOnlyPillIcon.image = NSImage(systemSymbolName: "list.bullet.rectangle", accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: 11, weight: .medium))
+            markedOnlyPillIcon.contentTintColor = .controlAccentColor
+            markedOnlyLabel.stringValue = L10n.f("ui.nameListPill", "清单匹配 · %1$d / %2$d",
+                                                 folder.matchingCount, folder.totalCount)
+        #endif
         default:
             markedOnlyPillIcon.isHidden = false
             markedOnlyPillIcon.image = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)?
@@ -3596,6 +3682,7 @@ final class ViewerViewController: NSViewController {
         case nil: return L10n.f("exp.f.summaryAll", "导出当前显示的 %d 张照片（整个文件夹）", count)
         #if FLIPIC_PRO
         case .content(let m): return L10n.f("exp.f.summaryContent", "导出当前显示的 %1$d 张照片（按内容查找「%2$@」）", count, m.query)
+        case .nameList: return L10n.f("exp.f.summaryNameList", "导出当前显示的 %d 张照片（文件名清单匹配）", count)
         #endif
         }
     }
@@ -3821,6 +3908,7 @@ final class ViewerViewController: NSViewController {
         // 两格时右边是「候选」，← → 换它，左边留着做参照
         compareActivate(startCount == 0 ? (n == 2 ? 1 : 0) : min(compareActive, n - 1))
         updateRatingLabel()
+        refreshInspectOverlays()
     }
 
     func exitCompare() {
@@ -3836,6 +3924,7 @@ final class ViewerViewController: NSViewController {
         showImage(resetToFit: true)
         view.window?.makeFirstResponder(imageView)
         updateRatingLabel()
+        refreshInspectOverlays()
     }
 
     private func configurePane(_ pane: ComparePane, at i: Int) {
@@ -7806,44 +7895,25 @@ final class ViewerViewController: NSViewController {
 
     @objc func batchRename(_ sender: Any?) {
         guard !folder.items.isEmpty, !isProcessing, let current = folder.current else { return }
+        let folderName = current.url.deletingLastPathComponent().lastPathComponent
         let alert = NSAlert()
         alert.messageText = L10n.t("br.title", "批量重命名")
-        alert.informativeText = L10n.f("br.info", "将当前文件夹 %d 张图片重命名为「前缀-001.扩展名」格式。", folder.count)
-        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 220, height: 24))
-        field.stringValue = current.url.deletingLastPathComponent().lastPathComponent
-        field.placeholderString = L10n.t("br.field", "前缀")
-        alert.accessoryView = field
+        alert.informativeText = L10n.f("br.infoTemplate", "将当前文件夹 %d 张图片按模板重命名（支持 EXIF 变量，留纯前缀自动编号）。", folder.count)
+        let acc = BatchRenameAccessory(items: folder.items, folderName: folderName)
+        alert.accessoryView = acc
         alert.addButton(withTitle: L10n.t("br.button", "重命名"))
         alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
+        alert.window.initialFirstResponder = acc.templateField
         guard alert.runModal() == .alertFirstButtonReturn else { return }
-        let prefix = field.stringValue.trimmingCharacters(in: .whitespaces)
-        guard !prefix.isEmpty else {
+        let tpl = acc.templateText
+        guard !tpl.isEmpty else {
             flash(L10n.t("msg.prefixEmpty", "前缀不能为空"))
             return
         }
         let oldCurrentURL = current.url
         let folderURL = oldCurrentURL.deletingLastPathComponent()
-        let fm = FileManager.default
-        var renamedCount = 0
-        var newNameOfCurrent: String?
-        var seq = 1
-        for item in folder.items {
-            let ext = item.url.pathExtension
-            var candidate = "\(prefix)-\(String(format: "%03d", seq)).\(ext)"
-            while candidate != item.url.lastPathComponent,
-                  fm.fileExists(atPath: folderURL.appendingPathComponent(candidate).path) {
-                seq += 1
-                candidate = "\(prefix)-\(String(format: "%03d", seq)).\(ext)"
-            }
-            if candidate != item.url.lastPathComponent {
-                if (try? fm.moveItem(at: item.url, to: folderURL.appendingPathComponent(candidate))) != nil {
-                    Self.renameCompanions(of: item.url, to: folderURL.appendingPathComponent(candidate))
-                    renamedCount += 1
-                    if item.url == oldCurrentURL { newNameOfCurrent = candidate }
-                }
-            }
-            seq += 1
-        }
+        let res = BatchRenameEngine.execute(items: folder.items, template: tpl, startSeq: acc.startNumber)
+        let newNameOfCurrent = res.newNameMap[oldCurrentURL]
         folderGeneration += 1
         folder.open(url: folderURL)
         if let newName = newNameOfCurrent {
@@ -7855,7 +7925,7 @@ final class ViewerViewController: NSViewController {
         showFirstAfterResort = false
         loadCaptureDatesIfNeeded()
         view.window?.makeFirstResponder(imageView)
-        flash(L10n.f("msg.renamedCount", "已重命名 %d 张图片", renamedCount))
+        flash(L10n.f("msg.renamedCount", "已重命名 %d 张图片", res.renamed))
     }
 }
 
@@ -8112,6 +8182,18 @@ extension ViewerViewController: NSMenuItemValidation {
         } else if menuItem.action == #selector(addBorder(_:)) {
             menuItem.state = border != nil ? .on : .off
             return folder.current != nil && cleanup == nil && !currentIsVideo && imageView.canStraighten && !isStraightening
+        } else if menuItem.action == #selector(toggleHistogram(_:)) {
+            menuItem.state = inspect.showHistogram ? .on : .off
+            return folder.current != nil && cleanup == nil && !currentIsVideo && compareView == nil
+        } else if menuItem.action == #selector(toggleClipping(_:)) {
+            menuItem.state = inspect.showClipping ? .on : .off
+            return folder.current != nil && cleanup == nil && !currentIsVideo && compareView == nil
+        } else if menuItem.action == #selector(toggleFocusPeaking(_:)) {
+            menuItem.state = inspect.showPeaking ? .on : .off
+            return folder.current != nil && cleanup == nil && !currentIsVideo && compareView == nil
+        } else if menuItem.action == #selector(toggleAFPoint(_:)) {
+            menuItem.state = inspect.showAF ? .on : .off
+            return folder.current != nil && cleanup == nil && !currentIsVideo && compareView == nil
         } else if menuItem.action == #selector(copyAllText(_:)) {
             return folder.current != nil && imageView.debugHasImage && mainViewerActive
         }
@@ -8140,6 +8222,9 @@ extension ViewerViewController: NSMenuItemValidation {
         } else if menuItem.action == #selector(searchContent(_:)) {
             menuItem.state = contentSearch?.isOpen == true ? .on : .off
             return folder.totalCount > 0
+        } else if menuItem.action == #selector(matchNameList(_:)) {
+            if case .nameList = folder.filter { menuItem.state = .on } else { menuItem.state = .off }
+            return folder.totalCount > 0 && cleanup == nil
         }
         #endif
         return true

@@ -8,6 +8,35 @@ enum TagColor: Int, CaseIterable {
     var index: Int { rawValue }
     fileprivate var bit: UInt8 { 1 << UInt8(rawValue) }
 
+    /// 标准 XMP 颜色标签名（xmp:Label），Lightroom Classic、Bridge、Capture One、Photo Mechanic 均认英文标准名
+    var xmpLabel: String {
+        switch self {
+        case .red: return "Red"
+        case .orange: return "Orange"
+        case .yellow: return "Yellow"
+        case .green: return "Green"
+        case .blue: return "Blue"
+        case .purple: return "Purple"
+        case .gray: return "Gray"
+        }
+    }
+
+    /// 识别 XMP 的 xmp:Label：标准英文、Lightroom 默认英文标签集（Select/Second/Approved/Review/To Do）及各国语言名
+    static func fromXMP(_ raw: String) -> TagColor? {
+        let t = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return nil }
+        switch t.lowercased() {
+        case "red", "select": return .red
+        case "orange": return .orange
+        case "yellow", "second": return .yellow
+        case "green", "approved": return .green
+        case "blue", "review": return .blue
+        case "purple", "violet", "to do", "todo": return .purple
+        case "gray", "grey": return .gray
+        default: return FinderTags.color(named: t)
+        }
+    }
+
     var title: String {
         switch self {
         case .red: return L10n.t("tag.red", "红色")
@@ -94,6 +123,11 @@ enum FinderTags {
         if system.count == 8 { for c in TagColor.allCases { map[system[c.index].precomposedStringWithCanonicalMapping] = c } }
         return map
     }()
+
+    /// 名称 → 颜色（给 XMP 多语言标签名回退用）
+    static func color(named name: String) -> TagColor? {
+        nameToColor[name] ?? nameToColor[name.precomposedStringWithCanonicalMapping]
+    }
 
     /// 列目录时顺带取回的标签名里有哪几种颜色；没有标签的文件（绝大多数）一步就返回
     static func colors(fromTagNames names: [String]?) -> TagColorSet {

@@ -565,7 +565,6 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     /// App Store 版没有这个功能，行是隐藏的
     private let crashAsk = NSButton(checkboxWithTitle: L10n.t("set.crashAsk", "意外退出后，问我要不要发送崩溃报告"), target: nil, action: nil)
     private let keepRunning = NSButton(checkboxWithTitle: L10n.t("set.keepRunning", "关掉窗口后留在后台，再打开图片更快"), target: nil, action: nil)
-    private let trashLocal = NSButton(checkboxWithTitle: L10n.t("set.trashLocalCheck", "删除外置盘上的照片时，复制到本机废纸篓"), target: nil, action: nil)
     private let themePopup = NSPopUpButton()
     private let editorName = NSTextField(labelWithString: "")
     private let editorIcon = NSImageView()
@@ -581,7 +580,6 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         sortPopup.target = self; sortPopup.action = #selector(sortChanged)
         descending.target = self; descending.action = #selector(sortChanged)
         keepRunning.target = self; keepRunning.action = #selector(keepRunningChanged)
-        trashLocal.target = self; trashLocal.action = #selector(trashLocalChanged)
         for (m, title) in [(Theme.Mode.dark, L10n.t("set.theme.dark", "深色")), (.light, L10n.t("set.theme.light", "浅色")),
                            (.system, L10n.t("set.theme.system", "跟随系统"))] {
             themePopup.addItem(withTitle: title)
@@ -625,15 +623,13 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
             [label(L10n.t("set.appearance", "外观：")), themePopup],
             spacerRow(note(L10n.t("set.appearanceNote", "工作台、设置等窗口跟着变；看图窗口一直是深色，方便看曝光和颜色。"))),
             [label(L10n.t("set.background", "后台：")), keepRunning],
-            [label(L10n.t("set.trash", "删除：")), trashLocal],
-            spacerRow(note(L10n.t("set.trashNote", "打开后，外置盘（U 盘、移动硬盘）上的照片删除时先复制到本机废纸篓再删原文件，所有删除都在一处查看和清空。代价是要多复制一份，几百张 RAW 会慢一些，也会临时占本机空间；复制不成时仍然退回该盘自己的废纸篓。关掉后和访达一样，进该盘自己的废纸篓。"))),
             [label(L10n.t("set.update", "更新：")), updateRow],
             spacerRow(note(L10n.t("set.updateNote", "默认每天自动检查一次。每次只发送：软件版本号、安装了多久（不到 7 天、7–29 天、30 天或以上三档之一）、Pro 是否已激活。不含任何能识别你的信息。"))),
             [label(L10n.t("set.crash", "崩溃报告：")), crashAsk],
             spacerRow(note(L10n.t("set.crashNote", "只有你点「发送」才会发出，不会自动上传。内容是崩在哪里、软件和系统版本、Mac 型号，不含照片、文件名和路径，发送前可以先看到完整内容。"))),
         ])
-        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 说明 7 后期软件 8 说明 9 外观 10 说明 11 后台 12 删除 13 说明 14 更新 15 说明 16 崩溃报告 17 说明
-        for r in [1, 4, 6, 8, 10, 13, 15, 17] { g.row(at: r).topPadding = -4 }
+        // 行号：0 默认看图 1 说明 2 打开照片 3 贴合 4 说明 5 排序 6 说明 7 后期软件 8 说明 9 外观 10 说明 11 后台 12 更新 13 说明 14 崩溃报告 15 说明
+        for r in [1, 4, 6, 8, 10, 13, 15] { g.row(at: r).topPadding = -4 }
         view = host(g)
         reload()
     }
@@ -648,7 +644,6 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         descending.state = UserDefaults.standard.bool(forKey: "sortReversed") ? .on : .off
         descending.isEnabled = !follows   // 跟随访达时方向也跟访达
         keepRunning.state = AppDelegate.keepRunning ? .on : .off
-        trashLocal.state = Trash.copyExternalToLocal ? .on : .off
         themePopup.selectItem(withTag: Theme.mode.rawValue)
         openPeek.state = ViewerViewController.openInPeek ? .on : .off
         peekKeep.state = ViewerViewController.peekKeepsPosition ? .on : .off
@@ -700,7 +695,6 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     @objc private func openPeekChanged() { ViewerViewController.openInPeek = openPeek.state == .on }
     @objc private func peekKeepChanged() { ViewerViewController.peekKeepsPosition = peekKeep.state == .on }
     @objc private func keepRunningChanged() { AppDelegate.keepRunning = keepRunning.state == .on }
-    @objc private func trashLocalChanged() { Trash.copyExternalToLocal = trashLocal.state == .on }
 
     @objc private func chooseEditorApp() {
         let panel = NSOpenPanel()
@@ -737,6 +731,9 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     private let escCloses = NSButton(checkboxWithTitle: L10n.t("menu.escCloses", "按 Esc 关闭窗口"), target: nil, action: nil)
     private let hdr = NSButton(checkboxWithTitle: L10n.t("set.hdrCheck", "显示 HDR 照片的高光"), target: nil, action: nil)
     private let hdrNote = note("")
+    private let extCacheCheck = NSButton(checkboxWithTitle: L10n.t("set.extCacheCheck", "外接硬盘照片缓存到本机 SSD（翻图更快）"), target: nil, action: nil)
+    private let extCacheSize = NSTextField(labelWithString: "")
+    private lazy var clearExtCache = pillButton(L10n.t("set.extCacheClear", "清除缓存"), self, #selector(clearExtDiskCache))
     private let ratingBadge = NSButton(checkboxWithTitle: L10n.t("set.ratingBadge", "在照片底部显示星级"), target: nil, action: nil)
     private let videosCheck = NSButton(checkboxWithTitle: L10n.t("set.videosCheck", "在文件夹里显示视频"), target: nil, action: nil)
     private let toolbarPopup: NSPopUpButton = {
@@ -794,6 +791,16 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         videosCheck.target = self; videosCheck.action = #selector(videosChanged)
         fileNameCheck.target = self; fileNameCheck.action = #selector(fileNameChanged)
         hdr.target = self; hdr.action = #selector(hdrChanged)
+        extCacheCheck.target = self; extCacheCheck.action = #selector(extCacheChanged)
+        extCacheSize.font = .systemFont(ofSize: 11.5)
+        extCacheSize.textColor = .secondaryLabelColor
+        let extCacheMetaRow = NSStackView(views: [extCacheSize, clearExtCache])
+        extCacheMetaRow.spacing = 10
+        extCacheMetaRow.alignment = .centerY
+        let extCacheBox = NSStackView(views: [extCacheCheck, extCacheMetaRow])
+        extCacheBox.orientation = .vertical
+        extCacheBox.alignment = .leading
+        extCacheBox.spacing = 6
         liveText.target = self; liveText.action = #selector(liveTextChanged)
         // 文件名的勾选单独一行；包一层 NSStackView，不当成说明行往上贴
         let fileNameRow = NSStackView(views: [fileNameCheck])
@@ -846,6 +853,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
             spacerRow(note(L10n.t("set.recentsNote", "关掉后，开始页和「文件 › 最近打开」都不再列出文件夹，也不再记录。开会投屏前可以关掉。已有的记录不会删除。"))),
             [label(L10n.t("set.hdr", "HDR：")), hdr],
             spacerRow(hdrNote),
+            [label(L10n.t("set.extCache", "外接盘加速：")), extCacheBox],
+            spacerRow(note(L10n.t("set.extCacheNote", "把外接硬盘、存储卡、网络盘上的预览图与缩略图缓存到 Mac 内置 SSD（上限 500 MB，自动清理最旧的）。再次打开或重插同一块硬盘时翻图接近本地速度；原图改过会自动更新，放大到 100% 仍读原图。"))),
             [label(L10n.t("set.esc", "Esc 键：")), escCloses],
             spacerRow(note(L10n.t("set.escNote", "适应窗口时按 Esc 直接关闭，放大时先恢复。配合访达的 ⌘↓ 打开，可以当快速查看用。"))),
             [label(L10n.t("set.slideInterval", "幻灯片间隔：")), intervalPopup],
@@ -902,6 +911,8 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
         let hdrOK = ImageLoader.hdrSupported
         hdr.state = ImageLoader.hdrEnabled && hdrOK ? .on : .off
         hdr.isEnabled = hdrOK
+        extCacheCheck.state = ExtDiskCache.enabled ? .on : .off
+        refreshExtCacheSize()
         hdrNote.stringValue = hdrOK
             ? L10n.t("set.hdrNote", "iPhone 等拍的 HDR 照片，亮部会比普通白更亮，和系统「预览」看到的一样。HDR 照片占用的内存是普通照片的两倍。")
             : L10n.t("set.hdrUnsupported", "需要 macOS 14 或更新版本，以及支持 HDR 的屏幕（如 MacBook Pro 的 XDR 屏）。")
@@ -959,6 +970,27 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
     @objc private func hdrChanged() {
         ImageLoader.hdrEnabled = hdr.state == .on
         SettingsWindowController.notify("hdr")
+    }
+
+    @objc private func extCacheChanged() { ExtDiskCache.enabled = extCacheCheck.state == .on }
+
+    @objc private func clearExtDiskCache() {
+        clearExtCache.isEnabled = false
+        ExtDiskCache.shared.clearAll { [weak self] in
+            self?.refreshExtCacheSize()
+        }
+    }
+
+    private func refreshExtCacheSize() {
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let bytes = ExtDiskCache.shared.diskUsageBytes()
+            let text = ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.extCacheSize.stringValue = L10n.f("set.extCacheUsage", "当前占用：%@", text)
+                self.clearExtCache.isEnabled = bytes > 0
+            }
+        }
     }
 
     @objc private func slideFadeChanged() {

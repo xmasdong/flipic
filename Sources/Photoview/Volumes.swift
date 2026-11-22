@@ -62,24 +62,30 @@ enum Volumes {
         i.readOnly || ["msdos", "exfat"].contains(i.fsType.lowercased())
     }
 
-    /// 慢存储：外接盘（USB 机械硬盘、读卡器）、可移除 / 可推出的盘、网络卷。
-    /// 这些盘随机读贵（机械盘每次寻道约 10ms，USB 带宽也小），后台分析要少开几路、按目录顺序读。
-    /// 按卷缓存（statfs 拿挂载点和 fsid 当键，一次系统调用），任何线程都能调；
-    /// 环境变量 FLIPIC_SLOW_STORAGE=1 / 0 强制（测试用）
-    static func isSlowStorage(_ url: URL) -> Bool {
-        if let forced = slowOverride { return forced }
+    /// 按卷缓存的完整卷信息（statfs 拿挂载点和 fsid 当键，一次系统调用），任何线程都能调；
+    /// 给 isSlowStorage 和 ExtDiskCache 共用，避免对文件夹里每张图都重复查 URLResourceValues
+    static func cachedInfo(for url: URL) -> VolumeInfo? {
         var fs = statfs()
-        guard statfs(url.standardizedFileURL.path, &fs) == 0 else { return false }
+        guard statfs(url.standardizedFileURL.path, &fs) == 0 else { return nil }
         let root = withUnsafePointer(to: &fs.f_mntonname) {
             $0.withMemoryRebound(to: CChar.self, capacity: Int(MAXPATHLEN)) { String(cString: $0) }
         }
         let key = "\(root)|\(fs.f_fsid.val.0)|\(fs.f_fsid.val.1)"
         slowLock.lock()
-        if let hit = slowCache[key] { slowLock.unlock(); return hit }
+        if let hit = infoCache[key] { slowLock.unlock(); return hit }
         slowLock.unlock()
-        let slow = info(for: url).map { !$0.internalDisk || $0.removable || $0.ejectable || !$0.local } ?? false
-        slowLock.lock(); slowCache[key] = slow; slowLock.unlock()
-        return slow
+        guard let built = info(for: url) else { return nil }
+        slowLock.lock(); infoCache[key] = built; slowLock.unlock()
+        return built
+    }
+
+    /// 慢存储：外接盘（USB 机械硬盘、读卡器）、可移除 / 可推出的盘、网络卷。
+    /// 这些盘随机读贵（机械盘每次寻道约 10ms，USB 带宽也小），后台分析要少开几路、按目录顺序读。
+    /// 环境变量 FLIPIC_SLOW_STORAGE=1 / 0 或测试钩子 debugForceSlow 可强制覆盖
+    static var debugForceSlow: Bool?
+    static func isSlowStorage(_ url: URL) -> Bool {
+        if let forced = debugForceSlow ?? slowOverride { return forced }
+        return cachedInfo(for: url).map { !$0.internalDisk || $0.removable || $0.ejectable || !$0.local } ?? false
     }
 
     private static let slowOverride: Bool? = {
@@ -90,7 +96,7 @@ enum Volumes {
         }
     }()
     private static let slowLock = NSLock()
-    private static var slowCache: [String: Bool] = [:]
+    private static var infoCache: [String: VolumeInfo] = [:]
 
     /// 只读，或者是可移除 / 可推出的盘：批量转换默认不往这里写
     static func isReadOnlyOrRemovable(_ url: URL) -> Bool {

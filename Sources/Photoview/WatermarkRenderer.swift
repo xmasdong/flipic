@@ -17,15 +17,15 @@ enum WatermarkRenderer {
 
     /// 角度的约定同屏幕：-30 = 文字向右上方倾斜（水印最常见的样子）；正数是向右下方
     static func render(_ image: CGImage, job: WatermarkJob, fileName: String?, date: Date = Date(),
-                       store: WatermarkStore = .shared) -> CGImage? {
+                       store: WatermarkStore = .shared, index: Int? = nil) -> CGImage? {
         let logo = job.style.kind == .image ? store.logoImage(job.style.imageFile) : nil
-        return render(image, style: job.style, text: job.effectiveText, fileName: fileName, date: date, logo: logo)
+        return render(image, style: job.style, text: job.effectiveText, fileName: fileName, date: date, logo: logo, index: index)
     }
 
     /// 返回 nil：画不出来（文字是空的、图片水印的 logo 找不到、建不出画布）。不透明度 0 原样返回传进来的图。
     /// text 给了就用它，没给用样式里的文字
     static func render(_ image: CGImage, style: WatermarkStyle, text: String? = nil, fileName: String?, date: Date = Date(),
-                       logo: CGImage? = nil) -> CGImage? {
+                       logo: CGImage? = nil, index: Int? = nil) -> CGImage? {
         guard style.opacity > 0.0005 else { return image }
         var clock = CFAbsoluteTimeGetCurrent()
         let w = image.width, h = image.height
@@ -38,7 +38,7 @@ enum WatermarkRenderer {
         let unit: CGFloat
         switch style.kind {
         case .text:
-            let raw = WatermarkTokens.expand(text ?? style.resolvedText, fileName: fileName, date: date)
+            let raw = WatermarkTokens.expand(text ?? style.resolvedText, fileName: fileName, date: date, index: index)
             guard raw.contains(where: { !$0.isWhitespace && !$0.isNewline }) else { return nil }
             let fs = max(4, CGFloat(style.size) * long)
             unit = fs

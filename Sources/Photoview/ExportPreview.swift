@@ -22,16 +22,21 @@ enum ExportPreviewRender {
         var k = o
         k.keepMetadata = true
         k.stripGPS = false
+        k.stripSerial = false
         k.maxBytes = nil
         return k
     }
 
-    /// 和 ImageExporter.encode 同一个顺序：缩小 → 胶片 → 水印 → 转 sRGB。base 已经是缩小过的底图
+    /// 和 ImageExporter.encode 同一个顺序：缩小/加边框 → 胶片 → 水印 → 转 sRGB。base 已经是缩小过的底图
     static func image(base: CGImage, options: ExportOptions, fileName: String?, source: URL?) -> CGImage {
         let hasStage = options.effect != nil || options.watermark != nil
         var img = base
         if !hasStage, options.toSRGB, let s = ImageExporter.converted(img) { img = s }
-        if let edge = options.maxLongEdge, edge < max(img.width, img.height), let s = ImageExporter.scaled(img, longEdge: edge) { img = s }
+        if let b = options.border {
+            let exif = b.showExif ? (source.map(BorderExif.read) ?? BorderExif.sample) : nil
+            let previewEdge = min(maxBase, options.maxLongEdge ?? maxBase)
+            if let r = b.render(img, choice: .preset(previewEdge), exif: exif) { img = r }
+        } else if let edge = options.maxLongEdge, edge < max(img.width, img.height), let s = ImageExporter.scaled(img, longEdge: edge) { img = s }
         guard hasStage else { return img }
         return ImageExporter.applyStages(img, options: options, source: source, fileName: fileName).image
     }

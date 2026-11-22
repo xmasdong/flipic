@@ -217,8 +217,8 @@ struct WatermarkJob: Codable, Equatable {
 // MARK: - 文字里的占位符
 
 enum WatermarkTokens {
-    /// {date} 今天（yyyy-MM-dd，公历），{name} 文件名（不含扩展名）；大小写不限，别的花括号原样保留
-    static func expand(_ text: String, fileName: String?, date: Date) -> String {
+    /// {date} 今天（yyyy-MM-dd，公历），{name} 文件名（不含扩展名），{index} 批量序号（001、002…）；大小写不限，别的花括号原样保留
+    static func expand(_ text: String, fileName: String?, date: Date, index: Int? = nil) -> String {
         guard text.contains("{") else { return text }
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
@@ -226,6 +226,7 @@ enum WatermarkTokens {
         f.dateFormat = "yyyy-MM-dd"
         let today = f.string(from: date)
         let name = fileName ?? ""
+        let seq = String(format: "%03d", max(1, index ?? 1))
         var out = ""
         var rest = Substring(text)
         while let open = rest.firstIndex(of: "{") {
@@ -235,6 +236,7 @@ enum WatermarkTokens {
                 switch after[after.startIndex..<close].lowercased() {
                 case "date": out += today
                 case "name": out += name
+                case "index": out += seq
                 default: out += "{" + after[after.startIndex..<close] + "}"
                 }
                 rest = after[after.index(after: close)...]

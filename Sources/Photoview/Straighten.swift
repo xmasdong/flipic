@@ -224,7 +224,8 @@ enum Straighten {
         guard var rendered = stage("2.render", { render(full, quarterTurns: turns, degrees: degrees, crop: scaledCrop(crop, full: full, turns: turns)) }) else { return failed }
         // 另存时选了尺寸：和导出的「长边不超过」同一个缩小（不放大）
         if let border {
-            guard let b = border.render(rendered, choice: border.size) else { return failed }
+            let exif = border.showExif ? BorderExif.read(url: url) : nil
+            guard let b = border.render(rendered, choice: border.size, exif: exif) else { return failed }
             rendered = b
         } else if let e = maxLongEdge, e < max(rendered.width, rendered.height) {
             guard let s = stage("2b.scale", { ImageExporter.scaled(rendered, longEdge: e) }) else { return failed }

@@ -28,6 +28,8 @@ enum PhotoFilter: Equatable {
     #if FLIPIC_PRO
     /// Pro：按内容查找的结果，列表按分数从高到低排
     case content(ContentMatch)
+    /// Pro：按客户文件名清单匹配的结果（按无扩展名主路径匹配，同名 RAW+JPG 自动成对）
+    case nameList(Set<String>, Int)
     #endif
 
     func matches(_ item: ImageItem) -> Bool {
@@ -37,6 +39,7 @@ enum PhotoFilter: Equatable {
         case .colorTag(let c): return item.tagColors.contains(c)
         #if FLIPIC_PRO
         case .content(let m): return m.scores[item.url] != nil
+        case .nameList(let keys, _): return keys.contains(item.url.deletingPathExtension().path)
         #endif
         }
     }
@@ -257,6 +260,17 @@ final class FolderModel {
     }
 
     private static let resourceKeys: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .fileSizeKey, .tagNamesKey, .addedToDirectoryDateKey]
+    /// exFAT / FAT / NTFS / 网络盘没有原生扩展属性，向系统要 .tagNamesKey 会触发成千上万次 AppleDouble (._*) 磁盘寻道
+    private static let fastResourceKeys: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .fileSizeKey, .addedToDirectoryDateKey]
+
+    private static func enumerationKeys(for folderURL: URL) -> (keys: [URLResourceKey], skipTags: Bool) {
+        if let vol = Volumes.info(for: folderURL) {
+            let fs = vol.fsType.lowercased()
+            let skip = Volumes.keepsMarksOffVolume(vol) || !vol.local || (!vol.internalDisk && fs != "apfs" && fs != "hfs")
+            if skip { return (fastResourceKeys, true) }
+        }
+        return (resourceKeys, false)
+    }
 
     /// 传文件夹则列出其中全部图片；传文件则打开其所在文件夹并定位到该文件
     @discardableResult
@@ -273,17 +287,27 @@ final class FolderModel {
         refreshFinderSort()
         if let previous, finderSort?.key == previous.key { finderSort = previous }
 
-        // 列目录时一并取回时间与大小，排序不再逐个 stat
-        var urls = ((try? FileManager.default.contentsOfDirectory(
-            at: folderURL, includingPropertiesForKeys: Self.resourceKeys, options: [.skipsHiddenFiles])) ?? [])
+        // 列目录时一并取回时间与大小，直接从 contentsOfDirectory 返回的原 URL 读缓存（避免重建 URL 导致逐个重新 stat 和读 ._*）
+        let (keys, skipTags) = Self.enumerationKeys(for: folderURL)
+        let keySet = Set(keys)
+        let rawEntries = ((try? FileManager.default.contentsOfDirectory(
+            at: folderURL, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles])) ?? [])
             .filter { Self.isListable($0.lastPathComponent) }
-            .map { folderURL.appendingPathComponent($0.lastPathComponent) }
+        var prefetched: [URL: URLResourceValues] = [:]
+        prefetched.reserveCapacity(rawEntries.count)
+        var urls: [URL] = []
+        urls.reserveCapacity(rawEntries.count)
+        for raw in rawEntries {
+            let canonical = folderURL.appendingPathComponent(raw.lastPathComponent)
+            urls.append(canonical)
+            if let v = try? raw.resourceValues(forKeys: keySet) { prefetched[canonical] = v }
+        }
         if let target, !urls.contains(target) { urls.append(target) }
         urls = Video.dropLiveCompanions(urls)
 
-        // 存储卡上的标记记在这台电脑里（CardMarks），列目录时一并并进来；访达标签照常读
+        // 存储卡上的标记记在这台电脑里（CardMarks），列目录时一并并进来；原生支持标签的卷照常读访达标签
         let card = CardMarks.markedNames(inFolder: folderURL)
-        items = urls.map { Self.makeItem($0, card: card) }
+        items = urls.map { Self.makeItem($0, prefetched: prefetched[$0], keySet: keySet, skipTags: skipTags, card: card) }
         unfiltered = nil
         filter = nil
         hidden = []
@@ -298,12 +322,14 @@ final class FolderModel {
         ImageLoader.isSupportedExtension(name) || (Video.enabled && Video.isVideoName(name))
     }
 
-    private static func makeItem(_ u: URL, card: Set<String>? = nil) -> ImageItem {
-        let v = try? u.resourceValues(forKeys: Set(resourceKeys))
+    private static func makeItem(_ u: URL, prefetched: URLResourceValues? = nil, keySet: Set<URLResourceKey>? = nil,
+                                 skipTags: Bool = false, card: Set<String>? = nil) -> ImageItem {
+        let v = prefetched ?? (try? u.resourceValues(forKeys: keySet ?? Set(resourceKeys)))
+        let tags = skipTags ? nil : v?.tagNames
         return ImageItem(url: u, pixelSize: nil, modified: v?.contentModificationDate,
                          created: v?.creationDate, fileSize: v?.fileSize ?? 0,
-                         marked: Marks.isMarked(tagNames: v?.tagNames) || (card?.contains(CardMarks.normalized(u.lastPathComponent)) ?? false),
-                         tagColors: FinderTags.colors(fromTagNames: v?.tagNames), added: v?.addedToDirectoryDate)
+                         marked: Marks.isMarked(tagNames: tags) || (card?.contains(CardMarks.normalized(u.lastPathComponent)) ?? false),
+                         tagColors: FinderTags.colors(fromTagNames: tags), added: v?.addedToDirectoryDate)
     }
 
     /// 和磁盘对一遍：别处新放进来的照片按当前排序插进列表，当前这张不动。
@@ -313,11 +339,18 @@ final class FolderModel {
         guard let folderURL else { return ([], []) }
         // 列不出目录（桌面、文稿还没获准访问，App Store 版只拿到这一个文件的权限）时什么都不动：
         // 以前这里当成空目录，正在看的照片被认成「不见了」，0.8 秒后被拿掉，退回开始页
+        let (keys, skipTags) = Self.enumerationKeys(for: folderURL)
+        let keySet = Set(keys)
         guard let listed = try? FileManager.default.contentsOfDirectory(
-            at: folderURL, includingPropertiesForKeys: Self.resourceKeys, options: [.skipsHiddenFiles]) else { return ([], []) }
-        let onDisk = Set(Video.dropLiveCompanions(listed
-            .filter { Self.isListable($0.lastPathComponent) }
-            .map { folderURL.appendingPathComponent($0.lastPathComponent) }))
+            at: folderURL, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles]) else { return ([], []) }
+        var prefetched: [URL: URLResourceValues] = [:]
+        var mapped: [URL] = []
+        for raw in listed where Self.isListable(raw.lastPathComponent) {
+            let canonical = folderURL.appendingPathComponent(raw.lastPathComponent)
+            mapped.append(canonical)
+            if let v = try? raw.resourceValues(forKeys: keySet) { prefetched[canonical] = v }
+        }
+        let onDisk = Set(Video.dropLiveCompanions(mapped))
         let known = Set(allItems.map(\.url))
         // 目录里没列出来、但按路径还在的（比如只拿到单个文件的权限）不算不见了
         let missing = known.subtracting(onDisk).filter { !FileManager.default.fileExists(atPath: $0.path) }
@@ -326,7 +359,7 @@ final class FolderModel {
         if !added.isEmpty {
             let cur = current?.url
             let card = CardMarks.markedNames(inFolder: folderURL)
-            rebuild(allItems + added.map { Self.makeItem($0, card: card) }, keeping: cur)
+            rebuild(allItems + added.map { Self.makeItem($0, prefetched: prefetched[$0], keySet: keySet, skipTags: skipTags, card: card) }, keeping: cur)
             resort(keeping: cur ?? current?.url)
         }
         return (added, missing)

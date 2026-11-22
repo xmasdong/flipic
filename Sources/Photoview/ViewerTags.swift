@@ -59,7 +59,8 @@ extension ViewerViewController {
         return targets
     }
 
-    /// 切换一种颜色标签：选中的照片都有就全去掉，否则全加上；其他标签不动。再按一次同一个键就是去掉
+    /// 切换一种颜色标签：选中的照片都有就全去掉，否则全加上；其他标签不动。再按一次同一个键就是去掉。
+    /// 写访达标签的同时同步写标准 XMP xmp:Label（Lightroom Classic / Capture One / Photo Mechanic 都能认）
     func toggleTagColor(_ color: TagColor) {
         guard cleanup == nil, folder.current != nil else { return }
         let targets = tagTargets()
@@ -69,13 +70,22 @@ extension ViewerViewController {
                        message: on ? L10n.f("msg.tagAdded", "已加上颜色标签：%@", color.title)
                                    : L10n.f("msg.tagRemoved", "已去掉颜色标签：%@", color.title),
                        change: { $0.with(color, on: on) },
-                       write: { FinderTags.set(color, on: on, for: $0) })
+                       write: { url in
+                           guard FinderTags.set(color, on: on, for: url) else { return false }
+                           let nextLabel = on ? color : FinderTags.colors(of: url).colors.first
+                           _ = Rating.writeLabel(nextLabel, to: url)
+                           return true
+                       })
     }
 
     @objc func clearTagColors(_ sender: Any?) {
         guard cleanup == nil, folder.current != nil else { return }
         applyTagChange(tagTargets(), message: L10n.t("msg.tagsCleared", "已清除颜色标签"),
-                       change: { _ in TagColorSet() }, write: { FinderTags.clearColors(for: $0) })
+                       change: { _ in TagColorSet() }, write: { url in
+                           guard FinderTags.clearColors(for: url) else { return false }
+                           _ = Rating.writeLabel(nil, to: url)
+                           return true
+                       })
     }
 
     /// 先改界面，后台写文件；写不进去（只读的盘、没有权限）就把界面改回去并说明

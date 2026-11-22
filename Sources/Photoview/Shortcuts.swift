@@ -77,6 +77,7 @@ enum ShortcutAction: String, CaseIterable {
     case prev, next, first, last
     case zoomIn, zoomOut, zoomAtPointer, actualSize, peek, fullscreen
     case info, infoLevel, filmstrip, slideshow, rotateCW, rotateCCW, straighten, border
+    case histogram, clipping, focusPeaking, afPoint
     case rename, trash, edit, reveal, exportAs, exportWatermarked, exportFolder, saveRotation
     case cleanup, batchConvert, batchRename, wallpaper
     case rate1, rate2, rate3, rate4, rate5, rate0
@@ -165,7 +166,8 @@ enum ShortcutAction: String, CaseIterable {
         switch self {
         case .toggleApp: return .global
         case .prev, .next, .first, .last, .zoomIn, .zoomOut, .zoomAtPointer, .actualSize, .peek, .zoomEye: return .browse
-        case .fullscreen, .info, .infoLevel, .filmstrip, .slideshow, .rotateCW, .rotateCCW, .straighten, .border: return .view
+        case .fullscreen, .info, .infoLevel, .filmstrip, .slideshow, .rotateCW, .rotateCCW, .straighten, .border,
+             .histogram, .clipping, .focusPeaking, .afPoint: return .view
         case .rename, .trash, .edit, .reveal, .exportAs, .exportWatermarked, .exportFolder, .saveRotation, .share: return .file
         case .preset1, .preset2, .preset3, .preset4, .preset5, .preset6, .preset7, .preset8, .preset9: return .file
         case .pinWindow, .playLive, .filmPanel, .filmToggle, .filmPrev, .filmNext, .filmHold: return .view
@@ -199,6 +201,10 @@ enum ShortcutAction: String, CaseIterable {
         case .rotateCCW: return L10n.t("menu.rotateCCW", "向左旋转 90°")
         case .straighten: return plain(L10n.t("menu.straighten", "裁剪与拉直…"))
         case .border: return plain(L10n.t("menu.border", "加边框…"))
+        case .histogram: return L10n.t("menu.histogram", "直方图")
+        case .clipping: return L10n.t("menu.clipping", "过曝与暗部警示")
+        case .focusPeaking: return L10n.t("menu.focusPeaking", "焦点峰值")
+        case .afPoint: return L10n.t("menu.afPoint", "显示相机对焦框")
         case .rename: return plain(L10n.t("menu.rename", "重命名…"))
         case .trash: return L10n.t("menu.trash", "移到废纸篓")
         case .edit: return plain(L10n.t("menu.editChoose", "在后期软件中编辑…"))
@@ -269,6 +275,10 @@ enum ShortcutAction: String, CaseIterable {
         case .rotateCCW: return KeyCombo(keyCode: 37, chars: "l")
         case .straighten: return KeyCombo(keyCode: 15, mods: .shift, chars: "r")
         case .border: return KeyCombo(keyCode: 11, mods: .shift, chars: "b")   // ⇧B：和裁剪的 ⇧R 一样带 ⇧；B 本身是修图前后对比（Pro）
+        case .histogram: return KeyCombo(keyCode: 4, chars: "h")
+        case .clipping: return KeyCombo(keyCode: 38, chars: "j")
+        case .focusPeaking: return KeyCombo(keyCode: 40, chars: "k")
+        case .afPoint: return KeyCombo(keyCode: 0, chars: "a")
         case .rename: return KeyCombo(keyCode: 36, chars: "\r")
         case .trash: return KeyCombo(keyCode: 51, mods: .command, chars: "\u{7F}")
         case .edit: return KeyCombo(keyCode: 14, mods: .command, chars: "e")

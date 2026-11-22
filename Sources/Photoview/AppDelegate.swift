@@ -368,6 +368,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // 没有待处理报告时只列一次目录，不延迟；自测环境和 --xxx 启动参数下什么都不做
         CrashReporter.checkOnLaunch()
         newViewerWindow()
+        ExtDiskCache.shared.scheduleStartupTrim()
         NSApp.activate(ignoringOtherApps: true)
 
         #if FLIPIC_PRO
@@ -649,6 +650,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--namematchtest"), i + 1 < CommandLine.arguments.count {
+            // --namematchtest <工作文件夹>：客户文件名清单匹配（Pro）自测，最后一行 NAMEMATCH summary
+            let outDir = CommandLine.arguments[i + 1]
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runNameMatchTest(outDir: outDir)
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--luttest"), i + 1 < CommandLine.arguments.count {
+            // --luttest <工作文件夹>：自定义 .cube 3D LUT（Pro）自测，最后一行 LUTTEST summary
+            let outDir = CommandLine.arguments[i + 1]
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runCustomLUTTest(outDir: outDir)
+            }
+            return
+        }
         #endif
         if let i = CommandLine.arguments.firstIndex(of: "--presettest"), i + 1 < CommandLine.arguments.count {
             // --presettest <工作文件夹> [RAW 文件夹]：导出预设的存取、改名模板、批量导出、存储卡回退、管理窗口和菜单，最后一行 PRESETTEST checks=N failures=M
@@ -676,6 +693,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         #endif
+        if let i = CommandLine.arguments.firstIndex(of: "--xmplabeltest"), i + 1 < CommandLine.arguments.count {
+            // --xmplabeltest <工作文件夹>：XMP 颜色标签、序列号脱敏、水印序号自测，最后一行 XMPLABEL summary
+            let outDir = CommandLine.arguments[i + 1]
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runXmpLabelTest(outDir: outDir)
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--inspecttest"), i + 1 < CommandLine.arguments.count {
+            // --inspecttest <工作文件夹>：直方图/过曝警示/焦点峰值/对焦框/EXIF模板改名/外接盘快开自测，最后一行 INSPECT summary
+            let outDir = CommandLine.arguments[i + 1]
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runInspectTest(outDir: outDir)
+            }
+            return
+        }
+        if let i = CommandLine.arguments.firstIndex(of: "--extcachetest"), i + 1 < CommandLine.arguments.count {
+            // --extcachetest <工作文件夹>：外接硬盘本机 SSD 持久化缓存与慢盘单通道调度自测，最后一行 EXTCACHE summary
+            let outDir = CommandLine.arguments[i + 1]
+            Timer.scheduledTimer(withTimeInterval: 1.5, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runExtCacheTest(outDir: outDir)
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--xhs-shots"), i + 2 < CommandLine.arguments.count {
             let outDir = CommandLine.arguments[i + 1]
             let folder = CommandLine.arguments[i + 2]
@@ -1504,6 +1545,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.rotateCCW(_:)): .rotateCCW,
         #selector(ViewerViewController.straighten(_:)): .straighten,
         #selector(ViewerViewController.addBorder(_:)): .border,
+        #selector(ViewerViewController.toggleHistogram(_:)): .histogram,
+        #selector(ViewerViewController.toggleClipping(_:)): .clipping,
+        #selector(ViewerViewController.toggleFocusPeaking(_:)): .focusPeaking,
+        #selector(ViewerViewController.toggleAFPoint(_:)): .afPoint,
         #selector(ViewerViewController.toggleInfoPanel(_:)): .info,
         #selector(ViewerViewController.toggleInfoLevel(_:)): .infoLevel,
         #selector(ViewerViewController.toggleFilmstrip(_:)): .filmstrip,
@@ -1631,7 +1676,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             #selector(ViewerViewController.switchPairMember(_:)), #selector(ViewerViewController.zoomToEye(_:)),
             #selector(ViewerViewController.splitByRating(_:)), #selector(ViewerViewController.openAllInEditor(_:)),
             #selector(ViewerViewController.trashUnpicked(_:)), #selector(AppDelegate.showWorkbench(_:)),
-            #selector(ViewerViewController.searchContent(_:)),
+            #selector(ViewerViewController.searchContent(_:)), #selector(ViewerViewController.matchNameList(_:)),
         ]
         func walk(_ m: NSMenu) {
             for it in m.items {
@@ -1770,6 +1815,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             m.addItem(.separator())
             item(m, L10n.t("menu.info", "照片信息"), #selector(ViewerViewController.toggleInfoPanel(_:)))
             item(m, L10n.t("menu.infoLevel", "显示全部照片信息"), #selector(ViewerViewController.toggleInfoLevel(_:)))
+            item(m, L10n.t("menu.histogram", "直方图"), #selector(ViewerViewController.toggleHistogram(_:)))
+            item(m, L10n.t("menu.clipping", "过曝与暗部警示"), #selector(ViewerViewController.toggleClipping(_:)))
+            item(m, L10n.t("menu.focusPeaking", "焦点峰值"), #selector(ViewerViewController.toggleFocusPeaking(_:)))
+            item(m, L10n.t("menu.afPoint", "显示相机对焦框"), #selector(ViewerViewController.toggleAFPoint(_:)))
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
             item(m, L10n.t("menu.toolbar", "工具条"), #selector(ViewerViewController.toggleToolbar(_:)))
             m.addItem(.separator())
@@ -1835,6 +1884,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.markedOnly", "只看已标记"), #selector(ViewerViewController.toggleMarkedOnly(_:)))
             #if FLIPIC_PRO
             item(m, L10n.t("menu.searchContent", "按内容查找…"), #selector(ViewerViewController.searchContent(_:)))
+            item(m, L10n.t("menu.nameMatch", "按文件名清单挑图…"), #selector(ViewerViewController.matchNameList(_:)))
             #endif
             m.addItem(.separator())
             item(m, L10n.t("menu.compare2", "并排对比 2 张"), #selector(ViewerViewController.toggleCompare(_:)))

@@ -313,7 +313,7 @@ final class WatermarkEditor: NSWindowController, NSTableViewDataSource, NSTableV
         textScroll.translatesAutoresizingMaskIntoConstraints = false
         textScroll.widthAnchor.constraint(equalToConstant: 250).isActive = true
         textScroll.heightAnchor.constraint(equalToConstant: 70).isActive = true
-        let textNote = note(L10n.t("wm.f.textNote", "可以写多行。{date} 是导出当天的日期，{name} 是文件名（不含扩展名）。"))
+        let textNote = note(L10n.t("wm.f.textNote2", "可以写多行。{date} 是当天日期，{name} 是文件名（不含扩展名），{index} 是批量序号（001…）。"))
         textNote.preferredMaxLayoutWidth = 250
         let textStack = NSStackView(views: [textScroll, textNote])
         textStack.orientation = .vertical

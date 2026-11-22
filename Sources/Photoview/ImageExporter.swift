@@ -22,6 +22,8 @@ struct ExportOptions: Equatable {
     var watermark: WatermarkJob?
     /// 导出的副本加边框（照片 › 加边框… 的设置）。nil = 不加；不记在偏好设置里
     var border: BorderSpec?
+    /// 去掉相机机身和镜头序列号及机主名（保留其余拍摄参数）
+    var stripSerial = false
 
     private static let d = UserDefaults.standard
 
@@ -30,6 +32,7 @@ struct ExportOptions: Equatable {
             var o = ExportOptions()
             o.keepMetadata = d.object(forKey: "export.keepMeta") as? Bool ?? true
             o.stripGPS = d.bool(forKey: "export.stripGPS")
+            o.stripSerial = d.bool(forKey: "export.stripSerial")
             if d.bool(forKey: "export.longEdgeOn") { o.maxLongEdge = max(64, d.integer(forKey: "export.longEdge")) }
             if d.bool(forKey: "export.sizeOn") { o.maxBytes = Int64(max(0.05, d.double(forKey: "export.sizeMB")) * 1_048_576) }
             o.toSRGB = d.bool(forKey: "export.srgb")
@@ -39,6 +42,7 @@ struct ExportOptions: Equatable {
             d.set(newValue.keepMetadata, forKey: "export.keepMeta")
             // 证件水印会自动勾上「去掉位置信息」，这一次的勾选不记到以后的普通导出里
             if newValue.watermark?.style.id != WatermarkBuiltIn.id.fixedID { d.set(newValue.stripGPS, forKey: "export.stripGPS") }
+            d.set(newValue.stripSerial, forKey: "export.stripSerial")
             d.set(newValue.maxLongEdge != nil, forKey: "export.longEdgeOn")
             if let e = newValue.maxLongEdge { d.set(e, forKey: "export.longEdge") }
             d.set(newValue.maxBytes != nil, forKey: "export.sizeOn")
@@ -85,23 +89,25 @@ enum ImageExporter {
     static func isLossy(_ uti: String) -> Bool { uti == "public.jpeg" || uti == "public.heic" }
 
     /// 导出一张已经按视图渲染好（转过、裁过）的图：先转 sRGB / 缩小，再按选项编码；设了大小限制就自动降质量、必要时缩小。
-    /// source 是原文件，用来带元数据；cancelled 在耗时的编码之间检查
+    /// source 是原文件，用来带元数据；batchIndex 给批量导出的 {index} 水印占位符；cancelled 在耗时的编码之间检查
     static func encode(_ image: CGImage, source: URL?, uti: String, quality: Double, options: ExportOptions,
-                       cancelled: () -> Bool = { false }) -> Outcome? {
+                       batchIndex: Int? = nil, cancelled: () -> Bool = { false }) -> Outcome? {
         // 有 effect 或水印时先缩小、再处理、最后才转 sRGB：处理在原来的色域里做，颗粒的粗细、水印的大小也跟着最终的像素尺寸走。
-        // 顺序：缩小 → 胶片 → 水印 → 转 sRGB → 编码
+        // 顺序：缩小/加边框 → 胶片 → 水印 → 转 sRGB → 编码
         let hasStage = options.effect != nil || options.watermark != nil
         var base = image
         if !hasStage, options.toSRGB, let s = converted(base) { base = s }
         // 加边框：长边限制管的是整张画布
-        if let b = options.border, let r = b.render(base, choice: options.maxLongEdge.map { .preset($0) } ?? .original) { base = r }
-        else if let edge = options.maxLongEdge, edge < max(base.width, base.height), let s = scaled(base, longEdge: edge) { base = s }
+        if let b = options.border {
+            let exif = b.showExif ? source.map(BorderExif.read) : nil
+            if let r = b.render(base, choice: options.maxLongEdge.map { .preset($0) } ?? .original, exif: exif) { base = r }
+        } else if let edge = options.maxLongEdge, edge < max(base.width, base.height), let s = scaled(base, longEdge: edge) { base = s }
         let plain = base
         let fileName = source?.deletingPathExtension().lastPathComponent
         var watermarkFailed = false
         func styled(_ img: CGImage) -> CGImage {
             guard hasStage else { return img }
-            let r = applyStages(img, options: options, source: source, fileName: fileName)
+            let r = applyStages(img, options: options, source: source, fileName: fileName, batchIndex: batchIndex)
             if r.watermarkFailed { watermarkFailed = true }
             return r.image
         }
@@ -165,13 +171,13 @@ enum ImageExporter {
 
     /// 缩小之后、编码之前的那几步：胶片 → 水印 → 转 sRGB。导出和导出面板里的预览共用这一份，预览才和真正导出的一致。
     /// 水印画不出来时 watermarkFailed 为 true（导出要整张失败；预览只是显示没有水印的图）
-    static func applyStages(_ img: CGImage, options: ExportOptions, source: URL?, fileName: String?) -> (image: CGImage, watermarkFailed: Bool) {
+    static func applyStages(_ img: CGImage, options: ExportOptions, source: URL?, fileName: String?, batchIndex: Int? = nil) -> (image: CGImage, watermarkFailed: Bool) {
         var out = img
         var failed = false
         if let token = options.effect { out = ExportEffect.apply?(out, token, source) ?? out }
         if let wm = options.watermark {
             // 水印画不出来（文字是空的、logo 找不到）就整张导出失败，不能悄悄出一份没水印的副本
-            if let marked = WatermarkRenderer.render(out, job: wm, fileName: fileName) { out = marked } else { failed = true }
+            if let marked = WatermarkRenderer.render(out, job: wm, fileName: fileName, index: batchIndex) { out = marked } else { failed = true }
         }
         if options.toSRGB, let s = converted(out) { out = s }
         return (out, failed)
@@ -238,15 +244,24 @@ enum ImageExporter {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
               let fixed = fixedMetadata(from: src, width: width, height: height) else { return nil }
         if CleanupUnit.isRaw(url) {
-            let stars = Rating.read(url)
+            let (stars, label) = Rating.readBoth(url)
             if stars > 0, CGImageMetadataCopyTagWithPath(fixed, nil, "xmp:Rating" as CFString) == nil,
                CGImageMetadataRegisterNamespaceForPrefix(fixed, "http://ns.adobe.com/xap/1.0/" as CFString, "xmp" as CFString, nil) {
                 CGImageMetadataSetValueWithPath(fixed, nil, "xmp:Rating" as CFString, "\(stars)" as CFString)
             }
+            if let label, CGImageMetadataCopyTagWithPath(fixed, nil, "xmp:Label" as CFString) == nil,
+               CGImageMetadataRegisterNamespaceForPrefix(fixed, "http://ns.adobe.com/xap/1.0/" as CFString, "xmp" as CFString, nil) {
+                CGImageMetadataSetValueWithPath(fixed, nil, "xmp:Label" as CFString, label.xmpLabel as CFString)
+            }
         }
         if options.stripGPS { removeGPS(from: fixed) }
+        if options.stripSerial { removeSerial(from: fixed) }
         return fixed
     }
+
+    private static let serialTagNames: Set<String> = [
+        "BodySerialNumber", "LensSerialNumber", "CameraOwnerName", "SerialNumber", "InternalSerialNumber", "OwnerName",
+    ]
 
     private static func carriedProperties(for url: URL, width: Int, height: Int, options: ExportOptions) -> [String: Any]? {
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
@@ -259,7 +274,16 @@ enum ImageExporter {
         if var exif = props[kCGImagePropertyExifDictionary as String] as? [String: Any] {
             exif[kCGImagePropertyExifPixelXDimension as String] = width
             exif[kCGImagePropertyExifPixelYDimension as String] = height
+            if options.stripSerial {
+                for k in [kCGImagePropertyExifBodySerialNumber, kCGImagePropertyExifLensSerialNumber, kCGImagePropertyExifCameraOwnerName] {
+                    exif.removeValue(forKey: k as String)
+                }
+            }
             props[kCGImagePropertyExifDictionary as String] = exif
+        }
+        if options.stripSerial, var aux = props[kCGImagePropertyExifAuxDictionary as String] as? [String: Any] {
+            for k in [kCGImagePropertyExifAuxSerialNumber, kCGImagePropertyExifAuxOwnerName] { aux.removeValue(forKey: k as String) }
+            props[kCGImagePropertyExifAuxDictionary as String] = aux
         }
         for k in [kCGImagePropertyPixelWidth, kCGImagePropertyPixelHeight, kCGImagePropertyDepth, kCGImagePropertyHasAlpha,
                   kCGImagePropertyColorModel, kCGImagePropertyProfileName, kCGImagePropertyJFIFDictionary,
@@ -291,6 +315,18 @@ enum ImageExporter {
         CGImageMetadataEnumerateTagsUsingBlock(meta, nil, nil) { _, tag in
             if let name = CGImageMetadataTagCopyName(tag) as String?, name.hasPrefix("GPS"),
                let prefix = CGImageMetadataTagCopyPrefix(tag) as String? { paths.append("\(prefix):\(name)") }
+            return true
+        }
+        for p in paths { CGImageMetadataRemoveTagWithPath(meta, nil, p as CFString) }
+    }
+
+    /// 去掉机身、镜头序列号和机主名（BodySerialNumber / LensSerialNumber / aux:SerialNumber / CameraOwnerName 等）
+    private static func removeSerial(from meta: CGMutableImageMetadata) {
+        var paths: [String] = []
+        CGImageMetadataEnumerateTagsUsingBlock(meta, nil, nil) { path, tag in
+            if let name = CGImageMetadataTagCopyName(tag) as String?, serialTagNames.contains(name) {
+                paths.append(path as String)
+            }
             return true
         }
         for p in paths { CGImageMetadataRemoveTagWithPath(meta, nil, p as CFString) }
