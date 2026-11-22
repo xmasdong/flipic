@@ -10,13 +10,13 @@ REPO = ROOT.parent
 DOCS = REPO / "docs"
 OUT = ROOT / "public"
 BASE = "https://flipic.app"
-UPDATED = "2026-11-16"
+UPDATED = "2026-11-22"
 # 水印功能 1.0.43 发布后改成 True；False 时站点里不出现任何水印文字和图片
 SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
 SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "8 MB"
+SIZE = "8.4 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -62,6 +62,9 @@ PAIRS = {
     "/compare/": "/en/compare/",
     "/guides/read-iptc-caption-mac/": "/en/guides/read-iptc-caption-mac/",
     "/guides/mac-view-raw/": "/en/guides/view-raw-files-mac/",
+    "/guides/external-drive-slow-photos-mac/": "/en/guides/fast-photo-viewer-external-hard-drive-mac/",
+    "/guides/mac-photo-viewer-benchmark/": "/en/guides/mac-photo-viewer-benchmark/",
+    "/changelog/": "/en/changelog/",
 }
 
 # Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
@@ -96,7 +99,7 @@ T = {
     "zh": {
         "lang": "zh-CN", "home": "/", "features": "功能", "guides": "指南", "faq": "常见问题",
         "other": "English", "download": "免费下载 Mac 版", "github_alt": "也可以从 <a href=\"{gh}/releases/latest\">GitHub</a> 下载，或者到 <a href=\"{store}\">Mac App Store</a>（中国大陆区暂未上架）",
-        "facts": ["免费开源", "安装包约 8 MB", "macOS 13 或更新", "Apple 芯片与 Intel 通用", "已通过 Apple 公证", "不用账号"],
+        "facts": ["免费开源", "安装包约 8.4 MB", "macOS 13 或更新", "Apple 芯片与 Intel 通用", "已通过 Apple 公证", "不用账号"],
         "phone": "Flipic Lens 是 Mac 软件，手机上装不了。复制网址，到 Mac 的浏览器里打开就能下载。",
         "phone_btn": "复制网址 flipic.app", "phone_done": "已复制，到 Mac 上粘贴打开",
         "crumbs_home": "Flipic Lens", "crumbs_guides": "指南", "updated": "更新于 " + UPDATED,
@@ -110,7 +113,7 @@ T = {
     "en": {
         "lang": "en", "home": "/en/", "features": "Features", "guides": "Guides", "faq": "FAQ",
         "other": "中文", "download": "Download for Mac, free", "github_alt": "or get it from <a href=\"{gh}/releases/latest\">GitHub</a> or the <a href=\"{store}\">Mac App Store</a>",
-        "facts": ["Free and open source", "About 8 MB download", "macOS 13 or later", "Apple silicon and Intel", "Notarized by Apple", "No account needed"],
+        "facts": ["Free and open source", "About 8.4 MB download", "macOS 13 or later", "Apple silicon and Intel", "Notarized by Apple", "No account needed"],
         "phone": "Flipic Lens is a Mac app and can't be installed on a phone. Copy the address and open it in a browser on your Mac.",
         "phone_btn": "Copy flipic.app", "phone_done": "Copied. Paste it on your Mac.",
         "crumbs_home": "Flipic Lens", "crumbs_guides": "Guides", "updated": "Updated " + UPDATED,
@@ -224,9 +227,10 @@ def footer(lang):
     t = T[lang]
     links = [(g["path"], g["short"]) for g in GUIDES[lang]]
     nav = "".join(f'<a href="{p}">{esc(n)}</a>' for p, n in links)
+    changelog_path = "/changelog/" if lang == "zh" else "/en/changelog/"
     return f"""<footer class="wrap">
   <nav>{nav}</nav>
-  <p>{t['footer_line'].format(v=VERSION)} · <a href="{GITHUB}">{t['src']}</a> · <a href="{GITHUB}/issues">{t['feedback']}</a> · <a href="{GITHUB}/releases">{t['releases']}</a>{legal_links(lang)}</p>
+  <p>{t['footer_line'].format(v=VERSION)} · <a href="{GITHUB}">{t['src']}</a> · <a href="{GITHUB}/issues">{t['feedback']}</a> · <a href="{changelog_path}">{t['releases']}</a>{legal_links(lang)}</p>
   <p>{t['footer_credit']}</p>
 </footer>
 <script src="/site.js?v={ASSET_V}" defer></script>
@@ -236,6 +240,27 @@ def footer(lang):
 
 
 def app_schema(lang, desc):
+    features = (
+        [
+            "不导入建库，方向键翻看整个文件夹照片与相机 RAW",
+            "按住 0 鼠标处 100% 放大看对焦；C / ⇧C 两张或四张同步对比",
+            "1–5 星评分与颜色标签写标准 XMP（Lightroom / Capture One 互通）",
+            "H 直方图、J 过曝/死黑警示、K 焦点峰值、A 相机对焦框",
+            "清理模式：本机识别相似连拍、重复、闭眼与模糊照片",
+            "外接硬盘本机 SSD 预览缓存（500 MB LRU）与 RAW 4 MB 前缀快扫",
+            "EXIF 参数相框、EXIF 模板批量重命名、批量转格式、加水印与导出脱敏",
+            "可选 Pro：工作台宫格、放大到眼睛、按客户文件名清单挑图、自定义 .cube 3D LUT",
+        ] if lang == "zh" else [
+            "Catalog-free folder browsing for photos and camera RAW with arrow keys",
+            "Hold 0 for 100% zoom at pointer; C / Shift-C synced 2-up and 4-up comparison",
+            "1–5 star ratings and color labels written as standard XMP (Lightroom & Capture One compatible)",
+            "Single-viewer H histogram, J highlight/shadow clipping, K focus peaking, A camera AF point",
+            "On-device Cleanup Mode for bursts, duplicates, closed eyes and blur",
+            "External drive local SSD preview cache (500 MB LRU) and 4 MB RAW embedded-preview scan",
+            "EXIF photo frame, EXIF template batch rename, batch convert, export watermarks and serial stripping",
+            "Optional Pro: Workbench project grid, zoom to eyes, match from client filename list, custom .cube 3D LUTs",
+        ]
+    )
     return {
         "@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Flipic Lens",
         # 「Flipic Lens」这个词常被当成拼错的 flip icon / flipaclip，写全称帮搜索引擎认出是哪个软件
@@ -243,6 +268,8 @@ def app_schema(lang, desc):
         "sameAs": [GITHUB, f"{GITHUB}/releases"],
         "operatingSystem": "macOS 13+", "applicationCategory": "MultimediaApplication",
         "softwareVersion": VERSION, "fileSize": SIZE.replace(" ", ""),
+        "releaseNotes": f"{BASE}{'/changelog/' if lang == 'zh' else '/en/changelog/'}",
+        "featureList": features,
         "downloadUrl": f"{BASE}/download/Flipic.dmg", "installUrl": f"{BASE}/download/Flipic.dmg",
         "image": f"{BASE}/og.jpg", "screenshot": f"{BASE}{SHOTS}browse-01.webp",
         "url": f"{BASE}{T[lang]['home']}", "inLanguage": T[lang]["lang"],
@@ -303,17 +330,22 @@ HOME = {
              "<p>按 <kbd>⇧F</kbd> 打开胶片滤镜面板，每一格都是当前这张照片套上这一款的样子，点一下就换。一共十款：偏暖的人像、日常的暖色、浓一点的反转片色、清冷的薄荷、细腻鲜艳的、夜景用的电影色、灰调的纪实，再加三款黑白。</p>"
              "<p>下面三个滑块调强度、颗粒和光晕。翻到下一张，效果还在，可以一路翻下去，看整组照片套上以后什么样。按住 <kbd>\\</kbd> 看原图，<kbd>G</kbd> 开关，<kbd>,</kbd> 和 <kbd>.</kbd> 换上一款、下一款。</p>"
              "<p>这只改看到的画面，原图不会动。想留下来就点「另存一份…」，拍摄信息、说明和位置都带着。⌘S 导出、批量转换格式和导出预设里也能选胶片，整批一起套。视频、动图和 HDR 照片不套用。</p>"
-             "<p>「暖调人像」和「经典黑白」免费，其余八款是 Pro 功能，试用期内十款都能用。</p>"),
+             "<p>「暖调人像」和「经典黑白」免费，其余八款与导入自定义 .cube 3D LUT 是 Pro 功能，试用期内都能用。</p>"),
         "wm_feature": ("wm-editor.webp", "Flipic Lens 导出水印编辑窗口：平铺的文字水印预览在一张示意证件上", "导出的副本加水印",
              "<p>拿照片去办事、发样片给客户或者署个名，可以给导出的副本加水印。文字或者你自己的图片（比如 logo）都行，可以斜着平铺满整张，也可以放在九个位置里的某一处。大小、透明度、颜色和角度都能调。</p>"
-             "<p>自带三个起点：证件用途、样片、署名，改几个字就能用。每次导出时还能单独填一行字，比如这一份证件复印件是办什么事用的，只对这一次导出有效，存好的水印不变。</p>"
+             "<p>自带三个起点：证件用途、样片、署名，改几个字就能用。文字里支持 <code>{index}</code> 自动序号，发样片选图时方便客户按编号回复；每次导出时还能单独填一行字，只对这一次导出有效，存好的水印不变。</p>"
              "<p>⌘S 导出、批量转换格式和导出预设（Pro）里都能选，也可以从「文件 › 加水印导出…」直接进。原照片不会被改，视频和动图会跳过。水印能让别人不方便直接拿去用，但拦不住有心人，重要的东西别只靠它。</p>"),
         "more_title": "其他功能",
         "more": [
+            ("直方图、过曝警示、焦点峰值与相机对焦框", "看图时按 H 开实时 RGB 与亮度直方图（底部标出死黑与过曝占比），J 开过曝红斜纹与暗部蓝斜纹警示，K 开焦点峰值，A 显示相机对焦框（支持 EXIF SubjectArea、XMP MWG-RS、Sony 与 Fujifilm MakerNotes）。全部免费。"),
+            ("外接硬盘本机 SSD 缓存与加速", "外接硬盘、存储卡、网络盘上的预览图与缩略图自动缓存到 Mac 内置 SSD（上限 500 MB，最久未访问自动清理，可在「设置 › 看图」开关或清空）。再次打开或重插同一块盘翻图接近本地速度；原图改动自动更新，放大 100% 仍读原图。"),
+            ("EXIF 参数相框（⇧B）", "加边框时勾选拍摄参数，在底边自动排版机身、镜头、焦距、光圈、快门与 ISO，深浅底色自动切换字色；支持单张另存、⌘S 导出、批量转换与导出预设。"),
             ("拍摄地点地图，国内照片不偏移", "按 I 打开照片信息，带位置的照片能看到拍在哪。国内拍的照片会先把 GPS 坐标换算成国内地图用的坐标，不会偏几百米；香港、澳门、台湾和国外的照片不用换算。地图点了才加载。"),
             ("一次看四张", "按 ⇧C 可以四张一起并排看，放大、拖动也是一起动。"),
             ("用后期软件打开", "按 ⌘E 用 Photoshop、Lightroom 或 Capture One 打开当前照片，有同名 RAW 时打开 RAW。"),
             ("RAW 和 JPG 当一张看（Pro）", "RAW 加 JPG 一起拍的话，同名的两个文件只显示一张，按 V 换着看。打星、标记、删除都只算一张。"),
+            ("按客户文件名清单挑图（Pro）", "客户从微信或邮件发来一堆选片编号（如 IMG_0123、0456），在「照片 › 按文件名清单挑图…」里整段粘贴，自动匹配文件夹里的原图（支持 .JPG 跨扩展名匹配同名 .ARW/RAW），一键筛选、标记或导出。"),
+            ("自定义 .cube 3D LUT 导入（Pro）", "在胶片滤镜面板（⇧F）直接导入索尼、富士、达芬奇或 Adobe 的 .cube 3D LUT（超过 64 级自动重采样），支持强度调节、实时翻页预览、导出与预设。"),
             ("修图前后对比（Pro）", "修好导出的那张跟原片叠在一起，按住 \\ 看原片，一松手就是修过的。"),
             ("按星级分文件夹（Pro）", "挑完可以按星级一下分到几个子文件夹里，也可以用 ⌥1 到 ⌥9 把照片丢进常用的文件夹。"),
             ("窗口置顶和分享", "点右上角的图钉，窗口就一直浮在最上面，修图时拿来对照参考图挺方便。分享按钮能用隔空投送、信息、邮件发出去。"),
@@ -322,12 +354,12 @@ HOME = {
             ("旋转、裁剪和拉直", "转 90° 只改方向标记，JPEG、HEIC 和相机 RAW 都不重新编码，画质没有损失。按 ⇧R 打开「裁剪与拉直」，拖裁剪框或者选个比例，裁完可以覆盖原图，也可以另存一份。RAW 不会被改，裁剪结果另存成 JPEG。"),
             ("照片里写的说明", "按 I 打开照片信息，文件里写的标题和说明（IPTC）显示在最上面，下面是作者、署名、版权、地名和关键词，文字可以选中复制。按 ⇧I 在「常用」和「全部」之间切换。这些信息只能看，Flipic Lens 不改。"),
             ("说明翻译", "说明的语言和界面语言不一样时，说明下面会出现「翻译」按钮，译文显示在原文下方。用的是 macOS 自带的翻译，在本机完成，需要 macOS 15 或更新。"),
-            ("批量重命名和导出", "可以按序号批量改名。导出时选格式和质量，导出前能看到大概多大。"),
-            ("导出时限制尺寸和大小", "⌘S 导出和批量转换格式时，可以设长边不超过多少像素、文件不超过多少 MB（JPEG 和 HEIC，会先降质量，不够再缩小）、转成 sRGB。拍摄信息、说明和版权默认保留，位置信息可以单独去掉。"),
-            ("颜色标签", "按 6、7、8、9 打红、黄、绿、蓝标签，再按一次取消。用的是访达自己的标签，别的软件里也看得到。「照片」菜单里能只看某种颜色。"),
+            ("EXIF 模板批量重命名与导出", "支持 {date}、{time}、{camera}、{focal}、{name}、{seq} 变量、5 套摄影预设与前 3 张实时预览，也兼容直接填前缀自动编号；同步改名 .xmp / .MOV 附属文件。导出前能看到预估体积。"),
+            ("导出限尺寸、去位置与去序列号", "⌘S 导出和批量转换格式时，可设长边像素、目标大小上限（MB）、转 sRGB；拍摄信息默认保留，位置信息和相机/镜头序列号都可以单独抹掉。"),
+            ("颜色标签（XMP + 访达互通）", "按 6、7、8、9 打红、黄、绿、蓝标签，再按一次取消。同时写入访达标签与标准 xmp:Label，在 Lightroom 和 Capture One 里也能认出来。"),
             ("缩略图上点右键", "在底部缩略图上选一张或几张，点右键就能送去后期软件，设好了软件时菜单第一项直接写软件名和张数。「打开方式」里能临时换别的软件，评分、标签、标记、复制、分享、移到废纸篓在这里也能用。"),
             ("裁剪记住上次的比例", "下次进入裁剪，默认用上次完成裁剪时的比例，横图裁 3:2，换到竖图会自动变成 2:3。"),
-            ("导出预设（Pro）", "把常用的导出方式存成预设，一步导出一批照片：格式、质量、尺寸上限、保存位置和文件名模板都记在里面，快捷键是 ⌥⌘1 到 ⌥⌘9。"),
+            ("导出预设（Pro）", "把常用的导出方式存成预设，一步导出一批照片：格式、质量、尺寸上限、保存位置、文件名模板、胶片/LUT、水印和参数相框都记在里面，快捷键是 ⌥⌘1 到 ⌥⌘9。"),
             ("界面语言", "支持 14 种语言，跟随系统设置。"),
         ],
         "vs_title": "和「预览」的区别",
@@ -342,8 +374,10 @@ HOME = {
         ],
         "keys_title": "常用快捷键",
         "keys": [("← →", "上一张 / 下一张"), ("空格", "窗口贴合照片比例"), ("0", "按住时在鼠标处放大到 100%，松手恢复"),
-                 ("I", "照片信息"), ("⇧I", "照片信息切换「常用 / 全部」"), ("⇧R", "裁剪与拉直"), ("1–5", "打 1 到 5 星，再按一次取消"), ("S", "幻灯片放映"), ("⌘E", "在后期软件中编辑"),
-                 ("⇧⌘K", "清理模式"), ("⇧F", "胶片滤镜"), ("6–9", "红、黄、绿、蓝颜色标签"), ("⌘⌫", "移到废纸篓"), ("⌘,", "设置，快捷键都能改")],
+                 ("I / ⇧I", "照片信息（常用 / 全部）"), ("H / J / K / A", "直方图 / 过曝警示 / 焦点峰值 / 相机对焦框"),
+                 ("⇧R / ⇧B", "裁剪与拉直 / EXIF 参数相框"), ("1–5", "打 1 到 5 星，再按一次取消"), ("6–9", "红、黄、绿、蓝颜色标签（XMP + 访达）"),
+                 ("C / ⇧C", "并排对比 2 张 / 4 张"), ("⌘E", "在后期软件中编辑"),
+                 ("⇧⌘K", "清理模式"), ("⇧F", "胶片滤镜与 .cube LUT"), ("⌘⌫", "移到废纸篓"), ("⌘,", "设置，快捷键都能改")],
         "guides_title": "指南",
         "faq": [
             ("Flipic Lens 收费吗？", "看图、评星、标记、筛选、导出、清理、两款胶片滤镜这些都免费，没有广告，也不用注册账号，代码以 MIT 协议开源在 GitHub。另有可选的 <a href=\"/pro/\">Pro</a>，¥68 一次买断，下载后可以先试用 7 天，只加了批量处理、另外八款胶片滤镜和几个专业功能，大多数人用不上。"),
@@ -356,7 +390,8 @@ HOME = {
             ("照片的拍摄地点在地图上偏了几百米，怎么回事？", "国内地图用的不是照片里存的国际通用 GPS 坐标，直接放上去会偏几百米。在中国大陆拍的照片，Flipic Lens 会先换算成地图用的坐标再标点，iPhone 拍的照片会落在实际拍摄的地方，点开「地图」App 也一样。面板上显示的坐标数字还是照片里的原值。"),
             ("Mac 上怎么看下一张图片？", "用 Flipic Lens 双击任意一张图片，按右方向键就是下一张，左方向键是上一张，同一个文件夹里的图片都能翻到。"),
             ("怎么设为默认看图软件？", "打开 Flipic Lens 的设置（⌘,），在「通用」里点「设为默认看图软件」，常见图片格式和相机 RAW 一次设好。"),
-            ("能不能一次看很多张，像宫格那样？", "免费版翻片时，底部有缩略图栏，同一个文件夹的照片都列在那里；Pro 的工作台（⌥⌘B）把每场拍摄当一个项目，中间宫格里打星、标记、删除，右边是大图、拍摄参数和直方图。工作台是 Pro 功能，下载后可以先试用 7 天。"),
+            ("能不能一次看很多张，像宫格那样？", "免费版翻片时，底部有缩略图栏，同一个文件夹的照片都列在那里；单图窗口也免费自带直方图（H）、过曝警示（J）、焦点峰值（K）和相机对焦框（A）。Pro 的工作台（⌥⌘B）把每场拍摄当一个项目，中间宫格里打星、标记、删除，右边是大图、拍摄参数和直方图，下载后可以先试用 7 天。"),
+            ("外接硬盘上看图和 RAW 会不会很慢？", "针对外接机械硬盘、存储卡和网络盘，Flipic Lens 会把屏幕级预览图与缩略图缓存到 Mac 内置 SSD（上限 500 MB，最久未访问自动清理，可在「设置 › 看图 › 外接盘加速」开关或清空），同时对 RAW 做前 4 MB 内嵌预览快扫并切单通道顺序读。再次打开或拔盘重插同一块硬盘时翻图接近本地速度，放大到 100% 仍读原图。详见 <a href=\"/guides/external-drive-slow-photos-mac/\">Mac 外接硬盘打开照片慢的原因与提速办法</a>。"),
             ("支持哪些格式？", "JPEG、PNG、HEIC、WebP、GIF 动图、TIFF、AVIF、JPEG XL（macOS 14 起），以及索尼、佳能、尼康、富士等相机 RAW。"),
             ("Intel 芯片的 Mac 能用吗？", "能。Flipic Lens 同时支持 Apple 芯片和 Intel 芯片，需要 macOS 13 或更新版本。"),
             ("以前装过 PixDeck 怎么办？", "Flipic Lens 就是改名后的 PixDeck。把「应用程序」里的 PixDeck 拖进废纸篓，再装 Flipic Lens，原来的设置都会保留。"),
@@ -394,17 +429,22 @@ HOME = {
              "<p>Press <kbd>⇧F</kbd> to open the Film Looks panel. Each swatch is the current photo with that look, and one click switches to it. There are ten: a warm portrait look, an everyday warm, a richer slide-film color, a cool mint, a fine vivid one, a night look with a cinema feel, a muted documentary gray, and three in black and white.</p>"
              "<p>Three sliders set Strength, Grain and Halation. The look stays on as you page, so you can go through a whole set and see how it sits. Hold <kbd>\\</kbd> to see the original, press <kbd>G</kbd> to turn it on and off, and <kbd>,</kbd> and <kbd>.</kbd> for the previous and next look.</p>"
              "<p>It only changes what you see; your files are not touched. To keep a result, click Save a Copy…; camera info, caption and location go with it. Export, Batch Convert Format and export presets can apply a look to a whole batch too. Videos, animated images and HDR photos are left as they are.</p>"
-             "<p>Warm Portrait and Classic B&amp;W are free. The other eight are Pro, and all ten work during the trial.</p>"),
+             "<p>Warm Portrait and Classic B&amp;W are free. The other eight and custom .cube 3D LUT import are Pro, and everything works during the 7-day trial.</p>"),
         "wm_feature": ("wm-editor-en.webp", "Flipic Lens Export Watermarks window: a tiled text watermark previewed on a sample ID card", "Watermark the copies you export",
              "<p>Sending a copy of an ID, or a proof to a client? Add a watermark to the exported copy: text, or your own picture such as a logo, tiled diagonally across the photo or placed once in one of nine positions. Size, opacity, color and angle are adjustable.</p>"
-             "<p>Three starting styles are built in: For verification only, Proof and Signature. You can also type a line of text for a single export, for example what this copy of an ID is for; it applies to that export only and the saved watermark stays as it is.</p>"
+             "<p>Three starting styles are built in: For verification only, Proof and Signature. Text supports an automatic <code>{index}</code> sequence number for numbered client proofs, and you can type a one-off line for a single export without changing your saved watermark.</p>"
              "<p>Pick one in Export (⌘S), Batch Convert Format and, with Pro, export presets, or go straight to File › Export with Watermark…. Originals are never changed, and videos and animated images are skipped. A watermark makes reuse harder but does not prevent it, so don’t rely on it alone for anything important.</p>"),
         "more_title": "More features",
         "more": [
+            ("Histogram, clipping, focus peaking and AF point", "Press H for a live RGB & luma histogram with shadow/highlight clipping %, J for red/blue highlight and shadow zebra overlays, K for focus peaking, and A to show the camera AF point (EXIF SubjectArea, XMP MWG-RS, Sony and Fujifilm MakerNotes). All free."),
+            ("External drive SSD cache & fast open", "Previews and thumbnails for external drives, SD cards and network shares are cached on your Mac’s internal SSD (up to 500 MB, automatic LRU cleanup; toggle or clear in Settings › Viewing). Reopening or reconnecting the same drive browses at near-local speed; modified files refresh automatically and 100% zoom still reads the original."),
+            ("EXIF photo frame (⇧B)", "Turn on EXIF info inside Border (⇧B) to typeset camera, lens, focal length, aperture, shutter speed and ISO along the bottom edge with automatic light/dark contrast. Works in single save, Export, Batch Convert and presets."),
             ("Location map that lines up in China", "Press I and photos with a location show where they were taken. Photos from mainland China are converted to the coordinates maps there use, so the pin isn’t a few hundred metres off; Hong Kong, Macau, Taiwan and the rest of the world need no conversion. The map loads only when you ask for it."),
             ("Four at once", "Press ⇧C to put four frames of a burst side by side; zooming and dragging move them together."),
             ("Open in your editor", "⌘E opens the current photo in Photoshop, Lightroom or Capture One, or its RAW file if there is one with the same name."),
             ("RAW and JPG as one (Pro)", "If you shoot RAW + JPG, the two files with the same name show as one photo; press V to switch between them. Ratings, marks and deletes count once."),
+            ("Match from a client’s filename list (Pro)", "Paste a client’s messy list of filenames or trailing numbers from chat or email (Photo › Match from Filename List…) to match files across extensions (.JPG → .ARW) and RAW+JPG pairs, then filter, mark or export."),
+            ("Custom .cube 3D LUT import (Pro)", "Import 17/33/64/65-point .cube 3D LUTs from Sony, Fujifilm, DaVinci Resolve or Adobe directly in the Film Looks panel (⇧F), with live swatches, Strength slider, Export and preset support."),
             ("Before and after (Pro)", "Put an edited export next to its original: hold \\ to see the original, release to see the edit."),
             ("Sort by rating (Pro)", "When you’re done, split the folder into subfolders by stars in one go, or send photos to favorite folders with ⌥1 to ⌥9."),
             ("Keep on top and share", "Click the pin at the top right to keep the window above other apps, handy for a reference image while editing. The share button sends the photo by AirDrop, Messages or Mail."),
@@ -413,12 +453,12 @@ HOME = {
             ("Rotate, crop and straighten", "90° turns only change the orientation tag, for JPEG, HEIC and camera RAW alike, so nothing is re-encoded. ⇧R opens Crop & Straighten: drag the frame or pick a ratio, then overwrite the original or save a copy. RAW files are not changed; the crop is saved as a JPEG."),
             ("Captions stored in the file", "Press I and the headline and caption written into the file (IPTC) are shown at the top of the info panel, above the creator, credit, copyright, place and keywords. The text can be selected and copied. ⇧I switches between Essentials and All. Flipic Lens reads this data and does not edit it."),
             ("Translate a caption", "When a caption is in a different language from the interface, a Translate button appears under it and the translation is shown below the original. It uses the translation built into macOS, on your Mac, and needs macOS 15 or later."),
-            ("Batch rename and export", "Rename by sequence number. When exporting, pick a format and quality and see roughly how big the file will be."),
-            ("Size limits on export", "Export (⌘S) and Batch Convert Format can limit the long edge to a number of pixels, keep the file under a size in MB (JPEG and HEIC; quality drops first, then dimensions) and convert to sRGB. Shooting information, captions and copyright are kept by default, and location can be removed on its own."),
-            ("Color tags", "Press 6, 7, 8 or 9 for a red, yellow, green or blue tag; press again to remove it. They are Finder’s own tags, so other apps see them too. Show by Color Tag in the Photo menu filters to one color."),
+            ("EXIF template batch rename & export", "Rename folders with {date}, {time}, {camera}, {focal}, {name} and {seq} tokens, 5 presets and live preview (plain prefixes still auto-number), keeping .xmp / .MOV sidecars in sync. Export shows an estimated file size beforehand."),
+            ("Size limits, GPS & serial stripping on export", "Export (⌘S) and Batch Convert can cap the long edge in pixels, target a file size in MB and convert to sRGB. Shooting info stays by default, while GPS location and camera/lens serial numbers can be stripped independently."),
+            ("Color tags (XMP + Finder)", "Press 6, 7, 8 or 9 for red, yellow, green or blue; press again to clear. Writes both Finder tags and standard xmp:Label so Lightroom and Capture One read them too."),
             ("Right-click on thumbnails", "Select one or several photos in the thumbnail strip and right-click to send them to your editor; when one is set, the first item names it and the count. Open With lets you pick another app for this time, and rating, tags, marks, copy, share and Move to Trash work here too."),
             ("Crop remembers the ratio", "The next crop starts with the ratio you last finished with. 3:2 on a landscape photo becomes 2:3 on a portrait one."),
-            ("Export presets (Pro)", "Save the ways you usually export and deliver a batch in one step: format, quality, size limits, destination and a file name template are all remembered. Shortcuts are ⌥⌘1 to ⌥⌘9."),
+            ("Export presets (Pro)", "Save the ways you usually export and deliver a batch in one step: format, quality, size limits, destination, file name template, film/LUT, watermark and EXIF frame are all remembered. Shortcuts are ⌥⌘1 to ⌥⌘9."),
             ("Languages", "14 interface languages, following your system setting."),
         ],
         "vs_title": "How it differs from Preview",
@@ -433,8 +473,10 @@ HOME = {
         ],
         "keys_title": "Keyboard shortcuts",
         "keys": [("← →", "Previous / next photo"), ("Space", "Wrap the window to the photo"), ("0", "Zoom to 100% at the pointer; hold to peek"),
-                 ("I", "Photo info"), ("⇧I", "Photo info: Essentials / All"), ("⇧R", "Crop & Straighten"), ("1–5", "Rate one to five stars; again to clear"), ("S", "Slideshow"), ("⌘E", "Edit in your photo editor"),
-                 ("⇧⌘K", "Cleanup Mode"), ("⇧F", "Film Looks"), ("6–9", "Red, yellow, green, blue tags"), ("⌘⌫", "Move to Trash"), ("⌘,", "Settings; change any shortcut")],
+                 ("I / ⇧I", "Photo info (Essentials / All)"), ("H / J / K / A", "Histogram / clipping / peaking / AF point"),
+                 ("⇧R / ⇧B", "Crop & Straighten / EXIF photo frame"), ("1–5", "Rate one to five stars; again to clear"), ("6–9", "Red, yellow, green, blue tags (XMP + Finder)"),
+                 ("C / ⇧C", "Compare 2 or 4 photos side by side"), ("⌘E", "Edit in your photo editor"),
+                 ("⇧⌘K", "Cleanup Mode"), ("⇧F", "Film Looks & .cube LUTs"), ("⌘⌫", "Move to Trash"), ("⌘,", "Settings; change any shortcut")],
         "guides_title": "Guides",
         "faq": [
             ("Is Flipic Lens free?", "Viewing, ratings, marks, filtering, export, Cleanup Mode and two film looks are free, with no ads and no account, and the code is MIT licensed on GitHub. There is an optional <a href=\"/en/pro/\">Pro</a> upgrade, $12.99 once, with a 7-day trial in every download. It adds batch tools, the other eight film looks and a few pro features; most people won’t need it."),
@@ -447,7 +489,8 @@ HOME = {
             ("Why is a photo’s location a few hundred metres off on the map?", "In mainland China, maps use a different coordinate system from the standard GPS coordinates stored in photos, so a pin placed directly ends up a few hundred metres away. Flipic Lens converts coordinates for photos taken there before placing the pin, and does the same when opening Maps. The coordinates shown as text are still the values stored in the photo."),
             ("How do I see the next image on a Mac?", "Double-click any image in Flipic Lens and press the right arrow key for the next one, the left arrow for the previous one, across the whole folder."),
             ("How do I make it my default viewer?", "Open Settings (⌘,) and click Make Default Viewer under General; common image formats and camera RAW are set in one go."),
-            ("Can I see many photos at once, in a grid?", "The free version has a thumbnail strip along the bottom while you page through a folder. Pro adds the Workbench (⌥⌘B): one project per shoot, a grid in the middle for rating, marking and deleting, with a large preview, shooting details and a histogram on the right. The Workbench is part of Pro, and every download includes a 7-day trial."),
+            ("Can I see many photos at once, in a grid?", "The free version has a thumbnail strip along the bottom while you page through a folder, plus single-viewer histogram (H), clipping warning (J), focus peaking (K) and camera AF point (A). Pro adds the Workbench (⌥⌘B): one project per shoot, a grid in the middle for rating, marking and deleting, with a large preview, shooting details and a histogram on the right, with a 7-day trial in every download."),
+            ("Is it fast with photos on an external hard drive?", "For external hard drives, SD cards and network shares, Flipic Lens caches screen-sized previews and thumbnails on your Mac’s internal SSD (up to 500 MB with automatic LRU cleanup; toggle or clear in Settings › Viewing › External drives), scans only the first 4 MB of RAW files for embedded previews, and switches to single-lane sequential I/O on slow storage. Reopening or reconnecting the same drive browses at near-local speed, while 100% zoom always reads the original. See <a href=\"/en/guides/fast-photo-viewer-external-hard-drive-mac/\">why photos open slowly from an external hard drive on Mac</a>."),
             ("Which formats are supported?", "JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later) and camera RAW from Sony, Canon, Nikon, Fujifilm and others."),
             ("Does it run on Intel Macs?", "Yes. Flipic Lens is universal for Apple silicon and Intel and needs macOS 13 or later."),
         ],
@@ -945,26 +988,26 @@ guide("en", "/en/guides/fastrawviewer-alternative-mac/", "FastRawViewer vs Flipi
       "FastRawViewer vs Flipic Lens",
       "FastRawViewer reads RAW data for histograms, exposure and focus peaking. Flipic Lens is a free folder viewer for paging, ratings and culling.",
       "RAW-data checks in FastRawViewer, quick culling in Flipic Lens",
-      f"""<p>Choose FastRawViewer if you need to judge the RAW data itself: a RAW histogram, highlight inspection, exposure checks and focus peaking. Choose <a href="/en/">Flipic Lens</a> if you want a simpler folder viewer for paging, focus checks, ratings and a first cull. They can sit in the same workflow: FastRawViewer for exposure-critical frames, Flipic Lens for the rest of the selection.</p>
-<table><thead><tr><th></th><th>FastRawViewer</th><th>Flipic Lens</th></tr></thead><tbody><tr><td>Price model</td><td>Paid license</td><td>Free; optional one-time Pro</td></tr><tr><td>Import or library</td><td>No catalog; browse folders directly</td><td>No import, no catalog; reads the folder</td></tr><tr><td>RAW</td><td>Decodes RAW data; RAW histogram, highlight inspection, focus peaking</td><td>Opens camera RAW; 0 zooms to 100% at the pointer</td></tr><tr><td>Star ratings</td><td>Ratings and labels in XMP sidecars</td><td>1 to 5 stars as standard XMP; RAW uses a same-name .xmp sidecar</td></tr><tr><td>Side-by-side compare</td><td>Grid and single-file view; synced two-up not listed on its site</td><td>C for two, Shift-C for four, zoom synced</td></tr><tr><td>Closed eyes / blur / bursts</td><td>Not listed on its official site</td><td>Yes: Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac</td></tr><tr><td>Platform</td><td>macOS and Windows</td><td>macOS 13 or later</td></tr><tr><td>Open source</td><td>No</td><td>Yes, MIT</td></tr></tbody></table>
+      f"""<p>Choose FastRawViewer if you need to judge the sensor-level RAW data before demosaic: a true RAW histogram, raw highlight headroom, Shadow Boost and exposure compensation checks. Choose <a href="/en/">Flipic Lens</a> if you want a free, lighter Mac folder culler with display-referred histogram (<kbd>H</kbd>), clipping (<kbd>J</kbd>), focus peaking (<kbd>K</kbd>), camera AF point (<kbd>A</kbd>), synced side-by-side compare, XMP ratings &amp; color labels, Cleanup Mode and external drive SSD caching. They can sit in the same workflow: FastRawViewer for raw-headroom checks, Flipic Lens for the broader selection.</p>
+<table><thead><tr><th></th><th>FastRawViewer</th><th>Flipic Lens</th></tr></thead><tbody><tr><td>Price model</td><td>Paid license</td><td>Free; optional one-time Pro</td></tr><tr><td>Import or library</td><td>No catalog; browse folders directly</td><td>No import, no catalog; reads the folder</td></tr><tr><td>RAW &amp; inspection</td><td>Decodes sensor RAW data; true RAW histogram, Shadow Boost, per-channel view, focus peaking</td><td>Opens camera RAW; 0 zooms to 100%; display RGB histogram (H), clipping (J), focus peaking (K), camera AF point (A)</td></tr><tr><td>Ratings &amp; labels</td><td>Ratings and labels in XMP sidecars</td><td>1–5 stars &amp; color labels as standard XMP; RAW uses same-name .xmp sidecars</td></tr><tr><td>Side-by-side compare</td><td>Grid and single-file view; synced two-up not listed on its site</td><td>C for two, Shift-C for four, zoom synced</td></tr><tr><td>Closed eyes / blur / bursts</td><td>Not listed on its official site</td><td>Yes: Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac</td></tr><tr><td>Platform</td><td>macOS and Windows</td><td>macOS 13 or later</td></tr><tr><td>Open source</td><td>No</td><td>Yes, MIT</td></tr></tbody></table>
 <h2>Where FastRawViewer is stronger</h2>
-<ul><li><strong>RAW data, not an embedded preview.</strong> It renders the RAW and shows a RAW histogram, RAW statistics and highlight inspection.</li><li><strong>Exposure and focus tools.</strong> Shadow Boost, per-channel view, focus peaking and exposure compensation help you see what a converter can recover.</li><li><strong>RAW+JPEG mode.</strong> It handles RAW and JPEG pairs and can work through folders without creating a catalog.</li></ul>
+<ul><li><strong>Sensor-level RAW data, not an embedded preview.</strong> It renders the RAW directly and computes a true RAW-data histogram and statistics before tone mapping.</li><li><strong>Exposure recovery tools.</strong> Shadow Boost, per-channel view and exposure compensation help you judge how many stops a RAW converter can still pull back.</li><li><strong>Cross-platform RAW+JPEG workflow.</strong> Runs on both macOS and Windows without a catalog.</li></ul>
 <h2>Where Flipic Lens fits</h2>
-<ul><li><strong>Simple paging.</strong> Double-click one photo and use the arrow keys through the folder, with no import and no catalog.</li><li><strong>Fast focus checks and comparison.</strong> Press 0 to zoom to 100% at the pointer; C and Shift-C compare two or four frames with synced zoom and pan.</li><li><strong>Ratings and marks.</strong> 1 to 5 stars go into standard XMP, with a same-name .xmp sidecar for proprietary RAW. P marks are Finder tags.</li></ul>
-<p><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.<br><strong>Small and local.</strong> An 8 MB MIT-licensed Mac app that keeps photos on your Mac; Pro adds the Workbench grid and is a one-time purchase with a 7-day trial.</p>
+<ul><li><strong>Simple paging &amp; everyday inspection.</strong> Double-click one photo and use the arrow keys; press <kbd>H</kbd> for RGB histogram, <kbd>J</kbd> for clipping, <kbd>K</kbd> for focus peaking, <kbd>A</kbd> for camera AF point, and <kbd>0</kbd> to zoom to 100% at the pointer.</li><li><strong>Synced comparison &amp; external drive cache.</strong> C and Shift-C compare two or four frames with synced zoom and pan; external hard drive previews cache to your Mac’s internal SSD.</li><li><strong>Ratings &amp; color labels in standard XMP.</strong> 1 to 5 stars and color labels write standard XMP (sidecar for proprietary RAW); P marks are Finder tags.</li></ul>
+<p><strong>Cleanup Mode.</strong> Free on-device grouping of bursts, duplicates, closed eyes and blur, with you deciding what to delete.<br><strong>Small and local.</strong> About 8.4 MB, MIT-licensed on Mac; Pro is a one-time purchase with a 7-day trial adding the Workbench grid, custom .cube 3D LUTs and client filename list matching.</p>
 <h2>Using them together</h2>
-<p>Open a shoot in FastRawViewer when you need the RAW histogram or a careful exposure check. Use Flipic Lens for the broader pass: page, rate, mark and let Cleanup Mode group the obvious rejects. Both can write ratings to XMP, so pick one app for the rating pass to keep the sidecars predictable.</p>
+<p>Open a shoot in FastRawViewer when you need a true pre-demosaic RAW histogram to check whether clipped highlights can still be recovered. Use Flipic Lens for the broader culling pass: page, check focus, rate, color-label and let Cleanup Mode group the obvious rejects. Both write standard XMP, so pick one app for the rating pass to keep sidecars predictable.</p>
 <p>See the full comparison at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
       faq=[
           ('Is FastRawViewer free?',
            'No. It is a paid license with a fully functional 30-day trial; check LibRaw for current licensing.'),
-          ('Does FastRawViewer show the embedded JPEG?',
-           'No. Its main point is rendering the RAW data itself, with a RAW histogram and RAW-based exposure tools.'),
+          ('How is Flipic Lens’s histogram different from FastRawViewer’s?',
+           'FastRawViewer computes a sensor-level RAW-data histogram before tone mapping so you can judge true highlight recovery headroom. Flipic Lens computes a fast display-referred RGB & luma histogram (H) plus clipping zebras (J), focus peaking (K) and camera AF point (A) on the rendered image.'),
           ('Can I use FastRawViewer and Flipic Lens together?',
            'Yes. Use FastRawViewer for RAW-data exposure checks and Flipic Lens for paging, ratings, marks and Cleanup Mode.'),
-          ('Do both write XMP ratings?',
-           'Yes. FastRawViewer writes ratings and labels to XMP sidecars; Flipic Lens writes standard XMP ratings, with a sidecar for proprietary RAW.'),
-      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+          ('Do both write XMP ratings and labels?',
+           'Yes. Both write standard XMP ratings and color labels, using same-name .xmp sidecars for proprietary RAW.'),
+      ], title_suffix=False, updated="2026-11-22", published="2026-11-08")
 
 guide("en", "/en/guides/xnview-mp-alternative-mac/", "XnView MP vs Flipic Lens: which viewer fits?",
       "XnView MP vs Flipic Lens",
@@ -1125,26 +1168,26 @@ guide("zh", "/guides/fastrawviewer-mac/", "FastRawViewer 和 Flipic Lens",
       "FastRawViewer 和 Flipic Lens 怎么选",
       "FastRawViewer 看 RAW 本身的数据和曝光，Flipic Lens 负责打开文件夹、用方向键翻页、打星和第一轮清理。这篇写清各自适合谁，以及怎么一起用。",
       "FastRawViewer 看 RAW 数据，Flipic Lens 做挑片",
-      f"""<p>FastRawViewer 适合要看 RAW 本身的数据：RAW 直方图、过曝和欠曝、峰值对焦、曝光补偿，再决定这张能不能救。Flipic Lens 适合打开文件夹，用方向键翻、看焦点、打星、做第一轮挑片。两个可以一起用：FastRawViewer 看曝光，Flipic Lens 做选择。</p>
-<table><thead><tr><th></th><th>FastRawViewer</th><th>Flipic Lens</th></tr></thead><tbody><tr><td>价格模式</td><td>付费授权</td><td>免费；可选一次买断的 Pro</td></tr><tr><td>要不要导入或建库</td><td>不建图库；直接浏览文件夹</td><td>不导入、不建库，直接读文件夹</td></tr><tr><td>看 RAW</td><td>直接解 RAW，RAW 直方图、过曝检查、峰值对焦</td><td>直接打开相机 RAW；按 0 看 100% 焦点</td></tr><tr><td>星级存在哪</td><td>星级和标签写 XMP sidecar</td><td>1 到 5 星写标准 XMP；RAW 写同名 .xmp</td></tr><tr><td>并排比较</td><td>网格和单张；官网未列出同步对比</td><td>C 两张、⇧C 四张，缩放同步</td></tr><tr><td>闭眼 / 模糊 / 连拍</td><td>官网未列出</td><td>有：清理模式在本机分连拍、重复、闭眼、模糊</td></tr><tr><td>平台</td><td>macOS 和 Windows</td><td>macOS 13 或更新</td></tr><tr><td>开源</td><td>否</td><td>是，MIT</td></tr></tbody></table>
+      f"""<p>FastRawViewer 适合要看传感器级 RAW 原始数据的人：去马赛克前的真 RAW 直方图、原始高光余量、暗部提亮与曝光补偿判断。Flipic Lens 适合想在 Mac 上免费打开文件夹就用方向键挑片的人，内置显示级直方图（<kbd>H</kbd>）、过曝/暗部斑马纹（<kbd>J</kbd>）、焦点峰值（<kbd>K</kbd>）、相机对焦框（<kbd>A</kbd>）、并排对比、XMP 星级与颜色标签、清理模式及外接硬盘 SSD 缓存。两个可以一起用：FastRawViewer 看 RAW 原始宽容度，Flipic Lens 做快速挑片。</p>
+<table><thead><tr><th></th><th>FastRawViewer</th><th>Flipic Lens</th></tr></thead><tbody><tr><td>价格模式</td><td>付费授权</td><td>免费；可选一次买断的 Pro</td></tr><tr><td>要不要导入或建库</td><td>不建图库；直接浏览文件夹</td><td>不导入、不建库，直接读文件夹</td></tr><tr><td>RAW 与质检</td><td>直接解传感器 RAW 数据；真 RAW 直方图、Shadow Boost、分通道、峰值对焦</td><td>直接打开相机 RAW；0 看 100% 焦点；显示级 RGB 直方图 (H)、过曝警示 (J)、焦点峰值 (K)、对焦框 (A)</td></tr><tr><td>星级与颜色标签</td><td>星级和标签写 XMP sidecar</td><td>1–5 星与颜色标签写标准 XMP；RAW 写同名 .xmp</td></tr><tr><td>并排比较</td><td>网格和单张；官网未列出同步对比</td><td>C 两张、⇧C 四张，缩放同步</td></tr><tr><td>闭眼 / 模糊 / 连拍</td><td>官网未列出</td><td>有：清理模式在本机分连拍、重复、闭眼、模糊</td></tr><tr><td>平台</td><td>macOS 和 Windows</td><td>macOS 13 或更新</td></tr><tr><td>开源</td><td>否</td><td>是，MIT</td></tr></tbody></table>
 <h2>FastRawViewer 更强的地方</h2>
-<ul><li><strong>看的是 RAW 数据。</strong> 不是内嵌 JPEG，给的是 RAW 直方图、RAW 统计和过曝检查。</li><li><strong>曝光和焦点工具。</strong> Shadow Boost、分通道查看、峰值对焦、曝光补偿，帮你看后期还能拉回多少。</li><li><strong>RAW+JPEG 模式。</strong> 同时处理 RAW 和 JPEG，按文件夹浏览，不建图库。</li></ul>
+<ul><li><strong>看的是去马赛克前的 RAW 原始数据。</strong> 给出真 RAW 直方图、RAW 统计和原始高光溢出，判断高光还能不能拉回来比显示直方图更直接。</li><li><strong>曝光宽容度工具。</strong> Shadow Boost、分通道查看、曝光补偿预览，帮你判断后期宽容度。</li><li><strong>跨平台。</strong> macOS 和 Windows 都能用，不建图库。</li></ul>
 <h2>Flipic Lens 更适合的地方</h2>
-<ul><li><strong>打开就翻。</strong> 双击一张，方向键翻整个文件夹，不导入，不建库。</li><li><strong>看焦点和比较。</strong> 0 在鼠标处放大到 100%；C 两张、⇧C 四张，缩放同步。</li><li><strong>星级和标记。</strong> 1 到 5 星写标准 XMP，专有 RAW 写同名 .xmp；P 标记是访达标签。</li></ul>
-<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些由你决定。<br><strong>小、免费、不用账号。</strong> 约 8 MB，MIT 开源。Pro 一次买断，带 7 天试用和工作台宫格。</p>
+<ul><li><strong>打开就翻 + 常用质检免费。</strong> 双击一张方向键翻完文件夹，按 <kbd>H</kbd> 看 RGB 直方图、<kbd>J</kbd> 看过曝死黑、<kbd>K</kbd> 看焦点峰值、<kbd>A</kbd> 看相机对焦框、<kbd>0</kbd> 鼠标处放大 100%。</li><li><strong>同步对比与外接盘加速。</strong> C 两张、⇧C 四张缩放同步；外接硬盘预览自动缓存到本机 SSD。</li><li><strong>星级和颜色标签写标准 XMP。</strong> 1–5 星与颜色标签和 Lightroom / Capture One 互通；P 标记是访达标签。</li></ul>
+<p><strong>清理模式。</strong> 免费，在本机分连拍、重复、闭眼和模糊，删哪些由你决定。<br><strong>小、免费、不用账号。</strong> 约 8.4 MB，MIT 开源。Pro 一次买断，带 7 天试用，增加工作台、自定义 .cube 3D LUT 和按客户文件名清单挑图。</p>
 <h2>一起用</h2>
-<p>要判断曝光、看 RAW 直方图、峰值对焦，用 FastRawViewer。要快速翻一遍、打星、标记、清理，用 Flipic Lens。两边都能写 XMP 星级，但固定一个软件负责评分，sidecar 更可控。</p>
+<p>需要判断 RAW 传感器高光还能拉回几档时用 FastRawViewer；日常快速翻片、看焦点与对焦框、打星标色、清理连拍废片用 Flipic Lens。两边都能写标准 XMP，建议固定一个软件负责评分，sidecar 更可控。</p>
 <p>完整对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
       faq=[
           ('FastRawViewer 免费吗？',
            '不是免费软件，是付费授权，提供完整功能的试用；具体授权方式看 LibRaw 官网。'),
-          ('FastRawViewer 看的是内嵌 JPEG 吗？',
-           '不是。它的重点是直接解 RAW，给 RAW 直方图和基于 RAW 数据的曝光工具。'),
+          ('Flipic Lens 的直方图和 FastRawViewer 的有什么区别？',
+           'FastRawViewer 算的是去马赛克前的传感器级 RAW 直方图，专门判断高光还能拉回多少档；Flipic Lens 提供的是显示级 RGB/亮度直方图（H）、过曝/死黑警示（J）、焦点峰值（K）和相机对焦框（A），主打挑片顺手、全部免费。'),
           ('FastRawViewer 和 Flipic Lens 能一起用吗？',
-           '能。FastRawViewer 看曝光和 RAW 数据，Flipic Lens 翻页、打星、标记和清理。'),
-          ('只挑片需要 FastRawViewer 吗？',
-           '不一定。要看 RAW 直方图和过曝，才需要它；只想翻一遍、看焦点、打星，Flipic Lens 就够。'),
-      ], title_suffix=False, updated="2026-11-08", published="2026-11-08")
+           '能。FastRawViewer 看 RAW 原始曝光余量，Flipic Lens 翻页、打星、标记和清理。'),
+          ('两边都写 XMP 星级和颜色标签吗？',
+           '都写。两边都支持标准 XMP 评分与颜色标签（专有 RAW 写同名 .xmp）。'),
+      ], title_suffix=False, updated="2026-11-22", published="2026-11-08")
 
 guide("en", "/en/compare/", "Compare Mac photo viewers and culling tools",
       "Compare Mac photo tools",
@@ -1156,7 +1199,7 @@ guide("en", "/en/compare/", "Compare Mac photo viewers and culling tools",
 <ul><li><strong>Just open a folder and cull:</strong> Flipic Lens, with no import and XMP ratings. Preview can open a file but does not browse a folder on its own.</li><li><strong>Metadata, keywords or Adobe batch work:</strong> Adobe Bridge.</li><li><strong>High-volume ingest, IPTC and delivery:</strong> Photo Mechanic.</li></ul>
 <p><strong>RAW histogram, exposure and focus peaking:</strong> FastRawViewer.<br><strong>Many formats, batch conversion or Linux:</strong> XnView MP.<br><strong>Mac-native metadata, HDR, stacks and quick edits:</strong> ApolloOne.<br><strong>Waterfall or grid browsing with video:</strong> FlowVision.<br><strong>Editing and a long-term catalog:</strong> Lightroom Classic.</p>
 <h2>What Flipic Lens covers</h2>
-<p>Flipic Lens reads the folder you open, double-click any photo and page with the arrow keys. Press 0 to zoom to 100% at the pointer, C or Shift-C to compare two or four frames with synced zoom, 1 to 5 to rate and P to mark. Ratings are standard XMP, with a same-name .xmp sidecar for proprietary RAW; marks are Finder tags. Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac. The app is about 8 MB, MIT-licensed and keeps photos on your Mac. Pro is a one-time purchase with a 7-day trial and adds the Workbench grid, zoom to the eyes, and content and text search.</p>
+<p>Flipic Lens reads the folder you open, double-click any photo and page with the arrow keys. Press 0 to zoom to 100% at the pointer, C or Shift-C to compare two or four frames with synced zoom, H/J/K/A for histogram, clipping, focus peaking and camera AF point, 1 to 5 to rate, 6 to 9 to color-label and P to mark. Ratings and color labels write standard XMP (same-name .xmp sidecar for proprietary RAW); marks are Finder tags. Cleanup Mode groups bursts, duplicates, closed eyes and blur on your Mac, and external drive previews cache to your Mac’s internal SSD. The app is about 8.4 MB, MIT-licensed and keeps photos on your Mac. Pro is a one-time purchase with a 7-day trial adding the Workbench grid, zoom to the eyes, content/text search, client filename list matching and custom .cube 3D LUTs. See <a href="/en/guides/mac-photo-viewer-benchmark/">reproducible speed &amp; memory benchmarks</a>.</p>
 <h2>What this table does not cover</h2>
 <p>Price amounts, camera compatibility and plugin ecosystems change. The table only compares the pricing model and the main job each app is built for; check the vendor page before you buy. For the detailed rows, open the individual comparison pages linked above.</p>
 <p>For the full open-source list, see <a href="/en/guides/open-source-image-viewers-mac/">open-source image viewers for Mac</a>.</p>""",
@@ -1181,7 +1224,7 @@ guide("zh", "/compare/", "Mac 看图与挑片软件对比",
 <ul><li><strong>只想打开文件夹挑一遍：</strong> Flipic Lens，不导入，星级写 XMP。预览能打开文件，但不适合翻整个文件夹。</li><li><strong>元数据、关键词或 Adobe 批处理：</strong> Adobe Bridge。</li><li><strong>大量拷卡、IPTC 和交付：</strong> Photo Mechanic。</li></ul>
 <p><strong>RAW 直方图、曝光和峰值对焦：</strong> FastRawViewer。<br><strong>格式多、批量转换或 Linux：</strong> XnView MP。<br><strong>Mac 原生元数据、HDR、堆栈和快速编辑：</strong> ApolloOne。<br><strong>瀑布流或网格浏览，还要看视频：</strong> FlowVision。<br><strong>修图和长期目录管理：</strong> Lightroom Classic。</p>
 <h2>Flipic Lens 覆盖什么</h2>
-<p>Flipic Lens 直接读你打开的文件夹，双击一张就用方向键翻。按 0 在鼠标处放大到 100%，按 C 两张、⇧C 四张，缩放同步；1 到 5 打星，P 标记。星级写标准 XMP，专有 RAW 写同名 .xmp；标记是访达标签。清理模式在本机分连拍、重复、闭眼和模糊。安装包约 8 MB，MIT 开源，不用账号。Pro 一次买断，带 7 天试用，多出工作台宫格、放大到眼睛、按内容和文字搜索。</p>
+<p>Flipic Lens 直接读你打开的文件夹，双击一张就用方向键翻。按 0 在鼠标处放大到 100%，C 两张、⇧C 四张缩放同步；H/J/K/A 看直方图、过曝死黑、焦点峰值与相机对焦框；1–5 打星、6–9 颜色标签写标准 XMP（专有 RAW 写同名 .xmp），P 标记是访达标签；外接硬盘预览缓存到本机 SSD。清理模式在本机分连拍、重复、闭眼和模糊。安装包约 8.4 MB，MIT 开源，不用账号。Pro 一次买断，带 7 天试用，增加工作台宫格、放大到眼睛、按内容和文字搜索、按客户文件名清单挑图和自定义 .cube 3D LUT。性能数据见 <a href="/guides/mac-photo-viewer-benchmark/">实测性能与内存占用</a>。</p>
 <h2>这张表不覆盖什么</h2>
 <p>具体价格、相机兼容性和插件生态会变。表里只写价格模式和主要用途，买之前看各家官网。每一行的详细对比，点上面对应链接。</p>
 <p>开源看图清单见 <a href="/guides/mac-image-viewer-recommend/">Mac 看图软件推荐</a>。</p>""",
@@ -1268,6 +1311,158 @@ guide("zh", "/guides/read-iptc-caption-mac/", "Mac 上怎么看照片里的说�
           ("看照片说明要买 Pro 吗？",
            "不用。照片信息面板、IPTC 说明和说明翻译都是免费功能。"),
       ], title_suffix=False, updated="2026-11-14", published="2026-11-14")
+
+guide("zh", "/guides/external-drive-slow-photos-mac/", "Mac 外接硬盘打开照片和 RAW 很慢？原因与提速办法",
+      "外接硬盘看图慢怎么解决",
+      "为什么外接机械硬盘或移动硬盘在 Mac 上打开照片和 RAW 特别慢？从休眠、NTFS 驱动、Spotlight 索引到 Flipic Lens 本机 SSD 缓存的实操提速办法。",
+      "排查外接硬盘看图卡顿的硬件、系统与缓存方案",
+      f"""<p>把几百 GB 照片放在外接移动硬盘上，在 Mac 上双击开图往往要转圈好几秒，换别的看图软件也同样慢。这通常不是某一个软件的 Bug，而是外接盘硬件特性、文件系统驱动和看图解码方式叠加的结果。</p>
+<h2>为什么外接硬盘在所有软件里都慢？</h2>
+<ul>
+<li><strong>机械硬盘休眠唤醒与低随机 IOPS：</strong>USB 机械硬盘闲置几分钟会停转，再次唤醒要等 3–8 秒；而且机械盘随机读只有约 80–150 IOPS（Mac 内置 SSD 在十万级），只要看图软件同时开多线程读缩略图、查扩展属性，磁头来回寻道就会卡顿。</li>
+<li><strong>文件系统与第三方 NTFS 驱动：</strong>Windows 常用的 NTFS 盘在 macOS 上依赖第三方 FUSE/内核驱动，每次 <code>stat()</code> 和打开文件开销成倍放大；exFAT 上查访达扩展属性还会触发成百上千次隐藏的 <code>._*</code>（AppleDouble）文件寻道。</li>
+<li><strong>刚插盘时 Spotlight（<code>mds_stores</code>）抢带宽：</strong>硬盘刚挂载后 macOS 会在后台扫描建索引，把本来有限的 USB 带宽占满。</li>
+<li><strong>全量 RAW 解码：</strong>许多看图软件没有取内嵌预览，直接通过 USB 读完整张 50–100 MB RAW 再解马赛克，单张耗时很容易拉到 5–10 秒。</li>
+</ul>
+<h2>Flipic Lens 针对外接硬盘做了哪些优化？</h2>
+<p><a href="/">Flipic Lens</a> 1.0.59 起内置了一套专门面向外接硬盘、存储卡与网络盘的加速链路（免费功能）：</p>
+<ol>
+<li><strong>本机 SSD 持久化预览缓存（500 MB LRU）：</strong>外接盘的屏幕级预览图（最高 2560px）与缩略图会自动缓存在 Mac 内置 SSD（<code>~/Library/Caches</code>），上限 500 MB，超限时按最久未访问自动清理。再次打开文件夹、甚至拔盘重插同一块硬盘后，翻图直接读 Mac 本机 SSD，接近本地速度；原图改动过会自动失效重解，放大到 100% 仍读原图。可在「设置 › 看图 › 外接盘加速」随时开关或清空。</li>
+<li><strong>RAW 前 4 MB 内嵌预览快扫：</strong>不再为了取内嵌预览把整张 60–100 MB RAW 映射过 USB，先只读文件头前 4 MB 快速定位相机内嵌大图预览，首次翻 RAW 也能在几十毫秒内上屏。</li>
+<li><strong>慢盘单通道顺序调度与首图优先：</strong>检测到外接慢存储时自动把解码/缩略图队列收窄为单通道顺序读，减少机械盘磁头抖动；双击单张图时在列目录之前抢跑首图解码，等首图上屏后再做后台缩略图预热。</li>
+<li><strong>跳过非 APFS 卷的 <code>._*</code> 寻道：</strong>列目录时直接复用 <code>getattrlistbulk</code> 预取结果，在 exFAT / FAT / NTFS / SMB 卷上不再逐文件查询访达扩展属性。</li>
+</ol>
+<h2>系统侧还能顺手做的 3 件事</h2>
+<ul>
+<li><strong>纯 Mac 工作盘优先格成 APFS：</strong>如果这块移动 SSD 只接 Mac，APFS 的目录遍历与元数据速度远高于 exFAT 和 NTFS。</li>
+<li><strong>跨系统优先 exFAT，少用老旧 NTFS 驱动：</strong>必须兼顾 Windows 和 Mac 时，exFAT 是系统原生支持，比第三方 NTFS 驱动稳定且少一层转发开销。</li>
+<li><strong>把归档机械盘排除出 Spotlight：</strong>在「系统设置 › 聚焦 › 搜索隐私」里加入不常搜的归档硬盘，避免每次插盘都被 <code>mds_stores</code> 占满 IO。</li>
+</ul>
+<p>想了解 Flipic Lens 在本机上的实测速度与内存数据，见 <a href="/guides/mac-photo-viewer-benchmark/">Flipic Lens 实测性能与内存占用</a>；RAW 看图流程见 <a href="/guides/mac-view-raw/">Mac 上怎么快速看 RAW 照片</a>。</p>""",
+      howto=["将 Flipic Lens 更新到 1.0.59 或更新版本，确认「设置 › 看图 › 外接盘加速」已开启（默认开启）",
+             "首次打开外接硬盘里的照片文件夹：Flipic Lens 会用单通道顺序读和 RAW 前 4 MB 快扫优先显示当前照片，并后台将预览缓存到 Mac 内置 SSD",
+             "再次打开该文件夹或拔盘重插同一块硬盘时，翻页直接命中本机 SSD 缓存，放大到 100% 时才回源读原图",
+             "如外接盘是归档机械盘，可在 macOS「系统设置 › 聚焦 › 搜索隐私」中排除该盘以减少后台抢占"],
+      faq=[
+          ("外接硬盘缓存会占满 Mac 硬盘吗？",
+           "不会。缓存放在系统标准 Caches 目录，默认上限 500 MB，超过后按最久未访问自动清理回 400 MB，也可以在「设置 › 看图 › 外接盘加速」里看实时占用并一键清空。"),
+          ("拔掉硬盘重插以后缓存还有效吗？",
+           "有效。缓存按「卷唯一标识 + 相对路径 + 文件大小 + 修改时间」做键，重插甚至挂载路径变化都能命中；如果原图被后期软件改过，缓存会自动失效并重新生成。"),
+          ("命中本机 SSD 缓存后，放大看焦点会糊吗？",
+           "不会。本机缓存用于窗口适应浏览（最高 2560px）；当你按 0 或捏合放大到 100% 时，Flipic Lens 仍会按需读取外接盘上的全分辨率原图。"),
+          ("这个外接盘加速功能收费吗？",
+           "免费，直接包含在开源核心版里，官网版与 Mac App Store 版都可用。"),
+      ], title_suffix=False, updated="2026-11-22", published="2026-11-22")
+
+guide("en", "/en/guides/fast-photo-viewer-external-hard-drive-mac/", "Why photos open slowly from an external hard drive on Mac",
+      "Fast viewing on external drives",
+      "Why photos and camera RAW files open slowly from an external hard drive on Mac (HDD spin-up, NTFS drivers, Spotlight, full RAW decode) and how local SSD caching fixes it.",
+      "Causes of slow external-drive photo browsing and how local SSD caching helps",
+      f"""<p>If double-clicking a photo on an external USB hard drive takes several seconds in every Mac viewer you try, the slowdown is rarely just one app. It is usually the combination of mechanical drive physics, file-system overhead, background indexing and full RAW decoding over USB.</p>
+<h2>Why every viewer feels slow on an external drive</h2>
+<ul>
+<li><strong>HDD spin-up and low random IOPS:</strong> A portable spinning drive parks its heads after a few minutes of idle time (3–8 seconds to wake up) and only delivers around 80–150 random IOPS compared to 100,000+ on a Mac’s internal SSD. Multi-threaded thumbnail and metadata reads cause constant head thrashing.</li>
+<li><strong>File system &amp; third-party NTFS drivers:</strong> NTFS drives mounted via third-party drivers on macOS add heavy per-syscall overhead. On exFAT, querying Finder extended attributes triggers thousands of seeks for hidden <code>._*</code> AppleDouble sidecar files.</li>
+<li><strong>Spotlight (<code>mds_stores</code>) indexing on mount:</strong> Right after plugging a drive in, macOS often scans it in the background, saturating USB bandwidth.</li>
+<li><strong>Full RAW demosaic over USB:</strong> Reading an entire 50–100 MB RAW file across USB just to fit a photo on screen can easily take 5–10 seconds per frame.</li>
+</ul>
+<h2>How Flipic Lens speeds up external hard drives</h2>
+<p>Starting in 1.0.59, <a href="/en/">Flipic Lens</a> ships a free external-drive acceleration pipeline designed for USB HDDs, external SSDs, SD card readers and network shares:</p>
+<ol>
+<li><strong>Persistent local SSD preview cache (500 MB LRU):</strong> Screen-sized previews (up to 2560px) and thumbnails for external drives are cached on your Mac’s internal SSD under <code>~/Library/Caches</code>, capped at 500 MB with automatic oldest-first eviction. Reopening a folder—or ejecting and reconnecting the same drive—browses at near-local speed. Modified files refresh automatically, and 100% zoom always reads the original. Toggle or clear anytime in Settings › Viewing › External drives.</li>
+<li><strong>4 MB prefix RAW embedded-preview scan:</strong> Instead of mapping an entire 60–100 MB RAW file across USB, Flipic Lens reads only the first 4 MB to extract the camera’s large embedded JPEG preview in tens of milliseconds on first open.</li>
+<li><strong>Single-lane sequential I/O &amp; first-photo priority:</strong> On slow external volumes, Flipic Lens automatically narrows decoding and thumbnail queues to sequential single-lane reads to stop HDD head thrashing, and defers background thumbnail warmup until the photo you clicked is on screen.</li>
+<li><strong>Zero double-stat &amp; skip <code>._*</code> probes on non-APFS drives:</strong> Reuses prefetched directory metadata from <code>getattrlistbulk</code> and skips Finder tag lookups on exFAT, FAT, NTFS and SMB volumes.</li>
+</ol>
+<h2>Three system-side checks worth doing</h2>
+<ul>
+<li><strong>Use APFS for Mac-only work drives:</strong> Directory enumeration and metadata lookups are dramatically faster on APFS than exFAT or NTFS.</li>
+<li><strong>Prefer exFAT over third-party NTFS drivers for Mac+Windows drives:</strong> exFAT is native to both systems and avoids FUSE bridge overhead.</li>
+<li><strong>Exclude archive HDDs from Spotlight:</strong> Add rarely searched archive drives under System Settings › Spotlight › Search Privacy so <code>mds_stores</code> does not fight your viewer right after mount.</li>
+</ul>
+<p>For reproducible speed and memory numbers on Mac, see the <a href="/en/guides/mac-photo-viewer-benchmark/">Flipic Lens speed &amp; memory benchmark</a>. For RAW culling workflows, see <a href="/en/guides/view-raw-files-mac/">how to quickly view RAW files on a Mac</a>.</p>""",
+      howto=["Update to Flipic Lens 1.0.59 or later and confirm Settings › Viewing › External drives cache is on (enabled by default)",
+             "Open a folder on your external drive: Flipic Lens prioritizes the first photo using 4 MB RAW preview scan and single-lane sequential I/O, writing previews asynchronously to your Mac’s SSD",
+             "Reopen the folder or reconnect the same drive later to page directly from the local SSD cache; hold 0 to zoom to 100% and read the original",
+             "Optionally exclude large archive spinning drives in macOS System Settings › Spotlight › Search Privacy"],
+      faq=[
+          ("Will the external-drive cache fill up my Mac’s SSD?",
+           "No. It lives in macOS’s standard Caches folder with a 500 MB cap, automatically evicting the least recently used previews down to 400 MB. You can check current usage or click Clear Cache anytime in Settings › Viewing."),
+          ("Does the cache still work after ejecting and reconnecting the drive?",
+           "Yes. Keys use the volume UUID (or name + capacity on FAT/exFAT), relative path, file size and modification timestamp, so reconnecting still hits—and any photo edited externally refreshes automatically."),
+          ("Does caching affect 100% zoom sharpness?",
+           "No. Cached previews (up to 2560px) are used for fit-to-window browsing; zooming to 100% still decodes the full-resolution original from the drive."),
+          ("Is external-drive caching a Pro feature?",
+           "No, it is free and included in both the website version and the Mac App Store version."),
+      ], title_suffix=False, updated="2026-11-22", published="2026-11-22")
+
+guide("zh", "/guides/mac-photo-viewer-benchmark/", "Flipic Lens 实测性能与内存占用（可自行复现）",
+      "实测性能与内存数据",
+      "Flipic Lens 1.0.59 在 50 张 2400 万像素 JPEG 下的真实翻页延迟、主线程卡顿、内存占用与安装包体积，附完整复现命令。",
+      "真实 --bench 翻页耗时、内存峰值与自行复现命令",
+      f"""<p>看图软件说「快」和「轻量」很容易空口无凭。Flipic Lens 内置了诊断参数 <code>--bench</code>，可以在你自己的 Mac 和真实照片文件夹上直接测出首图耗时、连续翻页延迟、1:1 放大卡顿和内存峰值。</p>
+<h2>1.0.59 实测数据（2026-11-22）</h2>
+<p><strong>测试环境：</strong>Apple M5 Pro · 64 GB 内存 · macOS 26.3.1 · Flipic Lens 1.0.59（arm64 + x86_64 通用版）<br>
+<strong>测试素材：</strong>内置 SSD 上 50 张 6000×4000（2400 万像素）JPEG 照片</p>
+<table><thead><tr><th>指标</th><th>实测值</th><th>说明</th></tr></thead><tbody>
+<tr><td>安装包体积（DMG）</td><td>8.4 MB</td><td>通用二进制（Apple 芯片 + Intel）+ 14 种语言</td></tr>
+<tr><td>首图打开（<code>firstOpen</code>）</td><td>50 ms</td><td>打开文件夹到第一张清晰图上屏</td></tr>
+<tr><td>连按方向键翻页（40 步）</td><td>p50 = 1 ms · max = 2 ms</td><td>40/40 步均出图，空白帧 <code>blankSamples = 0</code></td></tr>
+<tr><td>常规慢翻（<code>slowNav</code>）</td><td>p50 = 2 ms · max = 4 ms</td><td>后台单队列顺序预取命中</td></tr>
+<tr><td>1:1 全分辨率放大卡顿</td><td>17 ms（主线程停顿）</td><td>后台解码画入 IOSurface 直接交给显卡，原图 6000px</td></tr>
+<tr><td>内存占用（物理足迹）</td><td>打开 167 MB → 翻页 245–302 MB → 1:1 放大峰值 579 MB</td><td>缓存上限按本机物理内存比例封顶（8 GB / 16 GB 机器会自动更低）</td></tr>
+</tbody></table>
+<h2>如实说明边界</h2>
+<ul>
+<li>以上为内置 SSD 上 2400 万像素合成 JPEG 的基线读数；不同相机 RAW（如 4500–6000 万像素 ARW/RAF/CR3）、老款 Intel Mac 或外接 USB 机械硬盘耗时一定不同。</li>
+<li>在 8 GB / 16 GB 内存 Mac 上，预览与全图缓存天花板会按物理内存比例自动缩窄（预览上限 <code>mem/48</code>、全图上限 <code>mem/24</code>），并在收到系统内存压力信号时优先淘汰远离当前页的缓存，不把机器拖死。</li>
+<li>外接机械硬盘首次翻图受限于 USB 带宽与硬盘寻道，建议配合 <a href="/guides/external-drive-slow-photos-mac/">外接盘本机 SSD 缓存</a>（1.0.59 起默认开启）。</li>
+</ul>
+<h2>在你自己的照片文件夹上复现</h2>
+<p>装好 Flipic Lens 后，在终端运行这一行（把末尾路径换成你自己的照片文件夹）：</p>
+<pre><code>"/Applications/Flipic Lens.app/Contents/MacOS/Flipic" --bench ~/Pictures/你的照片文件夹</code></pre>
+<p>程序会自动走完打开、40 步快速连翻、慢翻和 1:1 放大，并在终端打印 <code>BENCH</code> 汇总行后退出，不会修改任何照片。</p>
+<p>完整版本变化见 <a href="/changelog/">更新记录</a>；软件选型对比见 <a href="/compare/">Mac 看图与挑片软件对比</a>。</p>""",
+      faq=[
+          ("为什么不放和竞争对手的跑分对比图？",
+           "不同软件的缓存预热、缩略图数据库、RAW 解码精度（内嵌预览 vs 全量解马赛克）差异很大，实验室里单方面对比别家很容易失真。Flipic Lens 只公开自己可一键复现的 --bench 数据与测试条件，欢迎用你自己的真实拍摄文件夹直接对比体感。"),
+          ("8 GB 内存的 MacBook Air 跑得动吗？",
+           "跑得动。Flipic Lens 的预览与全图内存缓存按本机物理内存比例自动封顶（8 GB Mac 上预览上限约 170 MB），且全图只在放大到 100% 时才按需解码，只保留当前与上一张。"),
+      ], title_suffix=False, updated="2026-11-22", published="2026-11-22")
+
+guide("en", "/en/guides/mac-photo-viewer-benchmark/", "Flipic Lens speed & memory benchmark (reproducible on your Mac)",
+      "Speed & memory benchmark",
+      "Real, reproducible --bench measurements for Flipic Lens 1.0.59 on 50×24 MP JPEGs: open latency, rapid arrow-key paging, 1:1 zoom stall, memory footprint and exact CLI command.",
+      "Reproducible --bench paging latency, memory footprint and exact command",
+      f"""<p>Speed claims are easy to write and hard to verify. Flipic Lens ships with a built-in <code>--bench</code> flag so you can measure open latency, rapid arrow-key paging, 1:1 zoom stalls and memory footprint on your own Mac and your own shoot folder.</p>
+<h2>1.0.59 baseline measurement (2026-11-22)</h2>
+<p><strong>Hardware:</strong> Apple M5 Pro · 64 GB RAM · macOS 26.3.1 · Flipic Lens 1.0.59 (universal arm64 + x86_64)<br>
+<strong>Dataset:</strong> 50 distinct 6000×4000 (24 MP) JPEGs on internal SSD</p>
+<table><thead><tr><th>Metric</th><th>Measured</th><th>Notes</th></tr></thead><tbody>
+<tr><td>Installer size (DMG)</td><td>8.4 MB</td><td>Universal binary (Apple silicon + Intel) + 14 languages</td></tr>
+<tr><td>First photo open (<code>firstOpen</code>)</td><td>50 ms</td><td>Folder open to sharp first frame on screen</td></tr>
+<tr><td>Rapid arrow-key hold (40 steps)</td><td>p50 = 1 ms · max = 2 ms</td><td>40/40 sharp steps, <code>blankSamples = 0</code></td></tr>
+<tr><td>Deliberate paging (<code>slowNav</code>)</td><td>p50 = 2 ms · max = 4 ms</td><td>Single-lane background prefetch hit</td></tr>
+<tr><td>1:1 full-res zoom stall</td><td>17 ms main-thread max</td><td>Decoded off-thread into IOSurface (6000px backing)</td></tr>
+<tr><td>Physical memory footprint</td><td>167 MB open → 245–302 MB paging → 579 MB peak at 1:1</td><td>Cache caps scale with machine RAM (lower on 8 GB / 16 GB Macs)</td></tr>
+</tbody></table>
+<h2>Honest boundaries</h2>
+<ul>
+<li>These numbers are a baseline on internal SSD with 24 MP synthetic JPEGs. Large 45–60 MP camera RAWs (ARW/RAF/CR3), older Intel Macs and USB spinning drives will measure differently.</li>
+<li>On 8 GB and 16 GB Macs, preview and full-image caches automatically cap as a fraction of physical RAM (<code>mem/48</code> preview, <code>mem/24</code> full) and shed distant frames under macOS memory pressure.</li>
+<li>For external USB drives and SD cards, see <a href="/en/guides/fast-photo-viewer-external-hard-drive-mac/">how Flipic Lens accelerates external drives with a 500 MB local SSD cache</a>.</li>
+</ul>
+<h2>Reproduce it on your own photos</h2>
+<p>After installing Flipic Lens, run this command in Terminal (point the path at any folder of your own photos):</p>
+<pre><code>"/Applications/Flipic Lens.app/Contents/MacOS/Flipic" --bench ~/Pictures/your-folder</code></pre>
+<p>It opens the folder, runs 40 rapid steps, slow paging and a 1:1 zoom, prints the <code>BENCH</code> summary and exits without modifying any file.</p>
+<p>See what changed recently in the <a href="/en/changelog/">Changelog</a>, or compare tools at <a href="/en/compare/">Mac photo viewers and culling tools compared</a>.</p>""",
+      faq=[
+          ("Why not publish side-by-side benchmark bars against competitors?",
+           "Viewers differ widely in thumbnail databases, warm caches and whether they show an embedded preview or full RAW demosaic, making vendor-run competitor charts easy to skew. We publish only reproducible --bench numbers with exact conditions so you can test on your own folder."),
+          ("Does it run well on an 8 GB MacBook Air?",
+           "Yes. Preview and full-image caches scale down automatically with system memory (about 170 MB preview cap on an 8 GB Mac), and full-resolution originals are decoded only when zoomed in and kept to two frames."),
+      ], title_suffix=False, updated="2026-11-22", published="2026-11-22")
 
 
 
@@ -1472,17 +1667,18 @@ PRO = {
             "alt": "修图前后对比的分割视图：左边是原片，右边是调亮、调冷以后的版本",
         },
         "film": {
-            "h": "胶片滤镜的全部十款",
+            "h": "十款胶片滤镜 + 自定义 .cube 3D LUT",
             "body": [
-                "胶片滤镜面板里十款效果，「暖调人像」和「经典黑白」免费，另外八款是 Pro：日常暖色、浓郁反转片、清冷薄荷、细腻鲜艳、电影夜色、纪实灰调、柔和黑白、粗颗粒黑白。下载后的 7 天试用里，十款都能用。",
-                "按 <kbd>⇧F</kbd> 打开面板，强度、颗粒、光晕三个滑块可调，翻页时效果一直保持，原图不会被改。另存一份、⌘S 导出和批量转换里的胶片选项，用哪一款都一样。",
+                "胶片滤镜面板里十款内置效果，「暖调人像」和「经典黑白」免费，另外八款是 Pro：日常暖色、浓郁反转片、清冷薄荷、细腻鲜艳、电影夜色、纪实灰调、柔和黑白、粗颗粒黑白。同时支持导入自己的 3D <code>.cube</code> LUT（索尼、富士、达芬奇、Adobe 导出的 17/33/64/65 级都支持，超过 64 级自动重采样）。下载后的 7 天试用里全部可用。",
+                "按 <kbd>⇧F</kbd> 打开面板，强度、颗粒、光晕三个滑块可调，翻页时效果一直保持，原图不会被改。另存一份、⌘S 导出、批量转换和导出预设里都能直接套用内置胶片或已导入的 .cube LUT。",
             ],
             "img": "film.webp",
             "alt": "胶片滤镜面板：十款效果的缩略图，下面是强度、颗粒、光晕滑块",
         },
         "small_title": "还有这些",
         "small": [
-            ("导出预设", "把常用的导出方式存成预设，一步导出一批照片，快捷键是 ⌥⌘1 到 ⌥⌘9。预设除了格式、质量、尺寸上限和文件名模板，还能带上一款胶片滤镜{wm}。"),
+            ("按客户文件名清单挑图", "客户从微信、飞书或邮件发来一串选片编号（哪怕夹杂文字或只写后四位），在「照片 › 按文件名清单挑图…」里整段粘贴，自动匹配文件夹里的原图（支持 .JPG 跨扩展名对应 .ARW/RAW 与 RAW+JPG 成对匹配），一键只看命中、全部标记或导出原图。"),
+            ("导出预设", "把常用的导出方式存成预设，一步导出一批照片，快捷键是 ⌥⌘1 到 ⌥⌘9。预设除了格式、质量、尺寸上限和文件名模板，还能带上一款胶片/LUT、EXIF 参数相框{wm}。"),
             ("JPG 和 RAW 合并显示", "相机同时存 JPG 和 RAW 的话，同名的两个文件只显示成一张，张数不会翻倍，按 V 切换看哪一张。打星、标记、导出、删除都当成一张处理。"),
             ("按星级分到子文件夹", "打完星以后，可以把整个文件夹的照片按星级复制或移动到「5 星」「4 星」这样的子文件夹里。"),
             ("常用文件夹", "最多设 9 个常用文件夹，看图时按 ⌥1 到 ⌥9 就把当前照片复制或移动过去。"),
@@ -1495,11 +1691,16 @@ PRO = {
         "trial": "下载 Flipic Lens 就带 7 天试用，到期后免费功能照常可用。",
         "free_title": "免费和 Pro",
         "free_head": ("功能", "免费", "Pro"),
-        "free_rows": [("看图、RAW 秒开、HDR、幻灯片", "有", "有"), ("评星、标记、按星级筛选", "有", "有"),
-                      ("导出到文件夹、并排对比、清理模式", "有", "有"), ("批量转格式、批量重命名", "有", "有"),
-                      ("工作台", "", "有"), ("放大到眼睛", "", "有"), ("按内容、按照片里的字找照片", "", "有"), ("修图前后对比", "", "有"), ("JPG 和 RAW 合并显示", "", "有"), ("按星级分到子文件夹", "", "有"),
-                      ("常用文件夹 ⌥1–⌥9", "", "有"), ("删除没挑中的照片", "", "有"), ("批量送进后期软件", "", "有"),
-                      ("自定义同名关联", "", "有"), ("胶片滤镜：暖调人像、经典黑白", "有", "有"), ("胶片滤镜：另外八款", "", "有"), ("导出预设", "", "有")],
+        "free_rows": [("看图、RAW 秒开、外接盘 SSD 缓存、HDR、幻灯片", "有", "有"),
+                      ("直方图 (H)、过曝警示 (J)、焦点峰值 (K)、对焦框 (A)", "有", "有"),
+                      ("评星、颜色标签（XMP + 访达）、标记、筛选", "有", "有"),
+                      ("导出到文件夹、EXIF 参数相框、并排对比、清理模式", "有", "有"),
+                      ("批量转格式、EXIF 模板批量重命名、水印与去序列号", "有", "有"),
+                      ("工作台", "", "有"), ("放大到眼睛", "", "有"), ("按内容、按照片里的字找照片", "", "有"),
+                      ("按客户文件名清单挑图", "", "有"), ("修图前后对比", "", "有"), ("JPG 和 RAW 合并显示", "", "有"),
+                      ("按星级分到子文件夹", "", "有"), ("常用文件夹 ⌥1–⌥9", "", "有"), ("删除没挑中的照片", "", "有"),
+                      ("批量送进后期软件", "", "有"), ("自定义同名关联", "", "有"),
+                      ("胶片滤镜：暖调人像、经典黑白", "有", "有"), ("胶片滤镜：另外八款 + 自定义 .cube 3D LUT", "", "有"), ("导出预设", "", "有")],
         "faq": [
             ("激活码怎么用？", "付款成功的页面上有激活码和「在 Flipic Lens 中激活」按钮，点一下就激活了。也可以复制激活码，粘贴到 Flipic Lens「设置 › Pro」里。"),
             ("要联网验证吗？", "第一次激活需要联网，把激活码绑定到这台 Mac，只发订单号和设备号的哈希。之后离线也能用，每隔一段时间联网核对一次；长时间（60 天）没联上网，联网一次就恢复。"),
@@ -1561,17 +1762,18 @@ PRO = {
             "alt": "Before and after split view: the original on the left, a brighter, cooler edit on the right",
         },
         "film": {
-            "h": "All ten film looks",
+            "h": "All ten film looks + custom .cube 3D LUTs",
             "body": [
-                "Of the ten looks in the Film Looks panel, Warm Portrait and Classic B&amp;W are free. The other eight are Pro: Everyday Warm, Rich Slide, Cool Mint, Fine Color, Cinema Night, Muted Gray, Soft B&amp;W and Coarse B&amp;W. All ten work during the 7-day trial in every download.",
-                "Press <kbd>⇧F</kbd> to open the panel. Strength, Grain and Halation are adjustable, the look stays on as you page, and your originals are never changed. Save a Copy and the Film option in Export (⌘S) and Batch Convert work the same with any look.",
+                "Of the ten built-in looks in the Film Looks panel, Warm Portrait and Classic B&amp;W are free. The other eight are Pro: Everyday Warm, Rich Slide, Cool Mint, Fine Color, Cinema Night, Muted Gray, Soft B&amp;W and Coarse B&amp;W. Pro also imports your own 3D <code>.cube</code> LUTs (17/33/64/65-point files from Sony, Fujifilm, DaVinci Resolve or Adobe; grids above 64 are automatically resampled). Everything works during the 7-day trial.",
+                "Press <kbd>⇧F</kbd> to open the panel. Strength, Grain and Halation are adjustable, the look stays on as you page, and your originals are never changed. Save a Copy, Export (⌘S), Batch Convert and export presets all support both built-in looks and imported .cube LUTs.",
             ],
             "img": "film-en.webp",
             "alt": "Film Looks panel: ten swatches of the current photo above Strength, Grain and Halation sliders",
         },
         "small_title": "And also",
         "small": [
-            ("Export presets", "Save the ways you usually export and deliver a batch in one step; the shortcuts are ⌥⌘1 to ⌥⌘9. Besides format, quality, size limits and a file name template, a preset can carry a film look{wm}."),
+            ("Match from a client’s filename list", "Paste a client’s messy list of photo names or trailing numbers from chat or email (Photo › Match from Filename List…) to match across extensions (.JPG → .ARW/RAW) and RAW+JPG pairs, then filter, mark all or export originals."),
+            ("Export presets", "Save the ways you usually export and deliver a batch in one step; the shortcuts are ⌥⌘1 to ⌥⌘9. Besides format, quality, size limits and a file name template, a preset can carry a film/LUT, EXIF frame{wm}."),
             ("Show JPG and RAW as one photo", "If your camera saves both JPG and RAW, each pair shows up as one photo, so the count doesn’t double. Press V to switch between them. Rating, marking, exporting and deleting treat the pair as one."),
             ("Sort into folders by rating", "After rating, copy or move the photos in a folder into subfolders like “5 stars” and “4 stars”."),
             ("Favorite folders", "Set up to nine folders, then press ⌥1 to ⌥9 while viewing to copy or move the current photo there."),
@@ -1584,11 +1786,16 @@ PRO = {
         "trial": "Every download includes a 7-day trial; after it ends, the free features keep working.",
         "free_title": "Free and Pro",
         "free_head": ("Feature", "Free", "Pro"),
-        "free_rows": [("Viewing, instant RAW, HDR, slideshow", "Yes", "Yes"), ("Ratings, marks, filter by rating", "Yes", "Yes"),
-                      ("Export to folder, side-by-side, Cleanup Mode", "Yes", "Yes"), ("Batch convert, batch rename", "Yes", "Yes"),
-                      ("Workbench", "", "Yes"), ("Zoom to the eyes", "", "Yes"), ("Find photos by content or text", "", "Yes"), ("Before & after", "", "Yes"), ("Merge JPG and RAW", "", "Yes"), ("Sort into folders by rating", "", "Yes"),
-                      ("Favorite folders ⌥1–⌥9", "", "Yes"), ("Delete what you didn’t pick", "", "Yes"), ("Send a batch to your editor", "", "Yes"),
-                      ("Custom linked files", "", "Yes"), ("Film looks: Warm Portrait, Classic B&W", "Yes", "Yes"), ("Film looks: the other eight", "", "Yes"), ("Export presets", "", "Yes")],
+        "free_rows": [("Viewing, instant RAW, external drive SSD cache, HDR, slideshow", "Yes", "Yes"),
+                      ("Histogram (H), clipping (J), focus peaking (K), AF point (A)", "Yes", "Yes"),
+                      ("Ratings, color labels (XMP + Finder), marks, filtering", "Yes", "Yes"),
+                      ("Export to folder, EXIF photo frame, side-by-side, Cleanup Mode", "Yes", "Yes"),
+                      ("Batch convert, EXIF template rename, watermarks & serial stripping", "Yes", "Yes"),
+                      ("Workbench", "", "Yes"), ("Zoom to the eyes", "", "Yes"), ("Find photos by content or text", "", "Yes"),
+                      ("Match from a client’s filename list", "", "Yes"), ("Before & after", "", "Yes"), ("Merge JPG and RAW", "", "Yes"),
+                      ("Sort into folders by rating", "", "Yes"), ("Favorite folders ⌥1–⌥9", "", "Yes"), ("Delete what you didn’t pick", "", "Yes"),
+                      ("Send a batch to your editor", "", "Yes"), ("Custom linked files", "", "Yes"),
+                      ("Film looks: Warm Portrait, Classic B&W", "Yes", "Yes"), ("Film looks: other eight + custom .cube 3D LUTs", "", "Yes"), ("Export presets", "", "Yes")],
         "faq": [
             ("How do I activate?", "The payment confirmation page shows your key and an Activate in Flipic Lens button. Or copy the key and paste it into Flipic Lens › Settings › Pro."),
             ("Does it need to go online?", "The first activation goes online to bind the key to this Mac, sending only hashes of the order number and device ID. After that it works offline and checks in now and then; if it has been offline for a long time (60 days), going online once restores it."),
@@ -1816,6 +2023,86 @@ def render_legal(lang, page):
     return out + f'<main id="main" class="narrow article">\n<h1>{title}</h1>{body}\n</main>\n' + footer(lang)
 
 
+def render_changelog(lang):
+    is_zh = lang == "zh"
+    path = "/changelog/" if is_zh else "/en/changelog/"
+    title = "更新记录" if is_zh else "Changelog"
+    desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
+            else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
+    entries_zh = [
+        ("1.0.59", "2026-11-22", [
+            "外接硬盘本机 SSD 预览缓存（上限 500 MB、LRU 自动清理，可在「设置 › 看图 › 外接盘加速」开关或清空）+ RAW 前 4 MB 内嵌预览快扫 + 慢盘单通道顺序调度与首图优先。",
+            "单图质检套件（免费）：H 实时 RGB/亮度直方图（含死黑/过曝占比）、J 过曝/暗部斑马纹警示、K 焦点峰值、A 相机对焦框（EXIF SubjectArea、XMP MWG-RS、Sony 与 Fujifilm MakerNotes）。",
+            "EXIF 参数相框（⇧B，免费）：自动排版机身、镜头、焦距、光圈、快门与 ISO，适配导出与批量转换。",
+            "EXIF 变量模板批量重命名（免费）：支持 {date}、{time}、{camera}、{focal}、{name}、{seq} 与实时预览；同步改名 .xmp/.MOV 附属文件。",
+            "XMP 颜色标签（xmp:Label）与 Lightroom / Capture One 互通；导出新增「抹掉相机与镜头序列号」；水印新增 {index} 自动序号。",
+            "Pro 新增：按客户文件名清单挑图（跨扩展名 + RAW+JPG 配对），胶片面板支持导入自定义 .cube 3D LUT（17/33/64/65 级）。",
+        ]),
+        ("1.0.58", "2026-11-21", [
+            "新增「跟随访达」排序（未手动改过排序时默认开启），按访达当前文件夹的排序方式直接翻页。",
+        ]),
+        ("1.0.57", "2026-11-21", [
+            "新增按「添加日期」排序（对齐访达的添加日期，缺项回落创建日期）。",
+        ]),
+        ("1.0.43", "2026-11-16", [
+            "新增导出水印（免费）：支持文字与图片 logo、斜向平铺或九宫格定位，⌘S 导出、批量转换与导出预设可用。",
+            "Pro 新增：胶片滤镜十款（两款免费 + 八款 Pro）、导出预设（⌥⌘1–⌥⌘9）。",
+        ]),
+        ("1.0.36", "2026-11-14", [
+            "照片信息面板支持读取 IPTC 标题、说明、版权与关键词，支持 macOS 15+ 本机离线说明翻译。",
+            "新增裁剪与拉直（⇧R），记住上次裁剪比例，RAW 裁剪另存为 JPEG 不伤原片。",
+        ]),
+        ("1.0.23", "2026-11-10", [
+            "正式启用名称 Flipic Lens，同时发布视频播放（MP4/MOV/M4V）、文件夹实时监听与触控板水平翻页。",
+        ]),
+        ("1.0.0", "2026-11-04", [
+            "Pro 工作台（⌥⌘B）默认开启、按内容/文字本机搜索、放大到眼睛（E）、修图前后对比与 Developer ID 签名公证。",
+        ]),
+    ]
+    entries_en = [
+        ("1.0.59", "2026-11-22", [
+            "External drive local SSD preview cache (500 MB cap, automatic LRU cleanup, toggle/clear in Settings › Viewing › External drives) + 4 MB RAW prefix embedded-preview scan + single-lane slow-drive I/O.",
+            "Single-viewer inspect suite (Free): H RGB/luma histogram with S/H %, J highlight/shadow clipping zebras, K focus peaking, A camera AF point (EXIF SubjectArea, XMP MWG-RS, Sony and Fujifilm MakerNotes).",
+            "EXIF photo frame (⇧B, Free): auto-typesets camera, lens, focal length, aperture, shutter and ISO, wired into Export and Batch Convert.",
+            "EXIF template batch rename (Free): {date}, {time}, {camera}, {focal}, {name}, {seq} tokens, 5 presets, live preview and companion .xmp/.MOV sync.",
+            "Standard xmp:Label color tags (Lightroom & Capture One compatible), export camera/lens serial stripping, and {index} watermark sequence token.",
+            "Pro additions: Match from a client’s filename list (cross-extension & RAW+JPG pair aware), plus custom .cube 3D LUT import (17/33/64/65-point) in the Film Looks panel.",
+        ]),
+        ("1.0.58", "2026-11-21", [
+            "New Same as Finder sort option (default if you never picked a sort), matching the folder’s Finder order.",
+        ]),
+        ("1.0.57", "2026-11-21", [
+            "Added Sort by Date Added (matches Finder’s Date Added attribute).",
+        ]),
+        ("1.0.43", "2026-11-16", [
+            "Free export watermarks (text or image logo, tiled or 9 positions) across Export, Batch Convert and presets.",
+            "Ten film looks (2 free, 8 Pro) and one-step Export Presets (⌥⌘1–⌥⌘9, Pro).",
+        ]),
+        ("1.0.36", "2026-11-14", [
+            "Read IPTC headlines, captions, credit and keywords in Photo Info, plus on-device caption translation on macOS 15+.",
+            "Crop & Straighten (⇧R) with remembered aspect ratios.",
+        ]),
+        ("1.0.23", "2026-11-10", [
+            "Renamed to Flipic Lens; added built-in video playback (MP4/MOV/M4V), live folder watching and trackpad horizontal paging.",
+        ]),
+        ("1.0.0", "2026-11-04", [
+            "Pro Workbench (⌥⌘B), on-device content & text search, zoom to eyes (E), before & after comparison, and Apple notarization.",
+        ]),
+    ]
+    rows = entries_zh if is_zh else entries_en
+    sections = []
+    for ver, dt, bullets in rows:
+        lis = "".join(f"<li>{esc(b)}</li>" for b in bullets)
+        sections.append(f'<h2>v{ver} <span class="updated">({dt})</span></h2><ul>{lis}</ul>')
+    intro = (f'<p>当前版本 <strong>{VERSION}</strong>（安装包约 {SIZE}）。完整历史版本与安装包见 <a href="{GITHUB}/releases">GitHub Releases</a>。</p>'
+             if is_zh else
+             f'<p>Current version <strong>{VERSION}</strong> (about {SIZE} download). Every release archive is also on <a href="{GITHUB}/releases">GitHub Releases</a>.</p>')
+    schema = [crumbs_schema(lang, title, path)]
+    out = head(lang, path, title + " | Flipic Lens", desc, schema) + header(lang, path)
+    return (out + f'<main id="main" class="narrow article">\n<h1>{title}</h1>\n<div class="prose">{intro}{"".join(sections)}</div>\n'
+            f'<div class="cta"><p>{T[lang]["cta"]}</p>{download_block(lang)}</div>\n</main>\n' + footer(lang))
+
+
 def write(path, text):
     p = OUT / path.lstrip("/")
     if path.endswith("/"):
@@ -1845,6 +2132,9 @@ def main():
             urls.append(g["path"])
         write(PRO[lang]["path"], render_pro(lang))
         urls.append(PRO[lang]["path"])
+        cl_path = "/changelog/" if lang == "zh" else "/en/changelog/"
+        write(cl_path, render_changelog(lang))
+        urls.append(cl_path)
         if LEGAL_READY:
             for page in legal_pages(lang):
                 write(page[0], render_legal(lang, page))
@@ -1874,34 +2164,38 @@ def main():
     (OUT / f"{INDEXNOW_KEY}.txt").write_text(INDEXNOW_KEY)
     (OUT / "robots.txt").write_text(f"User-agent: *\nAllow: /\n\nSitemap: {BASE}/sitemap.xml\n")
 
-    WM_LLMS = ("- Export watermark (free): text or picture, tiled or single position, adjustable size, opacity, color and angle; used in Export, Batch Convert and export presets; originals are never changed; videos and animated images are skipped.\n" if SHOW_WATERMARK else "")
+    WM_LLMS = ("- Export watermark (free): text or picture, tiled or single position, adjustable size, opacity, color and angle, plus {index} sequence number; used in Export, Batch Convert and export presets; originals are never changed; videos and animated images are skipped.\n" if SHOW_WATERMARK else "")
     guide_lines = "\n".join(f"- [{g['title']}]({BASE}{g['path']}): {g['desc']}" for lang in ("en", "zh") for g in GUIDES[lang])
     (OUT / "llms.txt").write_text(f"""# Flipic Lens
 
-> Flipic Lens is a free, open-source (MIT) image viewer for macOS 13+. Double-click any photo and page through the whole folder with the arrow keys. {SIZE} download, notarized by Apple, no account, photos stay on your Mac.
+> Flipic Lens is a free, open-source (MIT) Mac photo viewer and culling tool for macOS 13+. Double-click any photo and page through the whole folder with the arrow keys. {SIZE} universal download (Apple silicon + Intel), notarized by Apple, no account, photos stay on your Mac.
 
 Key facts:
-- Paging: ← → through every image in the folder; Space wraps the window to the photo; 0 zooms to 100% at the pointer.
-- Star ratings 1–5 written as XMP (embedded for JPEG/HEIC/TIFF, .xmp sidecar for proprietary RAW), readable by Lightroom, Bridge and Capture One.
-- Cleanup Mode: finds similar bursts, exact duplicates, closed eyes and blurry photos on-device.
-- Batch convert HEIC/JPEG/PNG, batch rename, lossless rotate, slideshow with adjustable crossfade and click-to-pause.
-- IPTC captions (free): press I and the IPTC Headline and Description stored in the file are shown at the top of the photo info panel, above creator, credit, copyright, place and keywords; ⇧I switches between Essentials and All. Read-only: Flipic Lens does not edit IPTC or other metadata.
-- Caption translation (free): when a caption is in a different language from the interface, a Translate button shows the translation below the original, using the translation built into macOS on the Mac itself; nothing is sent to a server. Needs macOS 15 or later.
-- Crop & Straighten (free, ⇧R): drag the crop frame or pick a ratio (Original, Free, 1:1, 4:5, 3:2, 16:9), then overwrite the original or save a copy. Capture info, caption and copyright are kept; RAW files are not changed and the crop is saved as a JPEG. There are no color, exposure, filter or retouching tools; ⌘E hands the photo to Lightroom or Capture One.
-- Film looks (⇧F): ten color looks shown as swatches of the current photo, with Strength, Grain and Halation sliders; the look stays on while paging, originals are never changed, Save a Copy… writes a new file, and Export, Batch Convert and export presets can apply it to a batch. Two looks are free, eight are Pro (all ten during the 7-day trial).
-- Location map in the info panel (loads on request); photos taken in mainland China are converted from WGS-84 to the GCJ-02 coordinates Apple Maps uses there, so the pin is not a few hundred metres off.
-- Color tags (keys 6-9, Finder tags), export size limits (long edge, file size in MB, sRGB), right-click menu on thumbnails, and Crop remembers the last ratio.
+- Paging & sorting: ← → through every image in the folder (default Same as Finder sort, or Date Added, Date Taken, Date Modified, Name, Size); Space wraps the window to the photo; hold 0 to zoom to 100% at the pointer.
+- Single-viewer inspection tools (free): H live RGB/luma histogram with highlight/shadow clipping %, J red/blue highlight and shadow clipping zebras, K focus peaking, A camera AF point overlay (EXIF SubjectArea, XMP mwg-rs:Regions, Sony 0x2027, Fujifilm 0x1023).
+- External drive acceleration (free): persistent local Mac SSD preview & thumbnail cache (500 MB LRU, toggle/clear in Settings › Viewing › External drives) for external hard drives, SD cards and network shares; 4 MB prefix RAW embedded-preview scan; single-lane sequential I/O on slow storage; 100% zoom always reads the original.
+- Star ratings 1–5 and color labels 6–9 written as standard XMP (xmp:Rating and xmp:Label embedded for JPEG/HEIC/TIFF/DNG, .xmp sidecar for proprietary RAW), readable by Lightroom, Bridge and Capture One; color tags also sync with Finder tags.
+- Cleanup Mode (free): finds similar bursts, exact duplicates, closed eyes and blurry photos on-device using Apple Vision.
+- EXIF photo frame (free, ⇧B): adds camera, lens, focal length, aperture, shutter and ISO caption along the bottom border with auto light/dark ink contrast; works in Export, Batch Convert and presets.
+- EXIF template batch rename (free): {{date}}, {{time}}, {{camera}}, {{focal}}, {{name}}, {{seq}} tokens, 5 presets, live preview, companion .xmp/.MOV rename.
+- Export & privacy (free): batch convert HEIC/JPEG/PNG, long-edge and MB size caps, sRGB conversion, lossless 90° rotation, optional GPS stripping and camera/lens serial-number stripping.
+- IPTC captions & translation (free): press I to read IPTC Headline/Description/credit/copyright/keywords (read-only); on-device translation via macOS 15+.
+- Crop & Straighten (free, ⇧R): aspect ratios remembered across photos; RAW crops save as JPEG without altering RAW originals.
+- Film looks & custom .cube 3D LUTs (⇧F): ten built-in film looks (2 free, 8 Pro) plus custom 3D .cube LUT import (Pro, 17/33/64/65-point) with Strength, Grain and Halation sliders, usable in Save a Copy, Export, Batch Convert and export presets.
+- Pro culling additions (optional one-time purchase, 7-day trial in every download): Workbench project grid (⌥⌘B), zoom to eyes (E), on-device content & OCR text search (⌘F), match photos from a client's filename list (cross-extension & RAW+JPG pair aware), before & after comparison, RAW+JPG pair merging (V), export presets (⌥⌘1–9).
+- Location map in the info panel (loads on request); photos taken in mainland China are converted from WGS-84 to GCJ-02 for Apple Maps alignment.
 {WM_LLMS}- Optional HDR display, customizable shortcuts, global show/hide shortcut, ⌘E hand-off to Photoshop/Lightroom/Capture One.
-- Formats: JPEG, PNG, HEIC, WebP, GIF, TIFF, AVIF, JPEG XL, camera RAW (Sony, Canon, Nikon, Fujifilm, more).
-- Download: {BASE}/download/Flipic.dmg · Source: {GITHUB} · Current version: {VERSION}
+- Formats: JPEG, PNG, HEIC, WebP, GIF, TIFF, AVIF, JPEG XL, camera RAW (Sony, Canon, Nikon, Fujifilm, more), MP4/MOV/M4V video.
+- Reproducible performance: built-in `--bench <folder>` CLI flag; baseline on Apple M5 Pro with 50×24 MP JPEGs: 50 ms first open, 1 ms median rapid paging, 17 ms max 1:1 zoom stall.
+- Download: {BASE}/download/Flipic.dmg · Source: {GITHUB} · Current version: {VERSION} · Changelog: {BASE}/en/changelog/
 
 ## How Flipic Lens compares
 - [Adobe Bridge]({BASE}/en/guides/adobe-bridge-alternative-mac/): choose Bridge for metadata, keywords, Camera Raw and Adobe batch work; choose Flipic Lens for a catalog-free folder cull.
-- [Photo Mechanic]({BASE}/en/guides/photo-mechanic-alternative-mac/): choose Photo Mechanic for ingest, IPTC, keywording and delivery; choose Flipic Lens for a simple paging and rating pass.
-- [FastRawViewer]({BASE}/en/guides/fastrawviewer-alternative-mac/): choose FastRawViewer for RAW histograms, exposure checks and focus peaking; choose Flipic Lens for paging, ratings and Cleanup Mode.
+- [Photo Mechanic]({BASE}/en/guides/photo-mechanic-alternative-mac/): choose Photo Mechanic for high-volume card ingest, IPTC editing, keywording and delivery; choose Flipic Lens for a lightweight Mac paging, inspection and rating pass.
+- [FastRawViewer]({BASE}/en/guides/fastrawviewer-alternative-mac/): choose FastRawViewer for sensor-level raw-data histograms (before demosaic) and Shadow Boost exposure recovery checks; choose Flipic Lens for free arrow-key culling, display-referred histogram/clipping/peaking/AF point, XMP ratings & color labels, Cleanup Mode and external drive SSD caching.
 - [XnView MP]({BASE}/en/guides/xnview-mp-alternative-mac/): choose XnView MP for format breadth, batch tools and cross-platform work; choose Flipic Lens for a quick Mac cull.
-- [ApolloOne]({BASE}/en/guides/apolloone-alternative/): choose ApolloOne for Mac-native metadata, HDR, stacks and quick edits; choose Flipic Lens for a free, catalog-free first cull.
-- [FlowVision]({BASE}/en/guides/flowvision-alternative/): choose FlowVision for waterfall or grid browsing with video; choose Flipic Lens for arrow-key culling with ratings and marks.
+- [ApolloOne]({BASE}/en/guides/apolloone-alternative/): choose ApolloOne for Mac-native metadata editing, stacks and quick edits; choose Flipic Lens for a free, open-source catalog-free first cull.
+- [FlowVision]({BASE}/en/guides/flowvision-alternative/): choose FlowVision for waterfall or grid browsing with video; choose Flipic Lens for arrow-key culling with XMP ratings, labels and inspection overlays.
 - [Lightroom Classic]({BASE}/en/guides/cull-before-lightroom/): choose Lightroom Classic for editing and a catalog; choose Flipic Lens to cull before import.
 - [Preview]({BASE}/en/guides/mac-preview-next-image/): choose Preview for a quick look at a file; choose Flipic Lens to page and rate a whole folder.
 - [Photos](https://support.apple.com/guide/photos/welcome/mac): choose Photos for a personal Apple photo library; choose Flipic Lens for a folder-based first cull.
@@ -1910,6 +2204,10 @@ Key facts:
 ## Pages
 - [Flipic Lens (English)]({BASE}/en/)
 - [Flipic Lens（中文）]({BASE}/)
+- [Flipic Lens Pro (English)]({BASE}/en/pro/)
+- [Flipic Lens Pro（中文）]({BASE}/pro/)
+- [Changelog (English)]({BASE}/en/changelog/)
+- [更新记录（中文）]({BASE}/changelog/)
 {guide_lines}
 """)
 

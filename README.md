@@ -30,7 +30,7 @@
 
 <p align="center"><sub>Real-time screen recording, 34 RAW files from 34 different cameras. <a href="docs/media/flipic-lens-demo.mp4">Full-quality video</a></sub></p>
 
-After a shoot I wanted to go through the photos first, but Preview isn't built for flipping through hundreds of shots and Lightroom wants an import first. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is about 8 MB, there is no account, and photos are processed only on your Mac.
+After a shoot I wanted to go through the photos first, but Preview isn't built for flipping through hundreds of shots and Lightroom wants an import first. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is about 8.4 MB, there is no account, and photos are processed only on your Mac.
 
 
 ## Culling a shoot
@@ -79,6 +79,8 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 
 - Culling: press P to mark the photos you want (a same-name RAW is marked too) and ⇧P to show only marked ones. Marks are a Finder tag named Flipic, so the photo files are not changed and the tag in the Finder sidebar lists them all, ready to select and drag.
 - Filter by rating: View › Show by Rating shows N stars and up, and File › Export to Folder… (⇧⌘E) copies or moves the photos shown in one go, numbering name clashes and taking RAW rating sidecars along.
+- Inspection overlays: press H for a live RGB & luma histogram with shadow/highlight clipping %, J for highlight/shadow clipping zebras, K for focus peaking, and A to show the camera AF point (EXIF SubjectArea, XMP MWG-RS, Sony and Fujifilm MakerNotes).
+- External drive acceleration: screen-sized previews and thumbnails for external hard drives, SD cards and network shares cache automatically to your Mac's internal SSD (500 MB LRU cap; toggle or clear in Settings › Viewing), paired with 4 MB prefix RAW embedded-preview scanning and single-lane sequential I/O on slow storage.
 - Side-by-side compare: C for two photos, Shift-C for four, with zoom and position synced so you can check focus and expressions across a burst. Hold ⌥ to nudge one pane on its own, and Shift-L turns syncing off.
 - The bottom toolbar can be turned off in Settings if you prefer shortcuts and menus.
 - Open several windows at once: opening another photo from Finder while one is showing starts a new window (Settings can switch back to replacing it), and File › New Window is ⌘N.
@@ -112,7 +114,9 @@ Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. 
 **Batch tools and more**
 
 - Convert a whole folder to JPEG, PNG or HEIC; converted files go into a subfolder and the originals stay untouched
-- Batch rename
+- EXIF template batch rename (`{date}`, `{time}`, `{camera}`, `{focal}`, `{name}`, `{seq}`) with presets, live preview and companion `.xmp`/`.MOV` sync
+- EXIF photo frame (`⇧B`): typesets camera, lens, focal length, aperture, shutter speed and ISO along the border; works in Export and Batch Convert
+- XMP color labels (`6–9`, synced with both Finder tags and standard `xmp:Label`), export camera/lens serial stripping, and watermark `{index}` sequence numbers
 - Rotate and save back to the file without quality loss: JPEG, HEIC and camera RAW (ARW, NEF, CR2, CR3, RAF, ORF, RW2, PEF, DNG and more) only get their orientation tags rewritten, the image data is untouched
 - Slideshow with 1, 2, 3, 5 or 10 seconds per photo and a 0.5 to 3 second crossfade, set separately from paging; click the photo to pause and click again to resume, with paging and rating available while paused; the thumbnail strip and toolbar hide while you leave the mouse alone
 - Export compressed copies, set as desktop picture, move to Trash
