@@ -74,13 +74,46 @@ final class InfoPanelView: NSVisualEffectView {
     var docked = false {
         didSet {
             guard docked != oldValue else { return }
-            layer?.cornerRadius = docked ? 0 : 12
-            titleTop?.constant = docked ? 52 : 14
-            edgeLine.isHidden = !docked
+            applyChromeStyle()
+        }
+    }
+    /// 工作台右侧独立圆角卡片样式：与工作台各面板同底色、10 pt 连续圆角、无顶栏留空
+    var cardStyle = false {
+        didSet {
+            guard cardStyle != oldValue else { return }
+            applyChromeStyle()
+        }
+    }
+    /// 未选中任何照片时显示的占位提示（工作台用；看图窗口保持 nil，连翻时不闪占位字）
+    var emptyMessage: String? {
+        didSet {
+            if shownURL == nil { rebuild() }
         }
     }
     private var titleTop: NSLayoutConstraint?
     private let edgeLine = NSView()
+    private let cardBacking = NSView()
+    private static let cardColor = Theme.gray(dark: 0.105, light: 0.97)
+
+    private func applyChromeStyle() {
+        cardBacking.isHidden = !cardStyle
+        if cardStyle {
+            layer?.cornerRadius = 10
+            layer?.cornerCurve = .continuous
+            titleTop?.constant = 16
+            edgeLine.isHidden = true
+        } else {
+            layer?.cornerRadius = docked ? 0 : 12
+            layer?.cornerCurve = .circular
+            titleTop?.constant = docked ? 52 : 14
+            edgeLine.isHidden = !docked
+        }
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        Theme.refresh(cardBacking)
+    }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -91,6 +124,12 @@ final class InfoPanelView: NSVisualEffectView {
         layer?.cornerRadius = 12
         layer?.masksToBounds = true
         translatesAutoresizingMaskIntoConstraints = false
+
+        cardBacking.wantsLayer = true
+        Theme.paint(cardBacking, background: Self.cardColor)
+        cardBacking.translatesAutoresizingMaskIntoConstraints = false
+        cardBacking.isHidden = true
+        addSubview(cardBacking)
 
         titleLabel.font = .boldSystemFont(ofSize: 13)
         titleLabel.textColor = .secondaryLabelColor
@@ -141,6 +180,10 @@ final class InfoPanelView: NSVisualEffectView {
         fit.priority = .dragThatCannotResizeWindow
         NSLayoutConstraint.activate([
             widthAnchor.constraint(equalToConstant: Self.width),
+            cardBacking.topAnchor.constraint(equalTo: topAnchor),
+            cardBacking.bottomAnchor.constraint(equalTo: bottomAnchor),
+            cardBacking.leadingAnchor.constraint(equalTo: leadingAnchor),
+            cardBacking.trailingAnchor.constraint(equalTo: trailingAnchor),
             titleTop,
             edgeLine.leadingAnchor.constraint(equalTo: leadingAnchor),
             edgeLine.topAnchor.constraint(equalTo: topAnchor),
@@ -253,10 +296,15 @@ final class InfoPanelView: NSVisualEffectView {
         titleLabel.stringValue = isVideo ? L10n.t("ui.videoInfoTitle", "视频信息") : L10n.t("ui.exifTitle", "照片信息")
         let level = InfoLevel.current
         levelControl.selectedSegment = level == .all ? 1 : 0
-        levelControl.isHidden = isVideo || info.isFlat
+        levelControl.isHidden = shownURL == nil || isVideo || info.isFlat
 
         if shownURL != nil {
             if info.isFlat || level == .common { buildCommon() } else { buildAll() }
+        } else if let msg = emptyMessage {
+            let empty = NSTextField(labelWithString: msg)
+            empty.font = .systemFont(ofSize: 12)
+            empty.textColor = .tertiaryLabelColor
+            stack.addArrangedSubview(empty)
         }
         layoutSubtreeIfNeeded()
         scroll.contentView.scroll(to: keepScroll ? offset : .zero)
