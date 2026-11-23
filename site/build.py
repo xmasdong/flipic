@@ -16,7 +16,7 @@ SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
 SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "8.6 MB"
+SIZE = "8.7 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -2030,6 +2030,10 @@ def render_changelog(lang):
     desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
             else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
     entries_zh = [
+        ("1.0.61", "2026-11-23", [
+            "Pro 工作台新增最右侧独立照片信息栏：顶部固定 ⓘ 按钮与快捷键 I / ⇧I 开关，宽屏圆角卡片贴边一屏显示直方图、曝光全参、相机镜头、文件色域、IPTC 说明翻译与地图，窄屏自动切为右侧浮层；支持 5 种视图全联动（含多图对比焦点格跟随）。",
+            "工作台胶片条与单张视图底部字幕同步补全快门、光圈、ISO、焦距与像素尺寸。",
+        ]),
         ("1.0.60", "2026-11-23", [
             "ExFAT 与外接机械硬盘冷读取深度加速（免费 + Pro）：按卷优先级单通道顺序调度、POSIX 顺序大块读盘、单次打开合并解码（RAW 前 4 MB 预览优先）、目录级 .xmp 索引免无效探测、统一跳过 ExFAT/FAT/NTFS/SMB 扩展属性寻道，工作台网格与胶片条同步接入本机 SSD 缩略图缓存与增量刷新。",
             "Pro 工作台重大升级：可折叠左侧边栏（⌃⌘S，顶部按钮与系统红黄绿按钮精准齐平）、胶片条模式（大图 + 底部缩略图，T 键快速切换）、2–9 张多图同屏对比（自适应网格布局 + 同步缩放/平移/放大到眼睛）、实时 1★–5★ 计数双色胶囊。",
@@ -2065,6 +2069,10 @@ def render_changelog(lang):
         ]),
     ]
     entries_en = [
+        ("1.0.61", "2026-11-23", [
+            "Pro Workbench right Photo Info Inspector: fixed top-right ⓘ toggle and I / ⇧I shortcuts, docking as a rounded card on wide windows (histogram, exposure, camera/lens, file/color profile, IPTC + translation, GPS map in one screen) with automatic floating fallback on narrow windows; follows selection across all 5 views including Multi-Photo Compare focus.",
+            "Workbench Filmstrip and Single caption bars now show shutter, aperture, ISO, focal length, and pixel dimensions.",
+        ]),
         ("1.0.60", "2026-11-23", [
             "Deep ExFAT & external HDD cold-read acceleration (Free + Pro): per-volume priority serial scheduler, POSIX large-chunk sequential reads, single-open decoding (4 MB RAW prefix preview first), directory-level .xmp indexing, unified skipping of Finder tags/AppleDouble seeks on ExFAT/FAT/NTFS/SMB, plus local SSD thumbnail caching & incremental reloads for Workbench.",
             "Major Pro Workbench upgrades: collapsible left sidebar (⌃⌘S, toggle aligned with window traffic lights), Filmstrip view mode (T quick toggle), 2–9 photo multi-pane Compare with adaptive grids & synced zoom/pan/eye zoom, and live per-star split-pill counters.",
