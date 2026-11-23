@@ -10,13 +10,13 @@ REPO = ROOT.parent
 DOCS = REPO / "docs"
 OUT = ROOT / "public"
 BASE = "https://flipic.app"
-UPDATED = "2026-11-22"
+UPDATED = "2026-11-23"
 # 水印功能 1.0.43 发布后改成 True；False 时站点里不出现任何水印文字和图片
 SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
 SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "8.4 MB"
+SIZE = "8.6 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -2030,6 +2030,11 @@ def render_changelog(lang):
     desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
             else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
     entries_zh = [
+        ("1.0.60", "2026-11-23", [
+            "ExFAT 与外接机械硬盘冷读取深度加速（免费 + Pro）：按卷优先级单通道顺序调度、POSIX 顺序大块读盘、单次打开合并解码（RAW 前 4 MB 预览优先）、目录级 .xmp 索引免无效探测、统一跳过 ExFAT/FAT/NTFS/SMB 扩展属性寻道，工作台网格与胶片条同步接入本机 SSD 缩略图缓存与增量刷新。",
+            "Pro 工作台重大升级：可折叠左侧边栏（⌃⌘S，顶部按钮与系统红黄绿按钮精准齐平）、胶片条模式（大图 + 底部缩略图，T 键快速切换）、2–9 张多图同屏对比（自适应网格布局 + 同步缩放/平移/放大到眼睛）、实时 1★–5★ 计数双色胶囊。",
+            "看图主窗口工作台跳转按钮独立移至左上角胶囊；修复同星级按键取消评分、⌘A 全选及多选右键批量评分 / 对比体验。",
+        ]),
         ("1.0.59", "2026-11-22", [
             "外接硬盘本机 SSD 预览缓存（上限 500 MB、LRU 自动清理，可在「设置 › 看图 › 外接盘加速」开关或清空）+ RAW 前 4 MB 内嵌预览快扫 + 慢盘单通道顺序调度与首图优先。",
             "单图质检套件（免费）：H 实时 RGB/亮度直方图（含死黑/过曝占比）、J 过曝/暗部斑马纹警示、K 焦点峰值、A 相机对焦框（EXIF SubjectArea、XMP MWG-RS、Sony 与 Fujifilm MakerNotes）。",
@@ -2060,6 +2065,11 @@ def render_changelog(lang):
         ]),
     ]
     entries_en = [
+        ("1.0.60", "2026-11-23", [
+            "Deep ExFAT & external HDD cold-read acceleration (Free + Pro): per-volume priority serial scheduler, POSIX large-chunk sequential reads, single-open decoding (4 MB RAW prefix preview first), directory-level .xmp indexing, unified skipping of Finder tags/AppleDouble seeks on ExFAT/FAT/NTFS/SMB, plus local SSD thumbnail caching & incremental reloads for Workbench.",
+            "Major Pro Workbench upgrades: collapsible left sidebar (⌃⌘S, toggle aligned with window traffic lights), Filmstrip view mode (T quick toggle), 2–9 photo multi-pane Compare with adaptive grids & synced zoom/pan/eye zoom, and live per-star split-pill counters.",
+            "Dedicated top-left Workbench jump pill in the main viewer; fixed same-star keyboard toggle-off, ⌘A select-all across all views, and multi-select batch rating / compare context menu.",
+        ]),
         ("1.0.59", "2026-11-22", [
             "External drive local SSD preview cache (500 MB cap, automatic LRU cleanup, toggle/clear in Settings › Viewing › External drives) + 4 MB RAW prefix embedded-preview scan + single-lane slow-drive I/O.",
             "Single-viewer inspect suite (Free): H RGB/luma histogram with S/H %, J highlight/shadow clipping zebras, K focus peaking, A camera AF point (EXIF SubjectArea, XMP MWG-RS, Sony and Fujifilm MakerNotes).",
