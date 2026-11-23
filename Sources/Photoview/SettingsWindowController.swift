@@ -1055,7 +1055,7 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
     private let invert = NSButton(checkboxWithTitle: L10n.t("wheel.invert", "反转缩放方向"), target: nil, action: nil)
     private let invertNav = NSButton(checkboxWithTitle: L10n.t("wheel.invertNav", "反转翻页方向"), target: nil, action: nil)
     private let hWheelNav = NSButton(radioButtonWithTitle: L10n.t("hwheel.navigate", "切换上一张 / 下一张"), target: nil, action: nil)
-    private let hWheelPan = NSButton(radioButtonWithTitle: L10n.t("hwheel.pan", "左右移动图片"), target: nil, action: nil)
+    private let hWheelPan = NSButton(radioButtonWithTitle: L10n.t("hwheel.pan", "放大后左右平移"), target: nil, action: nil)
     private let wheelNote = note("")
 
     override func loadView() {
@@ -1074,13 +1074,13 @@ private final class MouseSettingsPane: NSViewController, SettingsPane {
         let g = grid([
             [label(L10n.t("set.wheel", "滚轮 / 双指上下：")), radios],
             spacerRow(wheelNote),
-            [label(L10n.t("set.hwheel", "横向滚动：")), hRadios],
-            spacerRow(note(L10n.t("set.hwheelNote", "适用于鼠标的横向滚轮（如罗技 MX Master 的拇指滚轮）。鼠标侧键的后退 / 前进始终是上一张 / 下一张。"))),
+            [label(L10n.t("set.hwheel", "鼠标横向滚轮：")), hRadios],
+            spacerRow(note(L10n.t("set.hwheelNote", "仅对带拇指滚轮或左右拨轮的鼠标生效（如 MX Master）。"))),
             [label(L10n.t("set.navDirection", "翻页方向：")), invertNav],
-            spacerRow(note(L10n.t("set.invertNavNote", "默认手指往下滑是下一张。勾上后照片跟着手指走，往下滑回到上一张、往上滑是下一张，和刷手机一样。鼠标滚轮和触控板都适用。"))),
+            spacerRow(note(L10n.t("set.invertNavNote", "默认向下滚是下一张；勾选后方向相反，更接近手机滑动。"))),
             [label(L10n.t("set.zoomDirection", "缩放方向：")), invert],
-            spacerRow(note(L10n.t("set.invertNote", "用 Mos 之类的工具改过滚轮方向后，如果缩放反了，就勾上这一项。对滚轮缩放和触控板双指上下滑缩放都有效，不影响双指捏合和翻页。"))),
-            [label(L10n.t("set.trackpad", "触控板：")), note(L10n.t("set.trackpadNote", "双指左右滑翻页（往左滑是下一张），双指捏合缩放，双指轻点两下在适应窗口和 100% 之间切换，拖动平移。"))],
+            spacerRow(note(L10n.t("set.invertNote", "用 Mos 等工具改过滚轮方向导致缩放相反时勾选（不影响双指捏合）。"))),
+            [label(L10n.t("set.trackpad", "触控板与侧键：")), note(L10n.t("set.trackpadNote", "触控板双指左右滑翻页、捏合缩放、双指轻点切换 100%；鼠标前进 / 后退侧键固定用于翻页。"))],
         ])
         g.row(at: 0).rowAlignment = .none
         g.cell(atColumnIndex: 0, rowIndex: 0).yPlacement = .top

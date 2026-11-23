@@ -5,6 +5,11 @@ final class FilmstripView: NSScrollView {
     let collectionView = FilmstripCollectionView()
     /// 常驻的细滚动条：系统的浮动滚动条不动就藏起来，看不出这一张在文件夹里大概的位置
     private let scrollBar = FilmstripScrollBar()
+    /// 鼠标在缩略图条上上下滚轮（或横向滚轮 / 侧键）翻页：-1 上一张，+1 下一张；触控板左右滑仍自由浏览整条缩略图
+    var onWheelNavigate: ((Int) -> Void)?
+    private var lastWheelFlip = Date.distantPast
+    private var wheelAccum: CGFloat = 0
+    private var wheelFlippedInGesture = false
 
     /// 缩略图大小（点），设置里可选；格子是正方形，缩略图栏高度 = 格子 + 上下各 6
     static let thumbSizes: [CGFloat] = [48, 64, 96, 128]
@@ -72,6 +77,56 @@ final class FilmstripView: NSScrollView {
         guard index >= 0, index < collectionView.numberOfItems(inSection: 0) else { return }
         collectionView.scrollToItems(at: Set([IndexPath(item: index, section: 0)]),
                                      scrollPosition: .centeredHorizontally)
+    }
+
+    override func scrollWheel(with event: NSEvent) {
+        guard let onWheelNavigate else { super.scrollWheel(with: event); return }
+        let dx = event.scrollingDeltaX
+        let dy = event.scrollingDeltaY
+        let precise = event.hasPreciseScrollingDeltas
+        // 触控板 / 妙控鼠标左右滑：保持原生自由滑动整条缩略图
+        if precise && abs(dx) > abs(dy) {
+            super.scrollWheel(with: event)
+            return
+        }
+        // 鼠标横向滚轮（如拇指滚轮）：若设置开启了横向滚轮翻页则切图，否则横向滚动条
+        if !precise && abs(dx) > abs(dy) {
+            guard ZoomableImageView.hWheelNavigates else { super.scrollWheel(with: event); return }
+            guard event.momentumPhase.isEmpty else { return }
+            var x = dx
+            if event.isDirectionInvertedFromDevice { x = -x }
+            if ZoomableImageView.wheelNavInverted { x = -x }
+            guard x != 0, Date().timeIntervalSince(lastWheelFlip) > 0.06 else { return }
+            lastWheelFlip = Date()
+            onWheelNavigate(x < 0 ? 1 : -1)
+            return
+        }
+        // 鼠标普通上下滚轮 / 触控板双指上下滑：直接翻上一张 / 下一张（遵循翻页方向设置）
+        guard event.momentumPhase.isEmpty else { return }
+        if event.phase == .began { wheelAccum = 0; wheelFlippedInGesture = false }
+        var y = dy
+        if event.isDirectionInvertedFromDevice { y = -y }
+        if ZoomableImageView.wheelNavInverted { y = -y }
+        guard y != 0 else { return }
+        if precise {
+            guard !wheelFlippedInGesture else { return }
+            wheelAccum += y
+            guard abs(wheelAccum) >= 30 else { return }
+            y = wheelAccum
+            wheelFlippedInGesture = true
+        } else {
+            guard Date().timeIntervalSince(lastWheelFlip) > 0.06 else { return }
+        }
+        lastWheelFlip = Date()
+        onWheelNavigate(y < 0 ? 1 : -1)
+    }
+
+    override func otherMouseDown(with event: NSEvent) {
+        switch event.buttonNumber {
+        case 3: onWheelNavigate?(-1)
+        case 4: onWheelNavigate?(1)
+        default: super.otherMouseDown(with: event)
+        }
     }
 }
 

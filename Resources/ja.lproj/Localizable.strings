@@ -242,9 +242,9 @@ Return  表示中の画像を名称変更
 "set.clear" = "クリア";
 "set.wheel" = "ホイール / 2本指スクロール：";
 "set.zoomDirection" = "ズームの方向：";
-"set.invertNote" = "Mos などでホイールの方向を変えていて、ズームが逆になる場合はオンにしてください。ホイールとトラックパッドの2本指上下スクロールでのズームに効き、ピンチやページ送りは変わりません。";
-"set.trackpad" = "トラックパッド：";
-"set.trackpadNote" = "2 本指で左右にスワイプして写真を切り替え（左で次へ）、ピンチでズーム、2 本指でダブルタップするとウインドウに合わせる／100% を切り替え、ドラッグで移動。";
+"set.invertNote" = "Mos 等でスクロール方向を変更し拡大縮小が逆になった場合にオン（ピンチ操作は対象外）。";
+"set.trackpad" = "トラックパッドとサイドボタン：";
+"set.trackpadNote" = "トラックパッド：2本指左右スワイプで切替、ピンチで拡大縮小、2本指ダブルタップで100%。マウスの戻る／進むボタンは常に写真切替です。";
 "sc.group.browse" = "ブラウズ";
 "sc.group.view" = "表示";
 "sc.group.file" = "ファイル";
@@ -305,7 +305,7 @@ Return  表示中の画像を名称変更
 "msg.slideResumed" = "再開しました";
 "wheel.invertNav" = "ページ送りの方向を反転";
 "set.navDirection" = "ページ送りの方向：";
-"set.invertNavNote" = "通常は指を下に動かすと次の写真です。オンにすると写真が指に合わせて動き、スマートフォンと同じく下にスワイプで前の写真、上で次の写真になります。ホイールとトラックパッドの両方に適用されます。";
+"set.invertNavNote" = "通常は下スクロールで次の写真へ進みます。オンにすると方向が反転します。";
 "set.thumbs" = "サムネール：";
 "set.thumbSmall" = "小";
 "set.thumbMedium" = "中";
@@ -1270,10 +1270,10 @@ Return  表示中の画像を名称変更
 "split.chooseMessage" = "この場所には書き込めません。分割したフォルダの保存先を選んでください";
 "split.choosePrompt" = "選択";
 "pro.f.splitPhoto" = "分割";
-"set.hwheel" = "横スクロール：";
+"set.hwheel" = "マウス横スクロール：";
 "hwheel.navigate" = "前 / 次の写真";
-"hwheel.pan" = "写真を左右に動かす";
-"set.hwheelNote" = "マウスの横ホイール（Logicool MX Master の親指ホイールなど）に適用されます。マウスのサイドボタン（戻る / 進む）は常に前 / 次の写真に切り替わります。";
+"hwheel.pan" = "拡大時に左右へ移動";
+"set.hwheelNote" = "サムホイールやチルトホイール付きマウス（MX Master 等）のみ対象です。";
 "set.infoDockLabel" = "写真情報：";
 "set.infoDock" = "写真情報をウインドウの右端に固定して、写真に重ねない";
 "set.fitFillLabel" = "ウインドウに合わせる：";

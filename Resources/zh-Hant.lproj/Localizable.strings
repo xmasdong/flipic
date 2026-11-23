@@ -242,9 +242,9 @@ Return  重新命名目前圖片
 "set.clear" = "清除";
 "set.wheel" = "滾輪 / 雙指上下：";
 "set.zoomDirection" = "縮放方向：";
-"set.invertNote" = "用 Mos 之類的工具改過滾輪方向後，如果縮放反了，就勾選這一項。對滾輪縮放和觸控板雙指上下滑縮放都有效，不影響雙指捏合和翻頁。";
-"set.trackpad" = "觸控板：";
-"set.trackpadNote" = "雙指左右滑翻頁（往左滑是下一張），雙指捏合縮放，雙指輕點兩下在符合視窗和 100% 之間切換，拖移平移。";
+"set.invertNote" = "使用 Mos 等工具改過滾輪方向導致縮放相反時勾選（不影響雙指縮放）。";
+"set.trackpad" = "觸控式軌跡板與側鍵：";
+"set.trackpadNote" = "軌跡板雙指左右滑翻頁、雙指開合縮放、雙指輕點切換 100%；滑鼠前進 / 返回側鍵固定用於翻頁。";
 "sc.group.browse" = "瀏覽";
 "sc.group.view" = "顯示";
 "sc.group.file" = "檔案";
@@ -305,7 +305,7 @@ Return  重新命名目前圖片
 "msg.slideResumed" = "繼續播放";
 "wheel.invertNav" = "反轉翻頁方向";
 "set.navDirection" = "翻頁方向：";
-"set.invertNavNote" = "預設手指往下滑是下一張。勾選後照片跟著手指走，往下滑回到上一張、往上滑是下一張，和滑手機一樣。滑鼠滾輪和觸控板都適用。";
+"set.invertNavNote" = "預設向下滾為下一張；勾選後方向相反，更貼近手機滑動。";
 "set.thumbs" = "縮圖：";
 "set.thumbSmall" = "小";
 "set.thumbMedium" = "中";
@@ -1275,10 +1275,10 @@ Return  重新命名目前圖片
 "split.chooseMessage" = "照片所在的位置不能寫入，請選一個放切圖資料夾的位置";
 "split.choosePrompt" = "選擇";
 "pro.f.splitPhoto" = "切圖";
-"set.hwheel" = "橫向捲動：";
+"set.hwheel" = "滑鼠橫向滾輪：";
 "hwheel.navigate" = "切換上一張 / 下一張";
-"hwheel.pan" = "左右移動圖片";
-"set.hwheelNote" = "適用於滑鼠的橫向滾輪（如羅技 MX Master 的拇指滾輪）。滑鼠側鍵的後退 / 前進一律是上一張 / 下一張。";
+"hwheel.pan" = "放大後左右平移";
+"set.hwheelNote" = "僅對附帶拇指滾輪或左右撥輪的滑鼠生效（如 MX Master）。";
 "set.infoDockLabel" = "照片資訊：";
 "set.infoDock" = "照片資訊貼在視窗右邊，不擋住照片";
 "set.fitFillLabel" = "符合視窗：";

@@ -45,6 +45,7 @@ final class ViewerViewController: NSViewController {
     /// 右上角：照片信息、置顶、分享（和「照片」「预览」一样：信息按钮和它打开的面板在同一个角，分享在最右），
     /// 跟工具条一起出现和淡出
     private let cornerBar = NSVisualEffectView()
+    private var sortButton: NSButton?
     private var infoButton: NSButton?
     private var infoPanelObservation: NSKeyValueObservation?
     /// 左上角文件名，紧挨窗口的红黄绿按钮，和工具条一起出现和淡出；
@@ -357,6 +358,10 @@ final class ViewerViewController: NSViewController {
         filmstrip.collectionView.dataSource = self
         filmstrip.collectionView.delegate = self
         filmstrip.collectionView.register(FilmstripItem.self, forItemWithIdentifier: Self.filmstripID)
+        filmstrip.onWheelNavigate = { [weak self] delta in
+            guard let self else { return }
+            if delta > 0 { self.navigateForward(nil) } else { self.navigateBackward(nil) }
+        }
         filmstrip.collectionView.onClick = { [weak self] i, mods in self?.filmstripClicked(i, mods) }
         filmstrip.collectionView.onBlankClick = { [weak self] in
             guard let self, self.filmstrip.collectionView.selectionIndexPaths.count > 1 else { return }
@@ -772,8 +777,14 @@ final class ViewerViewController: NSViewController {
         stack.spacing = 2
         stack.edgeInsets = NSEdgeInsets(top: 3, left: 4, bottom: 3, right: 4)
         stack.translatesAutoresizingMaskIntoConstraints = false
+        // 快捷排序：放在右上角最左端，点一下原地弹出排序菜单（悬停显示当前排序方式）
+        let (sortContainer, sortBtn) = iconButton(symbol: "arrow.up.arrow.down", tip: L10n.t("menu.sort", "排序方式"),
+                                                  action: #selector(showSortMenu(_:)),
+                                                  size: NSSize(width: 32, height: 28), cornerRadius: 7, tint: .labelColor)
+        sortButton = sortBtn
+        stack.addArrangedSubview(sortContainer)
         #if FLIPIC_PRO
-        // 胶片滤镜：放在最左边，开着时按钮高亮
+        // 胶片滤镜：开着时按钮高亮
         let filmTip = L10n.t("film.title", "胶片滤镜")
         let (filmContainer, filmButton) = iconButton(symbol: "film", tip: Shortcuts.tooltip(filmTip, .filmPanel),
                                                      action: #selector(toggleFilmPanel(_:)),
@@ -797,6 +808,7 @@ final class ViewerViewController: NSViewController {
         }
         cornerBar.addSubview(stack)
         view.addSubview(cornerBar)
+        updateSortButtonTip()
         // 信息面板开着时 i 按钮高亮，和置顶的图钉一样；面板在很多地方开关，直接观察它的显示状态
         infoPanelObservation = exifPanel.observe(\.isHidden, options: [.initial, .new]) { [weak self] panel, _ in
             let on = !panel.isHidden
@@ -1314,6 +1326,7 @@ final class ViewerViewController: NSViewController {
         }
         let ok = folder.open(url: url)
         if ok { ExtDiskCache.shared.register(items: folder.allItems) }
+        updateSortButtonTip()
         #if FLIPIC_PRO
         if ok { applyMergePairs(keep: isDir.boolValue ? nil : url.standardizedFileURL) }
         #endif
@@ -1897,6 +1910,43 @@ final class ViewerViewController: NSViewController {
 
     // MARK: - 排序
 
+    /// 当前排序的可读摘要（如「跟随访达 · 文件名」或「拍摄时间 · 倒序」）
+    func currentSortSummary() -> String {
+        var parts: [String] = []
+        if FolderModel.followsFinder { parts.append(L10n.t("sort.finder", "跟随访达")) }
+        parts.append(folder.sortKey.title)
+        if folder.sortReversed { parts.append(L10n.t("sort.descending", "倒序")) }
+        return parts.joined(separator: " · ")
+    }
+
+    func updateSortButtonTip() {
+        sortButton?.toolTip = "\(L10n.t("menu.sort", "排序方式")): \(currentSortSummary())"
+    }
+
+    /// 供右上角 ⇅ 按钮与图片右键菜单共用的排序子菜单，和顶部菜单栏「显示 › 排序方式」一致
+    func buildSortMenu() -> NSMenu {
+        let m = NSMenu(title: L10n.t("menu.sort", "排序方式"))
+        func add(_ title: String, _ action: Selector, tag: Int = 0) {
+            let it = NSMenuItem(title: title, action: action, keyEquivalent: "")
+            it.target = self
+            it.tag = tag
+            m.addItem(it)
+        }
+        add(L10n.t("sort.finder", "跟随访达"), #selector(setSortKey(_:)), tag: -1)
+        m.addItem(.separator())
+        for key in SortKey.menuOrder {
+            add(key.title, #selector(setSortKey(_:)), tag: key.rawValue)
+        }
+        m.addItem(.separator())
+        add(L10n.t("sort.descending", "倒序"), #selector(toggleSortReversed(_:)))
+        return m
+    }
+
+    @objc func showSortMenu(_ sender: NSButton) {
+        let menu = buildSortMenu()
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: sender.bounds.height + 4), in: sender)
+    }
+
     /// tag 是 SortKey 的原始值；-1 是「跟随访达」
     @objc func setSortKey(_ sender: NSMenuItem) {
         if sender.tag == -1 {
@@ -1909,6 +1959,7 @@ final class ViewerViewController: NSViewController {
         }
         applySort()
         loadCaptureDatesIfNeeded()
+        flash("\(L10n.t("menu.sort", "排序方式")): \(currentSortSummary())")
     }
 
     /// 适应窗口时按 Esc 直接关闭窗口（退出），默认关
@@ -1942,10 +1993,12 @@ final class ViewerViewController: NSViewController {
     @objc func toggleSortReversed(_ sender: Any?) {
         folder.sortReversed.toggle()
         applySort()
+        flash("\(L10n.t("menu.sort", "排序方式")): \(currentSortSummary())")
     }
 
     /// 重排后当前看的图不变，只更新序号、胶片条与预取窗口
     private func applySort() {
+        updateSortButtonTip()
         guard folder.count > 0 else { return }
         exitCompare()
         if showFirstAfterResort {
@@ -3253,6 +3306,9 @@ final class ViewerViewController: NSViewController {
         menu.addItem(tags)
         add(markMenuTitle, #selector(toggleMark(_:)))
         add(L10n.t("menu.markedOnly", "只看已标记"), #selector(toggleMarkedOnly(_:)))
+        let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")
+        sortItem.submenu = buildSortMenu()
+        menu.addItem(sortItem)
         add(L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(exportToFolder(_:)))
         add(L10n.t("menu.copyImage", "复制图片"), #selector(copyImage(_:)))
         add(L10n.t("menu.share", "分享…"), #selector(shareCurrent(_:)))

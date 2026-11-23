@@ -254,9 +254,9 @@ Esc  先关掉右上角的照片信息
 "set.clear" = "清除";
 "set.wheel" = "滚轮 / 双指上下：";
 "set.zoomDirection" = "缩放方向：";
-"set.invertNote" = "用 Mos 之类的工具改过滚轮方向后，如果缩放反了，就勾上这一项。对滚轮缩放和触控板双指上下滑缩放都有效，不影响双指捏合和翻页。";
-"set.trackpad" = "触控板：";
-"set.trackpadNote" = "双指左右滑翻页（往左滑是下一张），双指捏合缩放，双指轻点两下在适应窗口和 100% 之间切换，拖动平移。";
+"set.invertNote" = "用 Mos 等工具改过滚轮方向导致缩放相反时勾选（不影响双指捏合）。";
+"set.trackpad" = "触控板与侧键：";
+"set.trackpadNote" = "触控板双指左右滑翻页、捏合缩放、双指轻点切换 100%；鼠标前进 / 后退侧键固定用于翻页。";
 "sc.group.browse" = "浏览";
 "sc.group.view" = "显示";
 "sc.group.file" = "文件";
@@ -317,7 +317,7 @@ Esc  先关掉右上角的照片信息
 "msg.slideResumed" = "继续播放";
 "wheel.invertNav" = "反转翻页方向";
 "set.navDirection" = "翻页方向：";
-"set.invertNavNote" = "默认手指往下滑是下一张。勾上后照片跟着手指走，往下滑回到上一张、往上滑是下一张，和刷手机一样。鼠标滚轮和触控板都适用。";
+"set.invertNavNote" = "默认向下滚是下一张；勾选后方向相反，更接近手机滑动。";
 "set.thumbs" = "缩略图：";
 "set.thumbSmall" = "小";
 "set.thumbMedium" = "中";
@@ -1287,10 +1287,10 @@ Esc  先关掉右上角的照片信息
 "split.chooseMessage" = "照片所在的位置不能写入，请选一个放切图文件夹的位置";
 "split.choosePrompt" = "选择";
 "pro.f.splitPhoto" = "切图";
-"set.hwheel" = "横向滚动：";
+"set.hwheel" = "鼠标横向滚轮：";
 "hwheel.navigate" = "切换上一张 / 下一张";
-"hwheel.pan" = "左右移动图片";
-"set.hwheelNote" = "适用于鼠标的横向滚轮（如罗技 MX Master 的拇指滚轮）。鼠标侧键的后退 / 前进始终是上一张 / 下一张。";
+"hwheel.pan" = "放大后左右平移";
+"set.hwheelNote" = "仅对带拇指滚轮或左右拨轮的鼠标生效（如 MX Master）。";
 "set.infoDockLabel" = "照片信息：";
 "set.infoDock" = "照片信息贴在窗口右边，不挡住照片";
 "set.fitFillLabel" = "适应窗口：";
