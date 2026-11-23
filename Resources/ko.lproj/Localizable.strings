@@ -1373,3 +1373,22 @@ Return  현재 이미지 이름 변경
 "set.extCacheClear" = "캐시 지우기";
 "set.extCacheNote" = "외장 드라이브, SD 카드, 네트워크 공유의 미리보기와 썸네일을 Mac 내장 SSD에 저장합니다(최대 500 MB, 오래된 항목 자동 정리). 다시 연결해도 로컬처럼 빠르게 넘길 수 있으며, 수정된 사진은 자동 갱신되고 100% 확대 시 항상 원본을 읽습니다.";
 "set.extCacheUsage" = "현재 사용량: %@";
+"pro.list.splitPhoto" = "분할: 와이드 사진을 연속 이미지나 2×2 / 3×3 그리드로 원본 해상도 내보내기";
+"pro.list.nameMatch" = "파일명 목록으로 선별: 고객이 보낸 파일명이나 번호를 붙여넣어 한 번에 추출(RAW+JPG 쌍 지원)";
+"pro.list.customLut" = "사용자 .cube 3D LUT: 필름 패널에서 직접 LUT를 가져와 실시간 미리보기·내보내기·프리셋에 적용";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "사이드바 가리기";
+"wb.menu.showSidebar" = "사이드바 보기";
+"wb.view.filmstrip" = "필름스트립";
+"wb.filmstripTip" = "큰 사진과 하단 썸네일 바";
+"wb.compareTipMulti" = "2~9장 나란히 비교, 동기화 확대/축소";
+"wb.compareSelected" = "선택한 사진 %d장 비교";
+"wb.compareMaxHint" = "한 번에 최대 %d장까지 비교할 수 있습니다";
+"wb.compareRemovePane" = "비교에서 제거";
+"wb.hintCompareMulti" = "← → 창 전환 · ⇧← ⇧→ 사진 변경 · %1$@–%2$@ 별점 · %3$@ 표시 · %4$@ 눈 확대 · Esc 뒤로";
+"wb.clearRating" = "별점 해제";
+"wb.clearRatingN" = "별점 해제(%d장)";
+"wb.markN" = "%d장 표시";
+"wb.unmarkN" = "%d장 표시 해제";
+"wb.f.exactStarTip" = "%1$d성 사진만 보기(총 %2$@장)";

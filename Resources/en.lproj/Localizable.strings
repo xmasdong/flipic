@@ -1385,3 +1385,22 @@ Drop a folder or image to open";
 "set.extCacheClear" = "Clear Cache";
 "set.extCacheNote" = "Stores screen-sized previews and thumbnails for external drives, SD cards, and network shares on your Mac's SSD (up to 500 MB, oldest evicted automatically). Reopening or reconnecting the same drive browses at near-local speed; modified photos refresh automatically and 100% zoom always reads the original.";
 "set.extCacheUsage" = "Current usage: %@";
+"pro.list.splitPhoto" = "Split: cut wide photos into a connected strip or 2×2 / 3×3 grid at full resolution";
+"pro.list.nameMatch" = "Pick by filename list: paste a client’s filename or number list to filter matching shots (with RAW+JPG pairs)";
+"pro.list.customLut" = "Custom .cube 3D LUTs: import your own LUTs in the Film panel for live preview, export and presets";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "Hide Sidebar";
+"wb.menu.showSidebar" = "Show Sidebar";
+"wb.view.filmstrip" = "Filmstrip";
+"wb.filmstripTip" = "Large photo with bottom filmstrip";
+"wb.compareTipMulti" = "Compare 2–9 photos side by side, synced zoom";
+"wb.compareSelected" = "Compare %d Selected Photos";
+"wb.compareMaxHint" = "Up to %d photos can be compared at once";
+"wb.compareRemovePane" = "Remove from Compare";
+"wb.hintCompareMulti" = "← → switch pane · ⇧← ⇧→ change photo · %1$@–%2$@ rate · %3$@ mark · %4$@ zoom to eyes · Esc back";
+"wb.clearRating" = "Clear Rating";
+"wb.clearRatingN" = "Clear Rating (%d Photos)";
+"wb.markN" = "Mark %d Photos";
+"wb.unmarkN" = "Unmark %d Photos";
+"wb.f.exactStarTip" = "Show %1$d-star photos only (%2$@ total)";

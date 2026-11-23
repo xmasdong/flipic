@@ -1373,3 +1373,22 @@ Trascina una cartella o un'immagine per aprire";
 "set.extCacheClear" = "Svuota cache";
 "set.extCacheNote" = "Memorizza anteprime e miniature di dischi esterni, schede SD e rete sull’SSD del Mac (fino a 500 MB, pulizia automatica). Le foto modificate si aggiornano da sole e lo zoom al 100% legge sempre l’originale.";
 "set.extCacheUsage" = "Spazio usato: %@";
+"pro.list.splitPhoto" = "Dividi: taglia foto larghe in una striscia continua o griglia 2×2 / 3×3 a piena risoluzione";
+"pro.list.nameMatch" = "Seleziona da elenco file: incolla la lista del cliente per filtrare gli scatti corrispondenti (con coppie RAW+JPG)";
+"pro.list.customLut" = "LUT 3D .cube personalizzate: importa le tue LUT nel pannello Pellicola per anteprima, esportazione e preset";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "Nascondi barra laterale";
+"wb.menu.showSidebar" = "Mostra barra laterale";
+"wb.view.filmstrip" = "Pellicola";
+"wb.filmstripTip" = "Foto grande con barra di miniature in basso";
+"wb.compareTipMulti" = "Confronta 2–9 foto affiancate con zoom sincronizzato";
+"wb.compareSelected" = "Confronta %d foto selezionate";
+"wb.compareMaxHint" = "Puoi confrontare fino a %d foto alla volta";
+"wb.compareRemovePane" = "Rimuovi dal confronto";
+"wb.hintCompareMulti" = "← → cambia riquadro · ⇧← ⇧→ cambia foto · %1$@–%2$@ valuta · %3$@ contrassegna · %4$@ zoom occhi · Esc indietro";
+"wb.clearRating" = "Rimuovi valutazione";
+"wb.clearRatingN" = "Rimuovi valutazione (%d foto)";
+"wb.markN" = "Contrassegna %d foto";
+"wb.unmarkN" = "Rimuovi contrassegno (%d foto)";
+"wb.f.exactStarTip" = "Mostra solo foto con %1$d stelle (%2$@ totali)";

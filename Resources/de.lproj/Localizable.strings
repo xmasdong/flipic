@@ -1373,3 +1373,22 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.extCacheClear" = "Cache leeren";
 "set.extCacheNote" = "Speichert Bildschirmvorschauen und Miniaturen von externen Laufwerken, SD-Karten und Netzlaufwerken auf der internen Mac-SSD (max. 500 MB, älteste werden automatisch entfernt). Geänderte Fotos werden automatisch aktualisiert; 100 %-Zoom liest immer das Original.";
 "set.extCacheUsage" = "Aktuelle Belegung: %@";
+"pro.list.splitPhoto" = "Aufteilen: breite Fotos in eine Bildreihe oder ein 2×2-/3×3-Raster in voller Auflösung exportieren";
+"pro.list.nameMatch" = "Auswahl per Dateiliste: Dateinamen oder Nummern vom Kunden einfügen und passende Bilder filtern (inkl. RAW+JPG-Paare)";
+"pro.list.customLut" = "Eigene .cube-3D-LUTs: eigene LUTs im Film-Panel importieren – für Vorschau, Export und Vorlagen";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "Seitenleiste ausblenden";
+"wb.menu.showSidebar" = "Seitenleiste einblenden";
+"wb.view.filmstrip" = "Filmstreifen";
+"wb.filmstripTip" = "Großansicht mit unterer Miniaturleiste";
+"wb.compareTipMulti" = "2–9 Fotos nebeneinander synchron vergleichen";
+"wb.compareSelected" = "%d ausgewählte Fotos vergleichen";
+"wb.compareMaxHint" = "Maximal %d Fotos gleichzeitig vergleichbar";
+"wb.compareRemovePane" = "Aus Vergleich entfernen";
+"wb.hintCompareMulti" = "← → Feld wechseln · ⇧← ⇧→ Foto wechseln · %1$@–%2$@ bewerten · %3$@ markieren · %4$@ auf Augen zoomen · Esc zurück";
+"wb.clearRating" = "Bewertung entfernen";
+"wb.clearRatingN" = "Bewertung entfernen (%d Fotos)";
+"wb.markN" = "%d Fotos markieren";
+"wb.unmarkN" = "Markierung bei %d Fotos entfernen";
+"wb.f.exactStarTip" = "Nur %1$d-Sterne-Fotos anzeigen (%2$@ gesamt)";

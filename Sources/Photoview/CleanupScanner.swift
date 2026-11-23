@@ -115,8 +115,8 @@ final class CleanupScanner {
     init(folder: URL, units: [CleanupUnit], useCache: Bool = true) {
         self.units = units
         cacheURL = useCache ? Self.cacheFile(for: folder) : nil
-        // 外置硬盘、存储卡上两路：一路读盘时另一路在算，硬盘不用在很多文件之间来回跳
-        workerCount = Volumes.isSlowStorage(folder) ? 2 : Self.workers
+        // 外置硬盘、存储卡、网络盘严格单路顺序读，绝不和前台或自身多线程抢磁头
+        workerCount = Volumes.isSlowStorage(folder) ? 1 : Self.workers
         queue = OperationQueue()
         queue.name = "Flipic.cleanup"
         queue.maxConcurrentOperationCount = workerCount
@@ -161,12 +161,16 @@ final class CleanupScanner {
                 var byQuick: [String: [CleanupUnit]] = [:]
                 for u in group {
                     guard let self, !self.cancelled else { return }
-                    if let q = Self.quickFingerprint(of: u.primary) { byQuick[q, default: []].append(u) }
+                    if let q = DiskIO.run(for: u.primary, priority: .background, isCancelled: { [weak self] in self?.cancelled == true }, {
+                        Self.quickFingerprint(of: u.primary)
+                    }) { byQuick[q, default: []].append(u) }
                 }
                 for same in byQuick.values where same.count > 1 {
                     for u in same {
                         guard let self, !self.cancelled else { return }
-                        if let h = Self.sha256(of: u.primary) {
+                        if let h = DiskIO.run(for: u.primary, priority: .background, isCancelled: { [weak self] in self?.cancelled == true }, {
+                            Self.sha256(of: u.primary)
+                        }) {
                             self.lock.lock(); self.hashes[u.primary] = h; self.lock.unlock()
                         }
                     }
@@ -179,7 +183,11 @@ final class CleanupScanner {
         for u in todo {
             queue.addOperation { [weak self] in
                 guard let self, !self.cancelled else { return }
-                let m = autoreleasepool { Self.analyze(u) }
+                let m = autoreleasepool {
+                    DiskIO.run(for: u.primary, priority: .background, isCancelled: { [weak self] in self?.cancelled == true }) {
+                        Self.analyze(u)
+                    }
+                }
                 DispatchQueue.main.async {
                     guard !self.cancelled else { return }
                     if let m { self.metrics[u.primary] = m }
@@ -224,9 +232,13 @@ final class CleanupScanner {
 
     static func analyze(_ unit: CleanupUnit) -> CleanupMetrics? {
         let url = unit.primary
-        // RAW 用内嵌的大预览，JPEG 等走降采样解码
-        guard let img = ImageLoader.renderThumbnail(url: url, maxPixel: analysisMaxPixel,
-                                                    allowEmbedded: CleanupUnit.isRaw(url)) else { return nil }
+        // 优先复用内存或本机 SSD 缓存里的清晰预览，慢盘上免去二次读取外接盘；未命中再单次顺序解码
+        let cachedImg = ImageLoader.shared.cachedPreview(for: url, maxPixel: analysisMaxPixel)
+            ?? (Volumes.isSlowStorage(url) ? ExtDiskCache.shared.load(for: url, kind: .preview, minLongEdge: analysisMaxPixel)?.image : nil)
+        guard let img = cachedImg
+                ?? ImageLoader.rawEmbeddedPreview(url: url, maxPixel: analysisMaxPixel)
+                ?? ImageLoader.renderThumbnail(url: url, maxPixel: analysisMaxPixel,
+                                               allowEmbedded: CleanupUnit.isRaw(url)) else { return nil }
         let gray = GrayImage(img)
 
         let faces = VNDetectFaceLandmarksRequest()

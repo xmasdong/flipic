@@ -27,19 +27,41 @@ enum EmbeddedPreview {
     static func forget(_ url: URL) { cache.removeObject(forKey: url as NSURL) }
 
     /// 解出内嵌 JPEG，按 RAW 记录的方向转正；maxPixel 给出时最长边不超过它。
-    /// 外接慢盘上只从 offset 开始读最多 16 MB，不再把整张 60–100 MB RAW 全映射进内存
+    /// 冷读优化：如果尚未缓存定位信息，直接一次大块顺序读出前 4 MB，在内存中同时完成方向读取、JPEG 定位与解码，
+    /// 绝大多数相机 RAW 只需 1 次顺序读即可出图（省去原先 scan + image 的 3 次独立打开）。
     static func image(_ url: URL, maxPixel: CGFloat? = nil) -> CGImage? {
-        guard let f = locate(url) else { return nil }
-        let sliceData: Data
-        if let fh = try? FileHandle(forReadingFrom: url) {
-            defer { try? fh.close() }
-            try? fh.seek(toOffset: UInt64(f.offset))
-            guard let chunk = try? fh.read(upToCount: 16 << 20), !chunk.isEmpty else { return nil }
-            sliceData = chunk
+        var found: Found?
+        var prefixData: Data?
+        if let hit = cache.object(forKey: url as NSURL) {
+            found = hit.found
         } else {
-            guard let data = try? Data(contentsOf: url, options: .alwaysMapped), f.offset < data.count else { return nil }
-            sliceData = data.subdata(in: f.offset..<min(data.count, f.offset + (16 << 20)))
+            let res = scanRetainingPrefix(url)
+            cache.setObject(Box(res.found), forKey: url as NSURL)
+            found = res.found
+            prefixData = res.prefix
         }
+        guard let f = found else { return nil }
+
+        // 若内嵌 JPEG 完整落在已读入内存的前 4 MB 缓冲中，直接原地解码，0 次额外磁盘打开
+        if let prefix = prefixData, f.offset < prefix.count {
+            let slice = prefix.subdata(in: f.offset..<prefix.count)
+            if hasJPEGEndMarker(slice), let img = decodeJPEGSlice(slice, found: f, maxPixel: maxPixel) {
+                return img
+            }
+        }
+
+        let sliceData: Data
+        if let chunk = DiskIO.readFileSlice(url, offset: f.offset, maxBytes: 16 << 20), !chunk.isEmpty {
+            sliceData = chunk
+        } else if let data = try? Data(contentsOf: url, options: .alwaysMapped), f.offset < data.count {
+            sliceData = data.subdata(in: f.offset..<min(data.count, f.offset + (16 << 20)))
+        } else {
+            return nil
+        }
+        return decodeJPEGSlice(sliceData, found: f, maxPixel: maxPixel)
+    }
+
+    private static func decodeJPEGSlice(_ sliceData: Data, found f: Found, maxPixel: CGFloat?) -> CGImage? {
         guard let src = CGImageSourceCreateWithData(sliceData as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) else { return nil }
         let side = max(f.size.width, f.size.height)
         let options: [CFString: Any] = [
@@ -50,6 +72,20 @@ enum EmbeddedPreview {
         ]
         guard let img = CGImageSourceCreateThumbnailAtIndex(src, 0, options as CFDictionary) else { return nil }
         return oriented(img, f.orientation)
+    }
+
+    /// 检查内存切片里是否已包含完整 JPEG 尾标记（FF D9），确保截断的预览不会半张解码
+    private static func hasJPEGEndMarker(_ data: Data) -> Bool {
+        guard data.count >= 4 else { return false }
+        return data.withUnsafeBytes { raw -> Bool in
+            guard let base = raw.baseAddress?.assumingMemoryBound(to: UInt8.self) else { return false }
+            var i = data.count - 2
+            while i >= 2 {
+                if base[i] == 0xFF && base[i + 1] == 0xD9 { return true }
+                i -= 1
+            }
+            return false
+        }
     }
 
     /// 测试用：这个文件是否走过内嵌预览
@@ -92,35 +128,47 @@ enum EmbeddedPreview {
     }
 
     private static func scan(_ url: URL) -> Found? {
-        // RAW 自己的方向（TIFF 类 RAW 的 IFD0、CR3 的 CMT1）：ImageIO 解不了像素时通常还读得出元数据
-        var rawOrientation: Int?
-        if !RawOrientation.forceUnrecognised,
-           let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
-           let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] {
-            rawOrientation = props[kCGImagePropertyOrientation as String] as? Int
-        }
-        if rawOrientation == nil { rawOrientation = RawOrientation.fileOrientation(url) }
+        scanRetainingPrefix(url).found
+    }
 
-        // 先扫前 4 MB：如果已经找到清晰大图（≥ 1024px），不用把整张几十 MB 的 RAW 从外接盘读一遍
-        var best: (offset: Int, w: Int, h: Int, orientation: Int?)?
-        if let fh = try? FileHandle(forReadingFrom: url) {
-            let prefix = (try? fh.read(upToCount: fastPrefixBytes)) ?? Data()
-            try? fh.close()
-            if prefix.count > 16 {
-                let candidate = scanBytes(prefix)
-                if let candidate, max(candidate.w, candidate.h) >= 1024 { best = candidate }
-                else if prefix.count < fastPrefixBytes { best = candidate }
+    private static func scanRetainingPrefix(_ url: URL) -> (found: Found?, prefix: Data?) {
+        let slow = Volumes.isSlowStorage(url)
+        // 先一次大块顺序读出前 4 MB（开启 F_RDAHEAD）：同时用于方向解析与内嵌 JPEG 扫描，
+        // 慢盘上不再先拿 CGImageSourceCreateWithURL 去触发几十次随机小读
+        let prefix = DiskIO.readFileData(url, maxBytes: fastPrefixBytes)
+        var rawOrientation: Int?
+        if !RawOrientation.forceUnrecognised {
+            if let prefix,
+               let src = CGImageSourceCreateWithData(prefix as CFData, [kCGImageSourceShouldCache: false] as CFDictionary),
+               let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] {
+                rawOrientation = props[kCGImagePropertyOrientation as String] as? Int
             }
+            if rawOrientation == nil && !slow,
+               let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
+               let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any] {
+                rawOrientation = props[kCGImagePropertyOrientation as String] as? Int
+            }
+        }
+
+        var best: (offset: Int, w: Int, h: Int, orientation: Int?)?
+        if let prefix, prefix.count > 16 {
+            let candidate = scanBytes(prefix)
+            if let candidate, max(candidate.w, candidate.h) >= 1024 { best = candidate }
+            else if prefix.count < fastPrefixBytes { best = candidate }
         }
         if best == nil, let data = try? Data(contentsOf: url, options: .alwaysMapped), data.count > 16 {
             best = scanBytes(data)
         }
-        guard let best else { return nil }
+        guard let best else { return (nil, nil) }
+        if rawOrientation == nil && best.orientation == nil {
+            rawOrientation = RawOrientation.fileOrientation(url)
+        }
         let o = rawOrientation ?? best.orientation ?? 1
         let swapped = (5...8).contains(o)
-        return Found(offset: best.offset,
-                     size: swapped ? CGSize(width: best.h, height: best.w) : CGSize(width: best.w, height: best.h),
-                     orientation: o)
+        let found = Found(offset: best.offset,
+                          size: swapped ? CGSize(width: best.h, height: best.w) : CGSize(width: best.w, height: best.h),
+                          orientation: o)
+        return (found, prefix)
     }
 
     /// EXIF 方向转正：相机只会写 1、3、6、8（不翻转）；其余按不转处理

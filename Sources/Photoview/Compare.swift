@@ -28,6 +28,11 @@ final class ComparePane: NSView {
         .withSymbolConfiguration(.init(pointSize: 12, weight: .semibold)) ?? NSImage())
     private let stars = NSTextField(labelWithString: "")
     private let note = NSTextField(labelWithString: "")
+    /// 悬停在右上角的移除按钮（仅工作台多图对比 > 2 格时启用）
+    private let removeButton = NSButton()
+    private var hovered = false { didSet { updateRemoveButton() } }
+    private var hoverArea: NSTrackingArea?
+    var onRemove: (() -> Void)? { didSet { updateRemoveButton() } }
 
     var isActive = false {
         didSet {
@@ -40,6 +45,23 @@ final class ComparePane: NSView {
         super.viewDidChangeEffectiveAppearance()
         Theme.refresh(self)
     }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let hoverArea { removeTrackingArea(hoverArea) }
+        let area = NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect], owner: self, userInfo: nil)
+        addTrackingArea(area)
+        hoverArea = area
+    }
+
+    override func mouseEntered(with event: NSEvent) { hovered = true }
+    override func mouseExited(with event: NSEvent) { hovered = false }
+
+    private func updateRemoveButton() {
+        removeButton.isHidden = onRemove == nil || !hovered
+    }
+
+    @objc private func removeClicked(_ sender: Any?) { onRemove?() }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -73,6 +95,22 @@ final class ComparePane: NSView {
         footer.addSubview(stack)
         addSubview(footer)
 
+        removeButton.isBordered = false
+        removeButton.bezelStyle = .inline
+        removeButton.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: L10n.t("wb.compareRemovePane", "移出对比"))?
+            .withSymbolConfiguration(.init(pointSize: 10.5, weight: .bold))
+        removeButton.contentTintColor = .white
+        removeButton.wantsLayer = true
+        removeButton.layer?.cornerRadius = 11
+        removeButton.layer?.backgroundColor = NSColor(calibratedWhite: 0, alpha: 0.58).cgColor
+        removeButton.toolTip = L10n.t("wb.compareRemovePane", "移出对比")
+        removeButton.target = self
+        removeButton.action = #selector(removeClicked(_:))
+        removeButton.refusesFirstResponder = true
+        removeButton.isHidden = true
+        removeButton.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(removeButton)
+
         NSLayoutConstraint.activate([
             imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -85,6 +123,10 @@ final class ComparePane: NSView {
             footer.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
             footer.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -8),
             footer.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -8),
+            removeButton.topAnchor.constraint(equalTo: topAnchor, constant: 8),
+            removeButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            removeButton.widthAnchor.constraint(equalToConstant: 22),
+            removeButton.heightAnchor.constraint(equalToConstant: 22),
         ])
     }
 
@@ -105,7 +147,7 @@ final class ComparePane: NSView {
     }
 }
 
-/// 2 格左右排（窗口竖长时上下排），3–4 格排成 2×2
+/// 自适应多格对比布局：2 格左右/上下，3 格横排或 2+1，4 格 2×2，5 格上 3 下 2，6 格 3×2，7 格上 4 下 3，8 格 4×2，9 格 3×3
 final class CompareView: NSView {
     private(set) var panes: [ComparePane] = []
 
@@ -119,6 +161,38 @@ final class CompareView: NSView {
         needsLayout = true
     }
 
+    /// 移出指定那一格，其余格子保留已解码图像和各自缩放偏差
+    func removePane(at index: Int) {
+        guard panes.indices.contains(index) else { return }
+        panes.remove(at: index).removeFromSuperview()
+        needsLayout = true
+    }
+
+    static func rowDistribution(for n: Int, size: CGSize) -> [Int] {
+        switch n {
+        case ...0: return []
+        case 1: return [1]
+        case 2: return size.width >= size.height ? [2] : [1, 1]
+        case 3: return size.width >= size.height * 1.15 ? [3] : [2, 1]
+        case 4: return [2, 2]
+        case 5: return [3, 2]
+        case 6: return [3, 3]
+        case 7: return [4, 3]
+        case 8: return [4, 4]
+        case 9: return [3, 3, 3]
+        default:
+            let cols = Int(ceil(sqrt(Double(n))))
+            var rows: [Int] = []
+            var rem = n
+            while rem > 0 {
+                let take = min(cols, rem)
+                rows.append(take)
+                rem -= take
+            }
+            return rows
+        }
+    }
+
     override var isFlipped: Bool { true }
 
     override func layout() {
@@ -127,20 +201,20 @@ final class CompareView: NSView {
         let b = bounds
         let n = panes.count
         guard n > 0 else { return }
-        let cols: Int, rows: Int
-        if n <= 2 {
-            let sideBySide = b.width >= b.height
-            cols = sideBySide ? n : 1
-            rows = sideBySide ? 1 : n
-        } else {
-            cols = 2
-            rows = 2
-        }
-        let w = (b.width - gap * CGFloat(cols - 1)) / CGFloat(cols)
+        let dist = Self.rowDistribution(for: n, size: b.size)
+        let rows = dist.count
         let h = (b.height - gap * CGFloat(rows - 1)) / CGFloat(rows)
-        for (i, p) in panes.enumerated() {
-            let c = i % cols, r = i / cols
-            p.frame = CGRect(x: CGFloat(c) * (w + gap), y: CGFloat(r) * (h + gap), width: w, height: h).integral
+        var idx = 0
+        for (r, cols) in dist.enumerated() {
+            let y = CGFloat(r) * (h + gap)
+            let rowH = r == rows - 1 ? b.height - y : h
+            let w = (b.width - gap * CGFloat(cols - 1)) / CGFloat(cols)
+            for c in 0..<cols where idx < n {
+                let x = CGFloat(c) * (w + gap)
+                let colW = c == cols - 1 ? b.width - x : w
+                panes[idx].frame = CGRect(x: x, y: y, width: colW, height: rowH).integral
+                idx += 1
+            }
         }
     }
 }

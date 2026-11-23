@@ -1390,3 +1390,22 @@ Esc  先关掉右上角的照片信息
 "set.extCacheClear" = "清除缓存";
 "set.extCacheNote" = "把外接硬盘、存储卡、网络盘上的预览图与缩略图缓存到 Mac 内置 SSD（上限 500 MB，自动清理最旧的）。再次打开或重插同一块硬盘时翻图接近本地速度；原图改过会自动更新，放大到 100% 仍读原图。";
 "set.extCacheUsage" = "当前占用：%@";
+"pro.list.splitPhoto" = "切图：把宽幅照片横排切成多张连续图，或切成 2×2 / 3×3 网格全尺寸导出";
+"pro.list.nameMatch" = "按文件名清单挑图：粘贴客户发来的文件名或编号，一键筛出对应照片（支持 RAW+JPG 配对）";
+"pro.list.customLut" = "自定义 .cube 3D LUT：在胶片面板导入自己的调色 LUT，实时预览并带入导出和预设";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "隐藏边栏";
+"wb.menu.showSidebar" = "显示边栏";
+"wb.view.filmstrip" = "胶片条";
+"wb.filmstripTip" = "大图与底部缩略图";
+"wb.compareTipMulti" = "2–9 张并排，一起缩放";
+"wb.compareSelected" = "对比选中的 %d 张照片";
+"wb.compareMaxHint" = "最多同时对比 %d 张照片";
+"wb.compareRemovePane" = "移出对比";
+"wb.hintCompareMulti" = "← → 切格 · ⇧← ⇧→ 换图 · %1$@–%2$@ 打星 · %3$@ 标记 · %4$@ 放大到眼睛 · Esc 返回";
+"wb.clearRating" = "取消评分";
+"wb.clearRatingN" = "取消评分（%d 张）";
+"wb.markN" = "标记 %d 张";
+"wb.unmarkN" = "取消标记 %d 张";
+"wb.f.exactStarTip" = "只看 %1$d 星照片（共 %2$@ 张）";

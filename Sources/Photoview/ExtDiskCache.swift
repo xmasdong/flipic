@@ -85,14 +85,18 @@ final class ExtDiskCache {
         self.trimTargetBytes = max(1, maxBytes * 4 / 5)
     }
 
-    /// 目录列完后批量登记文件指纹（FolderModel 已通过 getattrlistbulk 拿到，零额外外接盘 syscall）
+    /// 目录列完后批量登记文件指纹（FolderModel / Workbench 已通过列目录拿到，零额外外接盘 syscall）
     func register(items: [ImageItem]) {
-        guard !items.isEmpty else { return }
+        register(stamps: items.map { ($0.url, Int64($0.fileSize), $0.modified) })
+    }
+
+    func register(stamps list: [(URL, Int64, Date?)]) {
+        guard !list.isEmpty else { return }
         lock.lock()
         if stamps.count > 20_000 { stamps.removeAll(keepingCapacity: true) }
-        for item in items {
-            let mt = Int64((item.modified?.timeIntervalSince1970 ?? 0).rounded())
-            stamps[item.url.standardizedFileURL] = FileStamp(size: Int64(item.fileSize), mtime: mt)
+        for (url, size, modified) in list {
+            let mt = Int64((modified?.timeIntervalSince1970 ?? 0).rounded())
+            stamps[url.standardizedFileURL] = FileStamp(size: size, mtime: mt)
         }
         lock.unlock()
     }
@@ -165,7 +169,8 @@ final class ExtDiskCache {
         lock.unlock()
 
         let quality: Double = kind == .preview ? 0.86 : 0.80
-        let capEdge: CGFloat = kind == .preview ? Self.maxPreviewEdge : max(FilmstripView.thumbPixel, 240)
+        // 缩略图上限放宽到 640 px（覆盖工作台最大格子 320pt @2x），否则工作台 384px 格子写盘被截到 240px、下次重开直接 miss
+        let capEdge: CGFloat = kind == .preview ? Self.maxPreviewEdge : max(FilmstripView.thumbPixel, 640)
         writeQueue.async { [weak self] in
             guard let self else { return }
             defer {

@@ -7,23 +7,61 @@ import ImageIO
 enum Rating {
     private static let embeddable: Set<String> = ["jpg", "jpeg", "heic", "heif", "png", "tif", "tiff", "dng"]
 
-    static func read(_ url: URL) -> Int {
+    /// 目录里已有 .xmp 旁车文件的无扩展名小写键集合：用于零 I/O 跳过不存在的 .xmp 探测
+    static func sidecarStem(for url: URL) -> String {
+        url.deletingPathExtension().lastPathComponent.lowercased()
+    }
+
+    /// 测试用：统计因为没有提供 hasSidecar 或 hasSidecar == true 实际尝试读磁盘 .xmp 的次数
+    private static let statLock = NSLock()
+    private(set) static var debugSidecarReads = 0
+    static func debugResetStats() { statLock.lock(); debugSidecarReads = 0; statLock.unlock() }
+
+    static func read(_ url: URL, hasSidecar: Bool? = nil) -> Int {
         let ext = url.pathExtension.lowercased()
-        if !embeddable.contains(ext) || CleanupUnit.isRaw(url) && ext != "dng" {
-            if let r = readSidecar(sidecarURL(for: url)) { return r }
+        let preferSidecar = !embeddable.contains(ext) || (CleanupUnit.isRaw(url) && ext != "dng")
+        if preferSidecar {
+            if hasSidecar != false, let r = readSidecarCounted(sidecarURL(for: url)) { return r }
         }
-        guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
-              let meta = CGImageSourceCopyMetadataAtIndex(src, 0, nil),
-              let tag = CGImageMetadataCopyTagWithPath(meta, nil, "xmp:Rating" as CFString),
-              let value = CGImageMetadataTagCopyValue(tag) else {
-            return sidecarFallback(url)
+        if let src = metadataSource(for: url),
+           let meta = CGImageSourceCopyMetadataAtIndex(src, 0, nil),
+           let tag = CGImageMetadataCopyTagWithPath(meta, nil, "xmp:Rating" as CFString),
+           let value = CGImageMetadataTagCopyValue(tag) {
+            return clamp(Int("\(value)") ?? 0)
         }
-        return clamp(Int("\(value)") ?? 0)
+        return hasSidecar == false ? 0 : sidecarFallback(url)
+    }
+
+    /// 从已经打开的 CGImageSource 直接提取星级（0 额外磁盘打开）
+    static func read(from src: CGImageSource, url: URL, hasSidecar: Bool? = nil) -> Int {
+        if let meta = CGImageSourceCopyMetadataAtIndex(src, 0, nil),
+           let tag = CGImageMetadataCopyTagWithPath(meta, nil, "xmp:Rating" as CFString),
+           let value = CGImageMetadataTagCopyValue(tag) {
+            return clamp(Int("\(value)") ?? 0)
+        }
+        return hasSidecar == false ? 0 : sidecarFallback(url)
+    }
+
+    /// JPEG 在慢盘上 XMP 恒在文件头前 128 KB 内：一次顺序读出前缀再交给 ImageIO，免去用户态 ExFAT 多次小 pread 往返
+    private static func metadataSource(for url: URL) -> CGImageSource? {
+        let opts = [kCGImageSourceShouldCache: false] as CFDictionary
+        let ext = url.pathExtension.lowercased()
+        if (ext == "jpg" || ext == "jpeg" || ext == "jpe"), Volumes.isSlowStorage(url),
+           let head = DiskIO.readFileData(url, maxBytes: 128 << 10),
+           let src = CGImageSourceCreateWithData(head as CFData, opts) {
+            return src
+        }
+        return CGImageSourceCreateWithURL(url as CFURL, opts)
+    }
+
+    private static func readSidecarCounted(_ side: URL) -> Int? {
+        statLock.lock(); debugSidecarReads += 1; statLock.unlock()
+        return readSidecar(side)
     }
 
     /// 嵌入写不进去的格式，之前可能落到了旁车文件
     private static func sidecarFallback(_ url: URL) -> Int {
-        readSidecar(sidecarURL(for: url)) ?? 0
+        readSidecarCounted(sidecarURL(for: url)) ?? 0
     }
 
     /// 写入评分；成功返回 true。同名 RAW + JPG 由调用方各写一次
@@ -43,17 +81,18 @@ enum Rating {
         return writeSidecar(r, to: sidecarURL(for: url))
     }
 
-    /// 一次读出星级和 XMP 颜色标签（同一次打开文件/旁车，不额外多读盘）
-    static func readBoth(_ url: URL) -> (rating: Int, label: TagColor?) {
+    /// 一次读出星级和 XMP 颜色标签（同一次打开文件/旁车，不额外多读盘；hasSidecar == false 时彻底跳过不存在 .xmp 的目录探测）
+    static func readBoth(_ url: URL, hasSidecar: Bool? = nil) -> (rating: Int, label: TagColor?) {
         let ext = url.pathExtension.lowercased()
         let preferSidecar = !embeddable.contains(ext) || (CleanupUnit.isRaw(url) && ext != "dng")
         let side = sidecarURL(for: url)
         var r: Int?
         var lbl: TagColor?
-        var sideRead = false
+        var sideRead = hasSidecar == false
         func loadSidecar() {
             guard !sideRead else { return }
             sideRead = true
+            statLock.lock(); debugSidecarReads += 1; statLock.unlock()
             if let text = try? String(contentsOf: side, encoding: .utf8) {
                 if r == nil { r = parseSidecarRating(text) }
                 if lbl == nil { lbl = parseSidecarLabel(text) }
@@ -61,7 +100,7 @@ enum Rating {
         }
         if preferSidecar { loadSidecar() }
         if r == nil || lbl == nil,
-           let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
+           let src = metadataSource(for: url),
            let meta = CGImageSourceCopyMetadataAtIndex(src, 0, nil) {
             if r == nil, let tag = CGImageMetadataCopyTagWithPath(meta, nil, "xmp:Rating" as CFString),
                let value = CGImageMetadataTagCopyValue(tag) {

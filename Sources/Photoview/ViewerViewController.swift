@@ -67,8 +67,14 @@ final class ViewerViewController: NSViewController {
     let filmUI = FilmUIRefs()
     /// 贴合预览（空格）中，包括刚进入还没返回的那一刻
     var isPeekingNow: Bool { peekSaved != nil }
+    /// 左上角独立「工作台」跳转胶囊：放在红绿灯与文件名之间，与右上角当前图操作区隔开
+    private let workbenchBar = NSVisualEffectView()
+    private var workbenchLeading: NSLayoutConstraint?
+    private var fileNameAfterWorkbench: NSLayoutConstraint?
     #endif
     private var fileNameLeading: NSLayoutConstraint!
+    private var liveBadgeLeading: NSLayoutConstraint!
+    private var topLeftCenterY: [NSLayoutConstraint] = []
     private var slideshowButton: NSButton?
     private var pinButton: NSButton?
     /// 「磨砂玻璃」背景：系统材质，透出窗口后面的内容再模糊
@@ -504,6 +510,9 @@ final class ViewerViewController: NSViewController {
         case .top:
             var t: [NSView] = []
             if Self.showToolbar { t.append(cornerBar) }
+            #if FLIPIC_PRO
+            if Self.showToolbar && WorkbenchFeature.isEnabled { t.append(workbenchBar) }
+            #endif
             if Self.showFileName { t.append(fileNameBar) }
             if liveMovie != nil { t.append(liveBadge) }
             return t
@@ -527,7 +536,12 @@ final class ViewerViewController: NSViewController {
     func zoneViewsForTest(_ z: ControlZone) -> [NSView] {
         switch z {
         case .bottom: return [toolbarView]
-        case .top: return [cornerBar, fileNameBar]
+        case .top:
+            #if FLIPIC_PRO
+            return WorkbenchFeature.isEnabled ? [cornerBar, fileNameBar, workbenchBar] : [cornerBar, fileNameBar]
+            #else
+            return [cornerBar, fileNameBar]
+            #endif
         case .left: return [prevArrowContainer]
         case .right: return [nextArrowContainer]
         }
@@ -646,6 +660,9 @@ final class ViewerViewController: NSViewController {
         for t in [toolbarView, cornerBar, fileNameBar, prevArrowContainer!, nextArrowContainer!] as [NSView] {
             t.isHidden = true; t.alphaValue = 0
         }
+        #if FLIPIC_PRO
+        workbenchBar.isHidden = true; workbenchBar.alphaValue = 0
+        #endif
         if liveMovie == nil { liveBadge.isHidden = true }
         for z in ControlZone.allCases {
             let on = present && shownZones.contains(z)
@@ -764,15 +781,6 @@ final class ViewerViewController: NSViewController {
         shortcutTips.append((filmButton, filmTip, .filmPanel))
         filmUI.button = filmButton
         stack.addArrangedSubview(filmContainer)
-        // 工作台原来只在「窗口」菜单和 ⌥⌘B 里，放到信息按钮左边
-        if WorkbenchFeature.isEnabled {
-            let tip = L10n.t("menu.workbench", "工作台")
-            let (container, button) = iconButton(symbol: "square.grid.2x2", tip: Shortcuts.tooltip(tip, .workbench),
-                                                 action: #selector(openWorkbench(_:)),
-                                                 size: NSSize(width: 32, height: 28), cornerRadius: 7, tint: .labelColor)
-            shortcutTips.append((button, tip, .workbench))
-            stack.addArrangedSubview(container)
-        }
         #endif
         for (symbol, tip, action) in [("info.circle", L10n.t("tip.info", "照片信息（I）"), #selector(toggleInfoPanel(_:))),
                                       ("pin", L10n.t("tip.pin", "窗口置顶：浮在其他软件上面"), #selector(togglePinned(_:))),
@@ -819,35 +827,103 @@ final class ViewerViewController: NSViewController {
         liveBadge.onHover = { [weak self] inside in inside ? self?.playLivePhoto(nil) : self?.stopLivePhoto() }
         liveBadge.onClick = { [weak self] in self?.playLivePhoto(nil) }
         view.addSubview(liveBadge)
+        liveBadgeLeading = liveBadge.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 78)
 
-        NSLayoutConstraint.activate([
+        let fileNameCenterY = fileNameBar.centerYAnchor.constraint(equalTo: view.topAnchor, constant: 14)
+        topLeftCenterY = [fileNameCenterY]
+
+        var constraints: [NSLayoutConstraint] = [
             stack.topAnchor.constraint(equalTo: cornerBar.topAnchor),
             stack.bottomAnchor.constraint(equalTo: cornerBar.bottomAnchor),
             stack.leadingAnchor.constraint(equalTo: cornerBar.leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: cornerBar.trailingAnchor),
             cornerBar.topAnchor.constraint(equalTo: view.topAnchor, constant: 6),
             cornerBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -10),
-            fileNameLeading,
-            // 和红黄绿按钮在同一条水平线（标题栏高 28，按钮中心离顶边 14）
-            fileNameBar.centerYAnchor.constraint(equalTo: view.topAnchor, constant: 14),
+            fileNameCenterY,
             fileNameBar.heightAnchor.constraint(equalToConstant: 22),
             fileNameBar.trailingAnchor.constraint(lessThanOrEqualTo: cornerBar.leadingAnchor, constant: -12),
             fileNameLabel.leadingAnchor.constraint(equalTo: fileNameBar.leadingAnchor, constant: 8),
             fileNameLabel.trailingAnchor.constraint(equalTo: fileNameBar.trailingAnchor, constant: -8),
             fileNameLabel.centerYAnchor.constraint(equalTo: fileNameBar.centerYAnchor),
-            liveBadge.leadingAnchor.constraint(equalTo: fileNameBar.leadingAnchor),
+            liveBadgeLeading,
             liveBadge.topAnchor.constraint(equalTo: fileNameBar.bottomAnchor, constant: 6),
-        ])
+        ]
+        #if FLIPIC_PRO
+        if WorkbenchFeature.isEnabled {
+            workbenchBar.material = .hudWindow
+            workbenchBar.blendingMode = .withinWindow
+            workbenchBar.state = .active
+            workbenchBar.wantsLayer = true
+            workbenchBar.layer?.cornerRadius = 7
+            workbenchBar.layer?.cornerCurve = .continuous
+            workbenchBar.layer?.masksToBounds = true
+            workbenchBar.layer?.borderWidth = 0.5
+            workbenchBar.layer?.borderColor = NSColor.white.withAlphaComponent(0.14).cgColor
+            workbenchBar.translatesAutoresizingMaskIntoConstraints = false
+            workbenchBar.isHidden = true
+            let wbBtn = WorkbenchJumpButton()
+            wbBtn.target = self
+            wbBtn.action = #selector(openWorkbench(_:))
+            let wbTip = L10n.t("menu.workbench", "工作台")
+            wbBtn.toolTip = Shortcuts.tooltip(wbTip, .workbench)
+            shortcutTips.append((wbBtn, wbTip, .workbench))
+            wbBtn.translatesAutoresizingMaskIntoConstraints = false
+            workbenchBar.addSubview(wbBtn)
+            view.addSubview(workbenchBar)
+
+            let wbLeading = workbenchBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 78)
+            let wbCenterY = workbenchBar.centerYAnchor.constraint(equalTo: view.topAnchor, constant: 14)
+            let fnAfter = fileNameBar.leadingAnchor.constraint(equalTo: workbenchBar.trailingAnchor, constant: 8)
+            workbenchLeading = wbLeading
+            fileNameAfterWorkbench = fnAfter
+            topLeftCenterY.append(wbCenterY)
+            constraints += [
+                wbBtn.topAnchor.constraint(equalTo: workbenchBar.topAnchor),
+                wbBtn.bottomAnchor.constraint(equalTo: workbenchBar.bottomAnchor),
+                wbBtn.leadingAnchor.constraint(equalTo: workbenchBar.leadingAnchor),
+                wbBtn.trailingAnchor.constraint(equalTo: workbenchBar.trailingAnchor),
+                wbLeading,
+                wbCenterY,
+                workbenchBar.heightAnchor.constraint(equalToConstant: 22),
+                workbenchBar.trailingAnchor.constraint(lessThanOrEqualTo: cornerBar.leadingAnchor, constant: -12),
+            ]
+            if Self.showToolbar {
+                constraints.append(fnAfter)
+            } else {
+                constraints.append(fileNameLeading)
+            }
+        } else {
+            constraints.append(fileNameLeading)
+        }
+        #else
+        constraints.append(fileNameLeading)
+        #endif
+        NSLayoutConstraint.activate(constraints)
     }
 
-    /// 文件名紧跟在缩放按钮右边；全屏时红黄绿按钮不在，贴左边
+    /// 工作台胶囊与文件名紧跟在红绿灯右侧并精确垂直居中对齐；全屏时贴左边
     private func placeFileName() {
         guard let window = view.window else { return }
-        if !window.styleMask.contains(.fullScreen), let zoom = window.standardWindowButton(.zoomButton) {
-            fileNameLeading.constant = zoom.frame.maxX + 12
+        let lead: CGFloat
+        let cy: CGFloat
+        if !window.styleMask.contains(.fullScreen), let zoom = window.standardWindowButton(.zoomButton),
+           let sv = zoom.superview, !zoom.isHidden, view.bounds.height > 0 {
+            let local = view.convert(sv.convert(zoom.frame, to: nil), from: nil)
+            lead = (local.maxX + 12).rounded()
+            cy = (view.bounds.height - local.midY).rounded()
         } else {
-            fileNameLeading.constant = 16
+            lead = 16
+            cy = 14
         }
+        fileNameLeading.constant = lead
+        liveBadgeLeading.constant = lead
+        for c in topLeftCenterY { c.constant = cy }
+        #if FLIPIC_PRO
+        workbenchLeading?.constant = lead
+        let showWB = Self.showToolbar && WorkbenchFeature.isEnabled
+        fileNameLeading.isActive = !showWB
+        fileNameAfterWorkbench?.isActive = showWB
+        #endif
     }
 
     // MARK: - 实况照片
@@ -1114,6 +1190,7 @@ final class ViewerViewController: NSViewController {
         }
     }
 
+
     /// 开始页「打开…」下面列最近打开过的 5 个文件夹，点一下直接打开
     private let recentList = NSStackView()
 
@@ -1227,11 +1304,13 @@ final class ViewerViewController: NSViewController {
         decodeQueue.maxConcurrentOperationCount = slow ? 1 : 2
         draftQueue.maxConcurrentOperationCount = slow ? 1 : 3
         thumbQueue.maxConcurrentOperationCount = slow ? 1 : 2
-        // 外接慢盘双击单张图时，在列目录之前就先把这张图投进预解码队列（不与 showImage 的 decodeQueue 互相取消），目录列完时图已在缓存里或快解好了
+        // 外接慢盘双击单张图时，在列目录之前就先把这张图投进高优先级单车道，目录列完时图已在缓存里或快解好了
         if !isDir.boolValue, slow {
             let target = url.standardizedFileURL
             let px = previewPixelTarget
-            prefetchQueue.addOperation { [loader] in _ = loader.preview(for: target, maxPixel: px) }
+            prefetchQueue.addOperation { [loader] in
+                _ = DiskIO.run(for: target, priority: .interactive) { loader.preview(for: target, maxPixel: px) }
+            }
         }
         let ok = folder.open(url: url)
         if ok { ExtDiskCache.shared.register(items: folder.allItems) }
@@ -1402,20 +1481,27 @@ final class ViewerViewController: NSViewController {
         return compareView == nil
     }
 
-    /// 屏幕尺寸的清晰预览，解完换到屏幕上（已有草图时原位替换）
+    /// 屏幕尺寸的清晰预览，解完换到屏幕上（已有草图时原位替换）；
+    /// 慢盘上走最高优先级 interactive 插队单车道，先 preview（单次打开同时写入 infoCache），不再多开一遍文件读 info
     @discardableResult
     private func enqueueSharp(url: URL, gen: Int) -> Operation {
         let loader = self.loader
         let fitPx = previewPixelTarget
-        let op = BlockOperation { [weak self] in
-            guard self?.generation == gen, let info = loader.info(for: url) else { return }
+        let op = BlockOperation()
+        op.addExecutionBlock { [weak self, weak op] in
+            guard self?.generation == gen, op?.isCancelled == false else { return }
             let cached = loader.cachedPreview(for: url, maxPixel: fitPx) != nil
             let t0 = CFAbsoluteTimeGetCurrent()
-            let pv = loader.preview(for: url, maxPixel: fitPx)
+            let res: (CGImage, ImageInfo)? = DiskIO.run(for: url, priority: .interactive,
+                                                        isCancelled: { [weak self, weak op] in self?.generation != gen || op?.isCancelled == true }) {
+                guard let pv = loader.preview(for: url, maxPixel: fitPx),
+                      let info = loader.cachedInfo(for: url) ?? loader.info(for: url) else { return nil }
+                return (pv, info)
+            }
             let cost = CFAbsoluteTimeGetCurrent() - t0
             BenchProbe.log("sharp decoded \(url.lastPathComponent) \(Int(cost * 1000))ms")
             DispatchQueue.main.async {
-                guard let self, self.generation == gen, let pv else { return }
+                guard let self, self.generation == gen, let (pv, info) = res else { return }
                 if !cached { self.sharpCost = self.sharpCost * 0.7 + cost * 0.3 }
                 self.showSharp(pv, info: info, url: url)
             }
@@ -1447,9 +1533,15 @@ final class ViewerViewController: NSViewController {
         if draftOps[url] != nil { return }
         let loader = self.loader
         let fitPx = previewPixelTarget
-        let op = BlockOperation { [weak self] in
+        let op = BlockOperation()
+        op.addExecutionBlock { [weak self, weak op] in
             let t0 = CFAbsoluteTimeGetCurrent()
-            guard let d = loader.draft(for: url, previewPixel: fitPx), let info = loader.cachedInfo(for: url) else { return }
+            guard let res: ((image: CGImage, sharp: Bool), ImageInfo) = DiskIO.run(for: url, priority: .interactive,
+                                                                                   isCancelled: { [weak op] in op?.isCancelled == true }, {
+                guard let d = loader.draft(for: url, previewPixel: fitPx), let info = loader.cachedInfo(for: url) else { return nil }
+                return (d, info)
+            }) else { return }
+            let (d, info) = res
             let cost = CFAbsoluteTimeGetCurrent() - t0
             BenchProbe.log("draft \(url.lastPathComponent) \(Int(cost * 1000))ms")
             DispatchQueue.main.async {
@@ -1882,7 +1974,13 @@ final class ViewerViewController: NSViewController {
             var dates = [Date](repeating: .distantPast, count: urls.count)
             dates.withUnsafeMutableBufferPointer { buf in
                 DiskIO.forEach(urls) { i in
-                    buf[i] = FolderModel.readCaptureDate(url: urls[i], fallback: fallbacks[urls[i]] ?? nil)
+                    guard let self, self.folderGeneration == gen else { return }
+                    let u = urls[i]
+                    if let d = DiskIO.run(for: u, priority: .background, isCancelled: { [weak self] in self?.folderGeneration != gen }, {
+                        FolderModel.readCaptureDate(url: u, fallback: fallbacks[u] ?? nil)
+                    }) {
+                        buf[i] = d
+                    }
                 }
             }
             let map = Dictionary(uniqueKeysWithValues: zip(urls, dates))
@@ -1946,12 +2044,15 @@ final class ViewerViewController: NSViewController {
             #if FLIPIC_PRO
             let film = filmDisplay.prefilmJob()
             #endif
-            let op = BlockOperation {
-                _ = loader.info(for: url)
-                _ = loader.preview(for: url, maxPixel: fitPx)
-                #if FLIPIC_PRO
-                film?(url)
-                #endif
+            let op = BlockOperation()
+            op.addExecutionBlock { [weak op] in
+                _ = DiskIO.run(for: url, priority: .prefetch, isCancelled: { [weak op] in op?.isCancelled == true }) {
+                    _ = loader.preview(for: url, maxPixel: fitPx)
+                    #if FLIPIC_PRO
+                    film?(url)
+                    #endif
+                    return true
+                }
             }
             if let after { op.addDependency(after) }
             prefetchQueue.addOperation(op)
@@ -1984,7 +2085,9 @@ final class ViewerViewController: NSViewController {
         DispatchQueue.global(qos: .utility).async { [weak self] in
             for url in urls {
                 guard let self, self.warmupGeneration == gen else { return }
-                _ = loader.thumb(for: url)
+                _ = DiskIO.run(for: url, priority: .background, isCancelled: { [weak self] in self?.warmupGeneration != gen }) {
+                    loader.thumb(for: url)
+                }
                 Thread.sleep(forTimeInterval: 0.03)
             }
         }
@@ -2411,6 +2514,11 @@ final class ViewerViewController: NSViewController {
             toolbarView.alphaValue = toolbarView.isHidden ? 0 : 1
             cornerBar.isHidden = hideTools || !shownZones.contains(.top)
             cornerBar.alphaValue = cornerBar.isHidden ? 0 : 1
+            #if FLIPIC_PRO
+            workbenchBar.isHidden = hideTools || !WorkbenchFeature.isEnabled || !shownZones.contains(.top)
+            workbenchBar.alphaValue = workbenchBar.isHidden ? 0 : 1
+            placeFileName()
+            #endif
             ratingBadgeBottom.constant = ratingBadgeOffset(controls: bottomShown)
         case "videos":
             // 重新列一遍文件夹；正在看的视频被关掉了就回到文件夹开头
@@ -2894,6 +3002,7 @@ final class ViewerViewController: NSViewController {
         applyBackdropStyle()
         // 「只在全屏时铺满」：退出全屏回到整张放下
         if ZoomableImageView.fillMode == 1, imageView.isFit { imageView.fit() }
+        placeFileName()
     }
 
     /// 进入全屏完成后再换底：在「将要进入」时换，进入失败（被取消）窗口就一直是不透明的
@@ -2901,6 +3010,7 @@ final class ViewerViewController: NSViewController {
         guard (note.object as? NSWindow) === view.window else { return }
         applyBackdropStyle(fullScreen: true)
         if ZoomableImageView.fillMode == 1, imageView.isFit { imageView.fit() }
+        placeFileName()
     }
 
     @objc private func windowWillClose(_ note: Notification) {
@@ -3167,8 +3277,14 @@ final class ViewerViewController: NSViewController {
     func loadRating(for url: URL) {
         if ratingCache[url] != nil { updateRatingLabel(); return }
         updateRatingLabel()
+        let hasSide = folder.hasSidecar(for: url)
+        let gen = folderGeneration
         ratingQueue.async { [weak self] in
-            let (r, label) = Rating.readBoth(url)
+            guard let res = DiskIO.run(for: url, priority: .background,
+                                       isCancelled: { [weak self] in self?.folderGeneration != gen }, {
+                Rating.readBoth(url, hasSidecar: hasSide)
+            }) else { return }
+            let (r, label) = res
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.ratingCache[url] = r
@@ -3506,10 +3622,19 @@ final class ViewerViewController: NSViewController {
         guard !missing.isEmpty else { then(); return }
         if missing.count > 40 { flash(L10n.t("msg.readingRatings", "正在读取评分…"), seconds: 5) }
         let gen = folderGeneration
+        let sidecars = folder.xmpStems
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             var values = [(Int, TagColor?)](repeating: (0, nil), count: missing.count)
             values.withUnsafeMutableBufferPointer { buf in
-                DiskIO.forEach(missing) { i in buf[i] = Rating.readBoth(missing[i]) }
+                DiskIO.forEach(missing) { i in
+                    let u = missing[i]
+                    let hasSide = sidecars.contains(Rating.sidecarStem(for: u))
+                    if let res = DiskIO.run(for: u, priority: .background, isCancelled: { [weak self] in self?.folderGeneration != gen }, {
+                        Rating.readBoth(u, hasSidecar: hasSide)
+                    }) {
+                        buf[i] = res
+                    }
+                }
             }
             DispatchQueue.main.async {
                 guard let self, self.folderGeneration == gen else { return }
@@ -4770,6 +4895,7 @@ final class ViewerViewController: NSViewController {
 
     override func viewDidLayout() {
         super.viewDidLayout()
+        placeFileName()
         // 窗口拖窄到放不下面板旁边的照片时改回浮动，拖宽了再贴回去
         updateInfoDock(layoutNow: false)
         updateCropInset(layout: false)
@@ -5726,7 +5852,7 @@ final class ViewerViewController: NSViewController {
                 for sv in v.subviews { if let b = find(sv) { return b } }
                 return nil
             }
-            return find(cornerBar)
+            return find(workbenchBar) ?? find(cornerBar)
         }
         func report(_ tag: String) {
             let wb = WorkbenchWindowController.shared?.workbench
@@ -7950,12 +8076,14 @@ extension ViewerViewController: NSCollectionViewDataSource, NSCollectionViewDele
             item.setThumbnail(cached)
         } else {
             item.setThumbnail(nil)
-            thumbQueue.addOperation { [loader] in
-                let t = loader.thumb(for: url)
+            thumbQueue.addOperation { [loader, weak item] in
+                let t = DiskIO.run(for: url, priority: .visible, isCancelled: { [weak item] in item == nil }) {
+                    loader.thumb(for: url)
+                }
                 // 视频出缩略图时顺带读过文件头，时长已经在缓存里
                 let d = isVideo ? Video.cachedMeta(url)?.duration : nil
                 DispatchQueue.main.async {
-                    if item.itemIndex == idx {
+                    if let item, item.itemIndex == idx {
                         item.setThumbnail(t)
                         if isVideo { item.setDuration(d) }
                     }

@@ -1373,3 +1373,22 @@ Arraste uma pasta ou imagem para abrir";
 "set.extCacheClear" = "Limpar cache";
 "set.extCacheNote" = "Salva pré-visualizações e miniaturas de discos externos, cartões SD e rede no SSD do Mac (até 500 MB, limpeza automática). Fotos modificadas atualizam automaticamente e o zoom de 100% sempre lê o original.";
 "set.extCacheUsage" = "Uso atual: %@";
+"pro.list.splitPhoto" = "Dividir: corta fotos largas em faixa contínua ou grade 2×2 / 3×3 em resolução total";
+"pro.list.nameMatch" = "Escolher por lista de nomes: cole a lista do cliente para filtrar as fotos correspondentes (com pares RAW+JPG)";
+"pro.list.customLut" = "LUTs 3D .cube personalizadas: importe suas próprias LUTs no painel Filme para prévia, exportação e presets";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "Ocultar barra lateral";
+"wb.menu.showSidebar" = "Mostrar barra lateral";
+"wb.view.filmstrip" = "Tira de filme";
+"wb.filmstripTip" = "Foto grande com miniaturas na parte inferior";
+"wb.compareTipMulti" = "Comparar 2–9 fotos lado a lado com zoom sincronizado";
+"wb.compareSelected" = "Comparar %d fotos selecionadas";
+"wb.compareMaxHint" = "É possível comparar até %d fotos de uma vez";
+"wb.compareRemovePane" = "Remover da comparação";
+"wb.hintCompareMulti" = "← → trocar quadro · ⇧← ⇧→ trocar foto · %1$@–%2$@ classificar · %3$@ marcar · %4$@ zoom nos olhos · Esc voltar";
+"wb.clearRating" = "Limpar classificação";
+"wb.clearRatingN" = "Limpar classificação (%d fotos)";
+"wb.markN" = "Marcar %d fotos";
+"wb.unmarkN" = "Desmarcar %d fotos";
+"wb.f.exactStarTip" = "Mostrar apenas fotos de %1$d estrelas (%2$@ no total)";

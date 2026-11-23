@@ -1373,3 +1373,22 @@ Déposez un dossier ou une image pour ouvrir";
 "set.extCacheClear" = "Vider le cache";
 "set.extCacheNote" = "Stocke les aperçus et vignettes des disques externes, cartes SD et volumes réseau sur le SSD du Mac (500 Mo max., nettoyage automatique). Les photos modifiées sont actualisées automatiquement et le zoom à 100 % lit toujours l’original.";
 "set.extCacheUsage" = "Espace utilisé : %@";
+"pro.list.splitPhoto" = "Découpe : diviser un panorama en série d’images ou en grille 2×2 / 3×3 en pleine résolution";
+"pro.list.nameMatch" = "Sélection par liste de noms : coller la liste du client pour filtrer les photos correspondantes (paires RAW+JPG incluses)";
+"pro.list.customLut" = "LUT 3D .cube personnalisées : importer vos propres LUT dans le panneau Film pour aperçu, export et préréglages";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "Masquer la barre latérale";
+"wb.menu.showSidebar" = "Afficher la barre latérale";
+"wb.view.filmstrip" = "Pellicule";
+"wb.filmstripTip" = "Grande photo avec bande de vignettes en bas";
+"wb.compareTipMulti" = "Comparer 2 à 9 photos côte à côte avec zoom synchronisé";
+"wb.compareSelected" = "Comparer les %d photos sélectionnées";
+"wb.compareMaxHint" = "Vous pouvez comparer jusqu’à %d photos à la fois";
+"wb.compareRemovePane" = "Retirer de la comparaison";
+"wb.hintCompareMulti" = "← → changer de cadre · ⇧← ⇧→ changer de photo · %1$@–%2$@ noter · %3$@ marquer · %4$@ zoom yeux · Esc retour";
+"wb.clearRating" = "Effacer la note";
+"wb.clearRatingN" = "Effacer la note (%d photos)";
+"wb.markN" = "Marquer %d photos";
+"wb.unmarkN" = "Retirer la marque (%d photos)";
+"wb.f.exactStarTip" = "Afficher uniquement les photos %1$d étoiles (%2$@ au total)";

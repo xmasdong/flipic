@@ -1820,6 +1820,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.focusPeaking", "焦点峰值"), #selector(ViewerViewController.toggleFocusPeaking(_:)))
             item(m, L10n.t("menu.afPoint", "显示相机对焦框"), #selector(ViewerViewController.toggleAFPoint(_:)))
             item(m, L10n.t("menu.filmstrip", "缩略图栏"), #selector(ViewerViewController.toggleFilmstrip(_:)))
+            #if FLIPIC_PRO
+            item(m, L10n.t("wb.menu.hideSidebar", "隐藏边栏"), #selector(WorkbenchViewController.toggleSidebar(_:)), "s", [.control, .command])
+            #endif
             item(m, L10n.t("menu.toolbar", "工具条"), #selector(ViewerViewController.toggleToolbar(_:)))
             m.addItem(.separator())
             let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")

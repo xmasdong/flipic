@@ -1378,3 +1378,22 @@ Return  重新命名目前圖片
 "set.extCacheClear" = "清除快取";
 "set.extCacheNote" = "把外接硬碟、記憶卡、網路磁碟上的預覽圖與縮圖快取到 Mac 內建 SSD（上限 500 MB，自動清理最舊的）。再次開啟或重插同一顆硬碟時翻圖接近本機速度；原圖改過會自動更新，放大到 100% 仍讀取原圖。";
 "set.extCacheUsage" = "目前佔用：%@";
+"pro.list.splitPhoto" = "切圖：將寬幅照片橫排切成多張連續圖，或切成 2×2／3×3 網格全尺寸匯出";
+"pro.list.nameMatch" = "依檔名清單挑圖：貼上客戶提供的檔名或編號，一鍵篩出對應照片（支援 RAW+JPG 配對）";
+"pro.list.customLut" = "自訂 .cube 3D LUT：在底片面板匯入自己的調色 LUT，即時預覽並套用至匯出與預設";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "隱藏側邊欄";
+"wb.menu.showSidebar" = "顯示側邊欄";
+"wb.view.filmstrip" = "底片條";
+"wb.filmstripTip" = "大圖與底部縮圖";
+"wb.compareTipMulti" = "2–9 張並排，一起縮放";
+"wb.compareSelected" = "比較所選的 %d 張照片";
+"wb.compareMaxHint" = "最多同時比較 %d 張照片";
+"wb.compareRemovePane" = "移出比較";
+"wb.hintCompareMulti" = "← → 切格 · ⇧← ⇧→ 換圖 · %1$@–%2$@ 評星 · %3$@ 標記 · %4$@ 放大到眼睛 · Esc 返回";
+"wb.clearRating" = "取消評分";
+"wb.clearRatingN" = "取消評分（%d 張）";
+"wb.markN" = "標記 %d 張";
+"wb.unmarkN" = "取消標記 %d 張";
+"wb.f.exactStarTip" = "只看 %1$d 星照片（共 %2$@ 張）";

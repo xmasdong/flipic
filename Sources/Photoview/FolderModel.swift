@@ -78,6 +78,11 @@ final class FolderModel {
     private(set) var hidden: Set<URL> = []
     /// 打开的文件夹；照片全被删光了也还记着，别处再放进来能接着显示
     private(set) var folderURL: URL?
+    /// 当前目录里已存在的 .xmp 旁车文件无扩展名小写集合（列目录时顺带收集，0 额外磁盘探测）
+    private(set) var xmpStems: Set<String> = []
+
+    func hasSidecar(for url: URL) -> Bool { xmpStems.contains(Rating.sidecarStem(for: url)) }
+    func noteSidecarPresent(for url: URL) { xmpStems.insert(Rating.sidecarStem(for: url)) }
 
     /// 排序方式与方向，跨启动记住；sortReversed 是在该方式自然方向上反过来。
     /// 跟随访达时用 finderSort，不动记住的那个；指定一种排序方式就不再跟随访达
@@ -260,15 +265,11 @@ final class FolderModel {
     }
 
     private static let resourceKeys: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .fileSizeKey, .tagNamesKey, .addedToDirectoryDateKey]
-    /// exFAT / FAT / NTFS / 网络盘没有原生扩展属性，向系统要 .tagNamesKey 会触发成千上万次 AppleDouble (._*) 磁盘寻道
-    private static let fastResourceKeys: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .fileSizeKey, .addedToDirectoryDateKey]
+    /// exFAT / FAT / NTFS / 网络盘没有原生扩展属性与 addedDate，只取原生目录项里的修改时间/创建时间/大小，避免触发 AppleDouble (._*) 寻道
+    private static let fastResourceKeys: [URLResourceKey] = [.contentModificationDateKey, .creationDateKey, .fileSizeKey]
 
     private static func enumerationKeys(for folderURL: URL) -> (keys: [URLResourceKey], skipTags: Bool) {
-        if let vol = Volumes.info(for: folderURL) {
-            let fs = vol.fsType.lowercased()
-            let skip = Volumes.keepsMarksOffVolume(vol) || !vol.local || (!vol.internalDisk && fs != "apfs" && fs != "hfs")
-            if skip { return (fastResourceKeys, true) }
-        }
+        if Volumes.skipsFinderTags(for: folderURL) { return (fastResourceKeys, true) }
         return (resourceKeys, false)
     }
 
@@ -287,12 +288,23 @@ final class FolderModel {
         refreshFinderSort()
         if let previous, finderSort?.key == previous.key { finderSort = previous }
 
-        // 列目录时一并取回时间与大小，直接从 contentsOfDirectory 返回的原 URL 读缓存（避免重建 URL 导致逐个重新 stat 和读 ._*）
+        // 列目录时一并取回时间、大小，并顺带收集现有 .xmp 旁车名（零额外磁盘探测）
         let (keys, skipTags) = Self.enumerationKeys(for: folderURL)
         let keySet = Set(keys)
-        let rawEntries = ((try? FileManager.default.contentsOfDirectory(
-            at: folderURL, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles])) ?? [])
-            .filter { Self.isListable($0.lastPathComponent) }
+        let allEntries = (try? FileManager.default.contentsOfDirectory(
+            at: folderURL, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles])) ?? []
+        var stems = Set<String>()
+        var rawEntries: [URL] = []
+        rawEntries.reserveCapacity(allEntries.count)
+        for u in allEntries {
+            let name = u.lastPathComponent
+            if name.lowercased().hasSuffix(".xmp") {
+                stems.insert(Rating.sidecarStem(for: u))
+            } else if Self.isListable(name) {
+                rawEntries.append(u)
+            }
+        }
+        xmpStems = stems
         var prefetched: [URL: URLResourceValues] = [:]
         prefetched.reserveCapacity(rawEntries.count)
         var urls: [URL] = []
@@ -343,13 +355,20 @@ final class FolderModel {
         let keySet = Set(keys)
         guard let listed = try? FileManager.default.contentsOfDirectory(
             at: folderURL, includingPropertiesForKeys: keys, options: [.skipsHiddenFiles]) else { return ([], []) }
+        var stems = Set<String>()
         var prefetched: [URL: URLResourceValues] = [:]
         var mapped: [URL] = []
-        for raw in listed where Self.isListable(raw.lastPathComponent) {
-            let canonical = folderURL.appendingPathComponent(raw.lastPathComponent)
-            mapped.append(canonical)
-            if let v = try? raw.resourceValues(forKeys: keySet) { prefetched[canonical] = v }
+        for raw in listed {
+            let name = raw.lastPathComponent
+            if name.lowercased().hasSuffix(".xmp") {
+                stems.insert(Rating.sidecarStem(for: raw))
+            } else if Self.isListable(name) {
+                let canonical = folderURL.appendingPathComponent(name)
+                mapped.append(canonical)
+                if let v = try? raw.resourceValues(forKeys: keySet) { prefetched[canonical] = v }
+            }
         }
+        xmpStems = stems
         let onDisk = Set(Video.dropLiveCompanions(mapped))
         let known = Set(allItems.map(\.url))
         // 目录里没列出来、但按路径还在的（比如只拿到单个文件的权限）不算不见了

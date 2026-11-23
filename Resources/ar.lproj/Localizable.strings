@@ -1373,3 +1373,22 @@ Return  إعادة تسمية الصورة الحالية
 "set.extCacheClear" = "مسح ذاكرة التخزين المؤقت";
 "set.extCacheNote" = "يحفظ معاينات ومصغرات الأقراص الخارجية وبطاقات SD والشبكة على قرص SSD في Mac (بحد أقصى 500 ميجابايت مع التنظيف التلقائي). يتم تحديث الصور المعدّلة تلقائياً، والتكبير بنسبة 100% يقرأ الصورة الأصلية دائماً.";
 "set.extCacheUsage" = "المساحة المستخدمة: %@";
+"pro.list.splitPhoto" = "تقسيم الصور: قصّ الصور العريضة إلى شريط متصل أو شبكة 2×2 أو 3×3 بالدقة الكاملة";
+"pro.list.nameMatch" = "الاختيار بقائمة أسماء الملفات: الصق قائمة العميل لتصفية الصور المطابقة فوراً (مع أزواج RAW+JPG)";
+"pro.list.customLut" = "ملفات .cube 3D LUT مخصصة: استورد ملفات LUT الخاصة بك في لوحة الأفلام للمعاينة والتصدير والقوالب";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "إخفاء الشريط الجانبي";
+"wb.menu.showSidebar" = "إظهار الشريط الجانبي";
+"wb.view.filmstrip" = "شريط الصور";
+"wb.filmstripTip" = "صورة كبيرة مع شريط مصغّرات بالأسفل";
+"wb.compareTipMulti" = "مقارنة ٢–٩ صور جنبًا إلى جنب مع تكبير متزامن";
+"wb.compareSelected" = "مقارنة %d صور محددة";
+"wb.compareMaxHint" = "يمكن مقارنة حتى %d صور في الوقت نفسه";
+"wb.compareRemovePane" = "إزالة من المقارنة";
+"wb.hintCompareMulti" = "← → تبديل الإطار · ⇧← ⇧→ تغيير الصورة · %1$@–%2$@ تقييم · %3$@ تمييز · %4$@ تكبير للعينين · Esc رجوع";
+"wb.clearRating" = "إزالة التقييم";
+"wb.clearRatingN" = "إزالة التقييم (%d صور)";
+"wb.markN" = "تمييز %d صور";
+"wb.unmarkN" = "إلغاء تمييز %d صور";
+"wb.f.exactStarTip" = "عرض صور %1$d نجوم فقط (الإجمالي %2$@)";

@@ -99,8 +99,10 @@ enum IOMeasure {
         log("mode=\(mode) folder=\(dir.path) files=\(paths.count) (raw \(rawCount), other \(paths.count - rawCount)) bytes=\(folderBytes)"
             + " env BENCH_PREPARE=\(ProcessInfo.processInfo.environment["BENCH_PREPARE"] ?? "-")")
         let vol = Volumes.info(for: dir)
-        log("slowStorage=\(Volumes.isSlowStorage(dir) ? 1 : 0) env FLIPIC_SLOW_STORAGE=\(ProcessInfo.processInfo.environment["FLIPIC_SLOW_STORAGE"] ?? "-")"
+        log("slowStorage=\(Volumes.isSlowStorage(dir) ? 1 : 0) skipsTags=\(Volumes.skipsFinderTags(for: dir) ? 1 : 0) env FLIPIC_SLOW_STORAGE=\(ProcessInfo.processInfo.environment["FLIPIC_SLOW_STORAGE"] ?? "-")"
             + " volume internal=\(vol?.internalDisk == true ? 1 : 0) removable=\(vol?.removable == true ? 1 : 0) ejectable=\(vol?.ejectable == true ? 1 : 0) local=\(vol?.local == true ? 1 : 0) fs=\(vol?.fsType ?? "-")")
+        DiskIO.debugResetSlowStats()
+        Rating.debugResetStats()
 
         // 开始之前就已经在缓存里的（应该是 0：卷刚挂上）
         var before: Int64 = 0
@@ -251,9 +253,13 @@ enum IOMeasure {
                        rawCount, mb(rawBytes), mb(resRaw), pct(resRaw, rawBytes), rawFull, rawPart,
                        paths.count - rawCount, mb(otherBytes), mb(resOther), pct(resOther, otherBytes), otherFull, otherPart))
             log(String(format: "summary mode=%@ folderMB=%.1f residentMB=%.1f (%.0f%%) diskReadMB=%.1f filesTouched(ever)=%d/%d maxOpen=%d seenOpen=%d "
+                       + "slowMaxConc=%d slowOps=%d sidecarReads=%d extCacheHits=%d extCacheWrites=%d "
                        + "t50=%.1fs t90=%.1fs t100=%.1fs lastTouch=%.1fs readsIdleSince=%.1fs ranFor=%.1fs",
                        mode, mb(folderBytes), mb(last.residentBytes), pct(last.residentBytes, folderBytes), mb(last.diskRead),
-                       firstTouch.count, paths.count, mx, seen, timeTo(0.5), timeTo(0.9), timeTo(1.0),
+                       firstTouch.count, paths.count, mx, seen,
+                       DiskIO.debugSlowMaxConcurrent, DiskIO.debugSlowScheduled, Rating.debugSidecarReads,
+                       ExtDiskCache.shared.debugHits, ExtDiskCache.shared.debugWrites,
+                       timeTo(0.5), timeTo(0.9), timeTo(1.0),
                        touchTimes.last ?? -1, lastChange, t))
             exit(0)
         }

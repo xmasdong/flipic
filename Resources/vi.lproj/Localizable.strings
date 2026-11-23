@@ -1373,3 +1373,22 @@ Kéo thư mục hoặc ảnh vào để mở";
 "set.extCacheClear" = "Xóa bộ nhớ đệm";
 "set.extCacheNote" = "Lưu ảnh xem trước và ảnh thu nhỏ của ổ cứng ngoài, thẻ SD, ổ mạng lên SSD của Mac (tối đa 500 MB, tự dọn cũ nhất). Ảnh bị sửa sẽ tự cập nhật và phóng to 100% luôn đọc ảnh gốc.";
 "set.extCacheUsage" = "Đang dùng: %@";
+"pro.list.splitPhoto" = "Cắt ảnh: chia ảnh ngang thành dải nối tiếp hoặc lưới 2×2 / 3×3 ở độ phân giải gốc";
+"pro.list.nameMatch" = "Chọn theo danh sách tên file: dán danh sách khách gửi để lọc ảnh khớp một chạm (hỗ trợ cặp RAW+JPG)";
+"pro.list.customLut" = "Tuỳ chỉnh .cube 3D LUT: nhập LUT riêng vào bảng Phim để xem trước, xuất ảnh và dùng trong preset";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "Ẩn thanh bên";
+"wb.menu.showSidebar" = "Hiện thanh bên";
+"wb.view.filmstrip" = "Dải phim";
+"wb.filmstripTip" = "Ảnh lớn kèm dải ảnh thu nhỏ bên dưới";
+"wb.compareTipMulti" = "So sánh 2–9 ảnh cạnh nhau, thu phóng đồng bộ";
+"wb.compareSelected" = "So sánh %d ảnh đã chọn";
+"wb.compareMaxHint" = "Chỉ có thể so sánh tối đa %d ảnh cùng lúc";
+"wb.compareRemovePane" = "Bỏ khỏi so sánh";
+"wb.hintCompareMulti" = "← → đổi ô · ⇧← ⇧→ đổi ảnh · %1$@–%2$@ chấm sao · %3$@ đánh dấu · %4$@ phóng vào mắt · Esc quay lại";
+"wb.clearRating" = "Bỏ xếp hạng";
+"wb.clearRatingN" = "Bỏ xếp hạng (%d ảnh)";
+"wb.markN" = "Đánh dấu %d ảnh";
+"wb.unmarkN" = "Bỏ đánh dấu %d ảnh";
+"wb.f.exactStarTip" = "Chỉ xem ảnh %1$d sao (tổng %2$@ ảnh)";

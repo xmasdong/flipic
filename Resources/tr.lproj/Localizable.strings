@@ -1373,3 +1373,22 @@ Açmak için klasör veya resim sürükleyin";
 "set.extCacheClear" = "Önbelleği Temizle";
 "set.extCacheNote" = "Harici disk, SD kart ve ağ paylaşımlarındaki önizleme ve küçük resimleri Mac SSD’sine kaydeder (en fazla 500 MB, eskiler otomatik silinir). Değişen fotoğraflar otomatik yenilenir ve %100 yakınlaştırma her zaman orijinali okur.";
 "set.extCacheUsage" = "Mevcut kullanım: %@";
+"pro.list.splitPhoto" = "Bölme: geniş fotoğrafları tam çözünürlükte şerit veya 2×2 / 3×3 ızgara olarak dışa aktar";
+"pro.list.nameMatch" = "Dosya listesiyle seç: müşterinin gönderdiği dosya adlarını yapıştırıp eşleşenleri filtrele (RAW+JPG çiftleriyle)";
+"pro.list.customLut" = "Özel .cube 3D LUT: Film paneline kendi LUT dosyalarını aktar; önizleme, dışa aktarma ve ön ayarlarda kullan";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "Kenar Çubuğunu Gizle";
+"wb.menu.showSidebar" = "Kenar Çubuğunu Göster";
+"wb.view.filmstrip" = "Film Şeridi";
+"wb.filmstripTip" = "Büyük fotoğraf ve altta küçük resim şeridi";
+"wb.compareTipMulti" = "2–9 fotoğrafı eşzamanlı yakınlaştırmayla yan yana karşılaştır";
+"wb.compareSelected" = "Seçili %d Fotoğrafı Karşılaştır";
+"wb.compareMaxHint" = "Aynı anda en fazla %d fotoğraf karşılaştırılabilir";
+"wb.compareRemovePane" = "Karşılaştırmadan Kaldır";
+"wb.hintCompareMulti" = "← → bölme seç · ⇧← ⇧→ fotoğraf değiştir · %1$@–%2$@ puanla · %3$@ işaretle · %4$@ göze odaklan · Esc geri";
+"wb.clearRating" = "Puanı Kaldır";
+"wb.clearRatingN" = "Puanı Kaldır (%d Fotoğraf)";
+"wb.markN" = "%d Fotoğrafı İşaretle";
+"wb.unmarkN" = "%d Fotoğrafın İşaretini Kaldır";
+"wb.f.exactStarTip" = "Yalnızca %1$d yıldızlı fotoğrafları göster (toplam %2$@)";

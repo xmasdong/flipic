@@ -1373,3 +1373,22 @@ Return  表示中の画像を名称変更
 "set.extCacheClear" = "キャッシュを削除";
 "set.extCacheNote" = "外付け HDD・SD カード・ネットワーク上のプレビューとサムネイルを Mac 内蔵 SSD に保存します（最大 500 MB、古い順に自動削除）。再接続時もローカル並みに軽快に閲覧でき、編集済み写真は自動更新され、100% 拡大時は原画を読み込みます。";
 "set.extCacheUsage" = "現在の使用量：%@";
+"pro.list.splitPhoto" = "分割：横長写真を連続画像や 2×2・3×3 グリッドに元解像度で書き出し";
+"pro.list.nameMatch" = "ファイル名リスト抽出：クライアントの一覧を貼り付けて該当写真を一括抽出（RAW+JPG ペア対応）";
+"pro.list.customLut" = "カスタム .cube 3D LUT：フィルムパネルに独自の LUT を読み込み、プレビュー・書き出し・プリセットで利用";
+
+/* Workbench: Collapsible Sidebar, Filmstrip, Multi-Compare, Star Counts & Batch Rating */
+"wb.menu.hideSidebar" = "サイドバーを隠す";
+"wb.menu.showSidebar" = "サイドバーを表示";
+"wb.view.filmstrip" = "フィルムストリップ";
+"wb.filmstripTip" = "大きな写真と下部のサムネイル帯";
+"wb.compareTipMulti" = "2〜9枚を並べて同期ズーム比較";
+"wb.compareSelected" = "選択した%d枚の写真を比較";
+"wb.compareMaxHint" = "同時に比較できるのは最大%d枚です";
+"wb.compareRemovePane" = "比較から除外";
+"wb.hintCompareMulti" = "← → 枠を切替 · ⇧← ⇧→ 写真を変更 · %1$@–%2$@ 評価 · %3$@ マーク · %4$@ 瞳にズーム · Esc 戻る";
+"wb.clearRating" = "評価を解除";
+"wb.clearRatingN" = "評価を解除（%d枚）";
+"wb.markN" = "%d枚をマーク";
+"wb.unmarkN" = "%d枚のマークを解除";
+"wb.f.exactStarTip" = "%1$dつ星の写真のみ表示（計%2$@枚）";
