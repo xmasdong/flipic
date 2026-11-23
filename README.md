@@ -30,7 +30,7 @@
 
 <p align="center"><sub>Real-time screen recording, 34 RAW files from 34 different cameras. <a href="docs/media/flipic-lens-demo.mp4">Full-quality video</a></sub></p>
 
-After a shoot I wanted to go through the photos first, but Preview isn't built for flipping through hundreds of shots and Lightroom wants an import first. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is about 8.4 MB, there is no account, and photos are processed only on your Mac.
+After a shoot I wanted to go through the photos first, but Preview isn't built for flipping through hundreds of shots and Lightroom wants an import first. So I made Flipic Lens: double-click any photo in the folder, arrow through, star the ones you like, and the stars are still there in Lightroom. Most of the people using it now are photographers, and a lot of the features came from them. The download is about 8.7 MB, there is no account, and photos are processed only on your Mac.
 
 
 ## Culling a shoot
@@ -79,9 +79,12 @@ Then use it like Quick Look: select a photo in Finder, press ⌘↓ to open it, 
 
 - Culling: press P to mark the photos you want (a same-name RAW is marked too) and ⇧P to show only marked ones. Marks are a Finder tag named Flipic, so the photo files are not changed and the tag in the Finder sidebar lists them all, ready to select and drag.
 - Filter by rating: View › Show by Rating shows N stars and up, and File › Export to Folder… (⇧⌘E) copies or moves the photos shown in one go, numbering name clashes and taking RAW rating sidecars along.
-- Inspection overlays: press H for a live RGB & luma histogram with shadow/highlight clipping %, J for highlight/shadow clipping zebras, K for focus peaking, and A to show the camera AF point (EXIF SubjectArea, XMP MWG-RS, Sony and Fujifilm MakerNotes).
-- External drive acceleration: screen-sized previews and thumbnails for external hard drives, SD cards and network shares cache automatically to your Mac's internal SSD (500 MB LRU cap; toggle or clear in Settings › Viewing), paired with 4 MB prefix RAW embedded-preview scanning and single-lane sequential I/O on slow storage.
+- Inspection overlays (all free): press H for a live RGB & luma histogram with shadow/highlight clipping %, J for red/blue highlight and shadow clipping zebras, K for cyan focus peaking, and A to show the camera AF point (EXIF SubjectArea, XMP MWG-RS, Sony and Fujifilm MakerNotes). Overlays stay aligned after 90° rotation.
+- Quick sort (`⇅`) & filmstrip wheel paging: click `⇅` at the top right of the viewer (or right-click › Sort By) to switch between Same as Finder, Name, Capture Date, Date Modified, Date Created, Date Added, Size, Kind or Rating without opening Settings. Hover over the bottom filmstrip and roll the mouse wheel vertically (or click mouse side buttons 3/4) to flip photos while two-finger horizontal swipe scrolls the strip.
+- Deep ExFAT & external drive acceleration: screen-sized previews and thumbnails for external hard drives, ExFAT SD cards and network shares cache automatically to your Mac's internal SSD (500 MB LRU cap; toggle or clear in Settings › Viewing), paired with POSIX sequential large-chunk reads, 4 MB prefix RAW embedded-preview scanning, single-lane per-volume I/O and zero Finder-tag/AppleDouble seeks on slow storage.
 - Side-by-side compare: C for two photos, Shift-C for four, with zoom and position synced so you can check focus and expressions across a burst. Hold ⌥ to nudge one pane on its own, and Shift-L turns syncing off.
+
+![Inspection suite: live histogram, highlight zebras, focus peaking and camera AF point](docs/shots/inspect-suite-en.webp)
 - The bottom toolbar can be turned off in Settings if you prefer shortcuts and menus.
 - Open several windows at once: opening another photo from Finder while one is showing starts a new window (Settings can switch back to replacing it), and File › New Window is ⌘N.
 - Holding an arrow key keeps up: every key press changes the photo, a slightly soft version first and sharp as soon as you stop, even on Macs short on memory.
@@ -115,8 +118,11 @@ Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. 
 
 - Convert a whole folder to JPEG, PNG or HEIC; converted files go into a subfolder and the originals stay untouched
 - EXIF template batch rename (`{date}`, `{time}`, `{camera}`, `{focal}`, `{name}`, `{seq}`) with presets, live preview and companion `.xmp`/`.MOV` sync
-- EXIF photo frame (`⇧B`): typesets camera, lens, focal length, aperture, shutter speed and ISO along the border; works in Export and Batch Convert
-- XMP color labels (`6–9`, synced with both Finder tags and standard `xmp:Label`), export camera/lens serial stripping, and watermark `{index}` sequence numbers
+- EXIF photo frame (`⇧B`): typesets camera, lens, focal length, aperture, shutter speed, ISO and date along white, black, blurred or custom borders with automatic contrast; works in single save, Export, Batch Convert and Pro presets
+- Film looks (`⇧F`) & export watermarks (free): two built-in film looks (Warm Portrait and Classic B&W) with Strength, Grain and Halation sliders, plus text/logo watermarks with `{index}` sequence numbers in Export and Batch Convert
+- XMP color labels (`6–9`, synced with both Finder tags and standard `xmp:Label`), export camera/lens serial stripping, and size/long-edge limits
+
+![EXIF photo frame](docs/shots/exif-frame-en.webp)
 - Rotate and save back to the file without quality loss: JPEG, HEIC and camera RAW (ARW, NEF, CR2, CR3, RAF, ORF, RW2, PEF, DNG and more) only get their orientation tags rewritten, the image data is untouched
 - Slideshow with 1, 2, 3, 5 or 10 seconds per photo and a 0.5 to 3 second crossfade, set separately from paging; click the photo to pause and click again to resume, with paging and rating available while paused; the thumbnail strip and toolbar hide while you leave the mouse alone
 - Export compressed copies, set as desktop picture, move to Trash
@@ -145,36 +151,45 @@ JPEG, PNG, HEIC, WebP, animated GIF, TIFF, AVIF, JPEG XL (macOS 14 or later), PS
 | 0 (hold) | 100% at the pointer while held; release to fit |
 | Double-click | Fit to window / 100% |
 | 1–5 | Rate one to five stars; same number again clears |
+| 6–9 | Red, yellow, green, blue color labels (Finder + standard `xmp:Label`) |
+| P / ⇧P | Mark keeper / filter to marked photos |
+| H / J / K / A | Live histogram / clipping zebras / focus peaking / camera AF point |
+| C / ⇧C | Side-by-side compare (2 or 4 photos) |
 | I | Photo info panel (Esc also closes it) |
 | ⇧I | Switch photo info between Essentials and All; captions stored in the file (IPTC Description) are shown at the top and can be translated on-device (macOS 15+) |
 | Esc | Back to fit; with Esc Closes Window on in Settings, closes the window when fitted |
-| T | Thumbnail strip |
-| R / L | Rotate right / left |
-| ⇧R | Crop & Straighten |
+| T | Thumbnail strip (scroll vertically over the strip to flip photos) |
+| R / L | Rotate right / left (lossless for JPEG, HEIC and RAW) |
+| ⇧R / ⇧B | Crop & Straighten / EXIF photo frame |
+| ⇧F | Film Looks & custom `.cube` 3D LUT panel |
 | S | Slideshow |
 | Return | Rename |
-| ⌘S | Export a compressed copy |
+| ⌘S | Export a compressed copy (with optional watermark, film look, EXIF frame, serial strip) |
 | ⌥⌘C | Copy All Text in Image |
 | ⌘⌫ | Move to Trash (can be changed to a single key) |
 | ⌘Z | Put back the last deleted photo |
 | ⌘E | Edit in your photo editor |
+| ⌥⌘B | Workbench (Pro) |
 | ⇧⌘K | Cleanup Mode |
-| ⇧⌘C / ⇧⌘B | Batch convert / batch rename |
+| ⇧⌘C / ⇧⌘B | Batch convert / EXIF template batch rename |
 | ⌘, | Settings (change any shortcut here) |
 
 ## Pro
 
-Viewing, rating, marking, filtering, exporting, side-by-side comparison and Cleanup Mode stay free, and all of that code is in this repository (MIT).
+Viewing, rating, color labels, marking, inspection overlays (`H/J/K/A`), EXIF photo frames (`⇧B`), filtering, export, watermarks, side-by-side comparison and Cleanup Mode stay free, and all of that code is in this repository (MIT).
 
-Flipic Lens Pro is for people who cull and edit a lot. It is a one-time purchase ($12.99), and every download includes a 7-day trial. Since 1.0, Pro adds three things:
+Flipic Lens Pro is for photographers who cull and deliver hundreds or thousands of shots at a time. It is a one-time purchase ($12.99), and every download includes a 7-day trial:
 
-- **Workbench** (⌥⌘B): one project per shoot; rate, mark and delete in a grid, filter by closed eyes, blur and bursts, with a large preview showing the shooting settings and a histogram
-- **Find by content** (⌘F): type "dog", "beach" or "night" and the matching photos in the current folder are picked out; turn on the more accurate recognition to search with a phrase such as "dog running on the beach" (a one-time download of about 141 MB in Settings, then fully offline)
-- **Find by text in photos**: search "invoice" or "WiFi password" and photos with those words on them come first
+- **Workbench** (`⌥⌘B`): manage each shoot as a project in a collapsible sidebar (`⌃⌘S`) with five views—Grid, Grid + Preview, Filmstrip (`T`, with mouse-wheel photo flipping), Single, and **2–9 photo multi-pane Compare** (adaptive full-bleed grids like 3+2 with synced zoom/pan/eye-zoom). Live per-star split-pill counts (`★1`–`★5`), quick sort (`⇅`), Blink/Blur/Burst filters, and a docked one-screen **Photo Info card** on the right (`ⓘ` / `I` / `⇧I`, auto-floating on narrow windows) synced to the active selection or compare pane.
+- **Find by content & text** (`⌘F`): type "dog", "beach", "night", or words printed inside a photo ("invoice", "WiFi password") to filter locally; optional ~141 MB model enables natural-language phrase search completely offline.
+- **Match from a client's filename list**: paste a client's messy list of filenames or trailing numbers from chat or email to match across extensions (`.JPG` → `.ARW`/RAW) and RAW+JPG pairs, then filter, mark or export originals.
+- **All 10 Film Looks + custom `.cube` 3D LUTs** (`⇧F`): eight additional film looks plus importing your own 17/33/64/65-point `.cube` 3D LUTs from Sony, Fujifilm, DaVinci Resolve or Adobe, with live swatches, Strength slider, Export and Export Presets (`⌥⌘1–⌥⌘9`).
 
-![Workbench](docs/shots/pro-workbench-en.webp)
+![Workbench Filmstrip and Photo Info card](docs/shots/pro-workbench-en.webp)
 
-The other Pro features: press E to zoom to the eyes (paging keeps the spot), closed-eye checks in Cleanup Mode that compare each person with themselves across a burst, before/after comparison (hold `\` to switch, split line, opacity), merged JPG + RAW, sort into subfolders by rating, favorite folders on ⌥1–⌥9, delete what you didn’t pick, send a batch to your editor, and custom linked files. The free version is enough for most people; Pro just saves time for those who cull and edit a lot. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
+![Workbench 5-photo multi-compare synced with Photo Info card](docs/shots/pro-compare-en.webp)
+
+Other Pro features: press `E` to zoom straight to the subject's eyes (paging keeps the spot), burst-aware per-person closed-eye checks in Cleanup Mode, before/after comparison (hold `\` to switch, split line, opacity), merged JPG + RAW pairs (`V` to toggle), sort into subfolders by rating, favorite folders on `⌥1–⌥9`, delete unpicked shots, batch send to your editor, and custom linked sidecar files. Pro code is not in the public repository, so building from source gives you the free edition. See [flipic.app/en/pro](https://flipic.app/en/pro/).
 
 ## Privacy
 
