@@ -16,7 +16,7 @@ SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
 SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "8.7 MB"
+SIZE = "8.9 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -76,6 +76,7 @@ PAIRS = {
 # Pro 购买：Stripe 付款链接和价格。没填时页面显示「即将开放购买」
 # Mac App Store 上的 Flipic Lens（改名前的名字在 private.json 的 store_app_name）。中国大陆区没有上架
 APP_STORE_URL = "https://apps.apple.com/app/id6829623097"
+APP_STORE_REVIEW_URL = APP_STORE_URL + "?action=write-review"
 PRO_BUY_URL = "https://buy.stripe.com/9B66oI6Rg3uocmU2BAcbC02"
 PRO_PRICE = {"zh": "¥68", "en": "$12.99"}
 PRO_VALUE = {"zh": (68, "CNY"), "en": (12.99, "USD")}   # GA4 begin_checkout 的金额
@@ -104,8 +105,8 @@ DOWNLOAD_ICON = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 T = {
     "zh": {
         "lang": "zh-CN", "home": "/", "features": "功能", "guides": "指南", "faq": "常见问题",
-        "other": "English", "download": "免费下载 Mac 版", "github_alt": "也可以从 <a href=\"{gh}/releases/latest\">GitHub</a> 下载，或者到 <a href=\"{store}\">Mac App Store</a>（中国大陆区暂未上架）",
-        "facts": ["免费开源", "安装包约 8.4 MB", "macOS 13 或更新", "Apple 芯片与 Intel 通用", "已通过 Apple 公证", "不用账号"],
+        "other": "English", "download": "免费下载 Mac 版", "github_alt": "也可以从 <a href=\"{gh}/releases/latest\">GitHub</a> 下载，或者到 <a href=\"{store}\">Mac App Store</a>（中国大陆区暂未上架；已从商店下载欢迎<a href=\"{review}\">留一条评价</a>）",
+        "facts": ["免费开源", f"安装包约 {SIZE}", "macOS 13 或更新", "Apple 芯片与 Intel 通用", "已通过 Apple 公证", "不用账号"],
         "phone": "Flipic Lens 是 Mac 软件，手机上装不了。复制网址，到 Mac 的浏览器里打开就能下载。",
         "phone_btn": "复制网址 flipic.app", "phone_done": "已复制，到 Mac 上粘贴打开",
         "crumbs_home": "Flipic Lens", "crumbs_guides": "指南", "updated": "更新于 " + UPDATED,
@@ -118,8 +119,8 @@ T = {
     },
     "en": {
         "lang": "en", "home": "/en/", "features": "Features", "guides": "Guides", "faq": "FAQ",
-        "other": "中文", "download": "Download for Mac, free", "github_alt": "or get it from <a href=\"{gh}/releases/latest\">GitHub</a> or the <a href=\"{store}\">Mac App Store</a>",
-        "facts": ["Free and open source", "About 8.4 MB download", "macOS 13 or later", "Apple silicon and Intel", "Notarized by Apple", "No account needed"],
+        "other": "中文", "download": "Download for Mac, free", "github_alt": "or get it from <a href=\"{gh}/releases/latest\">GitHub</a> or the <a href=\"{store}\">Mac App Store</a> (installed from there? <a href=\"{review}\">leave a rating</a>)",
+        "facts": ["Free and open source", f"About {SIZE} download", "macOS 13 or later", "Apple silicon and Intel", "Notarized by Apple", "No account needed"],
         "phone": "Flipic Lens is a Mac app and can't be installed on a phone. Copy the address and open it in a browser on your Mac.",
         "phone_btn": "Copy flipic.app", "phone_done": "Copied. Paste it on your Mac.",
         "crumbs_home": "Flipic Lens", "crumbs_guides": "Guides", "updated": "Updated " + UPDATED,
@@ -215,7 +216,7 @@ def download_block(lang, big=True, brew=False, win=False):
     win_link = f'\n  <a class="alt win-link" href="#windows">{WAITLIST[lang]["link"]}</a>' if win else ""
     return f"""<div class="get">
   <a class="btn" href="/download/Flipic.dmg" download>{DOWNLOAD_ICON}{t['download']}</a>
-  <span class="alt">{t['github_alt'].format(gh=GITHUB, store=APP_STORE_URL)}</span>{win_link}
+  <span class="alt">{t['github_alt'].format(gh=GITHUB, store=APP_STORE_URL, review=APP_STORE_REVIEW_URL)}</span>{win_link}
 </div>
 <ul class="facts">{facts}</ul>{brew_line}
 <div class="on-phone"><p>{t['phone']}</p><button class="copy" type="button" data-url="https://flipic.app" data-done="{t['phone_done']}">{t['phone_btn']}</button></div>"""
