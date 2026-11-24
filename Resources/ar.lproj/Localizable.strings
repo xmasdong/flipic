@@ -1392,3 +1392,35 @@ Return  إعادة تسمية الصورة الحالية
 "wb.markN" = "تمييز %d صور";
 "wb.unmarkN" = "إلغاء تمييز %d صور";
 "wb.f.exactStarTip" = "عرض صور %1$d نجوم فقط (الإجمالي %2$@)";
+
+/* Format mismatch detection & repair */
+"menu.fixExtensions" = "إصلاح امتدادات الصور الخاطئة…";
+"mm.errDecode" = "تعذر فك تشفير الصورة الأصلية";
+"mm.errEncode" = "تعذر كتابة ملف JPEG الهدف";
+"mm.errVerify" = "فشل التحقق من JPEG؛ لم يتم تعديل الملف الأصلي";
+"mm.bannerText" = "التنسيق الفعلي %1$@ (الامتداد .%2$@) — لا يعرض Finder الصورة المصغرة";
+"mm.fixToExt" = "تغيير إلى .%@";
+"mm.fixFolderBtn" = "إصلاح المجلد بالكامل…";
+"mm.sheetTitle" = "إصلاح امتدادات الصور الخاطئة";
+"mm.foundHeader" = "تم العثور على %2$d صورة بامتداد غير مطابق في «%1$@»";
+"mm.foundSub" = "محتوى هذه الصور يختلف عن امتدادها (مثل حفظ PNG أو WebP بامتداد .jpg)، مما يمنع Finder من عرض الصور المصغرة.";
+"mm.modeRename" = "إعادة التسمية إلى الامتداد الحقيقي (مستحسن، بدون فقدان)";
+"mm.modeJPEG" = "تحويل إلى JPEG حقيقي (الإبقاء على اسم .jpg)";
+"mm.modeRenameHint" = "يغيّر الامتداد فقط دون إعادة ضغط، مع مزامنة ملفات .xmp و.MOV المرفقة.";
+"mm.modeJPEGHint" = "يعيد الترميز كـ JPEG قياسي (جودة 92% وخلفية بيضاء للشفافية) مع الحفاظ على EXIF ووسوم Finder.";
+"mm.targetRealJPEG" = "%@ (JPEG حقيقي)";
+"mm.selectedCount" = "محدد %1$d من %2$d";
+"mm.deselectAll" = "إلغاء تحديد الكل";
+"mm.selectAll" = "تحديد الكل";
+"mm.applyBtn" = "بدء الإصلاح";
+"mm.infoFormatSuffix" = "%1$@ (الامتداد .%2$@)";
+"mm.infoCardText" = "التنسيق الفعلي هو %1$@ (الامتداد .%2$@). قد يتعذر عرض الصورة المصغرة في Finder.";
+"mm.menuFixFallback" = "إصلاح الامتداد الخاطئ";
+"mm.menuFixOne" = "تغيير الامتداد إلى .%1$@ (فعلياً %2$@)";
+"mm.fixedOne" = "تم تغيير الامتداد إلى %@";
+"mm.fixFailed" = "فشل الإصلاح: %@";
+"mm.scanning" = "جارٍ فحص تنسيقات الصور…";
+"mm.noneFound" = "جميع امتدادات الصور في هذا المجلد تطابق تنسيقها الفعلي";
+"mm.fixedBatchRename" = "تم إصلاح امتداد %d صورة";
+"mm.fixedBatchJPEG" = "تم تحويل %d صورة إلى JPEG حقيقي";
+"mm.fixedBatchPartial" = "تم إصلاح %1$d، وفشل %2$d";

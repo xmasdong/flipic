@@ -1397,3 +1397,35 @@ Return  重新命名目前圖片
 "wb.markN" = "標記 %d 張";
 "wb.unmarkN" = "取消標記 %d 張";
 "wb.f.exactStarTip" = "只看 %1$d 星照片（共 %2$@ 張）";
+
+/* Format mismatch detection & repair */
+"menu.fixExtensions" = "修復錯誤的圖片副檔名…";
+"mm.errDecode" = "無法解碼原圖";
+"mm.errEncode" = "無法寫入目標 JPEG 檔案";
+"mm.errVerify" = "產生的 JPEG 驗證失敗，原圖未更動";
+"mm.bannerText" = "實際為 %1$@（副檔名為 .%2$@），Finder 無法顯示縮覽圖";
+"mm.fixToExt" = "修正為 .%@";
+"mm.fixFolderBtn" = "修復整個資料夾…";
+"mm.sheetTitle" = "修復錯誤的圖片副檔名";
+"mm.foundHeader" = "在「%1$@」中發現 %2$d 張副檔名與格式不符的圖片";
+"mm.foundSub" = "這些圖片的實際內容與副檔名不一致（例如 PNG / WebP 被存成 .jpg），導致 Finder 無法顯示縮覽圖或修圖軟體報錯。";
+"mm.modeRename" = "修正為真實副檔名（建議，無損最快）";
+"mm.modeJPEG" = "轉為真正的 JPEG（保留 .jpg 檔名）";
+"mm.modeRenameHint" = "僅修改副檔名，不重新壓縮、不損畫質，並同步重新命名同名 .xmp / .MOV 附屬檔案。";
+"mm.modeJPEGHint" = "將檔案內容重新編碼為標準 JPEG（品質 92%，透明底自動填白），保留 .jpg 檔名與 EXIF / Finder 標籤。";
+"mm.targetRealJPEG" = "%@（真 JPEG）";
+"mm.selectedCount" = "已選 %1$d / %2$d 張";
+"mm.deselectAll" = "取消全選";
+"mm.selectAll" = "全選";
+"mm.applyBtn" = "開始修復";
+"mm.infoFormatSuffix" = "%1$@（副檔名為 .%2$@）";
+"mm.infoCardText" = "實際格式為 %1$@（目前副檔名 .%2$@），Finder 可能無法顯示縮覽圖。";
+"mm.menuFixFallback" = "修正錯誤副檔名";
+"mm.menuFixOne" = "修正副檔名為 .%1$@（實際為 %2$@）";
+"mm.fixedOne" = "已修正副檔名為 %@";
+"mm.fixFailed" = "修復失敗：%@";
+"mm.scanning" = "正在檢查圖片格式…";
+"mm.noneFound" = "目前資料夾中所有圖片的副檔名皆與實際格式一致";
+"mm.fixedBatchRename" = "已修正 %d 張圖片的副檔名，Finder 縮覽圖已恢復";
+"mm.fixedBatchJPEG" = "已將 %d 張圖片轉為標準 JPEG";
+"mm.fixedBatchPartial" = "已修復 %1$d 張，%2$d 張失敗";

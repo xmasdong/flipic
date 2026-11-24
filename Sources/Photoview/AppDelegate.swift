@@ -709,6 +709,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--mismatchtest"), i + 1 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            Timer.scheduledTimer(withTimeInterval: 1.0, repeats: false) { [weak self] _ in
+                (self?.windowController?.contentViewController as? ViewerViewController)?.runFormatMismatchTest(outDir: outDir)
+            }
+            return
+        }
         if let i = CommandLine.arguments.firstIndex(of: "--extcachetest"), i + 1 < CommandLine.arguments.count {
             // --extcachetest <工作文件夹>：外接硬盘本机 SSD 持久化缓存与慢盘单通道调度自测，最后一行 EXTCACHE summary
             let outDir = CommandLine.arguments[i + 1]
@@ -1919,6 +1926,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         addMenu(L10n.t("menu.tools", "工具")) { m in
             item(m, L10n.t("menu.batchConvert", "批量转换格式…"), #selector(ViewerViewController.batchConvert(_:)))
             item(m, L10n.t("menu.batchRename", "批量重命名…"), #selector(ViewerViewController.batchRename(_:)))
+            item(m, L10n.t("menu.fixExtensions", "修复错误的图片后缀…"), #selector(ViewerViewController.fixMismatchedExtensions(_:)))
             #if FLIPIC_PRO
             item(m, L10n.t("menu.splitByRating", "按星级分到子文件夹…"), #selector(ViewerViewController.splitByRating(_:)))
             item(m, L10n.t("menu.openAllInEditor", "全部在后期软件中打开…"), #selector(ViewerViewController.openAllInEditor(_:)))

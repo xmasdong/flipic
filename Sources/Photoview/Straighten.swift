@@ -150,7 +150,7 @@ enum Straighten {
         let cropped = crop != nil
         if let border {
             let writable = !CleanupUnit.isRaw(url) && canOverwrite(url)
-            let out = copyURL(for: url, ext: writable ? url.pathExtension : "jpg", border: true)
+            let out = copyURL(for: url, ext: writable ? FormatMismatch.preferredCopyExtension(for: url) : "jpg", border: true)
             let r = reencode(url: url, turns: turns, degrees: degrees, crop: crop, to: out, type: writable ? nil : UTType.jpeg.identifier, border: border)
             return Outcome(result: r.result, url: r.result == .failed ? nil : out, pixelSize: r.size)
         }
@@ -181,8 +181,8 @@ enum Straighten {
             }
             return Outcome(result: r.result, url: url, pixelSize: r.size)
         }
-        // 另存：能写回的格式用原格式，RAW 等存成 JPEG
-        let ext = writable ? url.pathExtension : "jpg"
+        // 另存：能写回的格式用原格式（后缀与内容不符时改用真实格式后缀），RAW 等存成 JPEG
+        let ext = writable ? FormatMismatch.preferredCopyExtension(for: url) : "jpg"
         let out = copyURL(for: url, ext: ext, cropped: cropped)
         if degrees == 0, !cropped, edge == nil, writable, let lossless = losslessCopy(url: url, turns: turns, to: out) {
             return Outcome(result: lossless, url: out)

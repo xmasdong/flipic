@@ -35,6 +35,8 @@ struct PhotoInfo {
     var sections: [InfoSection] = []
     /// 视频：只有一列，不分级
     var isFlat = false
+    /// 文件后缀与真实格式不符时记录（如 .jpg 实际为 PNG），供信息面板提示与一键修复
+    var formatMismatch: FormatMismatch.Info? = nil
 }
 
 /// 信息条用的摘要
@@ -185,7 +187,17 @@ enum ExifReader {
             let mp = Double(w * h) / 1_000_000
             size = row("exif.size", "尺寸", "\(w) × \(h) · " + L10n.f("exif.megapixels", "%@ 百万像素", String(format: mp >= 10 ? "%.0f" : "%.1f", mp)))
         }
-        let format = row("exif.format", "格式", (CGImageSourceGetType(src) as String?).flatMap { UTType($0)?.localizedDescription })
+        let mismatch = FormatMismatch.detect(url)
+        info.formatMismatch = mismatch
+        let formatDesc = (CGImageSourceGetType(src) as String?).flatMap { UTType($0)?.localizedDescription }
+        let formatVal: String? = {
+            guard let base = formatDesc else { return nil }
+            if let m = mismatch {
+                return L10n.f("mm.infoFormatSuffix", "%1$@（后缀是 .%2$@）", base, m.currentExt)
+            }
+            return base
+        }()
+        let format = row("exif.format", "格式", formatVal)
         let depth = row("exif.depth", "色深", depthText(src: src, props: props))
         let profile = row("exif.profile", "色彩描述", clean(props[kCGImagePropertyProfileName as String]))
         let software = row("exif.software", "软件", clean(tiff?["Software"]))

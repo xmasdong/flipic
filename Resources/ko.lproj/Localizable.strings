@@ -1392,3 +1392,35 @@ Return  현재 이미지 이름 변경
 "wb.markN" = "%d장 표시";
 "wb.unmarkN" = "%d장 표시 해제";
 "wb.f.exactStarTip" = "%1$d성 사진만 보기(총 %2$@장)";
+
+/* Format mismatch detection & repair */
+"menu.fixExtensions" = "잘못된 이미지 확장자 복구…";
+"mm.errDecode" = "원본 이미지를 디코딩할 수 없습니다";
+"mm.errEncode" = "JPEG 파일을 저장할 수 없습니다";
+"mm.errVerify" = "JPEG 검증에 실패하여 원본 파일을 유지했습니다";
+"mm.bannerText" = "실제 형식은 %1$@(.%2$@ 확장자) — Finder 썸네일이 표시되지 않습니다";
+"mm.fixToExt" = ".%@로 수정";
+"mm.fixFolderBtn" = "폴더 일괄 복구…";
+"mm.sheetTitle" = "잘못된 이미지 확장자 복구";
+"mm.foundHeader" = "‘%1$@’에서 확장자가 일치하지 않는 이미지 %2$d장 발견";
+"mm.foundSub" = "실제 파일 형식과 확장자가 달라(PNG/WebP가 .jpg로 저장됨 등) Finder 썸네일이 표시되지 않거나 편집 앱에서 오류가 발생합니다.";
+"mm.modeRename" = "실제 확장자로 이름 변경(권장, 무손실)";
+"mm.modeJPEG" = "표준 JPEG로 변환(.jpg 파일명 유지)";
+"mm.modeRenameHint" = "재압축 없이 확장자만 변경하며 같은 이름의 .xmp / .MOV 파일도 함께 변경합니다.";
+"mm.modeJPEGHint" = "표준 JPEG(품질 92%, 투명 배경은 흰색)로 다시 인코딩하고 EXIF와 Finder 태그를 유지합니다.";
+"mm.targetRealJPEG" = "%@(표준 JPEG)";
+"mm.selectedCount" = "%1$d / %2$d장 선택됨";
+"mm.deselectAll" = "전체 해제";
+"mm.selectAll" = "전체 선택";
+"mm.applyBtn" = "복구 시작";
+"mm.infoFormatSuffix" = "%1$@(.%2$@ 확장자)";
+"mm.infoCardText" = "실제 형식은 %1$@(현재 .%2$@)입니다. Finder에서 썸네일이 보이지 않을 수 있습니다.";
+"mm.menuFixFallback" = "잘못된 확장자 수정";
+"mm.menuFixOne" = "확장자를 .%1$@로 수정(실제 %2$@)";
+"mm.fixedOne" = "확장자를 %@(으)로 수정했습니다";
+"mm.fixFailed" = "복구 실패: %@";
+"mm.scanning" = "이미지 형식 확인 중…";
+"mm.noneFound" = "이 폴더의 모든 이미지 확장자가 실제 형식과 일치합니다";
+"mm.fixedBatchRename" = "%d장의 확장자를 수정했습니다";
+"mm.fixedBatchJPEG" = "%d장을 표준 JPEG로 변환했습니다";
+"mm.fixedBatchPartial" = "%1$d장 복구, %2$d장 실패";

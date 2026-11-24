@@ -555,6 +555,7 @@ final class ImageLoader {
             let ext = url.pathExtension.lowercased()
             if allowEmb && slow && (ext == "jpg" || ext == "jpeg" || ext == "jpe"),
                let head = DiskIO.readFileData(url, maxBytes: 128 << 10),
+               FormatMismatch.hasJPEGHeader(head),
                let headSrc = CGImageSourceCreateWithData(head as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) {
                 if meta == nil { meta = info(for: url, source: headSrc) }
                 let embOpts: [CFString: Any] = [

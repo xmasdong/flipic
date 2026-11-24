@@ -116,6 +116,7 @@ Nothing is deleted until you press Move to Trash, and ⌘Z puts the files back. 
 
 **Batch tools and more**
 
+- Fix mismatched image extensions (free): detects PNG/WebP/HEIC/GIF/AVIF files mistakenly saved as `.jpg` (which break Mac Finder thumbnails and Photoshop) via a viewer banner, Photo Info (`I`) card, right-click menu, or `Tools › Fix Mismatched Extensions…` with lossless rename or real-JPEG conversion
 - Convert a whole folder to JPEG, PNG or HEIC; converted files go into a subfolder and the originals stay untouched
 - EXIF template batch rename (`{date}`, `{time}`, `{camera}`, `{focal}`, `{name}`, `{seq}`) with presets, live preview and companion `.xmp`/`.MOV` sync
 - EXIF photo frame (`⇧B`): typesets camera, lens, focal length, aperture, shutter speed, ISO and date along white, black, blurred or custom borders with automatic contrast; works in single save, Export, Batch Convert and Pro presets

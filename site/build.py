@@ -10,7 +10,7 @@ REPO = ROOT.parent
 DOCS = REPO / "docs"
 OUT = ROOT / "public"
 BASE = "https://flipic.app"
-UPDATED = "2026-11-23"
+UPDATED = "2026-11-24"
 # 水印功能 1.0.43 发布后改成 True；False 时站点里不出现任何水印文字和图片
 SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
@@ -69,6 +69,7 @@ PAIRS = {
     "/guides/match-client-photo-list-mac/": "/en/guides/match-client-photo-list-mac/",
     "/guides/exif-batch-rename-photos-mac/": "/en/guides/exif-batch-rename-photos-mac/",
     "/guides/cube-lut-preview-photos-mac/": "/en/guides/cube-lut-preview-photos-mac/",
+    "/guides/fix-wrong-image-extension-mac/": "/en/guides/fix-wrong-image-extension-mac/",
     "/changelog/": "/en/changelog/",
 }
 
@@ -348,6 +349,7 @@ HOME = {
         "more_title": "其他功能",
         "more": [
             ("看图与工作台快捷排序（⇅）+ 缩略图滚轮翻片", "看图页右上角（及右键菜单）和工作台 5 种视图顶栏都有 ⇅ 排序按钮，随时切换跟随访达、文件名、拍摄时间、添加时间、大小或标星。鼠标移到底部胶片缩略图栏时，上下滚轮直接切上一张/下一张（鼠标侧键也支持翻页），宫格里按住 ⌥ + 滚轮也能直接翻图。"),
+            ("检测并一键修复错误的图片后缀（免费）", "豆包、即梦或网页保存的 PNG / WebP 常被写成 .jpg，导致 Mac 访达不显示缩略图、Photoshop 报错。Flipic Lens 打开即在顶部与照片信息栏提示真实格式，支持单张无损修正，也可通过「工具 › 修复错误的图片后缀…」一键扫描整文件夹，无损改后缀或转为标准 JPEG（透明底自动铺白），同步改名 .xmp / .MOV。"),
             ("ExFAT 与外接机械硬盘深度冷读取加速", "针对外接机械硬盘、ExFAT 存储卡与网络盘：POSIX 顺序大块读盘、按卷优先级单通道顺序调度、RAW 前 4 MB 内嵌预览优先、跳过无效扩展属性寻道，并把预览与缩略图缓存到 Mac 内置 SSD（上限 500 MB，最久未访问自动清理，可在「设置 › 看图」开关或清空）。"),
             ("拍摄地点地图，国内照片不偏移", "按 I 打开照片信息，带位置的照片能看到拍在哪。国内拍的照片会先把 GPS 坐标换算成国内地图用的坐标，不会偏几百米；香港、澳门、台湾和国外的照片不用换算。地图点了才加载。"),
             ("一次看四张（工作台支持 2–9 张）", "单图看图按 ⇧C 可以四张一起并排看，放大、拖动一起动；Pro 工作台里框选 2–9 张即可多图同屏对比，支持 5 图上 3 下 2 铺满、同步缩放与右侧照片信息栏联动。"),
@@ -451,6 +453,7 @@ HOME = {
         "more_title": "More features",
         "more": [
             ("Quick sort (⇅) + filmstrip mouse-wheel flipping", "Both the Viewer top-right bar (plus right-click › Sort By) and all 5 Workbench views have a ⇅ quick sort menu for Same as Finder, Name, Capture Date, Date Added, Size or Rating. Hover over the bottom filmstrip and scroll vertically to flip photos (side buttons 3/4 also page), or hold ⌥ + wheel in the Workbench grid."),
+            ("Detect & fix mismatched image extensions (Free)", "PNG or WebP images saved as .jpg break Finder thumbnails and Photoshop. Flipic Lens flags mismatches on open in a top banner and Photo Info, and Tools › Fix Mismatched Extensions… scans a whole folder in milliseconds to losslessly rename extensions (syncing .xmp/.MOV) or convert to real JPEG with white transparency flattening."),
             ("Deep ExFAT & external hard drive cold-read acceleration", "On external HDDs, ExFAT SD cards and network shares: POSIX sequential large-chunk reads, per-volume priority serial I/O, 4 MB RAW prefix embedded previews, zero Finder-tag/AppleDouble seeks, plus a 500 MB local SSD preview & thumbnail cache (toggle or clear in Settings › Viewing)."),
             ("Location map that lines up in China", "Press I and photos with a location show where they were taken. Photos from mainland China are converted to the coordinates maps there use, so the pin isn’t a few hundred metres off; Hong Kong, Macau, Taiwan and the rest of the world need no conversion. The map loads only when you ask for it."),
             ("Four up in Viewer, 2–9 up in Workbench", "Press ⇧C in the Viewer to compare four burst frames side by side with synced zoom and pan; Pro Workbench lets you select 2 to 9 photos for adaptive multi-pane comparison synced with the right Photo Info card."),
@@ -1865,6 +1868,75 @@ guide("en", "/en/guides/cube-lut-preview-photos-mac/", "Preview & Batch Export P
            "Warm Portrait and Classic B&W are free forever. The other eight looks and custom .cube 3D LUT import are Pro ($12.99 one-time, with a full 7-day trial in every download)."),
       ], title_suffix=False, updated="2026-11-23", published="2026-11-23")
 
+guide("zh", "/guides/fix-wrong-image-extension-mac/", "Mac 访达不显示 JPG 缩略图？豆包/网页图片实际是 PNG 或 WebP 一键修复",
+      "Mac 访达不显示假 JPG 缩略图",
+      "豆包、即梦、小红书或微信网页保存的图片经常后缀是 .jpg，但实际内容是 PNG 或 WebP，导致 Mac 访达只显示通用 JPG 图标、Photoshop 报错。用 Flipic Lens 免费一键检测并批量修复。",
+      "一键检测并无损修正 PNG/WebP 伪装的 .jpg，立刻恢复 Mac 访达缩略图",
+      f"""<p>用豆包、即梦、Midjourney 或者从网页保存图片到 Mac，经常遇到一整个文件夹里的 <code>.jpg</code> 在访达里<strong>全都不显示缩略图</strong>，只剩一张空白的通用 JPG 文档图标；拖进 Photoshop 还会弹出「无法完成请求，因为找到了未知或无效的 JPEG 标记类型」。</p>
+<h2>为什么 Mac 访达显示不出缩略图？</h2>
+<p>并不是图片坏了，而是<strong>文件后缀和实际图像格式不符</strong>——很多 AI 绘图工具或图床实际下发的是 <code>PNG</code>（文件头 <code>89 50 4E 47</code>）或 <code>WebP</code>（文件头 <code>RIFF…WEBP</code>），下载时却顺手命名成了 <code>.jpg</code>。</p>
+<p>macOS 访达生成缩略图时依赖系统的 <code>QLThumbnailGenerator</code>，先按后缀 <code>.jpg</code> 调用 JPEG 解码器，读到 PNG/WebP 数据直接失败（返回 <code>QLThumbnailErrorDomain error 0</code>），于是只能退回通用 JPG 图标。无论默认看图软件是系统「预览」还是其他软件，都会出现同样的问题。</p>
+<h2>用 Flipic Lens 免费一键修复（单张 + 整文件夹批量）</h2>
+<p><a href="/">Flipic Lens</a> 1.0.63 起内置免费「错误图片后缀检测与修复」，只读每张图文件头前 32 字节（几百张只需几十毫秒，跳过所有相机 RAW 与视频零误报）：</p>
+<ol>
+<li><strong>单张打开即修：</strong>双击文件夹里任意一张「假 JPG」，Flipic Lens 正常显示画面的同时，会在顶部弹出一条轻提示（照片信息栏 <kbd>I</kbd> 与右键菜单也会同步标出），点一下「修正为 .png」即可无损改名，回到访达缩略图立刻出现。</li>
+<li><strong>整文件夹批量修复：</strong>点顶部轻提示里的「修复整个文件夹…」，或在菜单栏打开「工具 › 修复错误的图片后缀…」（Pro 工作台同样可用），一次列出文件夹里所有错配文件（支持 PNG / JPEG / WebP / GIF / HEIC / AVIF / TIFF 互相检测）。</li>
+<li><strong>两种修复方式按需选：</strong>
+<ul>
+<li><strong>修正为真实后缀（推荐，无损最快）：</strong>只改后缀（如 <code>.jpg → .png</code>），不重新压缩、不损画质，重名自动避让并保留创建时间、访达标签与同名 <code>.xmp</code> / <code>.MOV</code>。</li>
+<li><strong>转为真正的 JPEG（保留 <code>.jpg</code> 文件名）：</strong>如果你要把图传给只收 JPG 的平台，可以一键重编码为标准 JPEG（质量 92%，带透明通道的 PNG 自动铺白底不变黑），保留 EXIF 与访达标签，访达缩略图同样立刻恢复。</li>
+</ul></li>
+</ol>
+<p>另外，如果之后你需要给修复好的照片批量转格式或按 EXIF 批量改名，见 <a href="/guides/heic-to-jpg-mac/">Mac 批量转 JPG</a> 与 <a href="/guides/exif-batch-rename-photos-mac/">EXIF 模板批量重命名</a>。</p>""",
+      howto=["用 Flipic Lens 打开访达里不显示缩略图的图片文件夹（或双击其中一张图片）",
+             "看到顶部提示「实际为 PNG（后缀是 .jpg）」时，单张直接点「修正为 .png」",
+             "整个文件夹有多张错配图时，点「修复整个文件夹…」或菜单「工具 › 修复错误的图片后缀…」",
+             "选择「修正为真实后缀（无损）」或「转为真正的 JPEG（保留 .jpg）」，点开始修复后回到访达即可看到全部缩略图"],
+      faq=[
+          ("为什么换了默认看图软件后，这些图上显示的是该软件的 JPG 图标？",
+           "访达生成缩略图失败时，会回退显示「该后缀默认打开软件」的文档图标。并不是看图软件弄坏了缩略图，只要把假后缀修正为真实格式或转为真 JPEG，缩略图就会立刻恢复。"),
+          ("把 .jpg 改成 .png 会不会损失画质？",
+           "完全不会。文件本来就是 PNG 编码，修正后缀只是把文件名改对，不重新压缩，一个像素都不会变。"),
+          ("批量扫描会不会误改我的相机 RAW（ARW / CR3 / NEF / DNG）？",
+           "不会。检测逻辑会明确跳过所有相机 RAW 和视频文件，只检查常见静图格式的文件头魔数。"),
+          ("这个功能收费吗？",
+           "完全免费，包含在 Flipic Lens 开源核心版里，不需要买 Pro。"),
+      ], title_suffix=False, updated="2026-11-24", published="2026-11-24")
+
+guide("en", "/en/guides/fix-wrong-image-extension-mac/", "JPG Files Not Showing Thumbnails in Mac Finder? Fix Mismatched Extensions",
+      "Fix missing Finder JPG thumbnails",
+      "AI generators and websites often save PNG or WebP images with a .jpg extension, causing macOS Finder thumbnails to fail and Photoshop to report invalid JPEG markers. Detect and batch-fix them for free with Flipic Lens.",
+      "Detect and fix PNG/WebP files saved as .jpg so Mac Finder thumbnails work again",
+      f"""<p>Images saved from AI generators or web downloads often end in <code>.jpg</code> even though the file inside is actually <code>PNG</code> or <code>WebP</code>. In macOS Finder, those files refuse to show image previews—displaying only a generic JPG document icon—and Photoshop fails to open them with “an unknown or invalid JPEG marker type is found.”</p>
+<h2>Why macOS Finder fails to generate thumbnails</h2>
+<p>Finder’s thumbnail service (<code>QLThumbnailGenerator</code>) chooses its decoder from the file extension first. When a file named <code>.jpg</code> starts with PNG (<code>89 50 4E 47</code>) or WebP (<code>RIFF…WEBP</code>) magic bytes, macOS fails with <code>QLThumbnailErrorDomain error 0</code> and falls back to the default app’s generic JPG icon.</p>
+<h2>Fix one photo or an entire folder for free in Flipic Lens</h2>
+<p>Starting in 1.0.63, <a href="/en/">Flipic Lens</a> includes free mismatched-extension detection and batch repair. It inspects only the first 32 header bytes (scanning hundreds of files in milliseconds while safely skipping all camera RAW and video files):</p>
+<ol>
+<li><strong>Fix on sight while viewing:</strong> Double-click any broken <code>.jpg</code>. Flipic Lens displays the image normally and shows a dismissible banner at the top (plus an inline card in Photo Info <kbd>I</kbd> and the right-click menu). Click <strong>Rename to .png</strong> for an instant lossless fix.</li>
+<li><strong>Batch-fix a whole folder:</strong> Click <strong>Fix Folder…</strong> on the banner or choose <strong>Tools › Fix Mismatched Extensions…</strong> (also available in Workbench) to list every mismatched PNG, JPEG, WebP, GIF, HEIC, AVIF or TIFF file in the folder.</li>
+<li><strong>Choose lossless rename or real JPEG:</strong>
+<ul>
+<li><strong>Rename to actual extension (recommended, lossless):</strong> Changes only the extension (<code>.jpg → .png</code>) with zero recompression, collision-safe naming, and synchronized <code>.xmp</code> / <code>.MOV</code> sidecars. Finder thumbnails appear immediately.</li>
+<li><strong>Convert to real JPEG (keep <code>.jpg</code> filename):</strong> Re-encodes to standard JPEG (92% quality, automatically flattening transparent PNG backgrounds to white) while preserving EXIF and Finder tags.</li>
+</ul></li>
+</ol>
+<p>Need to convert real HEIC folders to JPG too? See <a href="/en/guides/batch-convert-heic-to-jpg-mac/">how to batch convert HEIC to JPG on Mac</a>.</p>""",
+      howto=["Open a folder with missing JPG thumbnails in Flipic Lens on Mac",
+             "Click Rename to .png on the top banner for a single file, or choose Tools › Fix Mismatched Extensions… for the whole folder",
+             "Pick Rename to actual extension (lossless) or Convert to real JPEG (keep .jpg filename)",
+             "Click Fix Selected—macOS Finder immediately renders thumbnails for every repaired photo"],
+      faq=[
+          ("Why do the broken JPG files show my viewer app’s icon instead of a photo preview?",
+           "Whenever macOS QuickLook fails to decode a thumbnail, Finder falls back to the generic document icon of whichever app is set as default for .jpg. Fixing the extension or converting to real JPEG restores previews immediately."),
+          ("Does renaming .jpg to .png reduce image quality?",
+           "Not at all. The pixels are already PNG—renaming only fixes the file extension with zero recompression."),
+          ("Will batch scanning ever touch my camera RAW files (ARW, CR3, NEF, DNG)?",
+           "No. All camera RAW formats and videos are explicitly excluded from mismatch detection."),
+          ("Is Fix Mismatched Extensions free?",
+           "Yes, it is completely free in the open-source core of Flipic Lens."),
+      ], title_suffix=False, updated="2026-11-24", published="2026-11-24")
+
 
 
 # ---------------------------------------------------------------- 渲染
@@ -2449,6 +2521,11 @@ def render_changelog(lang):
     desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
             else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
     entries_zh = [
+        ("1.0.63", "2026-11-24", [
+            "错误图片后缀检测与一键修复（免费）：自动识别文件头与后缀不符的图片（如豆包 / AI 绘图 / 网页保存的 PNG、WebP 被写成 .jpg 导致访达无法显示缩略图与后期软件报错），看图页顶部轻提示胶囊、照片信息栏（I）与右键菜单均可一键无损修正。",
+            "整文件夹批量修复（「工具 › 修复错误的图片后缀…」，看图窗口与工作台通用）：几十毫秒只扫前 32 字节文件头（跳过所有相机 RAW 与视频），提供「无损修正为真实后缀（同步 .xmp / .MOV）」与「转为真正的 JPEG（透明底自动铺白，保留 .jpg 名称与 EXIF/标签）」两种模式。",
+            "裁剪、拉直、加边框另存副本改用真实格式后缀，不再产出假 JPG；慢盘 128 KB JPEG 前缀快读新增真实 FF D8 FF 魔数校验。",
+        ]),
         ("1.0.62", "2026-11-23", [
             "看图页 & 工作台快捷排序（⇅）：看图页右上角（及照片右键菜单「排序方式 ▸」）和工作台 5 种视图顶栏新增 ⇅ 排序按钮，浏览与挑片时一键切换跟随访达、文件名、拍摄时间、修改/创建/添加时间、大小、类型、标星与升序/降序。",
             "缩略图栏鼠标滚轮翻图：鼠标悬停在看图页或工作台底部胶片缩略图条时，上下滚轮直接切换上一张/下一张（遵循滚轮翻页方向设置），双指横向滑动保持缩略图滚动，鼠标侧键 3/4 同步翻页；工作台宫格支持 ⌥ + 滚轮与侧键翻图。",
@@ -2493,6 +2570,11 @@ def render_changelog(lang):
         ]),
     ]
     entries_en = [
+        ("1.0.63", "2026-11-24", [
+            "Mismatched image extension detection & one-click repair (Free): detects images whose actual header differs from their filename extension (such as PNG or WebP saved as .jpg, which breaks Mac Finder thumbnails and Photoshop) with a dismissible viewer banner, an inline Photo Info (I) card, and right-click quick fix.",
+            "Batch folder repair (Tools › Fix Mismatched Extensions…, available in Viewer and Workbench): scans only the first 32 header bytes in milliseconds (skipping all camera RAW and video files), offering both lossless extension rename (syncing .xmp / .MOV sidecars) and real JPEG conversion (white background flattening for alpha PNGs, keeping .jpg names, EXIF and Finder tags).",
+            "Crop, Straighten and Border copies now write the actual matching extension instead of inheriting broken extensions; slow-storage 128 KB JPEG header fast-path now verifies real FF D8 FF magic bytes.",
+        ]),
         ("1.0.62", "2026-11-23", [
             "Quick Sort (⇅) in Viewer & Workbench: added a ⇅ sort menu to the top-right bar of both the single Viewer (plus a Sort By ▸ context submenu) and all 5 Workbench views for switching between Same as Finder, Name, Capture Date, Date Modified/Created/Added, Size, Kind, Rating and ascending/descending order on the fly.",
             "Filmstrip mouse-wheel photo flipping: hovering over the bottom filmstrip in Viewer or Workbench lets vertical scroll flip previous/next photo (respecting wheel direction settings), while two-finger horizontal swipe still scrolls the strip and mouse side buttons 3/4 flip photos; Workbench grid supports ⌥ + wheel and side buttons.",

@@ -27,6 +27,8 @@ final class InfoPanelView: NSVisualEffectView {
 
     /// 说明里的字被选中时焦点在面板上；重排或按 Esc 时把焦点还给照片，方向键才继续翻页
     var onReleaseFocus: (() -> Void)?
+    /// 点了格式错配卡片里的「修正为 .xxx」按钮
+    var onFixExtension: ((FormatMismatch.Info) -> Void)?
 
     private let titleLabel = NSTextField(labelWithString: "")
     private let levelControl = NSSegmentedControl(labels: [L10n.t("info.level.common", "常用"), L10n.t("info.level.all", "全部")],
@@ -288,6 +290,54 @@ final class InfoPanelView: NSVisualEffectView {
         rebuild()
     }
 
+    private func addFormatMismatchCard() {
+        guard let m = info.formatMismatch else { return }
+        let box = NSView()
+        box.wantsLayer = true
+        box.layer?.cornerRadius = 8
+        box.layer?.backgroundColor = NSColor.systemOrange.withAlphaComponent(0.14).cgColor
+        box.layer?.borderWidth = 0.75
+        box.layer?.borderColor = NSColor.systemOrange.withAlphaComponent(0.32).cgColor
+        box.translatesAutoresizingMaskIntoConstraints = false
+
+        let msg = NSTextField(wrappingLabelWithString: L10n.f("mm.infoCardText", "实际格式为 %1$@（当前后缀 .%2$@），访达可能无法显示缩略图。", m.actual.displayName, m.currentExt))
+        msg.font = .systemFont(ofSize: 11.5, weight: .medium)
+        msg.textColor = .labelColor
+        msg.preferredMaxLayoutWidth = Self.contentWidth - 20
+        msg.translatesAutoresizingMaskIntoConstraints = false
+
+        let btn = NSButton(title: L10n.f("mm.fixToExt", "修正为 .%@", m.suggestedExt), target: self, action: #selector(fixMismatchClicked))
+        btn.bezelStyle = .rounded
+        btn.controlSize = .small
+        btn.bezelColor = .controlAccentColor
+        btn.font = .systemFont(ofSize: 11.5, weight: .semibold)
+        btn.refusesFirstResponder = true
+        btn.translatesAutoresizingMaskIntoConstraints = false
+
+        let v = NSStackView(views: [msg, btn])
+        v.orientation = .vertical
+        v.alignment = .leading
+        v.spacing = 6
+        v.edgeInsets = NSEdgeInsets(top: 8, left: 10, bottom: 8, right: 10)
+        v.translatesAutoresizingMaskIntoConstraints = false
+        box.addSubview(v)
+
+        NSLayoutConstraint.activate([
+            box.widthAnchor.constraint(equalToConstant: Self.contentWidth),
+            v.topAnchor.constraint(equalTo: box.topAnchor),
+            v.bottomAnchor.constraint(equalTo: box.bottomAnchor),
+            v.leadingAnchor.constraint(equalTo: box.leadingAnchor),
+            v.trailingAnchor.constraint(equalTo: box.trailingAnchor),
+        ])
+        stack.addArrangedSubview(box)
+        stack.setCustomSpacing(10, after: box)
+    }
+
+    @objc private func fixMismatchClicked() {
+        guard let m = info.formatMismatch else { return }
+        onFixExtension?(m)
+    }
+
     private func rebuild(keepScroll: Bool = false) {
         if let w = window, let r = w.firstResponder as? NSView, r.isDescendant(of: self) { onReleaseFocus?() }
         let offset = scroll.contentView.bounds.origin
@@ -313,6 +363,7 @@ final class InfoPanelView: NSVisualEffectView {
 
     private func buildCommon() {
         let hasCaption = addCaptionBlock(showBoilerplate: false)
+        addFormatMismatchCard()
         addRating()
         addTags()
         addHistogram()
@@ -330,6 +381,7 @@ final class InfoPanelView: NSVisualEffectView {
 
     private func buildAll() {
         measureLabelColumn()
+        addFormatMismatchCard()
         let hasCaptionText = info.title != nil || info.caption != nil
         if hasCaptionText || !info.captionRows.isEmpty || rating > 0 || !tags.isEmpty {
             addSectionHeader(L10n.t("exif.sec.caption", "说明"))

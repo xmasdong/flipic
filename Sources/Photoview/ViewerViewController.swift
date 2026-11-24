@@ -39,6 +39,12 @@ final class ViewerViewController: NSViewController {
     private let hudExifLabel2 = NSTextField(labelWithString: "")
     let exifPanel = InfoPanelView()
     private var exifClearPending = false
+    /// 后缀与真实格式不符时的轻提示胶囊（如 .jpg 实际为 PNG）
+    let mismatchBanner = FormatMismatchBannerView()
+    private(set) var currentMismatch: FormatMismatch.Info?
+    private var dismissedMismatchURLs = Set<URL>()
+    private var mismatchSheet: FormatMismatchWindowController?
+    private let mismatchQueue = DispatchQueue(label: "com.xmasdong.photoview.mismatch", qos: .utility)
     let emptyState = NSStackView()
     let emptyHint = NSTextField(labelWithString: "")
     private let toolbarView = NSVisualEffectView()
@@ -1168,7 +1174,26 @@ final class ViewerViewController: NSViewController {
             guard let self else { return }
             self.view.window?.makeFirstResponder(self.imageView)
         }
+        exifPanel.onFixExtension = { [weak self] info in
+            self?.fixExtension(info)
+        }
         view.addSubview(exifPanel)
+
+        mismatchBanner.isHidden = true
+        mismatchBanner.onFixOne = { [weak self] in self?.fixCurrentExtension(nil) }
+        mismatchBanner.onFixFolder = { [weak self] in self?.fixMismatchedExtensions(nil) }
+        mismatchBanner.onDismiss = { [weak self] in
+            guard let self, let url = self.currentMismatch?.url else { return }
+            self.dismissedMismatchURLs.insert(url)
+            self.updateMismatchBannerVisibility()
+        }
+        view.addSubview(mismatchBanner)
+        NSLayoutConstraint.activate([
+            mismatchBanner.topAnchor.constraint(equalTo: view.topAnchor, constant: 44),
+            mismatchBanner.centerXAnchor.constraint(equalTo: imageView.centerXAnchor),
+            mismatchBanner.leadingAnchor.constraint(greaterThanOrEqualTo: imageView.leadingAnchor, constant: 16),
+            mismatchBanner.trailingAnchor.constraint(lessThanOrEqualTo: imageView.trailingAnchor, constant: -16),
+        ])
     }
 
     private func buildEmptyState() {
@@ -1404,6 +1429,7 @@ final class ViewerViewController: NSViewController {
         draftQueue.cancelAllOperations()
         updateHUD(); updateExifPanel(); syncFilmstripSelection(); loadRating(for: url)
         updateMarkedOnlyPill()
+        checkFormatMismatch(for: url, gen: gen)
         #if FLIPIC_PRO
         if beforeAfter != nil {
             endRapidPaging()
@@ -2150,6 +2176,7 @@ final class ViewerViewController: NSViewController {
 
     /// 左上角只用来显示几秒就消失的临时提示；照片信息统一在右上角面板（I）里看
     func updateHUD() {
+        updateMismatchBannerVisibility()
         guard !isFlashing else { return }
         hudView.isHidden = true
     }
@@ -3314,6 +3341,7 @@ final class ViewerViewController: NSViewController {
         add(L10n.t("menu.share", "分享…"), #selector(shareCurrent(_:)))
         if TextRecognition.isAvailable { add(L10n.t("menu.copyText", "复制图中全部文字"), #selector(copyAllText(_:))) }
         menu.addItem(.separator())
+        add(L10n.t("mm.menuFixFallback", "修正错误后缀"), #selector(fixCurrentExtension(_:)))
         add(L10n.t("menu.reveal", "在 Finder 中显示"), #selector(revealInFinder(_:)))
         add(L10n.t("menu.trash", "移到废纸篓"), #selector(trashCurrent(_:)))
         // 只盯这一个菜单的开和关（子菜单不单独通知）；不用 delegate，「打开方式」子菜单的 delegate 不受影响
@@ -8109,6 +8137,118 @@ final class ViewerViewController: NSViewController {
         view.window?.makeFirstResponder(imageView)
         flash(L10n.f("msg.renamedCount", "已重命名 %d 张图片", res.renamed))
     }
+
+    // MARK: - 修复错误的图片后缀（如 PNG / WebP 被存成 .jpg）
+
+    private func checkFormatMismatch(for url: URL, gen: Int) {
+        currentMismatch = nil
+        mismatchBanner.isHidden = true
+        guard !Video.isVideo(url), !CleanupUnit.isRaw(url) else { return }
+        mismatchQueue.async { [weak self] in
+            let found = FormatMismatch.detect(url)
+            DispatchQueue.main.async {
+                guard let self, self.generation == gen, self.folder.current?.url == url else { return }
+                self.currentMismatch = found
+                self.updateMismatchBannerVisibility()
+            }
+        }
+    }
+
+    func updateMismatchBannerVisibility() {
+        guard let m = currentMismatch,
+              !dismissedMismatchURLs.contains(m.url),
+              folder.current?.url == m.url,
+              mainViewerActive,
+              cleanup == nil,
+              border == nil,
+              !isStraightening,
+              peekSaved == nil,
+              !slideshowActive,
+              !currentIsVideo else {
+            mismatchBanner.isHidden = true
+            return
+        }
+        mismatchBanner.configure(info: m, showFolderAction: folder.count > 1)
+        mismatchBanner.isHidden = false
+    }
+
+    @objc func fixCurrentExtension(_ sender: Any?) {
+        guard let m = currentMismatch else { return }
+        fixExtension(m)
+    }
+
+    func fixExtension(_ info: FormatMismatch.Info) {
+        guard !isProcessing else { return }
+        switch FormatMismatch.renameToActual(info) {
+        case .success(let dest):
+            let newName = dest.lastPathComponent
+            if folder.current?.url == info.url {
+                folder.renameCurrent(to: newName)
+                fileNameLabel.stringValue = newName
+                view.window?.title = newName
+            } else {
+                folder.open(url: dest)
+            }
+            dismissedMismatchURLs.remove(info.url)
+            currentMismatch = nil
+            mismatchBanner.isHidden = true
+            filmstrip.collectionView.reloadData()
+            syncFilmstripSelection()
+            updateHUD()
+            updateExifPanel()
+            view.window?.makeFirstResponder(imageView)
+            flash(L10n.f("mm.fixedOne", "已修正后缀为 %@", newName))
+        case .failure(let err):
+            flash(L10n.f("mm.fixFailed", "修复失败：%@", err.localizedDescription), seconds: 3.5)
+        }
+    }
+
+    @objc func fixMismatchedExtensions(_ sender: Any?) {
+        guard !folder.items.isEmpty, !isProcessing, let current = folder.current else { return }
+        let urls = folder.items.map(\.url)
+        let folderURL = current.url.deletingLastPathComponent()
+        let folderName = folderURL.lastPathComponent
+        let oldCurrentURL = current.url
+        isProcessing = true
+        flash(L10n.t("mm.scanning", "正在检查图片格式…"), seconds: 10)
+        mismatchQueue.async { [weak self] in
+            let found = FormatMismatch.scan(urls)
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isProcessing = false
+                if found.isEmpty {
+                    self.flash(L10n.t("mm.noneFound", "当前文件夹所有图片的后缀均与实际格式一致"), seconds: 2.4)
+                    return
+                }
+                let sheet = FormatMismatchWindowController(items: found, folderName: folderName) { [weak self] outcome, mode in
+                    guard let self else { return }
+                    self.folderGeneration += 1
+                    self.folder.open(url: folderURL)
+                    let targetURL = outcome.urlMap[oldCurrentURL] ?? oldCurrentURL
+                    if let idx = self.folder.items.firstIndex(where: { $0.url == targetURL }) {
+                        self.folder.jump(to: idx)
+                    }
+                    self.prefetchedURLs.removeAll()
+                    self.dismissedMismatchURLs.removeAll()
+                    self.filmstrip.collectionView.reloadData()
+                    self.showImage(resetToFit: false)
+                    self.loadCaptureDatesIfNeeded()
+                    self.view.window?.makeFirstResponder(self.imageView)
+                    if outcome.failed == 0 {
+                        let msg = mode == .renameExtension
+                            ? L10n.f("mm.fixedBatchRename", "已修正 %d 张图片的后缀，访达缩略图已恢复", outcome.fixed)
+                            : L10n.f("mm.fixedBatchJPEG", "已将 %d 张图片转为标准 JPEG", outcome.fixed)
+                        self.flash(msg, seconds: 3.0)
+                    } else {
+                        self.flash(L10n.f("mm.fixedBatchPartial", "已修复 %1$d 张，%2$d 张失败", outcome.fixed, outcome.failed), seconds: 3.5)
+                    }
+                }
+                sheet.onClose = { [weak self] in self?.mismatchSheet = nil }
+                self.mismatchSheet = sheet
+                sheet.present(attachedTo: self.view.window)
+            }
+        }
+    }
 }
 
 // MARK: - 胶片条数据源
@@ -8380,6 +8520,16 @@ extension ViewerViewController: NSMenuItemValidation {
             return folder.current != nil && cleanup == nil && !currentIsVideo && compareView == nil
         } else if menuItem.action == #selector(copyAllText(_:)) {
             return folder.current != nil && imageView.debugHasImage && mainViewerActive
+        } else if menuItem.action == #selector(fixCurrentExtension(_:)) {
+            if let m = currentMismatch, cleanup == nil, !currentIsVideo, folder.current?.url == m.url {
+                menuItem.isHidden = false
+                menuItem.title = L10n.f("mm.menuFixOne", "修正后缀为 .%1$@（实际为 %2$@）", m.suggestedExt, m.actual.displayName)
+                return !isProcessing
+            }
+            menuItem.isHidden = true
+            return false
+        } else if menuItem.action == #selector(fixMismatchedExtensions(_:)) {
+            return folder.count > 0 && !isProcessing && cleanup == nil
         }
         #if FLIPIC_PRO
         if let r = validateFilmMenuItem(menuItem) { return r }

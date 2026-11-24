@@ -48,6 +48,7 @@ enum Rating {
         let ext = url.pathExtension.lowercased()
         if (ext == "jpg" || ext == "jpeg" || ext == "jpe"), Volumes.isSlowStorage(url),
            let head = DiskIO.readFileData(url, maxBytes: 128 << 10),
+           FormatMismatch.hasJPEGHeader(head),
            let src = CGImageSourceCreateWithData(head as CFData, opts) {
             return src
         }

@@ -1409,3 +1409,35 @@ Esc  先关掉右上角的照片信息
 "wb.markN" = "标记 %d 张";
 "wb.unmarkN" = "取消标记 %d 张";
 "wb.f.exactStarTip" = "只看 %1$d 星照片（共 %2$@ 张）";
+
+/* Format mismatch detection & repair */
+"menu.fixExtensions" = "修复错误的图片后缀…";
+"mm.errDecode" = "无法解码原图";
+"mm.errEncode" = "无法写入目标 JPEG 文件";
+"mm.errVerify" = "生成的 JPEG 校验失败，原图未改动";
+"mm.bannerText" = "实际为 %1$@（后缀是 .%2$@），访达无法显示缩略图";
+"mm.fixToExt" = "修正为 .%@";
+"mm.fixFolderBtn" = "修复整个文件夹…";
+"mm.sheetTitle" = "修复错误的图片后缀";
+"mm.foundHeader" = "在「%1$@」中发现 %2$d 张后缀与格式不符的图片";
+"mm.foundSub" = "这些图片的实际内容与文件后缀不一致（例如 PNG / WebP 被存成 .jpg），导致访达无法生成缩略图或后期软件报错。";
+"mm.modeRename" = "修正为真实后缀（推荐，无损最快）";
+"mm.modeJPEG" = "转为真正的 JPEG（保留 .jpg 文件名）";
+"mm.modeRenameHint" = "仅修改文件后缀，不重新压缩、不损画质，并同步重命名同名 .xmp / .MOV 附属文件。";
+"mm.modeJPEGHint" = "将文件内容重新编码为标准 JPEG（质量 92%，透明底自动铺白），保留 .jpg 文件名与 EXIF / 访达标签。";
+"mm.targetRealJPEG" = "%@（真 JPEG）";
+"mm.selectedCount" = "已选 %1$d / %2$d 张";
+"mm.deselectAll" = "取消全选";
+"mm.selectAll" = "全选";
+"mm.applyBtn" = "开始修复";
+"mm.infoFormatSuffix" = "%1$@（后缀是 .%2$@）";
+"mm.infoCardText" = "实际格式为 %1$@（当前后缀 .%2$@），访达可能无法显示缩略图。";
+"mm.menuFixFallback" = "修正错误后缀";
+"mm.menuFixOne" = "修正后缀为 .%1$@（实际为 %2$@）";
+"mm.fixedOne" = "已修正后缀为 %@";
+"mm.fixFailed" = "修复失败：%@";
+"mm.scanning" = "正在检查图片格式…";
+"mm.noneFound" = "当前文件夹所有图片的后缀均与实际格式一致";
+"mm.fixedBatchRename" = "已修正 %d 张图片的后缀，访达缩略图已恢复";
+"mm.fixedBatchJPEG" = "已将 %d 张图片转为标准 JPEG";
+"mm.fixedBatchPartial" = "已修复 %1$d 张，%2$d 张失败";
