@@ -1441,3 +1441,11 @@ Esc  先关掉右上角的照片信息
 "mm.fixedBatchRename" = "已修正 %d 张图片的后缀，访达缩略图已恢复";
 "mm.fixedBatchJPEG" = "已将 %d 张图片转为标准 JPEG";
 "mm.fixedBatchPartial" = "已修复 %1$d 张，%2$d 张失败";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "仅 %@";
+"fileops.typesWithCount" = "%1$@ · 共 %2$d 个文件";
+"fileops.withTypes" = "%1$@（%2$@）";
+"trash.movedTypes" = "已移到废纸篓 %1$d 张（%2$@）· ⌘Z 撤销";
+"trash.movedLocalTypes" = "已移到本机废纸篓 %1$d 张（%2$@）· ⌘Z 撤销";
+"trash.movedVolumeTypes" = "已移到「%1$@」的废纸篓 %2$d 张（%3$@）· ⌘Z 撤销";

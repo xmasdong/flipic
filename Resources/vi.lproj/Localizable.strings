@@ -1424,3 +1424,11 @@ Kéo thư mục hoặc ảnh vào để mở";
 "mm.fixedBatchRename" = "Đã sửa đuôi cho %d ảnh";
 "mm.fixedBatchJPEG" = "Đã chuyển %d ảnh sang JPEG chuẩn";
 "mm.fixedBatchPartial" = "Đã sửa %1$d, lỗi %2$d";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "chỉ %@";
+"fileops.typesWithCount" = "%1$@ · %2$d tệp";
+"fileops.withTypes" = "%1$@ (%2$@)";
+"trash.movedTypes" = "Đã chuyển %1$d ảnh vào Thùng rác (%2$@) · ⌘Z hoàn tác";
+"trash.movedLocalTypes" = "Đã chuyển %1$d ảnh vào Thùng rác máy Mac (%2$@) · ⌘Z hoàn tác";
+"trash.movedVolumeTypes" = "Đã chuyển %2$d ảnh vào Thùng rác của “%1$@” (%3$@) · ⌘Z hoàn tác";

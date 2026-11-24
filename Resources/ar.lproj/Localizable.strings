@@ -1424,3 +1424,11 @@ Return  إعادة تسمية الصورة الحالية
 "mm.fixedBatchRename" = "تم إصلاح امتداد %d صورة";
 "mm.fixedBatchJPEG" = "تم تحويل %d صورة إلى JPEG حقيقي";
 "mm.fixedBatchPartial" = "تم إصلاح %1$d، وفشل %2$d";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "%@ فقط";
+"fileops.typesWithCount" = "%1$@ · %2$d ملفات";
+"fileops.withTypes" = "%1$@ (%2$@)";
+"trash.movedTypes" = "تم نقل %1$d إلى سلة المهملات (%2$@) · ⌘Z للتراجع";
+"trash.movedLocalTypes" = "تم نقل %1$d إلى سلة مهملات هذا الـ Mac (%2$@) · ⌘Z للتراجع";
+"trash.movedVolumeTypes" = "تم نقل %2$d إلى سلة مهملات «%1$@» (%3$@) · ⌘Z للتراجع";

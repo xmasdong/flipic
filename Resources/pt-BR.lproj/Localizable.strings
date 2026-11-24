@@ -1424,3 +1424,11 @@ Arraste uma pasta ou imagem para abrir";
 "mm.fixedBatchRename" = "%d extensão(ões) corrigida(s)";
 "mm.fixedBatchJPEG" = "%d imagem(ns) convertida(s) para JPEG real";
 "mm.fixedBatchPartial" = "%1$d corrigidas, %2$d com falha";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "apenas %@";
+"fileops.typesWithCount" = "%1$@ · %2$d arquivos";
+"fileops.withTypes" = "%1$@ (%2$@)";
+"trash.movedTypes" = "%1$d foto(s) para o Lixo (%2$@) · ⌘Z para desfazer";
+"trash.movedLocalTypes" = "%1$d foto(s) para o Lixo deste Mac (%2$@) · ⌘Z para desfazer";
+"trash.movedVolumeTypes" = "%2$d foto(s) para o Lixo de “%1$@” (%3$@) · ⌘Z para desfazer";

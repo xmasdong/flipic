@@ -1424,3 +1424,11 @@ Arrastra una carpeta o imagen para abrir";
 "mm.fixedBatchRename" = "Se corrigieron %d extensiones";
 "mm.fixedBatchJPEG" = "Se convirtieron %d imágenes a JPEG real";
 "mm.fixedBatchPartial" = "%1$d corregidas, %2$d con error";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "solo %@";
+"fileops.typesWithCount" = "%1$@ · %2$d archivos";
+"fileops.withTypes" = "%1$@ (%2$@)";
+"trash.movedTypes" = "%1$d foto(s) a la Papelera (%2$@) · ⌘Z para deshacer";
+"trash.movedLocalTypes" = "%1$d foto(s) a la Papelera de este Mac (%2$@) · ⌘Z para deshacer";
+"trash.movedVolumeTypes" = "%2$d foto(s) a la Papelera de «%1$@» (%3$@) · ⌘Z para deshacer";

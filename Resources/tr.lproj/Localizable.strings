@@ -1424,3 +1424,11 @@ Açmak için klasör veya resim sürükleyin";
 "mm.fixedBatchRename" = "%d dosya uzantısı düzeltildi";
 "mm.fixedBatchJPEG" = "%d görsel gerçek JPEG’e dönüştürüldü";
 "mm.fixedBatchPartial" = "%1$d düzeltildi, %2$d başarısız";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "yalnızca %@";
+"fileops.typesWithCount" = "%1$@ · %2$d dosya";
+"fileops.withTypes" = "%1$@ (%2$@)";
+"trash.movedTypes" = "%1$d fotoğraf Çöp Sepeti’ne taşındı (%2$@) · ⌘Z geri alır";
+"trash.movedLocalTypes" = "%1$d fotoğraf bu Mac’in Çöp Sepeti’ne taşındı (%2$@) · ⌘Z geri alır";
+"trash.movedVolumeTypes" = "%2$d fotoğraf “%1$@” Çöp Sepeti’ne taşındı (%3$@) · ⌘Z geri alır";

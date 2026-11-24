@@ -1429,3 +1429,11 @@ Return  重新命名目前圖片
 "mm.fixedBatchRename" = "已修正 %d 張圖片的副檔名，Finder 縮覽圖已恢復";
 "mm.fixedBatchJPEG" = "已將 %d 張圖片轉為標準 JPEG";
 "mm.fixedBatchPartial" = "已修復 %1$d 張，%2$d 張失敗";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "僅 %@";
+"fileops.typesWithCount" = "%1$@ · 共 %2$d 個檔案";
+"fileops.withTypes" = "%1$@（%2$@）";
+"trash.movedTypes" = "已移到垃圾桶 %1$d 張（%2$@）· ⌘Z 復原";
+"trash.movedLocalTypes" = "已移到本機垃圾桶 %1$d 張（%2$@）· ⌘Z 復原";
+"trash.movedVolumeTypes" = "已移到「%1$@」的垃圾桶 %2$d 張（%3$@）· ⌘Z 復原";

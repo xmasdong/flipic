@@ -1424,3 +1424,11 @@ Return  Переименовать текущее изображение
 "mm.fixedBatchRename" = "Исправлено расширений: %d";
 "mm.fixedBatchJPEG" = "Преобразовано в JPEG: %d";
 "mm.fixedBatchPartial" = "Исправлено: %1$d, ошибок: %2$d";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "только %@";
+"fileops.typesWithCount" = "%1$@ · %2$d файлов";
+"fileops.withTypes" = "%1$@ (%2$@)";
+"trash.movedTypes" = "Перемещено в Корзину: %1$d (%2$@) · ⌘Z отменить";
+"trash.movedLocalTypes" = "Перемещено в Корзину этого Mac: %1$d (%2$@) · ⌘Z отменить";
+"trash.movedVolumeTypes" = "Перемещено в Корзину «%1$@»: %2$d (%3$@) · ⌘Z отменить";

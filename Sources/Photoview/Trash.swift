@@ -183,19 +183,89 @@ enum Trash {
 
     // MARK: - 提示与找回
 
-    /// 「已移到…废纸篓 N 张」的提示；一个都没挪成时只说失败，不报「0 张」
+    /// 从实际操作的文件里算出照片张数（同名 JPG + RAW + XMP 算 1 张；全是附属文件时退回文件个数）
+    static func photoCount(in urls: some Sequence<URL>) -> Int {
+        var stems = Set<String>()
+        var total = 0
+        for u in urls {
+            total += 1
+            if ImageLoader.isSupportedExtension(u.lastPathComponent) {
+                stems.insert(u.deletingPathExtension().path.lowercased())
+            }
+        }
+        return stems.isEmpty ? total : stems.count
+    }
+
+    /// 把实际操作到的文件扩展名整理成紧凑提示，例如「仅 JPG」「JPG + NEF + XMP」「JPG + NEF + XMP · 共 9 个文件」
+    static func fileTypesLabel(for urls: [URL], photoCount: Int = 1, includeFileCount: Bool = true) -> String? {
+        guard !urls.isEmpty else { return nil }
+        var seen = Set<String>()
+        var std: [String] = []
+        var raws: [String] = []
+        var sidecars: [String] = []
+        for u in urls {
+            let ext = u.pathExtension.uppercased()
+            guard !ext.isEmpty, seen.insert(ext).inserted else { continue }
+            if CleanupUnit.isRaw(u) {
+                raws.append(ext)
+            } else if ImageLoader.isSupportedExtension(u.lastPathComponent) {
+                std.append(ext)
+            } else {
+                sidecars.append(ext)
+            }
+        }
+        std.sort()
+        raws.sort()
+        sidecars.sort()
+        let ordered = std + raws + sidecars
+        guard !ordered.isEmpty else { return nil }
+        let body: String
+        if ordered.count == 1 {
+            body = L10n.f("fileops.onlyType", "仅 %@", ordered[0])
+        } else if ordered.count <= 4 {
+            body = ordered.joined(separator: " + ")
+        } else {
+            body = ordered.prefix(4).joined(separator: " + ") + "…"
+        }
+        if includeFileCount && photoCount > 1 && urls.count > photoCount {
+            return L10n.f("fileops.typesWithCount", "%1$@ · 共 %2$d 个文件", body, urls.count)
+        }
+        return body
+    }
+
+    /// 在一条操作提示后附上实际处理到的文件类型（例如「（JPG + NEF + XMP）」或「（仅 JPG）」）
+    static func appendingTypes(_ base: String, files: [URL], photoCount: Int = 1, includeFileCount: Bool = true) -> String {
+        guard let label = fileTypesLabel(for: files, photoCount: photoCount, includeFileCount: includeFileCount) else { return base }
+        return L10n.f("fileops.withTypes", "%1$@（%2$@）", base, label)
+    }
+
+    /// 「已移到…废纸篓 N 张（JPG + NEF + XMP）· ⌘Z 撤销」的提示；一个都没挪成时只说失败，不报「0 张」
     static func summary(_ out: Outcome, count: Int) -> String {
         if out.moved.isEmpty {
             guard !out.failed.isEmpty else { return "" }
             return L10n.f("trash.someFailed", "%d 个没挪动成功，还在原处", out.failed.count)
         }
+        let movedFiles = Array(out.moved.keys)
+        let types = fileTypesLabel(for: movedFiles, photoCount: count)
         var text: String
         if out.usedLocalTrash {
-            text = L10n.f("trash.movedLocal", "已移到本机废纸篓 %d 张 · ⌘Z 撤销", count)
+            if let types {
+                text = L10n.f("trash.movedLocalTypes", "已移到本机废纸篓 %1$d 张（%2$@）· ⌘Z 撤销", count, types)
+            } else {
+                text = L10n.f("trash.movedLocal", "已移到本机废纸篓 %d 张 · ⌘Z 撤销", count)
+            }
         } else if let vol = out.volumeName {
-            text = L10n.f("trash.movedVolume", "已移到「%@」的废纸篓 %d 张 · ⌘Z 撤销", vol, count)
+            if let types {
+                text = L10n.f("trash.movedVolumeTypes", "已移到「%1$@」的废纸篓 %2$d 张（%3$@）· ⌘Z 撤销", vol, count, types)
+            } else {
+                text = L10n.f("trash.movedVolume", "已移到「%@」的废纸篓 %d 张 · ⌘Z 撤销", vol, count)
+            }
         } else {
-            text = L10n.f("cleanup.trashed", "已移到废纸篓 %d 张 · ⌘Z 撤销", count)
+            if let types {
+                text = L10n.f("trash.movedTypes", "已移到废纸篓 %1$d 张（%2$@）· ⌘Z 撤销", count, types)
+            } else {
+                text = L10n.f("cleanup.trashed", "已移到废纸篓 %d 张 · ⌘Z 撤销", count)
+            }
         }
         if !out.failed.isEmpty {
             text += " · " + L10n.f("trash.someFailed", "%d 个没挪动成功，还在原处", out.failed.count)

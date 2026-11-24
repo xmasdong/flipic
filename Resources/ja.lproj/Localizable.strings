@@ -1424,3 +1424,11 @@ Return  表示中の画像を名称変更
 "mm.fixedBatchRename" = "%d 件の拡張子を修正しました";
 "mm.fixedBatchJPEG" = "%d 件を標準 JPEG に変換しました";
 "mm.fixedBatchPartial" = "%1$d 件修復、%2$d 件失敗";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "%@ のみ";
+"fileops.typesWithCount" = "%1$@ · 計 %2$d ファイル";
+"fileops.withTypes" = "%1$@（%2$@）";
+"trash.movedTypes" = "%1$d 枚をゴミ箱に入れました（%2$@）· ⌘Z で取り消し";
+"trash.movedLocalTypes" = "%1$d 枚をこの Mac のゴミ箱に入れました（%2$@）· ⌘Z で取り消し";
+"trash.movedVolumeTypes" = "「%1$@」のゴミ箱に %2$d 枚を移動しました（%3$@）· ⌘Z で取り消し";

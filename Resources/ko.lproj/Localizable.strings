@@ -1424,3 +1424,11 @@ Return  현재 이미지 이름 변경
 "mm.fixedBatchRename" = "%d장의 확장자를 수정했습니다";
 "mm.fixedBatchJPEG" = "%d장을 표준 JPEG로 변환했습니다";
 "mm.fixedBatchPartial" = "%1$d장 복구, %2$d장 실패";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "%@만";
+"fileops.typesWithCount" = "%1$@ · 총 %2$d개 파일";
+"fileops.withTypes" = "%1$@ (%2$@)";
+"trash.movedTypes" = "%1$d장을 휴지통으로 이동함 (%2$@) · ⌘Z 실행 취소";
+"trash.movedLocalTypes" = "%1$d장을 이 Mac의 휴지통으로 이동함 (%2$@) · ⌘Z 실행 취소";
+"trash.movedVolumeTypes" = "%2$d장을 “%1$@” 휴지통으로 이동함 (%3$@) · ⌘Z 실행 취소";

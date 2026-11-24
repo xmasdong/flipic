@@ -1424,3 +1424,11 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "mm.fixedBatchRename" = "%d Dateiendung(en) korrigiert";
 "mm.fixedBatchJPEG" = "%d Bild(er) in echtes JPEG umgewandelt";
 "mm.fixedBatchPartial" = "%1$d korrigiert, %2$d fehlgeschlagen";
+
+/* File-type breakdown feedback (JPG / RAW / XMP) */
+"fileops.onlyType" = "nur %@";
+"fileops.typesWithCount" = "%1$@ · %2$d Dateien";
+"fileops.withTypes" = "%1$@ (%2$@)";
+"trash.movedTypes" = "%1$d Fotos in den Papierkorb gelegt (%2$@) · ⌘Z widerruft";
+"trash.movedLocalTypes" = "%1$d Fotos in den Papierkorb dieses Macs gelegt (%2$@) · ⌘Z widerruft";
+"trash.movedVolumeTypes" = "In den Papierkorb von „%1$@“ gelegt: %2$d Fotos (%3$@) · ⌘Z widerruft";

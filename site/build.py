@@ -2522,6 +2522,10 @@ def render_changelog(lang):
     desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
             else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
     entries_zh = [
+        ("1.0.64", "2026-11-24", [
+            "Pro 工作台全视图支持按 V 切换看 JPG / RAW：胶片条、宫格 + 大图、单张、多图对比与宫格均可按 V（或菜单 / 右键）快速切换同名配对照片，保留当前缩放倍数与查看位置；胶片条底部状态栏与大图信息栏新增「+ NEF / + JPG」配对后缀标记。",
+            "文件操作类型明细提示（免费 + Pro）：删除、⌘Z 放回、⌘C 拷贝、导出复制/移动、发送到常用文件夹与重命名后，提示条会清晰写明实际处理到的文件类型（例如「仅 JPG」或「JPG + NEF + XMP」），不再担心漏删或误删 RAW 与 XMP 旁车文件。",
+        ]),
         ("1.0.63", "2026-11-24", [
             "错误图片后缀检测与一键修复（免费）：自动识别文件头与后缀不符的图片（如豆包 / AI 绘图 / 网页保存的 PNG、WebP 被写成 .jpg 导致访达无法显示缩略图与后期软件报错），看图页顶部轻提示胶囊、照片信息栏（I）与右键菜单均可一键无损修正。",
             "整文件夹批量修复（「工具 › 修复错误的图片后缀…」，看图窗口与工作台通用）：几十毫秒只扫前 32 字节文件头（跳过所有相机 RAW 与视频），提供「无损修正为真实后缀（同步 .xmp / .MOV）」与「转为真正的 JPEG（透明底自动铺白，保留 .jpg 名称与 EXIF/标签）」两种模式。",
@@ -2571,6 +2575,10 @@ def render_changelog(lang):
         ]),
     ]
     entries_en = [
+        ("1.0.64", "2026-11-24", [
+            "Switch JPG / RAW with V across all Pro Workbench views: Filmstrip, Grid + Preview, Single, Multi-Compare and Grid now all support V (plus menu bar and context menu) to switch paired shots while keeping zoom and pan position; Filmstrip and Preview caption bars now show paired format badges (+ NEF / + JPG).",
+            "Clear file-type action feedback (Free + Pro): Trash, ⌘Z Undo, ⌘C Copy, Export Copy/Move, Send To and Rename toasts now explicitly show which file types were affected (such as JPG only vs. JPG + NEF + XMP), removing guesswork around RAW and XMP sidecars.",
+        ]),
         ("1.0.63", "2026-11-24", [
             "Mismatched image extension detection & one-click repair (Free): detects images whose actual header differs from their filename extension (such as PNG or WebP saved as .jpg, which breaks Mac Finder thumbnails and Photoshop) with a dismissible viewer banner, an inline Photo Info (I) card, and right-click quick fix.",
             "Batch folder repair (Tools › Fix Mismatched Extensions…, available in Viewer and Workbench): scans only the first 32 header bytes in milliseconds (skipping all camera RAW and video files), offering both lossless extension rename (syncing .xmp / .MOV sidecars) and real JPEG conversion (white background flattening for alpha PNGs, keeping .jpg names, EXIF and Finder tags).",

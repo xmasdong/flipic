@@ -2361,7 +2361,7 @@ final class ViewerViewController: NSViewController {
             } else {
                 self.filmstrip.collectionView.reloadData()
             }
-            self.flash(Trash.summary(out, count: gone.count), seconds: 3)
+            self.flash(Trash.summary(out, count: Trash.photoCount(in: gone)), seconds: 3)
         }
     }
 
@@ -2387,7 +2387,7 @@ final class ViewerViewController: NSViewController {
                 self.emptyHint.stringValue = L10n.t("ui.noMore", "文件夹里没有更多图片了")
                 self.updateHUD()
             }
-            self.flash(Trash.summary(out, count: gone.count), seconds: 3)
+            self.flash(Trash.summary(out, count: Trash.photoCount(in: gone)), seconds: 3)
         }
     }
 
@@ -2427,7 +2427,9 @@ final class ViewerViewController: NSViewController {
         let show = rec.photo.flatMap { back.contains($0) ? $0 : nil }
             ?? cur.flatMap { fm.fileExists(atPath: $0.path) ? $0 : nil } ?? dir
         open(url: show)
-        flash(L10n.f("pro.restored", "已放回 %d 个文件", back.count), seconds: 2.5)
+        flash(Trash.appendingTypes(L10n.f("pro.restored", "已放回 %d 个文件", back.count),
+                                   files: back, photoCount: Trash.photoCount(in: back), includeFileCount: false),
+              seconds: 2.8)
     }
 
     /// 编辑菜单的「撤销」（⌘Z）：在输入框里时照常撤销文字，否则放回刚才删掉的照片
@@ -2872,7 +2874,8 @@ final class ViewerViewController: NSViewController {
         } else {
             pb.writeObjects(files.map { $0 as NSURL })
         }
-        flash(L10n.f("msg.copiedPhotos", "已拷贝 %d 张照片，可以到访达里粘贴", picked.count), seconds: 2)
+        let base = L10n.f("msg.copiedPhotos", "已拷贝 %d 张照片，可以到访达里粘贴", picked.count)
+        flash(Trash.appendingTypes(base, files: files, photoCount: picked.count), seconds: 2.4)
     }
 
     private func finishCopyText(_ lines: [String]) {
@@ -3909,22 +3912,25 @@ final class ViewerViewController: NSViewController {
         return out
     }
 
-    /// 照片改了名，同名的 .MOV 和星级 .xmp 跟着改成同一个名字；目标已有同名文件就不动它
-    static func renameCompanions(of old: URL, to new: URL) {
+    /// 照片改了名，同名的 .MOV 和星级 .xmp 跟着改成同一个名字；目标已有同名文件就不动它。返回实际跟着改名的文件列表
+    @discardableResult
+    static func renameCompanions(of old: URL, to new: URL) -> [URL] {
         let fm = FileManager.default
         var files = companions(of: old)
         let side = Rating.sidecarURL(for: old)
         if fm.fileExists(atPath: side.path), !files.contains(side) { files.append(side) }
         let base = new.deletingPathExtension()
+        var renamed: [URL] = []
         for f in files {
             let dest = base.appendingPathExtension(f.pathExtension)
             guard dest.path != f.path, !fm.fileExists(atPath: dest.path) else { continue }
-            try? fm.moveItem(at: f, to: dest)
+            if (try? fm.moveItem(at: f, to: dest)) != nil { renamed.append(dest) }
         }
+        return renamed
     }
 
     static func transfer(_ urls: [URL], to target: URL, move: Bool,
-                         progress: ((Int) -> Void)? = nil) -> (done: Set<URL>, failed: Int) {
+                         progress: ((Int) -> Void)? = nil) -> (done: Set<URL>, failed: Int, files: [URL]) {
         let fm = FileManager.default
         var groups: [(base: String, files: [URL])] = []
         var groupIndex: [String: Int] = [:]
@@ -3943,6 +3949,7 @@ final class ViewerViewController: NSViewController {
         }
         try? fm.createDirectory(at: target, withIntermediateDirectories: true)
         var done = Set<URL>()
+        var movedAll: [URL] = []
         var failed = 0
         var processed = 0
         for g in groups {
@@ -3963,6 +3970,7 @@ final class ViewerViewController: NSViewController {
                         Marks.set(true, for: dest)
                         if move { CardMarks.set(false, for: f) }
                     }
+                    movedAll.append(f)
                     if urls.contains(f) { done.insert(f) }
                 } catch {
                     if urls.contains(f) { failed += 1 }
@@ -3971,7 +3979,7 @@ final class ViewerViewController: NSViewController {
             processed += g.files.filter { urls.contains($0) }.count
             progress?(processed)
         }
-        return (done, failed)
+        return (done, failed, movedAll)
     }
 
     /// 移走的照片从列表里拿掉，显示剩下的；全移走了就回到全部照片或空状态
@@ -4004,7 +4012,7 @@ final class ViewerViewController: NSViewController {
         isProcessing = true
         let total = urls.count
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let (done, failed) = Self.transfer(urls, to: target, move: move) { processed in
+            let (done, failed, movedAll) = Self.transfer(urls, to: target, move: move) { processed in
                 guard total > 30, processed % 20 == 0 else { return }
                 DispatchQueue.main.async { self?.flash(L10n.f("msg.batchProgress", "正在处理 %1$d / %2$d", processed, total), seconds: 5) }
             }
@@ -4012,8 +4020,10 @@ final class ViewerViewController: NSViewController {
                 guard let self else { return }
                 self.isProcessing = false
                 let folderName = target.lastPathComponent
-                var msg = move ? L10n.f("msg.exportedMove", "已移动 %1$d 张到「%2$@」", done.count, folderName)
-                               : L10n.f("msg.exportedCopy", "已复制 %1$d 张到「%2$@」", done.count, folderName)
+                let photoCount = Trash.photoCount(in: done)
+                var msg = move ? L10n.f("msg.exportedMove", "已移动 %1$d 张到「%2$@」", photoCount, folderName)
+                               : L10n.f("msg.exportedCopy", "已复制 %1$d 张到「%2$@」", photoCount, folderName)
+                msg = Trash.appendingTypes(msg, files: movedAll, photoCount: photoCount)
                 if failed > 0 { msg += " · " + L10n.f("msg.batchFailed", "%d 个文件没能处理", failed) }
                 if move { self.removeTransferred(done) }
                 self.flash(msg, seconds: 3.5)
@@ -4729,10 +4739,15 @@ final class ViewerViewController: NSViewController {
             candidate = ext.isEmpty ? "\(sanitized) \(n)" : "\(sanitized) \(n).\(ext)"
             n += 1
         }
+        var renamedFiles: [URL] = []
         do {
-            try fm.moveItem(at: item.url, to: folderURL.appendingPathComponent(candidate))
-            CardMarks.rename(from: item.url, to: folderURL.appendingPathComponent(candidate))
-            Self.renameCompanions(of: item.url, to: folderURL.appendingPathComponent(candidate))
+            let dest = folderURL.appendingPathComponent(candidate)
+            try fm.moveItem(at: item.url, to: dest)
+            renamedFiles.append(dest)
+            CardMarks.rename(from: item.url, to: dest)
+            for c in Self.renameCompanions(of: item.url, to: dest) where !renamedFiles.contains(c) {
+                renamedFiles.append(c)
+            }
         } catch {
             flash(L10n.f("msg.renameFailed", "重命名失败： %@", error.localizedDescription))
             return
@@ -4741,7 +4756,8 @@ final class ViewerViewController: NSViewController {
         loader.evict(url: folderURL.appendingPathComponent(candidate))  // 无害；确保旧键不残留
         updateHUD()
         view.window?.makeFirstResponder(imageView)
-        flash(L10n.f("msg.renamedTo", "已重命名为 %@", candidate))
+        let msg = L10n.f("msg.renamedTo", "已重命名为 %@", candidate)
+        flash(Trash.appendingTypes(msg, files: renamedFiles, photoCount: 1), seconds: 2.5)
     }
 
     // MARK: - 导出
