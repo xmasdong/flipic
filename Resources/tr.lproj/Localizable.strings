@@ -1432,3 +1432,17 @@ Açmak için klasör veya resim sürükleyin";
 "trash.movedTypes" = "%1$d fotoğraf Çöp Sepeti’ne taşındı (%2$@) · ⌘Z geri alır";
 "trash.movedLocalTypes" = "%1$d fotoğraf bu Mac’in Çöp Sepeti’ne taşındı (%2$@) · ⌘Z geri alır";
 "trash.movedVolumeTypes" = "%2$d fotoğraf “%1$@” Çöp Sepeti’ne taşındı (%3$@) · ⌘Z geri alır";
+
+"menu.exportAsCount" = "%d Fotoğrafı Dışa Aktar…";
+"menu.resizeCount" = "%d Fotoğrafı Yeniden Boyutlandır…";
+"menu.exportWatermarkedCount" = "%d Fotoğrafı Filigranlı Dışa Aktar…";
+"exp.batch.title" = "Toplu Dışa Aktar";
+"exp.batch.info" = "Seçili %d fotoğraf bu ayarlarla dışa aktarılacak.";
+"exp.batch.resizeTitle" = "Toplu Yeniden Boyutlandır";
+"exp.batch.resizeInfo" = "%d küçültülmüş kopya dışa aktarmak için uzun kenar piksel sınırını girin. Orijinaller değişmez.";
+"exp.batch.start" = "Dışa Aktar";
+"exp.batch.defaultNote" = "Varsayılan olarak orijinallerin yanındaki Exported-%@ klasörüne kaydedilir; mevcut dosyaların üzerine yazılmaz.";
+"exp.batch.progress" = "Dışa aktarılıyor %1$d / %2$d";
+"exp.batch.doneTitle" = "Dışa aktarma tamamlandı";
+"exp.batch.cancelledTitle" = "Dışa aktarma iptal edildi";
+"exp.batch.sum.exported" = "%d dışa aktarıldı";

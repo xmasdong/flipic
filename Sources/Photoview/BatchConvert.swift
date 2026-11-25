@@ -12,6 +12,8 @@ enum BatchConvert {
         var outDir: URL
         /// 已经是目标格式、也没有需要改的照片：false = 跳过（批量转换），true = 原样存一份（导出预设：要交的每张都得在文件夹里）
         var alwaysWrite = false
+        /// 批量「导出为…」时设为 true：即使已是目标格式也按所选质量与选项重新编码导出，不跳过
+        var forceReencode = false
         /// 输出文件名（不含扩展名）：参数是原文件和这是第几个输出（从 1 数）；nil = 用原文件名
         var outputName: ((URL, Int) -> String)?
     }
@@ -33,16 +35,16 @@ enum BatchConvert {
         ("JPEG", "public.jpeg", "jpg"), ("PNG", "public.png", "png"), ("HEIC", "public.heic", "heic"),
     ]
 
-    /// 默认输出文件夹：原照片所在文件夹里的 Converted-<ext>；那个盘只读或者可移除（存储卡）就改放到 ~/图片 下面，不往卡里写。
-    /// onVolume = false 表示因为这个原因改了位置，界面上要说一声
-    static func defaultOutputFolder(for source: URL, ext: String) -> (url: URL, redirected: Bool) {
+    /// 默认输出文件夹：原照片所在文件夹里的 <prefix>-<ext>；那个盘只读或者可移除（存储卡）就改放到 ~/图片 下面，不往卡里写。
+    /// redirected = true 表示因为这个原因改了位置，界面上要说一声
+    static func defaultOutputFolder(for source: URL, ext: String, prefix: String = "Converted") -> (url: URL, redirected: Bool) {
         let dir = source.hasDirectoryPath ? source : source.deletingLastPathComponent()
         if Volumes.isReadOnlyOrRemovable(dir) {
             let pictures = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first
                 ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Pictures")
-            return (pictures.appendingPathComponent("Converted-\(ext)"), true)
+            return (pictures.appendingPathComponent("\(prefix)-\(ext)"), true)
         }
-        return (dir.appendingPathComponent("Converted-\(ext)"), false)
+        return (dir.appendingPathComponent("\(prefix)-\(ext)"), false)
     }
 
     /// 这个文件已经是目标格式了吗
@@ -57,6 +59,7 @@ enum BatchConvert {
 
     /// 已经是目标格式的文件，按现在的选项转一遍会有变化吗：没设任何限制就原样不动（重新压缩只会掉画质）
     static func needsWork(_ url: URL, settings s: Settings) -> Bool {
+        if s.forceReencode { return true }
         if s.options.effect != nil || s.options.watermark != nil || s.options.border != nil { return true }
         guard isSameFormat(url, ext: s.ext) else { return true }
         let o = s.options
@@ -153,9 +156,11 @@ enum BatchConvert {
     }
 
     /// 结果小结，一行一项（没有的项不写）
-    static func message(_ sum: Summary, limit: Int64?) -> String {
+    static func message(_ sum: Summary, limit: Int64?, exported: Bool = false) -> String {
         var lines: [String] = []
-        lines.append(L10n.f("bc.sum.converted", "已转换 %d 张", sum.converted))
+        lines.append(exported
+            ? L10n.f("exp.batch.sum.exported", "已导出 %d 张", sum.converted)
+            : L10n.f("bc.sum.converted", "已转换 %d 张", sum.converted))
         if sum.skipped > 0 { lines.append(L10n.f("bc.sum.skipped", "跳过 %d 张（已经是这个格式，没有需要改的）", sum.skipped)) }
         if sum.skippedMotion > 0 { lines.append(L10n.f("bc.sum.skippedMotion2", "跳过 %d 个视频或动图（加不了水印和边框）", sum.skippedMotion)) }
         if sum.failed > 0 {

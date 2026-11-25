@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 
 /// 导出选项那一组控件：「导出为…」面板和「批量转换格式」对话框共用
 final class ExportOptionsView: NSStackView, NSTextFieldDelegate {
@@ -312,8 +313,11 @@ final class ExportAccessory {
     #endif
 }
 
-/// 批量转换对话框的附件：格式、质量、导出选项、保存位置
+/// 批量转换 / 批量导出对话框的附件：格式、质量、导出选项、保存位置
 final class BatchAccessory: NSObject {
+    enum Mode { case convert, export, resize }
+
+    let mode: Mode
     private(set) var view: NSView
     let popup = NSPopUpButton(frame: .zero)
     let slider: NSSlider
@@ -332,7 +336,10 @@ final class BatchAccessory: NSObject {
     /// 装着这个附件的对话框（水印那一行高度变了要让它重新排）
     weak var alert: NSAlert?
 
-    init(source: URL, formatIndex: Int, quality: Double) {
+    private var folderPrefix: String { mode == .convert ? "Converted" : "Exported" }
+
+    init(source: URL, formatIndex: Int, quality: Double, mode: Mode = .convert) {
+        self.mode = mode
         self.source = source
         popup.addItems(withTitles: BatchConvert.formats.map(\.name))
         popup.selectItem(at: BatchConvert.formats.indices.contains(formatIndex) ? formatIndex : 0)
@@ -343,8 +350,11 @@ final class BatchAccessory: NSObject {
         #if FLIPIC_PRO
         initial.effect = FilmEffect.defaultToken
         #endif
-        options = ExportOptionsView(options: initial, watermarkKey: WatermarkMemory.batchKey)
-        let d = BatchConvert.defaultOutputFolder(for: source, ext: BatchConvert.formats[max(0, min(formatIndex, 2))].ext)
+        let wmKey = mode == .convert ? WatermarkMemory.batchKey : WatermarkMemory.exportKey
+        options = ExportOptionsView(options: initial, watermarkKey: wmKey, preselectWatermark: WatermarkMemory.forceNextExport)
+        WatermarkMemory.forceNextExport = false
+        let prefix = mode == .convert ? "Converted" : "Exported"
+        let d = BatchConvert.defaultOutputFolder(for: source, ext: BatchConvert.formats[max(0, min(formatIndex, 2))].ext, prefix: prefix)
         outDir = d.url
         redirected = d.redirected
         view = NSView()
@@ -411,18 +421,25 @@ final class BatchAccessory: NSObject {
     var formatIndex: Int { popup.indexOfSelectedItem }
     var settings: BatchConvert.Settings {
         let f = BatchConvert.formats[formatIndex]
-        return BatchConvert.Settings(uti: f.uti, ext: f.ext, quality: slider.doubleValue, options: options.options, outDir: outDir)
+        return BatchConvert.Settings(uti: f.uti, ext: f.ext, quality: slider.doubleValue, options: options.options, outDir: outDir,
+                                     forceReencode: mode != .convert)
     }
 
     private func refresh() {
         pathLabel.stringValue = (outDir.path as NSString).abbreviatingWithTildeInPath
         pathLabel.toolTip = outDir.path
         let ext = BatchConvert.formats[max(0, min(popup.indexOfSelectedItem, 2))].ext
-        var note = redirected && !userChose
-            ? L10n.t("bc.cardNote", "原照片在存储卡或只读的盘上，默认存到「图片」文件夹，不往那个盘里写。")
-            : L10n.f("bc.defaultNote", "默认放在原照片旁边的 Converted-%@ 文件夹，同名文件不会被覆盖。", ext)
-        note += " " + L10n.t("bc.sameNote", "已经是这个格式的照片，没设限制时会跳过。")
-        noteLabel.stringValue = note
+        if mode == .convert {
+            var note = redirected && !userChose
+                ? L10n.t("bc.cardNote", "原照片在存储卡或只读的盘上，默认存到「图片」文件夹，不往那个盘里写。")
+                : L10n.f("bc.defaultNote", "默认放在原照片旁边的 Converted-%@ 文件夹，同名文件不会被覆盖。", ext)
+            note += " " + L10n.t("bc.sameNote", "已经是这个格式的照片，没设限制时会跳过。")
+            noteLabel.stringValue = note
+        } else {
+            noteLabel.stringValue = redirected && !userChose
+                ? L10n.t("bc.cardNote", "原照片在存储卡或只读的盘上，默认存到「图片」文件夹，不往那个盘里写。")
+                : L10n.f("exp.batch.defaultNote", "默认放在原照片旁边的 Exported-%@ 文件夹，同名文件不会被覆盖。", ext)
+        }
     }
 
     #if FLIPIC_PRO
@@ -449,7 +466,7 @@ final class BatchAccessory: NSObject {
         slider.isEnabled = !png
         options.isPNG = png
         if !userChose {
-            let d = BatchConvert.defaultOutputFolder(for: source, ext: BatchConvert.formats[max(0, min(s.indexOfSelectedItem, 2))].ext)
+            let d = BatchConvert.defaultOutputFolder(for: source, ext: BatchConvert.formats[max(0, min(s.indexOfSelectedItem, 2))].ext, prefix: folderPrefix)
             outDir = d.url
             redirected = d.redirected
         }
@@ -468,5 +485,137 @@ final class BatchAccessory: NSObject {
         outDir = url
         userChose = true
         refresh()
+    }
+}
+
+/// 看图窗口与工作台共用的批量导出 / 批量转换弹窗与后台执行器
+enum BatchExportUI {
+    static let exportFormats: [(name: String, uti: UTType, ext: String)] = [
+        ("JPEG", .jpeg, "jpg"), ("PNG", .png, "png"), ("HEIC", .heic, "heic"),
+    ]
+
+    /// 测试用：拦截弹窗并直接返回要执行的设置（nil 表示取消）
+    static var debugBatchHandler: ((_ urls: [URL], _ mode: BatchAccessory.Mode, _ acc: BatchAccessory) -> BatchConvert.Settings?)?
+    /// 测试用：最近一次批量执行的小结
+    static var debugLastSummary: BatchConvert.Summary?
+    /// 测试用：跳过完成后的结果弹窗，避免阻塞自动测试
+    static var debugSkipDoneAlert = false
+
+    static func buildAlert(source: URL, count: Int, picked: Bool, mode: BatchAccessory.Mode = .convert) -> (NSAlert, BatchAccessory) {
+        let alert = NSAlert()
+        let d = UserDefaults.standard
+        let fmtKey = mode == .convert ? "batch.format" : "export.format"
+        let qualKey = mode == .convert ? "batch.quality" : "export.quality"
+        switch mode {
+        case .convert:
+            alert.messageText = L10n.t("bc.title", "批量转换格式")
+            alert.informativeText = picked ? L10n.f("bc.info.picked", "将转换选中的 %d 张照片。", count)
+                : L10n.f("bc.info.shown", "将转换当前显示的 %d 张照片。", count)
+        case .export:
+            alert.messageText = L10n.t("exp.batch.title", "批量导出")
+            alert.informativeText = L10n.f("exp.batch.info", "将按以下设置导出选中的 %d 张照片。", count)
+        case .resize:
+            alert.messageText = L10n.t("exp.batch.resizeTitle", "批量调整尺寸")
+            alert.informativeText = L10n.f("exp.batch.resizeInfo", "填长边的像素数，批量导出选中的 %d 张照片，原图不变。", count)
+        }
+        let acc = BatchAccessory(source: source, formatIndex: d.integer(forKey: fmtKey),
+                                 quality: d.object(forKey: qualKey) as? Double ?? 85, mode: mode)
+        alert.accessoryView = acc.view
+        acc.alert = alert
+        if mode == .resize { acc.options.focusLongEdge() }
+        alert.addButton(withTitle: mode == .convert ? L10n.t("bc.start", "开始转换") : L10n.t("exp.batch.start", "开始导出"))
+        alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
+        return (alert, acc)
+    }
+
+    static func promptAndRun(urls: [URL], picked: Bool, mode: BatchAccessory.Mode, in window: NSWindow,
+                             setProcessing: @escaping (Bool) -> Void, onComplete: ((BatchConvert.Summary) -> Void)? = nil) {
+        guard let first = urls.first else { return }
+        let (alert, acc) = buildAlert(source: first, count: urls.count, picked: picked, mode: mode)
+        let settings: BatchConvert.Settings
+        if let hook = debugBatchHandler {
+            guard let s = hook(urls, mode, acc) else { return }
+            settings = s
+        } else {
+            guard alert.runModal() == .alertFirstButtonReturn else { return }
+            settings = acc.settings
+            ExportOptions.saved = settings.options
+            acc.options.watermarkRow.rememberChoice()
+            let fmtKey = mode == .convert ? "batch.format" : "export.format"
+            let qualKey = mode == .convert ? "batch.quality" : "export.quality"
+            UserDefaults.standard.set(acc.formatIndex, forKey: fmtKey)
+            UserDefaults.standard.set(settings.quality, forKey: qualKey)
+        }
+        runBatch(urls: urls, settings: settings, in: window, exported: mode != .convert,
+                 setProcessing: setProcessing, onComplete: onComplete)
+    }
+
+    /// 后台逐张转换 / 导出，窗口上挂一个带进度和「取消」的 sheet；完成后弹出小结
+    static func runBatch(urls: [URL], settings: BatchConvert.Settings, in window: NSWindow,
+                         exported: Bool = false, summaryNote: String? = nil,
+                         setProcessing: @escaping (Bool) -> Void, onComplete: ((BatchConvert.Summary) -> Void)? = nil) {
+        setProcessing(true)
+        let progress = NSAlert()
+        let progressKey = exported ? "exp.batch.progress" : "bc.progress"
+        let progressFallback = exported ? "正在导出 %1$d / %2$d" : "正在转换 %1$d / %2$d"
+        progress.messageText = L10n.f(progressKey, progressFallback, 0, urls.count)
+        progress.informativeText = " "
+        let bar = NSProgressIndicator(frame: NSRect(x: 0, y: 0, width: 300, height: 14))
+        bar.isIndeterminate = false
+        bar.minValue = 0
+        bar.maxValue = Double(urls.count)
+        progress.accessoryView = bar
+        progress.addButton(withTitle: L10n.t("alert.cancel", "取消"))
+        let cancelled = AtomicFlag()
+        var finished = false
+        var sheetShown = false
+        // 极短的批量导出（几张小图 < 0.15s）不闪一下进度条，也避免 macOS beginSheetModal 进场动画未结束时 endSheet 失效导致 sheet 卡住窗口
+        let showSheet = DispatchWorkItem {
+            guard !finished else { return }
+            sheetShown = true
+            progress.beginSheetModal(for: window) { _ in
+                if !finished { cancelled.set() }
+                if finished && debugSkipDoneAlert { window.makeKey() }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15, execute: showSheet)
+        DispatchQueue.global(qos: .userInitiated).async {
+            let sum = BatchConvert.run(urls, settings: settings, isCancelled: { cancelled.isSet }) { done in
+                DispatchQueue.main.async {
+                    bar.doubleValue = Double(done)
+                    progress.messageText = L10n.f(progressKey, progressFallback, done, urls.count)
+                }
+            }
+            DispatchQueue.main.async {
+                finished = true
+                showSheet.cancel()
+                if sheetShown {
+                    if let sheet = window.attachedSheet {
+                        window.endSheet(sheet, returnCode: .OK)
+                    } else if let parent = progress.window.sheetParent {
+                        parent.endSheet(progress.window, returnCode: .OK)
+                    }
+                    window.makeKey()
+                }
+                setProcessing(false)
+                debugLastSummary = sum
+                onComplete?(sum)
+                guard !debugSkipDoneAlert else { return }
+                let done = NSAlert()
+                if exported {
+                    done.messageText = sum.cancelled ? L10n.t("exp.batch.cancelledTitle", "导出已取消") : L10n.t("exp.batch.doneTitle", "导出完成")
+                } else {
+                    done.messageText = sum.cancelled ? L10n.t("bc.cancelledTitle", "转换已取消") : L10n.t("bc.doneTitle", "转换完成")
+                }
+                done.informativeText = BatchConvert.message(sum, limit: settings.options.maxBytes, exported: exported) + (summaryNote.map { "\n" + $0 } ?? "")
+                done.addButton(withTitle: L10n.t("bc.ok", "好"))
+                if !sum.outputs.isEmpty { done.addButton(withTitle: L10n.t("bc.reveal", "在访达中显示")) }
+                done.beginSheetModal(for: window) { resp in
+                    if resp == .alertSecondButtonReturn, let first = sum.outputs.first {
+                        NSWorkspace.shared.activateFileViewerSelecting([first])
+                    }
+                }
+            }
+        }
     }
 }

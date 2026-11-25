@@ -319,7 +319,11 @@ final class ViewerViewController: NSViewController {
             // 按内容查找的搜索框开着时，Esc 先清除并关掉它（照片信息面板开着时先关面板）
             if self.exifPanel.isHidden, self.closeContentSearchOnEscape() { return }
             #endif
-            if !self.exifPanel.isHidden {
+            if self.filmstrip.collectionView.selectionIndexPaths.count > 1 {
+                self.keepStripSelection = false
+                self.syncFilmstripSelection()
+                self.updateRatingLabel()
+            } else if !self.exifPanel.isHidden {
                 self.exifPanel.isHidden = true   // 右上角的照片信息面板开着时，Esc 先关它
             } else if Self.escCloses {
                 // 像快速查看一样用：放大时先回到适应窗口，已经适应窗口再按就关掉回访达
@@ -377,6 +381,7 @@ final class ViewerViewController: NSViewController {
         }
         filmstrip.collectionView.dragURLs = { [weak self] i in self?.filmstripDragURLs(from: i) ?? [] }
         filmstrip.collectionView.onContextMenu = { [weak self] i in self?.filmstripContextMenu(for: i) }
+        filmstrip.collectionView.onSelectAll = { [weak self] in self?.selectAll(nil) }
         view.addSubview(filmstrip)
 
         buildHUD()
@@ -2219,9 +2224,8 @@ final class ViewerViewController: NSViewController {
         if keepStripSelection, cv.selectionIndexPaths.contains(target) { return }
         stripAnchor = nil
         if cv.selectionIndexPaths == [target] { return }
-        cv.deselectAll(nil)
-        cv.selectItems(at: Set([IndexPath(item: folder.index, section: 0)]),
-                       scrollPosition: [.centeredHorizontally])
+        cv.selectionIndexPaths = [target]
+        filmstrip.scrollTo(index: folder.index)
     }
 
     // MARK: - 缩略图栏多选
@@ -2297,6 +2301,25 @@ final class ViewerViewController: NSViewController {
         let selected = Set(filmstrip.collectionView.selectionIndexPaths.map(\.item))
         if !(selected.count > 1 && selected.contains(i)) { filmstripClicked(i, []) }
         return imageView.menu
+    }
+
+    /// 编辑 › 全选（⌘A）：输入框或实况文本选中时全选文字；看图默认模式下全选当前列表里的全部照片
+    @objc override func selectAll(_ sender: Any?) {
+        if let text = view.window?.firstResponder as? NSText { text.selectAll(sender); return }
+        if liveText?.hasTextSelection == true, let sv = liveText?.selectionView {
+            _ = sv.tryToPerform(#selector(NSText.selectAll(_:)), with: sender)
+            return
+        }
+        guard cleanup == nil, compareView == nil, folder.count > 0 else { return }
+        let cv = filmstrip.collectionView
+        if cv.numberOfItems(inSection: 0) != folder.count { cv.reloadData() }
+        let all = Set((0..<folder.count).map { IndexPath(item: $0, section: 0) })
+        keepStripSelection = true
+        cv.selectionIndexPaths = all
+        keepStripSelection = false
+        stripAnchor = folder.index
+        updateRatingLabel()
+        if folder.count > 1 { flash(L10n.f("msg.picked", "已选 %d 张", folder.count), seconds: 1.4) }
     }
 
     // MARK: - 菜单动作
@@ -3339,6 +3362,7 @@ final class ViewerViewController: NSViewController {
         let sortItem = NSMenuItem(title: L10n.t("menu.sort", "排序方式"), action: nil, keyEquivalent: "")
         sortItem.submenu = buildSortMenu()
         menu.addItem(sortItem)
+        add(L10n.t("menu.exportAs", "导出为…"), #selector(exportAs(_:)))
         add(L10n.t("menu.exportFolder", "导出到文件夹…"), #selector(exportToFolder(_:)))
         add(L10n.t("menu.copyImage", "复制图片"), #selector(copyImage(_:)))
         add(L10n.t("menu.share", "分享…"), #selector(shareCurrent(_:)))
@@ -4608,32 +4632,15 @@ final class ViewerViewController: NSViewController {
     }
 
     private func buildBatchAlert(source: URL, count: Int, picked: Bool) -> (NSAlert, BatchAccessory) {
-        let alert = NSAlert()
-        alert.messageText = L10n.t("bc.title", "批量转换格式")
-        alert.informativeText = picked ? L10n.f("bc.info.picked", "将转换选中的 %d 张照片。", count)
-            : L10n.f("bc.info.shown", "将转换当前显示的 %d 张照片。", count)
-        let d = UserDefaults.standard
-        let acc = BatchAccessory(source: source, formatIndex: d.integer(forKey: "batch.format"),
-                                 quality: d.object(forKey: "batch.quality") as? Double ?? 85)
-        alert.accessoryView = acc.view
-        acc.alert = alert
-        alert.addButton(withTitle: L10n.t("bc.start", "开始转换"))
-        alert.addButton(withTitle: L10n.t("alert.cancel", "取消"))
-        return (alert, acc)
+        BatchExportUI.buildAlert(source: source, count: count, picked: picked, mode: .convert)
     }
 
     @objc func batchConvert(_ sender: Any?) {
-        guard !folder.items.isEmpty, !isProcessing else { return }
+        guard !folder.items.isEmpty, !isProcessing, let window = view.window else { return }
         let (urls, picked) = batchTargets()
-        guard let first = urls.first else { return }
-        let (alert, acc) = buildBatchAlert(source: first, count: urls.count, picked: picked)
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        let settings = acc.settings
-        ExportOptions.saved = settings.options
-        acc.options.watermarkRow.rememberChoice()
-        UserDefaults.standard.set(acc.formatIndex, forKey: "batch.format")
-        UserDefaults.standard.set(settings.quality, forKey: "batch.quality")
-        convertAll(urls, settings: settings)
+        guard !urls.isEmpty else { return }
+        BatchExportUI.promptAndRun(urls: urls, picked: picked, mode: .convert, in: window,
+                                   setProcessing: { [weak self] in self?.isProcessing = $0 })
     }
 
     /// 自测用：和菜单里一样地组出批量转换对话框，不弹出
@@ -4654,43 +4661,8 @@ final class ViewerViewController: NSViewController {
     /// 后台逐张转换，窗口上挂一个带进度和「取消」的 sheet；转完弹出小结
     func convertAll(_ urls: [URL], settings: BatchConvert.Settings, summaryNote: String? = nil) {
         guard let window = view.window else { return }
-        isProcessing = true
-        let progress = NSAlert()
-        progress.messageText = L10n.f("bc.progress", "正在转换 %1$d / %2$d", 0, urls.count)
-        progress.informativeText = " "
-        let bar = NSProgressIndicator(frame: NSRect(x: 0, y: 0, width: 300, height: 14))
-        bar.isIndeterminate = false
-        bar.minValue = 0
-        bar.maxValue = Double(urls.count)
-        progress.accessoryView = bar
-        progress.addButton(withTitle: L10n.t("alert.cancel", "取消"))
-        let cancelled = AtomicFlag()
-        var finished = false
-        progress.beginSheetModal(for: window) { _ in if !finished { cancelled.set() } }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let sum = BatchConvert.run(urls, settings: settings, isCancelled: { cancelled.isSet }) { done in
-                DispatchQueue.main.async {
-                    bar.doubleValue = Double(done)
-                    progress.messageText = L10n.f("bc.progress", "正在转换 %1$d / %2$d", done, urls.count)
-                }
-            }
-            DispatchQueue.main.async {
-                finished = true
-                window.endSheet(progress.window)
-                guard let self else { return }
-                self.isProcessing = false
-                let done = NSAlert()
-                done.messageText = sum.cancelled ? L10n.t("bc.cancelledTitle", "转换已取消") : L10n.t("bc.doneTitle", "转换完成")
-                done.informativeText = BatchConvert.message(sum, limit: settings.options.maxBytes) + (summaryNote.map { "\n" + $0 } ?? "")
-                done.addButton(withTitle: L10n.t("bc.ok", "好"))
-                if let first = sum.outputs.first { done.addButton(withTitle: L10n.t("bc.reveal", "在访达中显示")); _ = first }
-                done.beginSheetModal(for: window) { resp in
-                    if resp == .alertSecondButtonReturn, let first = sum.outputs.first {
-                        NSWorkspace.shared.activateFileViewerSelecting([first])
-                    }
-                }
-            }
-        }
+        BatchExportUI.runBatch(urls: urls, settings: settings, in: window, exported: false, summaryNote: summaryNote,
+                               setProcessing: { [weak self] in self?.isProcessing = $0 })
     }
 
     // MARK: - 重命名当前图片
@@ -4800,18 +4772,36 @@ final class ViewerViewController: NSViewController {
     }
     private var exportForResize = false
 
-    /// ⌘S：导出压缩副本（保存面板交给用户选择位置、文件名、格式与质量）
+    /// 「导出为…」的目标静态图：多选时是选中的照片，否则是当前这张（跳过视频）
+    func exportableTargets() -> [URL] {
+        let picked = stripPicked
+        let raw = picked.isEmpty ? (folder.current.map { [$0.url] } ?? []) : picked
+        return raw.filter { !Video.isVideo($0) }
+    }
+
+    /// ⌘S：导出压缩副本（单张打开保存面板，多选时直接进入批量导出对话框）
     @objc func exportAs(_ sender: Any?) {
         let forResize = exportForResize
         exportForResize = false
-        guard let item = folder.current, !Video.isVideo(item.url), !isProcessing, let window = view.window else { return }
+        guard !isProcessing, let window = view.window else { return }
+        let targets = exportableTargets()
+        if targets.count > 1 {
+            BatchExportUI.promptAndRun(urls: targets, picked: true, mode: forResize ? .resize : .export, in: window,
+                                       setProcessing: { [weak self] in self?.isProcessing = $0 })
+            return
+        }
+        guard let sourceURL = targets.first else { return }
         // 正在裁剪：先按现在的框定下来，导出的就是看到的样子
         if isStraightening { finishStraighten(apply: true) }
+        let useViewEdits = folder.current?.url == sourceURL
+        let turns = useViewEdits ? imageView.rotationTurns : 0
+        let degrees = useViewEdits ? imageView.fineDegrees : 0
+        let crop = useViewEdits ? imageView.cropSpec : nil
         let panel = NSSavePanel()
         panel.title = L10n.t("exp.title", "导出压缩图片")
         panel.message = L10n.t("exp.message", "选择保存位置、文件名与格式")
-        panel.directoryURL = item.url.deletingLastPathComponent()
-        panel.nameFieldStringValue = item.url.deletingPathExtension().lastPathComponent + "-compressed.jpg"
+        panel.directoryURL = sourceURL.deletingLastPathComponent()
+        panel.nameFieldStringValue = sourceURL.deletingPathExtension().lastPathComponent + "-compressed.jpg"
 
         let d = UserDefaults.standard
         let acc = ExportAccessory(formats: Self.exportFormats.map { $0.name }, formatIndex: d.integer(forKey: "export.format"),
@@ -4820,14 +4810,14 @@ final class ViewerViewController: NSViewController {
             self?.scheduleExportEstimate()
         }
         panel.accessoryView = acc.view
-        panel.nameFieldStringValue = item.url.deletingPathExtension().lastPathComponent + "-compressed.jpg"
-        acc.setPhoto(url: item.url, turns: imageView.rotationTurns, degrees: imageView.fineDegrees, crop: imageView.cropSpec)
+        panel.nameFieldStringValue = sourceURL.deletingPathExtension().lastPathComponent + "-compressed.jpg"
+        acc.setPhoto(url: sourceURL, turns: turns, degrees: degrees, crop: crop)
         exportAccessory = acc
         exportSavePanel = panel
         if forResize {
             panel.title = L10n.t("exp.resizeTitle", "调整尺寸")
             panel.message = L10n.t("exp.resizeMessage", "填长边的像素数，导出一份缩小后的副本，原图不变")
-            panel.nameFieldStringValue = item.url.deletingPathExtension().lastPathComponent + "-resized.jpg"
+            panel.nameFieldStringValue = sourceURL.deletingPathExtension().lastPathComponent + "-resized.jpg"
             acc.options.focusLongEdge()
         }
 
@@ -4848,12 +4838,12 @@ final class ViewerViewController: NSViewController {
             acc.options.watermarkRow.rememberChoice()
             UserDefaults.standard.set(acc.popup.indexOfSelectedItem, forKey: "export.format")
             UserDefaults.standard.set(acc.slider.doubleValue, forKey: "export.quality")
-            let currentBytes = ((try? FileManager.default.attributesOfItem(atPath: item.url.path))?[.size] as? Int64) ?? 0
+            let currentBytes = ((try? FileManager.default.attributesOfItem(atPath: sourceURL.path))?[.size] as? Int64) ?? 0
             // 保存面板「标签」一栏里选的标签：文件是我们自己写的，系统不会代劳，导出完补上
             let tags = panel.tagNames ?? []
             let before = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
-            self.runExport(sourceURL: item.url, turns: self.imageView.rotationTurns, degrees: self.imageView.fineDegrees,
-                           crop: self.imageView.cropSpec, destURL: url,
+            self.runExport(sourceURL: sourceURL, turns: turns, degrees: degrees,
+                           crop: crop, destURL: url,
                            uti: f.uti.identifier, quality: acc.slider.doubleValue, options: options,
                            currentBytes: currentBytes) { msg in
                 let after = (try? FileManager.default.attributesOfItem(atPath: url.path))?[.modificationDate] as? Date
@@ -8435,6 +8425,35 @@ extension ViewerViewController: NSMenuItemValidation {
         if menuItem.action == #selector(undo(_:)) {
             if let w = view.window, w.firstResponder is NSText { return w.undoManager?.canUndo ?? false }
             return Self.canRestoreTrash && !isProcessing
+        }
+        if menuItem.action == #selector(NSText.selectAll(_:)) {
+            if let w = view.window, w.firstResponder is NSText { return true }
+            if liveText?.hasTextSelection == true { return true }
+            return compareView == nil && folder.count > 0
+        }
+        if menuItem.action == #selector(exportAs(_:)) {
+            let targets = exportableTargets()
+            menuItem.title = targets.count > 1
+                ? L10n.f("menu.exportAsCount", "批量导出 %d 张…", targets.count)
+                : L10n.t("menu.exportAs", "导出为…")
+            return !targets.isEmpty && !isProcessing
+        }
+        if menuItem.action == #selector(resizeAs(_:)) {
+            let targets = exportableTargets()
+            menuItem.title = targets.count > 1
+                ? L10n.f("menu.resizeCount", "批量调整尺寸（%d 张）…", targets.count)
+                : L10n.t("menu.resize", "调整尺寸…")
+            return !targets.isEmpty && !isProcessing
+        }
+        if menuItem.action == #selector(exportWithWatermark(_:)) {
+            let targets = exportableTargets()
+            menuItem.title = targets.count > 1
+                ? L10n.f("menu.exportWatermarkedCount", "批量加水印导出（%d 张）…", targets.count)
+                : L10n.t("menu.exportWatermarked", "加水印导出…")
+            return !targets.isEmpty && !isProcessing
+        }
+        if menuItem.action == #selector(batchConvert(_:)) {
+            return !batchTargets().urls.isEmpty && !isProcessing
         }
         if menuItem.action == #selector(setSortKey(_:)) {
             // 跟随访达时打勾的是「跟随访达」，访达里实际用的那种排序标一条短横

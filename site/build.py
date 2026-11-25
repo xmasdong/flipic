@@ -10,13 +10,13 @@ REPO = ROOT.parent
 DOCS = REPO / "docs"
 OUT = ROOT / "public"
 BASE = "https://flipic.app"
-UPDATED = "2026-11-24"
+UPDATED = "2026-11-25"
 # 水印功能 1.0.43 发布后改成 True；False 时站点里不出现任何水印文字和图片
 SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
 SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "8.9 MB"
+SIZE = "9.0 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -2522,6 +2522,10 @@ def render_changelog(lang):
     desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
             else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
     entries_zh = [
+        ("1.0.65", "2026-11-25", [
+            "批量「导出为…」与全模式工作台导出支持（免费 + Pro）：工作台现已完整支持「导出为…」（⌘S）、「调整尺寸…」、「加水印导出…」（⇧⌘S）、「批量转换格式…」（⇧⌘C）与「按预设导出」；在默认看图视图或工作台里多选 / 全选照片后，点「导出为…」可直接批量导出所选照片，右键菜单同步新增对应入口。",
+            "全场景 ⌘A 全选修复：默认看图窗口（底部缩略图栏）现已支持按 ⌘A 一键全选当前列表全部照片（按 Esc 回到单选），并修复工作台焦点停在左侧边栏、胶片条或窗口空白区时 ⌘A 与导出菜单失效的问题。",
+        ]),
         ("1.0.64", "2026-11-24", [
             "Pro 工作台全视图支持按 V 切换看 JPG / RAW：胶片条、宫格 + 大图、单张、多图对比与宫格均可按 V（或菜单 / 右键）快速切换同名配对照片，保留当前缩放倍数与查看位置；胶片条底部状态栏与大图信息栏新增「+ NEF / + JPG」配对后缀标记。",
             "文件操作类型明细提示（免费 + Pro）：删除、⌘Z 放回、⌘C 拷贝、导出复制/移动、发送到常用文件夹与重命名后，提示条会清晰写明实际处理到的文件类型（例如「仅 JPG」或「JPG + NEF + XMP」），不再担心漏删或误删 RAW 与 XMP 旁车文件。",
@@ -2575,6 +2579,10 @@ def render_changelog(lang):
         ]),
     ]
     entries_en = [
+        ("1.0.65", "2026-11-25", [
+            "Batch Export As and full Workbench export support (Free + Pro): Workbench now supports Export As (⌘S), Resize, Export with Watermark (⇧⌘S), Batch Convert Format (⇧⌘C) and Export Presets. Selecting multiple or all photos in either the default Viewer or Workbench and choosing Export As now batch-exports all selected photos directly, with matching right-click menu items.",
+            "⌘A Select All everywhere: the default Viewer now supports ⌘A to select all photos in the current list (press Esc to clear back to one), and Workbench now routes ⌘A and export commands cleanly even when focus sits in the left sidebar, filmstrip or window background.",
+        ]),
         ("1.0.64", "2026-11-24", [
             "Switch JPG / RAW with V across all Pro Workbench views: Filmstrip, Grid + Preview, Single, Multi-Compare and Grid now all support V (plus menu bar and context menu) to switch paired shots while keeping zoom and pan position; Filmstrip and Preview caption bars now show paired format badges (+ NEF / + JPG).",
             "Clear file-type action feedback (Free + Pro): Trash, ⌘Z Undo, ⌘C Copy, Export Copy/Move, Send To and Rename toasts now explicitly show which file types were affected (such as JPG only vs. JPG + NEF + XMP), removing guesswork around RAW and XMP sidecars.",

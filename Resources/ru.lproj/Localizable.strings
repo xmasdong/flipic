@@ -1432,3 +1432,17 @@ Return  Переименовать текущее изображение
 "trash.movedTypes" = "Перемещено в Корзину: %1$d (%2$@) · ⌘Z отменить";
 "trash.movedLocalTypes" = "Перемещено в Корзину этого Mac: %1$d (%2$@) · ⌘Z отменить";
 "trash.movedVolumeTypes" = "Перемещено в Корзину «%1$@»: %2$d (%3$@) · ⌘Z отменить";
+
+"menu.exportAsCount" = "Экспортировать %d фото…";
+"menu.resizeCount" = "Изменить размер %d фото…";
+"menu.exportWatermarkedCount" = "Экспортировать %d фото с водяным знаком…";
+"exp.batch.title" = "Пакетный экспорт";
+"exp.batch.info" = "Будут экспортированы %d выбранных фото с этими настройками.";
+"exp.batch.resizeTitle" = "Пакетное изменение размера";
+"exp.batch.resizeInfo" = "Укажите максимальную длинную сторону в пикселях для экспорта %d копий. Оригиналы не изменятся.";
+"exp.batch.start" = "Экспортировать";
+"exp.batch.defaultNote" = "По умолчанию сохраняется в папку Exported-%@ рядом с оригиналами; существующие файлы не перезаписываются.";
+"exp.batch.progress" = "Экспорт %1$d из %2$d";
+"exp.batch.doneTitle" = "Экспорт завершен";
+"exp.batch.cancelledTitle" = "Экспорт отменен";
+"exp.batch.sum.exported" = "Экспортировано: %d";

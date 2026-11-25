@@ -1432,3 +1432,17 @@ Return  表示中の画像を名称変更
 "trash.movedTypes" = "%1$d 枚をゴミ箱に入れました（%2$@）· ⌘Z で取り消し";
 "trash.movedLocalTypes" = "%1$d 枚をこの Mac のゴミ箱に入れました（%2$@）· ⌘Z で取り消し";
 "trash.movedVolumeTypes" = "「%1$@」のゴミ箱に %2$d 枚を移動しました（%3$@）· ⌘Z で取り消し";
+
+"menu.exportAsCount" = "%d 枚を一括書き出し…";
+"menu.resizeCount" = "%d 枚を一括リサイズ…";
+"menu.exportWatermarkedCount" = "%d 枚を透かし付きで書き出し…";
+"exp.batch.title" = "一括書き出し";
+"exp.batch.info" = "選択した %d 枚の写真をこの設定で書き出します。";
+"exp.batch.resizeTitle" = "一括リサイズ";
+"exp.batch.resizeInfo" = "長辺のピクセル数を指定して、選択した %d 枚の縮小コピーを書き出します。元のファイルは変更されません。";
+"exp.batch.start" = "書き出す";
+"exp.batch.defaultNote" = "既定では元の写真と同じ場所の Exported-%@ フォルダに保存されます。同名ファイルは上書きされません。";
+"exp.batch.progress" = "書き出し中 %1$d / %2$d";
+"exp.batch.doneTitle" = "書き出し完了";
+"exp.batch.cancelledTitle" = "書き出しをキャンセルしました";
+"exp.batch.sum.exported" = "%d 枚を書き出しました";

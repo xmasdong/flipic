@@ -1437,3 +1437,17 @@ Return  重新命名目前圖片
 "trash.movedTypes" = "已移到垃圾桶 %1$d 張（%2$@）· ⌘Z 復原";
 "trash.movedLocalTypes" = "已移到本機垃圾桶 %1$d 張（%2$@）· ⌘Z 復原";
 "trash.movedVolumeTypes" = "已移到「%1$@」的垃圾桶 %2$d 張（%3$@）· ⌘Z 復原";
+
+"menu.exportAsCount" = "批次輸出 %d 張…";
+"menu.resizeCount" = "批次調整尺寸（%d 張）…";
+"menu.exportWatermarkedCount" = "批次加浮水印輸出（%d 張）…";
+"exp.batch.title" = "批次輸出";
+"exp.batch.info" = "將依以下設定輸出選取的 %d 張照片。";
+"exp.batch.resizeTitle" = "批次調整尺寸";
+"exp.batch.resizeInfo" = "輸入長邊像素數，批次輸出選取的 %d 張照片，原檔不變。";
+"exp.batch.start" = "開始輸出";
+"exp.batch.defaultNote" = "預設儲存在原照片旁的 Exported-%@ 資料夾，同名檔案不會被覆蓋。";
+"exp.batch.progress" = "正在輸出 %1$d / %2$d";
+"exp.batch.doneTitle" = "輸出完成";
+"exp.batch.cancelledTitle" = "輸出已取消";
+"exp.batch.sum.exported" = "已輸出 %d 張";

@@ -1449,3 +1449,17 @@ Esc  先关掉右上角的照片信息
 "trash.movedTypes" = "已移到废纸篓 %1$d 张（%2$@）· ⌘Z 撤销";
 "trash.movedLocalTypes" = "已移到本机废纸篓 %1$d 张（%2$@）· ⌘Z 撤销";
 "trash.movedVolumeTypes" = "已移到「%1$@」的废纸篓 %2$d 张（%3$@）· ⌘Z 撤销";
+
+"menu.exportAsCount" = "批量导出 %d 张…";
+"menu.resizeCount" = "批量调整尺寸（%d 张）…";
+"menu.exportWatermarkedCount" = "批量加水印导出（%d 张）…";
+"exp.batch.title" = "批量导出";
+"exp.batch.info" = "将按以下设置导出选中的 %d 张照片。";
+"exp.batch.resizeTitle" = "批量调整尺寸";
+"exp.batch.resizeInfo" = "填长边的像素数，批量导出选中的 %d 张照片，原图不变。";
+"exp.batch.start" = "开始导出";
+"exp.batch.defaultNote" = "默认放在原照片旁边的 Exported-%@ 文件夹，同名文件不会被覆盖。";
+"exp.batch.progress" = "正在导出 %1$d / %2$d";
+"exp.batch.doneTitle" = "导出完成";
+"exp.batch.cancelledTitle" = "导出已取消";
+"exp.batch.sum.exported" = "已导出 %d 张";

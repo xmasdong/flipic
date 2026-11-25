@@ -1432,3 +1432,17 @@ Trascina una cartella o un'immagine per aprire";
 "trash.movedTypes" = "%1$d foto nel Cestino (%2$@) · ⌘Z per annullare";
 "trash.movedLocalTypes" = "%1$d foto nel Cestino di questo Mac (%2$@) · ⌘Z per annullare";
 "trash.movedVolumeTypes" = "%2$d foto nel Cestino di “%1$@” (%3$@) · ⌘Z per annullare";
+
+"menu.exportAsCount" = "Esporta %d foto…";
+"menu.resizeCount" = "Ridimensiona %d foto…";
+"menu.exportWatermarkedCount" = "Esporta %d foto con filigrana…";
+"exp.batch.title" = "Esportazione in blocco";
+"exp.batch.info" = "Esporta le %d foto selezionate con queste impostazioni.";
+"exp.batch.resizeTitle" = "Ridimensionamento in blocco";
+"exp.batch.resizeInfo" = "Inserisci il lato lungo massimo in pixel per esportare %d copie ridimensionate. Gli originali restano invariati.";
+"exp.batch.start" = "Esporta";
+"exp.batch.defaultNote" = "Salvato per impostazione predefinita nella cartella Exported-%@ accanto agli originali; i file esistenti non vengono mai sovrascritti.";
+"exp.batch.progress" = "Esportazione %1$d di %2$d";
+"exp.batch.doneTitle" = "Esportazione completata";
+"exp.batch.cancelledTitle" = "Esportazione annullata";
+"exp.batch.sum.exported" = "%d esportate";

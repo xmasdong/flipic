@@ -1432,3 +1432,17 @@ Kéo thư mục hoặc ảnh vào để mở";
 "trash.movedTypes" = "Đã chuyển %1$d ảnh vào Thùng rác (%2$@) · ⌘Z hoàn tác";
 "trash.movedLocalTypes" = "Đã chuyển %1$d ảnh vào Thùng rác máy Mac (%2$@) · ⌘Z hoàn tác";
 "trash.movedVolumeTypes" = "Đã chuyển %2$d ảnh vào Thùng rác của “%1$@” (%3$@) · ⌘Z hoàn tác";
+
+"menu.exportAsCount" = "Xuất %d ảnh…";
+"menu.resizeCount" = "Đổi kích thước %d ảnh…";
+"menu.exportWatermarkedCount" = "Xuất %d ảnh có hình mờ…";
+"exp.batch.title" = "Xuất hàng loạt";
+"exp.batch.info" = "Xuất %d ảnh đã chọn với các thiết lập sau.";
+"exp.batch.resizeTitle" = "Đổi kích thước hàng loạt";
+"exp.batch.resizeInfo" = "Nhập cạnh dài tối đa theo pixel để xuất %d bản sao đã thu nhỏ. Ảnh gốc không bị thay đổi.";
+"exp.batch.start" = "Xuất";
+"exp.batch.defaultNote" = "Mặc định lưu trong thư mục Exported-%@ cạnh ảnh gốc; không bao giờ ghi đè tệp đã có.";
+"exp.batch.progress" = "Đang xuất %1$d / %2$d";
+"exp.batch.doneTitle" = "Xuất xong";
+"exp.batch.cancelledTitle" = "Đã hủy xuất";
+"exp.batch.sum.exported" = "Đã xuất %d ảnh";

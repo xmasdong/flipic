@@ -64,6 +64,12 @@ final class ViewerWindowController: NSWindowController {
     /// 正在看的照片，工作台从它所在的文件夹打开
     var currentPhotoURL: URL? { viewerVC?.folder.current?.url }
 
+    /// 焦点停在窗口本身（如关闭 sheet / 点击空白区后）时，把 ⌘A、⌘S 等菜单命令继续路由给看图控制器
+    override func supplementalTarget(forAction action: Selector, sender: Any?) -> Any? {
+        if let vc = viewerVC, vc.responds(to: action) { return vc }
+        return super.supplementalTarget(forAction: action, sender: sender)
+    }
+
     func runSelfTest() { viewerVC?.runSelfTest() }
     func runShotSequence(outDir: String) { viewerVC?.runShotSequence(outDir: outDir) }
     func runBrowseShots(outDir: String) { viewerVC?.runBrowseShots(outDir: outDir) }

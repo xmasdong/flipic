@@ -1432,3 +1432,17 @@ Arrastra una carpeta o imagen para abrir";
 "trash.movedTypes" = "%1$d foto(s) a la Papelera (%2$@) · ⌘Z para deshacer";
 "trash.movedLocalTypes" = "%1$d foto(s) a la Papelera de este Mac (%2$@) · ⌘Z para deshacer";
 "trash.movedVolumeTypes" = "%2$d foto(s) a la Papelera de «%1$@» (%3$@) · ⌘Z para deshacer";
+
+"menu.exportAsCount" = "Exportar %d fotos…";
+"menu.resizeCount" = "Cambiar tamaño de %d fotos…";
+"menu.exportWatermarkedCount" = "Exportar %d fotos con marca de agua…";
+"exp.batch.title" = "Exportación por lotes";
+"exp.batch.info" = "Se exportarán %d fotos seleccionadas con estos ajustes.";
+"exp.batch.resizeTitle" = "Cambiar tamaño por lotes";
+"exp.batch.resizeInfo" = "Indica el lado largo máximo en píxeles para exportar %d copias redimensionadas. Los originales no se modifican.";
+"exp.batch.start" = "Exportar";
+"exp.batch.defaultNote" = "Por defecto se guarda en la carpeta Exported-%@ junto a los originales; nunca se sobrescriben archivos existentes.";
+"exp.batch.progress" = "Exportando %1$d de %2$d";
+"exp.batch.doneTitle" = "Exportación completada";
+"exp.batch.cancelledTitle" = "Exportación cancelada";
+"exp.batch.sum.exported" = "%d exportadas";

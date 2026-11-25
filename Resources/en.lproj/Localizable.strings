@@ -1444,3 +1444,17 @@ Drop a folder or image to open";
 "trash.movedTypes" = "Moved %1$d to Trash (%2$@) · ⌘Z to undo";
 "trash.movedLocalTypes" = "Moved %1$d to this Mac’s Trash (%2$@) · ⌘Z to undo";
 "trash.movedVolumeTypes" = "Moved %2$d to the Trash on “%1$@” (%3$@) · ⌘Z to undo";
+
+"menu.exportAsCount" = "Export %d Photos…";
+"menu.resizeCount" = "Resize %d Photos…";
+"menu.exportWatermarkedCount" = "Export %d with Watermark…";
+"exp.batch.title" = "Batch Export";
+"exp.batch.info" = "Export %d selected photos with these settings.";
+"exp.batch.resizeTitle" = "Batch Resize";
+"exp.batch.resizeInfo" = "Enter the max long edge in pixels to export %d resized copies. Originals stay untouched.";
+"exp.batch.start" = "Export";
+"exp.batch.defaultNote" = "By default saved in an Exported-%@ folder next to the originals; existing files are never overwritten.";
+"exp.batch.progress" = "Exporting %1$d of %2$d";
+"exp.batch.doneTitle" = "Export finished";
+"exp.batch.cancelledTitle" = "Export cancelled";
+"exp.batch.sum.exported" = "%d exported";

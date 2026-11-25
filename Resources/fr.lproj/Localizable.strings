@@ -1432,3 +1432,17 @@ Déposez un dossier ou une image pour ouvrir";
 "trash.movedTypes" = "%1$d photo(s) placée(s) dans la corbeille (%2$@) · ⌘Z pour annuler";
 "trash.movedLocalTypes" = "%1$d photo(s) placée(s) dans la corbeille de ce Mac (%2$@) · ⌘Z pour annuler";
 "trash.movedVolumeTypes" = "%2$d photo(s) placée(s) dans la corbeille de « %1$@ » (%3$@) · ⌘Z pour annuler";
+
+"menu.exportAsCount" = "Exporter %d photos…";
+"menu.resizeCount" = "Redimensionner %d photos…";
+"menu.exportWatermarkedCount" = "Exporter %d photos avec filigrane…";
+"exp.batch.title" = "Exportation par lot";
+"exp.batch.info" = "Exporter les %d photos sélectionnées avec ces réglages.";
+"exp.batch.resizeTitle" = "Redimensionnement par lot";
+"exp.batch.resizeInfo" = "Indiquez la longueur maximale en pixels pour exporter %d copies redimensionnées. Les originaux restent intacts.";
+"exp.batch.start" = "Exporter";
+"exp.batch.defaultNote" = "Enregistré par défaut dans un dossier Exported-%@ à côté des originaux. Les fichiers existants ne sont jamais écrasés.";
+"exp.batch.progress" = "Exportation %1$d sur %2$d";
+"exp.batch.doneTitle" = "Exportation terminée";
+"exp.batch.cancelledTitle" = "Exportation annulée";
+"exp.batch.sum.exported" = "%d exportées";

@@ -1432,3 +1432,17 @@ Arraste uma pasta ou imagem para abrir";
 "trash.movedTypes" = "%1$d foto(s) para o Lixo (%2$@) · ⌘Z para desfazer";
 "trash.movedLocalTypes" = "%1$d foto(s) para o Lixo deste Mac (%2$@) · ⌘Z para desfazer";
 "trash.movedVolumeTypes" = "%2$d foto(s) para o Lixo de “%1$@” (%3$@) · ⌘Z para desfazer";
+
+"menu.exportAsCount" = "Exportar %d fotos…";
+"menu.resizeCount" = "Redimensionar %d fotos…";
+"menu.exportWatermarkedCount" = "Exportar %d fotos com marca d'água…";
+"exp.batch.title" = "Exportação em lote";
+"exp.batch.info" = "Exportar %d fotos selecionadas com estas configurações.";
+"exp.batch.resizeTitle" = "Redimensionar em lote";
+"exp.batch.resizeInfo" = "Informe o lado maior em pixels para exportar %d cópias redimensionadas. Os originais não são alterados.";
+"exp.batch.start" = "Exportar";
+"exp.batch.defaultNote" = "Por padrão, salvo na pasta Exported-%@ ao lado dos originais; arquivos existentes nunca são sobrescritos.";
+"exp.batch.progress" = "Exportando %1$d de %2$d";
+"exp.batch.doneTitle" = "Exportação concluída";
+"exp.batch.cancelledTitle" = "Exportação cancelada";
+"exp.batch.sum.exported" = "%d exportadas";

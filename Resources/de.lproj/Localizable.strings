@@ -1432,3 +1432,17 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "trash.movedTypes" = "%1$d Fotos in den Papierkorb gelegt (%2$@) · ⌘Z widerruft";
 "trash.movedLocalTypes" = "%1$d Fotos in den Papierkorb dieses Macs gelegt (%2$@) · ⌘Z widerruft";
 "trash.movedVolumeTypes" = "In den Papierkorb von „%1$@“ gelegt: %2$d Fotos (%3$@) · ⌘Z widerruft";
+
+"menu.exportAsCount" = "%d Fotos exportieren…";
+"menu.resizeCount" = "Größe von %d Fotos ändern…";
+"menu.exportWatermarkedCount" = "%d Fotos mit Wasserzeichen exportieren…";
+"exp.batch.title" = "Stapel-Export";
+"exp.batch.info" = "%d ausgewählte Fotos mit diesen Einstellungen exportieren.";
+"exp.batch.resizeTitle" = "Größe im Stapel ändern";
+"exp.batch.resizeInfo" = "Gib die maximale lange Kante in Pixeln ein, um %d verkleinerte Kopien zu exportieren. Originale bleiben unverändert.";
+"exp.batch.start" = "Exportieren";
+"exp.batch.defaultNote" = "Standardmäßig im Ordner Exported-%@ neben den Originalen gespeichert. Vorhandene Dateien werden nicht überschrieben.";
+"exp.batch.progress" = "Exportiere %1$d von %2$d";
+"exp.batch.doneTitle" = "Export abgeschlossen";
+"exp.batch.cancelledTitle" = "Export abgebrochen";
+"exp.batch.sum.exported" = "%d exportiert";

@@ -1432,3 +1432,17 @@ Return  إعادة تسمية الصورة الحالية
 "trash.movedTypes" = "تم نقل %1$d إلى سلة المهملات (%2$@) · ⌘Z للتراجع";
 "trash.movedLocalTypes" = "تم نقل %1$d إلى سلة مهملات هذا الـ Mac (%2$@) · ⌘Z للتراجع";
 "trash.movedVolumeTypes" = "تم نقل %2$d إلى سلة مهملات «%1$@» (%3$@) · ⌘Z للتراجع";
+
+"menu.exportAsCount" = "تصدير %d صور…";
+"menu.resizeCount" = "تغيير حجم %d صور…";
+"menu.exportWatermarkedCount" = "تصدير %d صور بعلامة مائية…";
+"exp.batch.title" = "تصدير جماعي";
+"exp.batch.info" = "سيتم تصدير %d صور محددة بهذه الإعدادات.";
+"exp.batch.resizeTitle" = "تغيير الحجم جماعياً";
+"exp.batch.resizeInfo" = "أدخل الحد الأقصى للضلع الأطول بالبكسل لتصدير %d نسخ مصغّرة. تبقى الصور الأصلية كما هي.";
+"exp.batch.start" = "تصدير";
+"exp.batch.defaultNote" = "يُحفظ افتراضياً في مجلد Exported-%@ بجانب الصور الأصلية دون استبدال أي ملفات موجودة.";
+"exp.batch.progress" = "جارٍ التصدير %1$d من %2$d";
+"exp.batch.doneTitle" = "اكتمل التصدير";
+"exp.batch.cancelledTitle" = "تم إلغاء التصدير";
+"exp.batch.sum.exported" = "تم تصدير %d";

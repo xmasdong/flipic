@@ -142,6 +142,13 @@ final class FilmstripCollectionView: NSCollectionView {
 
     /// 右键点在第几张：看图界面按访达的规则定选区（点在多选里就保持，点在外面就只选它）再给菜单；空白处和没有菜单时返回 nil
     var onContextMenu: ((Int) -> NSMenu?)?
+    /// 编辑 › 全选（⌘A）：交给上层统一全选当前列表，避免只改了 collectionView 选区却没同步状态
+    var onSelectAll: (() -> Void)?
+
+    override func selectAll(_ sender: Any?) {
+        if let onSelectAll { onSelectAll(); return }
+        super.selectAll(sender)
+    }
 
     override func menu(for event: NSEvent) -> NSMenu? {
         // 右键不开始拖动、不翻页：只在这里定选区、给菜单
