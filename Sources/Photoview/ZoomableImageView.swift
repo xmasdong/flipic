@@ -53,6 +53,9 @@ final class ZoomableImageView: NSView {
     var monoBackdrop = false { didSet { if oldValue != monoBackdrop { refreshBackdrop() } } }
     /// 固定的底图（全屏时模糊过的桌面壁纸），设了就不再按照片生成
     var backdropOverride: CGImage? { didSet { refreshBackdrop() } }
+    /// 当前是视频：底不按第一帧（封面）的颜色做。视频一播画面就变了，按封面模糊出来的底会一直留在视频四周，
+    /// 看起来像第一帧垫在视频后面；视频照用纯色底（全屏磨砂玻璃时的壁纸底照常）
+    var showingVideo = false { didSet { if oldValue != showingVideo { refreshBackdrop() } } }
     private var image: CGImage?          // 当前显示（已应用旋转）的图
     private var baseImage: CGImage?      // 未旋转原图
     private var quarterTurns = 0
@@ -336,7 +339,7 @@ final class ZoomableImageView: NSView {
             CATransaction.commit()
             return
         }
-        guard allowsBackdrop, Self.backdropStyle == .photo || monoBackdrop, let src = image else {
+        guard allowsBackdrop, !showingVideo, Self.backdropStyle == .photo || monoBackdrop, let src = image else {
             backdropLayer.isHidden = true
             backdropLayer.contents = nil
             return
@@ -945,6 +948,8 @@ final class ZoomableImageView: NSView {
     private func syncInspectOverlays() {
         let b = imageLayer.bounds
         inspectLayer.frame = b
+        // 视频画面和照片框严格一样大：不靠图层的 autoresizing（每次按差值加减，几次缩放、贴边、收放缩略图栏以后差出一两个像素，封面从边上露出来）
+        overlayLayer?.frame = b
         afShadowLayer.frame = b
         afLayer.frame = b
         guard !afBoxes.isEmpty, b.width > 8, b.height > 8 else {
@@ -1444,10 +1449,12 @@ final class ZoomableImageView: NSView {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         l.frame = imageLayer.bounds
-        l.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
         imageLayer.addSublayer(l)
         CATransaction.commit()
     }
+
+    /// 测试用：视频画面图层在照片图层里的位置（没挂视频时 nil）
+    var debugOverlayFrame: CGRect? { overlayLayer?.frame }
 
     /// 键盘事件先给上层看一眼（看视频时回车播放、⇧← ⇧→ 快退快进），处理了就不再往下走
     var onKeyIntercept: ((NSEvent) -> Bool)?

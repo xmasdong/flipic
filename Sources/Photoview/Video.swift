@@ -134,11 +134,17 @@ final class VideoBar: NSVisualEffectView {
 
     private var dragging = false
 
+    private var shownIcons: (Bool, Bool)?
+
     func update(time: Double, duration: Double, playing: Bool, muted: Bool) {
-        playButton.image = NSImage(systemSymbolName: playing ? "pause.fill" : "play.fill", accessibilityDescription: nil)
-        muteButton.image = NSImage(systemSymbolName: muted ? "speaker.slash.fill" : "speaker.wave.2.fill", accessibilityDescription: nil)
+        if shownIcons.map({ $0 != (playing, muted) }) ?? true {
+            shownIcons = (playing, muted)
+            playButton.image = NSImage(systemSymbolName: playing ? "pause.fill" : "play.fill", accessibilityDescription: nil)
+            muteButton.image = NSImage(systemSymbolName: muted ? "speaker.slash.fill" : "speaker.wave.2.fill", accessibilityDescription: nil)
+        }
         if !dragging { slider.doubleValue = duration > 0 ? time / duration : 0 }
-        timeLabel.stringValue = Video.timeText(time) + " / " + Video.timeText(duration)
+        let text = Video.timeText(time) + " / " + Video.timeText(duration)
+        if timeLabel.stringValue != text { timeLabel.stringValue = text }
     }
 
     @objc private func togglePressed() { onToggle?() }
@@ -162,6 +168,9 @@ final class VideoPlayback {
     private var timeObserver: Any?
     private var endObserver: NSObjectProtocol?
     private var atEnd = false
+    private var readyObservation: NSKeyValueObservation?
+    /// 控制条上次显示的内容：没变就不碰它（播放时每 0.1 秒来一次，别每次都换图标、重排文字）
+    private var lastBarState: (Int, Int, Int, Bool, Bool)?
     /// 这台 Mac 播放不了：提示一次，回车也只是再提示
     private(set) var unplayable = false
     var onMessage: ((String) -> Void)?
@@ -181,6 +190,21 @@ final class VideoPlayback {
         bar.onMute = { [weak self] in self?.toggleMute() }
     }
 
+    /// 有视频正在播放（任何一个看图窗口）：后台的缩略图预热据此先停一停，不和视频抢盘、抢解码器。哪个线程都能读
+    static var anyPlaying: Bool {
+        playingLock.lock(); defer { playingLock.unlock() }
+        return !playingNow.isEmpty
+    }
+    private static let playingLock = NSLock()
+    private static var playingNow = Set<ObjectIdentifier>()
+    private func setPlayingFlag(_ on: Bool) {
+        Self.playingLock.lock()
+        if on { Self.playingNow.insert(ObjectIdentifier(self)) } else { Self.playingNow.remove(ObjectIdentifier(self)) }
+        Self.playingLock.unlock()
+    }
+
+    deinit { setPlayingFlag(false) }
+
     var isActive: Bool { player != nil }
     var isPlaying: Bool { (player?.rate ?? 0) != 0 }
 
@@ -190,15 +214,18 @@ final class VideoPlayback {
         // 视频翻到视频：中间不通知，缩略图栏和工具栏不来回闪
         let next = url.flatMap { Video.isVideo($0) ? $0 : nil }
         clear(notify: next == nil)
+        // 封面还没解出来之前就定下来：视频的底不按封面颜色做
+        imageView?.showingVideo = next != nil
         guard let url = next else { return }
         self.url = url
+        let slow = Volumes.isSlowStorage(url)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let meta = Video.meta(url)
-            DispatchQueue.main.async { self?.attach(url, meta: meta) }
+            DispatchQueue.main.async { self?.attach(url, meta: meta, slowStorage: slow) }
         }
     }
 
-    private func attach(_ url: URL, meta: Video.Meta?) {
+    private func attach(_ url: URL, meta: Video.Meta?, slowStorage: Bool) {
         guard self.url == url, player == nil else { return }
         guard let meta, meta.playable else {
             unplayable = true
@@ -206,12 +233,26 @@ final class VideoPlayback {
             onMessage?(L10n.t("video.unplayable", "这台 Mac 播放不了这个视频，可以在访达里用别的软件打开"))
             return
         }
-        let p = AVPlayer(url: url)
+        let item = AVPlayerItem(url: url)
+        // 存储卡、移动硬盘、网络盘：多缓冲一些，读盘偶尔慢一下不卡画面（本机 SSD 用系统默认）
+        if slowStorage { item.preferredForwardBufferDuration = 8 }
+        let p = AVPlayer(playerItem: item)
         p.isMuted = Self.muted
         p.actionAtItemEnd = .pause
         let layer = AVPlayerLayer(player: p)
         layer.videoGravity = .resizeAspect
-        layer.actions = ["bounds": NSNull(), "position": NSNull(), "frame": NSNull(), "contents": NSNull()]
+        // 位置和大小跟着照片图层同一个动画走（放大的动画里不会先跳过去）；不动画的时候外面已经关了动画
+        layer.actions = ["contents": NSNull(), "backgroundColor": NSNull()]
+        // 第一帧真画出来之前图层是透明的，下面的封面照常显示，不闪空底；画出来以后图层不透明，封面再也露不出来
+        readyObservation = layer.observe(\.isReadyForDisplay, options: [.initial, .new]) { l, _ in
+            DispatchQueue.main.async {
+                guard l.isReadyForDisplay, l.backgroundColor == nil else { return }
+                CATransaction.begin()
+                CATransaction.setDisableActions(true)
+                l.backgroundColor = NSColor.black.cgColor
+                CATransaction.commit()
+            }
+        }
         imageView?.setOverlayLayer(layer)
         player = p
         timeObserver = p.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.1, preferredTimescale: 600), queue: .main) { [weak self] _ in
@@ -224,6 +265,10 @@ final class VideoPlayback {
         }
         onActiveChange?()
         refresh()
+        if playWhenReady {
+            playWhenReady = false
+            toggle()
+        }
     }
 
     func clear(notify: Bool = true) {
@@ -231,9 +276,13 @@ final class VideoPlayback {
         if let endObserver { NotificationCenter.default.removeObserver(endObserver) }
         timeObserver = nil
         endObserver = nil
+        readyObservation = nil
+        lastBarState = nil
+        setPlayingFlag(false)
         player?.pause()
         player = nil
         url = nil
+        playWhenReady = false
         atEnd = false
         unplayable = false
         imageView?.setOverlayLayer(nil)
@@ -241,9 +290,14 @@ final class VideoPlayback {
         if notify { onActiveChange?() }
     }
 
+    /// 视频还在后台读信息、播放器没接上时就按了播放：记下来，接上后马上播。
+    /// 以前这一下被悄悄吞掉，慢一点的 Mac 或外置硬盘上第一次按播放没反应
+    private var playWhenReady = false
+
     func toggle() {
         guard let p = player else {
             if unplayable { onMessage?(L10n.t("video.unplayable", "这台 Mac 播放不了这个视频，可以在访达里用别的软件打开")) }
+            else if url != nil { playWhenReady.toggle() }
             return
         }
         if isPlaying {
@@ -284,12 +338,21 @@ final class VideoPlayback {
 
     private func refresh() {
         guard let p = player else { return }
+        setPlayingFlag(isPlaying)
         let d = p.currentItem?.duration.seconds ?? 0
-        bar.update(time: p.currentTime().seconds, duration: d.isFinite ? d : 0, playing: isPlaying, muted: p.isMuted)
+        let dur = d.isFinite ? d : 0
+        let time = p.currentTime().seconds
+        // 进度条按 420 点宽，千分之一足够；时间按秒显示
+        let state = (Int(time.rounded(.down)), Int(dur), dur > 0 ? Int(time / dur * 1000) : 0, isPlaying, p.isMuted)
+        if let last = lastBarState, last == state { return }
+        lastBarState = state
+        bar.update(time: time, duration: dur, playing: isPlaying, muted: p.isMuted)
     }
 
     /// 测试用：当前播放位置（秒）
     var debugTime: Double { player?.currentTime().seconds ?? -1 }
+    /// 测试用：播放器（数丢帧、看缓冲设置）
+    var debugPlayer: AVPlayer? { player }
 }
 
 /// 信息面板（I）里的视频信息：从文件头读，不解码画面。别在主线程调

@@ -164,7 +164,7 @@ final class TrashBrowserWindowController: NSWindowController, NSTableViewDataSou
 
         func consider(_ url: URL, place: String, original: URL?) {
             guard seen.insert(url.standardizedFileURL).inserted else { return }
-            guard ImageLoader.isSupportedExtension(url.lastPathComponent) else { return }
+            guard ImageLoader.isSupportedExtension(url.lastPathComponent) || Video.isVideo(url) else { return }
             guard let v = try? url.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey]),
                   v.isRegularFile == true, let date = v.contentModificationDate, date > cutoff else { return }
             out.append(Found(url: url, date: date, place: place, original: original))
@@ -392,7 +392,12 @@ final class TrashBrowserWindowController: NSWindowController, NSTableViewDataSou
     @discardableResult
     static func moveBack(_ items: [Found], to dir: URL) -> Int {
         var done = 0
-        for item in items where move(item.url, to: dir, preferredName: nil) { done += 1 }
+        for item in items where move(item.url, to: dir, preferredName: nil) {
+            done += 1
+            for (trashed, original) in videoCompanions(of: item) {
+                move(trashed, to: dir, preferredName: original.lastPathComponent)
+            }
+        }
         return done
     }
 
@@ -403,9 +408,28 @@ final class TrashBrowserWindowController: NSWindowController, NSTableViewDataSou
         for item in items {
             guard let original = item.original else { continue }
             let dir = original.deletingLastPathComponent()
-            if move(item.url, to: dir, preferredName: original.lastPathComponent) { done += 1 }
+            if move(item.url, to: dir, preferredName: original.lastPathComponent) {
+                done += 1
+                for (trashed, orig) in videoCompanions(of: item) where !FileManager.default.fileExists(atPath: orig.path) {
+                    move(trashed, to: orig.deletingLastPathComponent(), preferredName: orig.lastPathComponent)
+                }
+            }
         }
         return done
+    }
+
+    /// 和这段视频一起删掉的 .LRF / .SRT / .THM / .LRV / .XML（废纸篓里的位置 → 原位置），从「最近一次删除」的记录里找；
+    /// 附属文件本身不在列表里显示，放回视频时一起放回
+    static func videoCompanions(of item: Found) -> [(URL, URL)] {
+        guard let original = item.original, Video.isVideo(original),
+              let rec = ViewerViewController.lastTrash else { return [] }
+        let dir = original.deletingLastPathComponent().standardizedFileURL.path
+        let siblings = rec.moved.filter { $0.key.deletingLastPathComponent().standardizedFileURL.path == dir }
+        let names = siblings.keys.map(\.lastPathComponent)
+        let picked = Set(VideoCompanions.match(video: original.lastPathComponent, among: names))
+        return siblings.filter { picked.contains($0.key.lastPathComponent) }
+            .map { ($0.value, $0.key) }
+            .filter { FileManager.default.fileExists(atPath: $0.0.path) }
     }
 
     /// 单个文件挪回目标文件夹；重名加编号，不覆盖已有的文件

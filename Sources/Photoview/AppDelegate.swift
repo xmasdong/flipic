@@ -1172,6 +1172,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runFolderSyncTest(outDir: outDir)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--videotest"), i + 1 < CommandLine.arguments.count {
+            // --videotest <工作文件夹> [perf|perfonly]：视频封面不在播放时露出来、大疆 / GoPro / 索尼附属文件跟着视频走、播放流畅度，最后一行 VIDEOTEST summary
+            let outDir = CommandLine.arguments[i + 1]
+            let extra = i + 2 < CommandLine.arguments.count ? CommandLine.arguments[i + 2] : ""
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                (self?.windowController?.contentViewController as? ViewerViewController)?
+                    .runVideoSelfTest(outDir: outDir, perfOnly: extra == "perfonly", withPerf: extra == "perf")
+            }
         } else if let i = CommandLine.arguments.firstIndex(of: "--zonetest"), i + 1 < CommandLine.arguments.count {
             // --zonetest <工作文件夹>：控件按鼠标所在区域出现、按键不叫出控件，最后一行 ZONE summary
             let outDir = CommandLine.arguments[i + 1]

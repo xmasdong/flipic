@@ -183,13 +183,13 @@ enum Trash {
 
     // MARK: - 提示与找回
 
-    /// 从实际操作的文件里算出照片张数（同名 JPG + RAW + XMP 算 1 张；全是附属文件时退回文件个数）
+    /// 从实际操作的文件里算出照片张数（同名 JPG + RAW + XMP 算 1 张，视频连同 .LRF / .SRT 这些附属文件也算 1 个；全是附属文件时退回文件个数）
     static func photoCount(in urls: some Sequence<URL>) -> Int {
         var stems = Set<String>()
         var total = 0
         for u in urls {
             total += 1
-            if ImageLoader.isSupportedExtension(u.lastPathComponent) {
+            if ImageLoader.isSupportedExtension(u.lastPathComponent) || Video.isVideo(u) {
                 stems.insert(u.deletingPathExtension().path.lowercased())
             }
         }
@@ -208,7 +208,7 @@ enum Trash {
             guard !ext.isEmpty, seen.insert(ext).inserted else { continue }
             if CleanupUnit.isRaw(u) {
                 raws.append(ext)
-            } else if ImageLoader.isSupportedExtension(u.lastPathComponent) {
+            } else if ImageLoader.isSupportedExtension(u.lastPathComponent) || Video.isVideo(u) {
                 std.append(ext)
             } else {
                 sidecars.append(ext)

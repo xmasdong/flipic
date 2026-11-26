@@ -1678,6 +1678,8 @@ final class ViewerViewController: NSViewController {
 
     /// 翻到视频或离开视频：照片工具栏和视频控制条换位置，可见状态跟着当前的控件显隐走
     private func videoActiveChanged() {
+        // 开始播放：还没解完的前后预取先撤掉，别和视频抢盘（翻页时会重新排）
+        if video.isPlaying { prefetchQueue.cancelAllOperations() }
         // 播放时画面占满：缩略图栏收起；暂停、播完或回到照片时放回来
         if video.isActive, video.isPlaying, !filmstrip.isHidden {
             filmstripHiddenForVideo = true
@@ -2193,6 +2195,8 @@ final class ViewerViewController: NSViewController {
         let loader = self.loader
         DispatchQueue.global(qos: .utility).async { [weak self] in
             for url in urls {
+                // 视频播放中先停：4K 素材在存储卡上要的读盘带宽和解码器，别让预热缩略图抢走（等的时候不抓着窗口不放）
+                while VideoPlayback.anyPlaying, self?.warmupGeneration == gen { Thread.sleep(forTimeInterval: 0.25) }
                 guard let self, self.warmupGeneration == gen else { return }
                 _ = DiskIO.run(for: url, priority: .background, isCancelled: { [weak self] in self?.warmupGeneration != gen }) {
                     loader.thumb(for: url)
@@ -3962,12 +3966,22 @@ final class ViewerViewController: NSViewController {
     /// 跟着照片一起复制、移动、删除的附属文件（Pro 里可以设扩展名）；nil 时只带星级用的 .xmp
     static var linkedFiles: ((URL) -> [URL])?
 
-    /// 跟照片绑在一起的文件：实况照片的同名 .MOV，加上 Pro 里设的附属文件
+    /// 跟照片绑在一起的文件：实况照片的同名 .MOV，视频的低清代理 / 遥测字幕 / 缩略图 / 元数据（见 VideoCompanions），加上 Pro 里设的附属文件
     static func companions(of url: URL) -> [URL] {
         var out: [URL] = []
         if let mov = LivePhoto.movie(for: url) { out.append(mov) }
+        for f in VideoCompanions.files(of: url) where !out.contains(f) { out.append(f) }
         for f in linkedFiles?(url) ?? [] where !out.contains(f) { out.append(f) }
         return out
+    }
+
+    /// 主文件 main 换成名字 newStem（不带扩展名）时，同组的文件 f 该叫什么：视频附属文件按相机的命名规则（GoPro 的 GL…、索尼的 …M01），其余同名换扩展名
+    static func companionName(_ f: URL, main: URL, newStem: String) -> String {
+        if Video.isVideo(main), f != main,
+           let n = VideoCompanions.renamed(f.lastPathComponent, oldStem: main.deletingPathExtension().lastPathComponent, newStem: newStem) {
+            return n
+        }
+        return f.pathExtension.isEmpty ? newStem : newStem + "." + f.pathExtension
     }
 
     /// 照片改了名，同名的 .MOV 和星级 .xmp 跟着改成同一个名字；目标已有同名文件就不动它。返回实际跟着改名的文件列表
@@ -3980,7 +3994,7 @@ final class ViewerViewController: NSViewController {
         let base = new.deletingPathExtension()
         var renamed: [URL] = []
         for f in files {
-            let dest = base.appendingPathExtension(f.pathExtension)
+            let dest = base.deletingLastPathComponent().appendingPathComponent(companionName(f, main: old, newStem: base.lastPathComponent))
             guard dest.path != f.path, !fm.fileExists(atPath: dest.path) else { continue }
             if (try? fm.moveItem(at: f, to: dest)) != nil { renamed.append(dest) }
         }
@@ -3990,7 +4004,7 @@ final class ViewerViewController: NSViewController {
     static func transfer(_ urls: [URL], to target: URL, move: Bool,
                          progress: ((Int) -> Void)? = nil) -> (done: Set<URL>, failed: Int, files: [URL]) {
         let fm = FileManager.default
-        var groups: [(base: String, files: [URL])] = []
+        var groups: [(base: String, main: URL, files: [URL])] = []
         var groupIndex: [String: Int] = [:]
         for u in urls {
             let base = u.deletingPathExtension().lastPathComponent
@@ -4000,9 +4014,11 @@ final class ViewerViewController: NSViewController {
             for f in companions(of: u) where !files.contains(f) { files.append(f) }
             if let gi = groupIndex[base] {
                 for f in files where !groups[gi].files.contains(f) { groups[gi].files.append(f) }
+                // 同名的照片和视频在一组时按视频的规则给附属文件起名
+                if Video.isVideo(u) { groups[gi].main = u }
             } else {
                 groupIndex[base] = groups.count
-                groups.append((base, files))
+                groups.append((base, u, files))
             }
         }
         try? fm.createDirectory(at: target, withIntermediateDirectories: true)
@@ -4014,12 +4030,12 @@ final class ViewerViewController: NSViewController {
             // 找一个这组所有扩展名都不冲突的名字：base、base 2、base 3…
             var name = g.base
             var n = 1
-            while g.files.contains(where: { fm.fileExists(atPath: target.appendingPathComponent(name).appendingPathExtension($0.pathExtension).path) }) {
+            while g.files.contains(where: { fm.fileExists(atPath: target.appendingPathComponent(companionName($0, main: g.main, newStem: name)).path) }) {
                 n += 1
                 name = "\(g.base) \(n)"
             }
             for f in g.files {
-                let dest = target.appendingPathComponent(name).appendingPathExtension(f.pathExtension)
+                let dest = target.appendingPathComponent(companionName(f, main: g.main, newStem: name))
                 // 存储卡上的标记记在这台电脑里、不在文件上：要在复制或移动之前看，之后给新位置的文件打上正常的标记
                 let cardMarked = urls.contains(f) && CardMarks.isStoreMarked(f)
                 do {
