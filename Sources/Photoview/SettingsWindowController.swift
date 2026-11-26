@@ -192,8 +192,17 @@ enum DefaultViewer {
         let firstError: Error?
     }
 
+    /// 设为默认成功、或在别处改过后发出：设置页刷新，看图窗口收起底部的提示条
+    static let didChange = Notification.Name("FlipicDefaultViewerDidChange")
+
+    /// 自测用：替换「这个格式是不是 Flipic 打开」的判断、「是不是在临时位置」和真正的设置动作，测试时不碰系统默认
+    static var isFlipicOverride: ((UTType) -> Bool)?
+    static var temporaryLocationOverride: Bool?
+    static var makeOverride: (() -> MakeResult)?
+
     /// 按 bundle id 比：同一个 App 装了几份时，系统打开的可能是另一份
     static func isFlipic(_ type: UTType) -> Bool {
+        if let o = isFlipicOverride { return o(type) }
         guard let url = NSWorkspace.shared.urlForApplication(toOpen: type) else { return false }
         return Bundle(url: url)?.bundleIdentifier == Bundle.main.bundleIdentifier
     }
@@ -215,6 +224,7 @@ enum DefaultViewer {
 
     /// 当前是否正从 DMG / 只读磁盘映像或 AppTranslocation 临时路径运行
     static var isInTemporaryLocation: Bool {
+        if let o = temporaryLocationOverride { return o }
         let url = Bundle.main.bundleURL
         return Volumes.isReadOnlyOrRemovable(url) || url.path.contains("/AppTranslocation/")
     }
@@ -224,6 +234,11 @@ enum DefaultViewer {
     }
 
     static func makeWithResult(_ done: @escaping (MakeResult) -> Void) {
+        if let o = makeOverride {
+            let r = o()
+            DispatchQueue.main.async { done(r) }
+            return
+        }
         let group = DispatchGroup()
         let lock = NSLock()
         var succeeded = 0
@@ -246,6 +261,37 @@ enum DefaultViewer {
         }
         group.notify(queue: .main) {
             done(MakeResult(succeeded: succeeded, failed: failed, firstError: firstError))
+        }
+    }
+
+    /// 设置里的按钮、看图窗口底部的提示条、菜单「设为默认看图软件」共用：
+    /// 先看是不是从磁盘映像 / 临时位置运行，再逐个格式设置，系统一个都没让改时提示去访达 ⌘I 手动改。
+    /// done 的参数：是否至少改成了一个格式（从临时位置运行时不改，done(false)）
+    static func makeInteractively(from window: NSWindow?, done: ((Bool) -> Void)? = nil) {
+        func show(_ alert: NSAlert) {
+            if let w = window, w.isVisible { alert.beginSheetModal(for: w) } else { alert.runModal() }
+        }
+        if isInTemporaryLocation {
+            let alert = NSAlert()
+            alert.messageText = L10n.t("set.defaultMoveTitle", "请先把 Flipic 移到「应用程序」文件夹")
+            alert.informativeText = L10n.t("set.defaultMoveMsg", "当前正在从磁盘映像或临时位置运行，设为默认会在推出映像后失效。请把 Flipic 拖进「应用程序」再从那里打开并设置。")
+            alert.addButton(withTitle: L10n.t("bc.ok", "好"))
+            show(alert)
+            done?(false)
+            return
+        }
+        makeWithResult { res in
+            NotificationCenter.default.post(name: didChange, object: nil)
+            if res.succeeded == 0 && res.failed > 0 {
+                let alert = NSAlert()
+                alert.messageText = L10n.t("set.defaultFailedTitle", "系统未允许自动更改默认打开方式")
+                alert.informativeText = L10n.t("set.defaultFailedMsg", "请在访达里选中照片按 ⌘I（显示简介），在「打开方式」中选 Flipic，然后点击「全部更改…」。")
+                alert.addButton(withTitle: L10n.t("bc.ok", "好"))
+                show(alert)
+                done?(false)
+                return
+            }
+            done?(res.succeeded > 0)
         }
     }
 }
@@ -695,6 +741,8 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         for r in [1, 4, 6, 8, 10, 13, 15] { g.row(at: r).topPadding = -4 }
         view = host(g)
         reload()
+        NotificationCenter.default.addObserver(self, selector: #selector(defaultViewerChanged),
+                                               name: DefaultViewer.didChange, object: nil)
     }
 
     @objc private func themeChanged() {
@@ -750,27 +798,17 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     }
 
     @objc private func makeDefaultViewer() {
-        if DefaultViewer.isInTemporaryLocation {
-            let alert = NSAlert()
-            alert.messageText = L10n.t("set.defaultMoveTitle", "请先把 Flipic 移到「应用程序」文件夹")
-            alert.informativeText = L10n.t("set.defaultMoveMsg", "当前正在从磁盘映像或临时位置运行，设为默认会在推出映像后失效。请把 Flipic 拖进「应用程序」再从那里打开并设置。")
-            alert.addButton(withTitle: L10n.t("bc.ok", "好"))
-            if let w = view.window { alert.beginSheetModal(for: w) } else { alert.runModal() }
-            return
-        }
         makeDefault.isEnabled = false
-        DefaultViewer.makeWithResult { [weak self] res in
+        DefaultViewer.makeInteractively(from: view.window) { [weak self] _ in
             guard let self else { return }
             self.makeDefault.isEnabled = true
             self.reload()
-            if res.succeeded == 0 && res.failed > 0 {
-                let alert = NSAlert()
-                alert.messageText = L10n.t("set.defaultFailedTitle", "系统未允许自动更改默认打开方式")
-                alert.informativeText = L10n.t("set.defaultFailedMsg", "请在访达里选中照片按 ⌘I（显示简介），在「打开方式」中选 Flipic，然后点击「全部更改…」。")
-                alert.addButton(withTitle: L10n.t("bc.ok", "好"))
-                if let w = self.view.window { alert.beginSheetModal(for: w) } else { alert.runModal() }
-            }
         }
+    }
+
+    /// 在看图窗口的提示条或菜单里设好了：设置开着时这一行跟着变
+    @objc private func defaultViewerChanged() {
+        if isViewLoaded { reload() }
     }
 
     @objc private func sortChanged() {

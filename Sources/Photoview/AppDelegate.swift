@@ -1146,6 +1146,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                 (self?.windowController?.contentViewController as? ViewerViewController)?.runSortAddedTest(outDir: outDir)
             }
+        } else if let i = CommandLine.arguments.firstIndex(of: "--defaultprompttest"), i + 1 < CommandLine.arguments.count {
+            // --defaultprompttest <工作文件夹>：「设为默认」提示条的出现规则、菜单项和快捷键，不改系统默认。最后一行 DEFAULTPROMPT summary
+            let outDir = CommandLine.arguments[i + 1]
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in self?.runDefaultPromptTest(outDir: outDir) }
         } else if let i = CommandLine.arguments.firstIndex(of: "--keyclosetest"), i + 1 < CommandLine.arguments.count {
             // --keyclosetest <工作文件夹>：⌘W、⌃Z、⌘Z 之后窗口去哪了，最后一行 KEYCLOSE summary
             let outDir = CommandLine.arguments[i + 1]
@@ -1593,6 +1597,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         #selector(ViewerViewController.playLivePhoto(_:)): .playLive,
         #selector(ViewerViewController.copyAllText(_:)): .copyText,
     ]
+    /// App 菜单里的「设为默认看图软件」：App Store 版改不了默认打开方式，没有这一项
+    private static let appMenuActions: [Selector: ShortcutAction] = [
+        #selector(AppDelegate.makeDefaultViewer(_:)): .makeDefaultViewer,
+    ]
+    private static func appMenuAction(_ sel: Selector) -> ShortcutAction? {
+        return appMenuActions[sel]
+    }
     #if FLIPIC_PRO
     private static let proMenuActions: [Selector: ShortcutAction] = [
         #selector(ViewerViewController.toggleBeforeAfter(_:)): .beforeAfter,
@@ -1640,6 +1651,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    /// 「Flipic › 设为默认看图软件」（也可以在设置里给它分一个快捷键）：和设置里的按钮同一套流程，成功后在看图窗口里提示一下
+    @objc func makeDefaultViewer(_ sender: Any?) {
+        let viewer = activeViewer
+        let window = NSApp.keyWindow ?? viewer?.view.window
+        DefaultViewer.makeInteractively(from: window) { ok in
+            if ok { viewer?.flashDefaultViewerSet() }
+        }
+    }
+
     // MARK: - 反馈建议
 
     /// 「关于」菜单和关于窗口里的「反馈建议…」，没有看图窗口时也能打开
@@ -1671,9 +1691,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 if let sub = it.submenu { walk(sub) }
                 guard let sel = it.action else { continue }
                 #if FLIPIC_PRO
-                let mapped = Self.shortcutMenuActions[sel] ?? Self.proMenuActions[sel]
+                let mapped = Self.shortcutMenuActions[sel] ?? Self.proMenuActions[sel] ?? Self.appMenuAction(sel)
                 #else
-                let mapped = Self.shortcutMenuActions[sel]
+                let mapped = Self.shortcutMenuActions[sel] ?? Self.appMenuAction(sel)
                 #endif
                 guard let action = mapped else { continue }
                 if let c = Shortcuts.combo(for: action), c.isMenuCombo {
@@ -1755,6 +1775,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item(m, L10n.t("menu.feedback", "反馈建议…"), #selector(AppDelegate.showFeedback(_:))).target = self
             m.addItem(.separator())
             item(m, L10n.t("menu.settings", "设置…"), #selector(ViewerViewController.showSettings(_:)), ",")
+            item(m, L10n.t("set.makeDefault", "设为默认看图软件"), #selector(AppDelegate.makeDefaultViewer(_:))).target = self
             m.addItem(.separator())
             item(m, L10n.t("menu.hide", "隐藏 Flipic"), #selector(NSApplication.hide(_:)), "h")
             let hideOthers = item(m, L10n.t("menu.hideOthers", "隐藏其他"), #selector(NSApplication.hideOtherApplications(_:)), "h")

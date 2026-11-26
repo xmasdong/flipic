@@ -1453,3 +1453,10 @@ Ordner oder Bild hineinziehen zum Öffnen";
 "set.defaultMoveMsg" = "Flipic läuft derzeit aus einem Disk-Image oder temporären Ordner. Nach dem Auswerfen geht die Zuordnung verloren. Ziehe Flipic in den Ordner „Programme“, öffne es dort und versuche es erneut.";
 "set.defaultFailedTitle" = "Standard-App konnte nicht automatisch geändert werden";
 "set.defaultFailedMsg" = "Wähle ein Foto im Finder aus, drücke ⌘I (Informationen), wähle unter „Öffnen mit“ Flipic und klicke auf „Alle ändern…“.";
+
+/* 从访达打开的照片格式不是默认用 Flipic 打开时，照片区底部的提示条 */
+"dp.message" = "Nur dieses Foto ist auf Flipic eingestellt. Alle Fotos mit Flipic öffnen?";
+"dp.make" = "Als Standard";
+"dp.never" = "Nicht mehr fragen";
+"dp.close" = "Schließen";
+"dp.done" = "Fotos öffnen sich per Doppelklick ab jetzt in Flipic";

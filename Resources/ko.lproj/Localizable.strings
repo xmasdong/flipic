@@ -1453,3 +1453,10 @@ Return  현재 이미지 이름 변경
 "set.defaultMoveMsg" = "현재 디스크 이미지나 임시 위치에서 실행 중이어서 기본값으로 설정해도 이미지를 추출하면 해제됩니다. Flipic을 '응용 프로그램'으로 드래그해 실행한 뒤 다시 설정해 주세요.";
 "set.defaultFailedTitle" = "기본 앱을 자동으로 변경하지 못했습니다";
 "set.defaultFailedMsg" = "Finder에서 사진을 선택하고 ⌘I(정보 가져오기)를 누른 뒤 '다음으로 열기'에서 Flipic을 선택하고 '모두 변경…'을 클릭하세요.";
+
+/* 从访达打开的照片格式不是默认用 Flipic 打开时，照片区底部的提示条 */
+"dp.message" = "이 사진만 Flipic으로 열리도록 설정되어 있습니다. 모든 사진을 Flipic으로 열까요?";
+"dp.make" = "기본으로 설정";
+"dp.never" = "다시 묻지 않기";
+"dp.close" = "닫기";
+"dp.done" = "이제 사진을 더블 클릭하면 Flipic으로 열립니다";

@@ -86,6 +86,7 @@ enum ShortcutAction: String, CaseIterable {
     case beforeAfter, splitByRating, switchPair
     case pinWindow, share, playLive, zoomEye, workbench
     case copyText
+    case makeDefaultViewer
     case searchContent
     case filmPanel, filmToggle, filmPrev, filmNext, filmHold
     case preset1, preset2, preset3, preset4, preset5, preset6, preset7, preset8, preset9
@@ -171,7 +172,7 @@ enum ShortcutAction: String, CaseIterable {
         case .rename, .trash, .edit, .reveal, .exportAs, .exportWatermarked, .exportFolder, .saveRotation, .share: return .file
         case .preset1, .preset2, .preset3, .preset4, .preset5, .preset6, .preset7, .preset8, .preset9: return .file
         case .pinWindow, .playLive, .filmPanel, .filmToggle, .filmPrev, .filmNext, .filmHold: return .view
-        case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench, .copyText: return .tools
+        case .cleanup, .batchConvert, .batchRename, .wallpaper, .workbench, .copyText, .makeDefaultViewer: return .tools
         case .rate1, .rate2, .rate3, .rate4, .rate5, .rate0: return .rating
         case .tagRed, .tagYellow, .tagGreen, .tagBlue, .mark, .markedOnly, .searchContent, .compare, .compare4, .comparePane, .compareSync, .beforeAfter, .splitByRating, .switchPair: return .pick
         }
@@ -235,6 +236,7 @@ enum ShortcutAction: String, CaseIterable {
         case .zoomEye: return L10n.t("menu.zoomEye", "放大到眼睛") + ShortcutAction.proSuffix
         case .workbench: return L10n.t("menu.workbench", "工作台") + ShortcutAction.proSuffix
         case .copyText: return L10n.t("menu.copyText", "复制图中全部文字")
+        case .makeDefaultViewer: return L10n.t("set.makeDefault", "设为默认看图软件")
         case .searchContent: return plain(L10n.t("menu.searchContent", "按内容查找…")) + ShortcutAction.proSuffix
         case .filmPanel: return L10n.t("sc.a.filmPanel", "胶片滤镜面板") + ShortcutAction.proSuffix
         case .filmToggle: return L10n.t("sc.a.filmToggle", "开 / 关胶片滤镜（用上次的那一款）") + ShortcutAction.proSuffix
@@ -312,6 +314,7 @@ enum ShortcutAction: String, CaseIterable {
         case .switchPair: return KeyCombo(keyCode: 9, chars: "v")
         case .pinWindow: return KeyCombo(keyCode: 17, mods: [.command, .option], chars: "t")
         case .share: return nil
+        case .makeDefaultViewer: return nil   // 一次性的操作，默认不占键，想要的自己在设置里分一个
         case .playLive: return KeyCombo(keyCode: 37, mods: .option, chars: "l")
         case .zoomEye: return KeyCombo(keyCode: 14, chars: "e")
         case .workbench: return KeyCombo(keyCode: 11, mods: [.command, .option], chars: "b")   // ⇧⌘B 已是批量重命名

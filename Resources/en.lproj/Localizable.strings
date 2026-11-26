@@ -1465,3 +1465,10 @@ Drop a folder or image to open";
 "set.defaultMoveMsg" = "Flipic is currently running from a disk image or temporary folder, so setting it as default would stop working after ejecting. Drag Flipic into Applications, open it from there, and try again.";
 "set.defaultFailedTitle" = "Could Not Change Default Viewer Automatically";
 "set.defaultFailedMsg" = "Select an image in Finder and press ⌘I (Get Info), choose Flipic under Open with, then click Change All….";
+
+/* 从访达打开的照片格式不是默认用 Flipic 打开时，照片区底部的提示条 */
+"dp.message" = "Only this photo is set to open in Flipic. Open all photos in Flipic?";
+"dp.make" = "Make Default";
+"dp.never" = "Don’t Ask Again";
+"dp.close" = "Close";
+"dp.done" = "Photos will now open in Flipic when you double-click them";

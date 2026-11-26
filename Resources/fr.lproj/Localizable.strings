@@ -1453,3 +1453,10 @@ Déposez un dossier ou une image pour ouvrir";
 "set.defaultMoveMsg" = "Flipic s’exécute actuellement depuis une image disque ou un dossier temporaire ; le réglage ne tiendra pas après éjection. Glissez Flipic dans Applications, ouvrez-le depuis ce dossier et réessayez.";
 "set.defaultFailedTitle" = "Impossible de modifier l’app par défaut automatiquement";
 "set.defaultFailedMsg" = "Dans le Finder, sélectionnez une photo, appuyez sur ⌘I (Lire les informations), choisissez Flipic sous « Ouvrir avec », puis cliquez sur « Tout modifier… ».";
+
+/* 从访达打开的照片格式不是默认用 Flipic 打开时，照片区底部的提示条 */
+"dp.message" = "Seule cette photo s’ouvre avec Flipic. Ouvrir toutes les photos avec Flipic ?";
+"dp.make" = "Par défaut";
+"dp.never" = "Ne plus demander";
+"dp.close" = "Fermer";
+"dp.done" = "Les photos s’ouvriront désormais dans Flipic par double-clic";

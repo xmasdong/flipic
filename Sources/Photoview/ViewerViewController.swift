@@ -127,6 +127,26 @@ final class ViewerViewController: NSViewController {
     /// 测试用
     var nextArrowContainerForTest: NSView { nextArrowContainer }
     var toolbarForTest: NSView { toolbarView }
+    /// 从访达打开的这张格式不是默认用 Flipic 打开时，照片区底部那条提示（见 DefaultPrompt.swift）
+    var defaultPromptBar: NSView?
+    var defaultPromptType: UTType?
+    /// 等着出现的格式：贴合预览、放映、全屏时先不出，回到普通窗口再出
+    var defaultPromptPending: UTType?
+    var defaultPromptWork: DispatchWorkItem?
+    /// 提示条放在底部工具条上方，工具条出来时不重叠
+    var bottomToolbarClearance: CGFloat { 8 + max(toolbarView.fittingSize.height, 44) + 8 }
+    var isPeekingWindow: Bool { peekSaved != nil }
+    /// 提示条出现 / 收起后，星级按它重新摆
+    func relayoutRatingBadge() {
+        if !ratingBadge.isHidden { ratingBadgeBottom.constant = ratingBadgeOffset(controls: bottomShown) }
+    }
+    /// 工具条出来时星级让到它上方；提示条也在那里时再让出提示条的高度
+    private var defaultPromptLift: CGFloat {
+        if let b = defaultPromptBar, !b.isHidden {
+            return (b.frame.height > 0 ? b.frame.height : b.fittingSize.height) + 8
+        }
+        return 0
+    }
     private var generation = 0
     private var slideshowTimer: Timer?
     var isProcessing = false
@@ -360,6 +380,8 @@ final class ViewerViewController: NSViewController {
                                                name: SettingsWindowController.didChange, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(refreshShortcutTips),
                                                name: Shortcuts.didChange, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(defaultViewerDidChange(_:)),
+                                               name: DefaultViewer.didChange, object: nil)
         // 从 Photoshop 切回来时再对一遍，监听漏掉的（网络盘、外接盘）也能换上
         NotificationCenter.default.addObserver(self, selector: #selector(appDidBecomeActive(_:)),
                                                name: NSApplication.didBecomeActiveNotification, object: nil)
@@ -705,6 +727,7 @@ final class ViewerViewController: NSViewController {
         guard let window = view.window, peekSaved == nil, folder.current != nil,
               !window.styleMask.contains(.fullScreen) else { return false }
         peekSaved = (window.frame, window.minSize, filmstrip.isHidden, exifPanel.isHidden)
+        refreshDefaultPrompt()
         setControlsVisible(false)
         hudView.isHidden = true
         exifPanel.isHidden = true
@@ -739,6 +762,7 @@ final class ViewerViewController: NSViewController {
         updateHUD()
         updateRatingLabel()
         imageView.fit()
+        refreshDefaultPrompt()
     }
 
     /// 窗口按图片比例重新取形：以原图 100% 的点尺寸为上限，超出屏幕可见区 90% 则等比缩小。
@@ -1390,6 +1414,7 @@ final class ViewerViewController: NSViewController {
                 loadCaptureDatesIfNeeded()
             }
             showCleanupHintIfNeeded()
+            scheduleDefaultPrompt(for: isDir.boolValue ? nil : url)
             #if FLIPIC_PRO
             // 用过按内容查找的：闲下来后在后台先把这个文件夹分析好
             contentSearchFolderDidOpen()
@@ -2578,6 +2603,8 @@ final class ViewerViewController: NSViewController {
         case .share: shareCurrent(nil)
         case .playLive: playLivePhoto(nil)
         case .copyText: copyAllText(nil)
+        case .makeDefaultViewer:
+            (NSApp.delegate as? AppDelegate)?.makeDefaultViewer(nil)
         case .zoomEye:
             #if FLIPIC_PRO
             zoomToEye(nil)
@@ -2725,6 +2752,7 @@ final class ViewerViewController: NSViewController {
         ])
         cleanup = c
         refreshInspectOverlays()
+        refreshDefaultPrompt()
         view.window?.makeFirstResponder(c.grid)
     }
 
@@ -2990,6 +3018,7 @@ final class ViewerViewController: NSViewController {
         updateSlideshowButton()
         setFilmstripFloating(true)
         flash(L10n.f("msg.slideshowOnN", "幻灯片放映中 · 每张 %d 秒 · S 或退出全屏停止", slideshowInterval), seconds: 3)
+        refreshDefaultPrompt()
     }
 
     static let slideshowIntervals = [1, 2, 3, 5, 10]
@@ -3085,6 +3114,7 @@ final class ViewerViewController: NSViewController {
         updateSlideshowButton()
         setFilmstripFloating(false)
         flash(L10n.t("msg.slideshowOff", "已停止幻灯片放映"))
+        refreshDefaultPrompt()
     }
 
     /// 贴合照片比例预览时点了绿灯（从访达双击打开就是这种预览）：先结束预览再进全屏。
@@ -3109,6 +3139,7 @@ final class ViewerViewController: NSViewController {
         // 「只在全屏时铺满」：退出全屏回到整张放下
         if ZoomableImageView.fillMode == 1, imageView.isFit { imageView.fit() }
         placeFileName()
+        refreshDefaultPrompt()
     }
 
     /// 进入全屏完成后再换底：在「将要进入」时换，进入失败（被取消）窗口就一直是不透明的
@@ -3117,6 +3148,7 @@ final class ViewerViewController: NSViewController {
         applyBackdropStyle(fullScreen: true)
         if ZoomableImageView.fillMode == 1, imageView.isFit { imageView.fit() }
         placeFileName()
+        refreshDefaultPrompt()
     }
 
     @objc private func windowWillClose(_ note: Notification) {
@@ -3461,7 +3493,7 @@ final class ViewerViewController: NSViewController {
     private var ratingBadgeBottom: NSLayoutConstraint!
 
     func ratingBadgeOffset(controls: Bool) -> CGFloat {
-        if controls && Self.showToolbar { return -(8 + max(toolbarView.fittingSize.height, 44) + 8) }
+        if controls && Self.showToolbar { return -(8 + max(toolbarView.fittingSize.height, 44) + 8) - defaultPromptLift }
         // 放映时缩略图栏隐藏了，星级落到屏幕底部
         return filmstripFloating ? filmstripHeight.constant - 14 : -14
     }
@@ -3524,6 +3556,8 @@ final class ViewerViewController: NSViewController {
         #endif
         ratingLabel.stringValue = Rating.stars(r)
         ratingLabel.isHidden = r == 0 || badge
+        // 进出对比、清理模式都会走到这里
+        refreshDefaultPrompt()
     }
 
     /// 「评分」子菜单：5 星到 1 星，最后是未评分，当前评分打勾

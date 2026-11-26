@@ -1458,3 +1458,10 @@ Return  重新命名目前圖片
 "set.defaultMoveMsg" = "目前正在從磁碟映像或暫存位置執行，設為預設會在退出映像後失效。請把 Flipic 拖進「應用程式」再從那裡打開並設定。";
 "set.defaultFailedTitle" = "系統未允許自動更改預設打開方式";
 "set.defaultFailedMsg" = "請在 Finder 裡選取照片按 ⌘I（取得資訊），在「打開檔案的應用程式」選 Flipic，然後按「全部更改…」。";
+
+/* 从访达打开的照片格式不是默认用 Flipic 打开时，照片区底部的提示条 */
+"dp.message" = "這張照片只對它自己設定成用 Flipic 打開。要讓所有照片都用 Flipic 打開嗎？";
+"dp.make" = "設為預設";
+"dp.never" = "不再提示";
+"dp.close" = "關閉";
+"dp.done" = "之後按兩下照片都會用 Flipic 打開";

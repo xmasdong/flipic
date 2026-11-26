@@ -1470,3 +1470,10 @@ Esc  先关掉右上角的照片信息
 "set.defaultMoveMsg" = "当前正在从磁盘映像或临时位置运行，设为默认会在推出映像后失效。请把 Flipic 拖进「应用程序」再从那里打开并设置。";
 "set.defaultFailedTitle" = "系统未允许自动更改默认打开方式";
 "set.defaultFailedMsg" = "请在访达里选中照片按 ⌘I（显示简介），在「打开方式」中选 Flipic，然后点击「全部更改…」。";
+
+/* 从访达打开的照片格式不是默认用 Flipic 打开时，照片区底部的提示条 */
+"dp.message" = "这张照片只对它自己设成了用 Flipic 打开。要让所有照片都用 Flipic 打开吗？";
+"dp.make" = "设为默认";
+"dp.never" = "不再提示";
+"dp.close" = "关闭";
+"dp.done" = "以后双击照片都会用 Flipic 打开";

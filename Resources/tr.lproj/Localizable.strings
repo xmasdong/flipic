@@ -1453,3 +1453,10 @@ Açmak için klasör veya resim sürükleyin";
 "set.defaultMoveMsg" = "Flipic şu anda bir disk görüntüsünden veya geçici klasörden çalışıyor; görüntü çıkarıldığında varsayılan ayar bozulur. Flipic'i Uygulamalar'a sürükleyip oradan açın ve tekrar deneyin.";
 "set.defaultFailedTitle" = "Varsayılan Uygulama Otomatik Değiştirilemedi";
 "set.defaultFailedMsg" = "Finder'da bir fotoğraf seçip ⌘I (Bilgi Ver) tuşuna basın, \"Birlikte aç\" altında Flipic'i seçin ve \"Tümünü Değiştir…\"e tıklayın.";
+
+/* 从访达打开的照片格式不是默认用 Flipic 打开时，照片区底部的提示条 */
+"dp.message" = "Yalnızca bu fotoğraf Flipic ile açılacak şekilde ayarlı. Tüm fotoğraflar Flipic ile açılsın mı?";
+"dp.make" = "Varsayılan yap";
+"dp.never" = "Bir daha sorma";
+"dp.close" = "Kapat";
+"dp.done" = "Fotoğraflar artık çift tıklayınca Flipic ile açılacak";
