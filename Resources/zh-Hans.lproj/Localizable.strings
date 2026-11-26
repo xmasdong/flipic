@@ -286,7 +286,7 @@ Esc  先关掉右上角的照片信息
 "set.makeDefault" = "设为默认看图软件";
 "set.isDefault" = "Flipic 已是默认看图软件";
 "set.currentDefault" = "现在双击照片用「%@」打开";
-"set.defaultNote" = "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相机 RAW 双击都用 Flipic 打开。也可以在访达里右键一张图，按住 ⌥ 键，选「始终以此方式打开」› Flipic。";
+"set.defaultNote" = "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相机 RAW 双击都用 Flipic 打开。也可以在访达里选中图片按 ⌘I（显示简介）→「打开方式」选 Flipic → 点「全部更改…」。";
 "menu.rating" = "评分";
 "sc.group.rating" = "评分";
 "rating.none" = "未评分";
@@ -1463,3 +1463,10 @@ Esc  先关掉右上角的照片信息
 "exp.batch.doneTitle" = "导出完成";
 "exp.batch.cancelledTitle" = "导出已取消";
 "exp.batch.sum.exported" = "已导出 %d 张";
+
+"set.partialDefault" = "部分图片格式已是默认（%1$d / %2$d）";
+"set.makeDefaultAll" = "将全部格式设为默认";
+"set.defaultMoveTitle" = "请先把 Flipic 移到「应用程序」文件夹";
+"set.defaultMoveMsg" = "当前正在从磁盘映像或临时位置运行，设为默认会在推出映像后失效。请把 Flipic 拖进「应用程序」再从那里打开并设置。";
+"set.defaultFailedTitle" = "系统未允许自动更改默认打开方式";
+"set.defaultFailedMsg" = "请在访达里选中照片按 ⌘I（显示简介），在「打开方式」中选 Flipic，然后点击「全部更改…」。";

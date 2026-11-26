@@ -274,7 +274,7 @@ Return  重新命名目前圖片
 "set.makeDefault" = "設為預設看圖軟體";
 "set.isDefault" = "Flipic 已是預設看圖軟體";
 "set.currentDefault" = "目前按兩下照片會用「%@」打開";
-"set.defaultNote" = "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相機 RAW 按兩下都用 Flipic 打開。也可以在 Finder 裡按右鍵點一張圖，按住 ⌥ 鍵，選「每次都用此應用程式來打開」› Flipic。";
+"set.defaultNote" = "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相機 RAW 按兩下都用 Flipic 打開。也可以在 Finder 裡選取圖片按 ⌘I（取得資訊）→「打開檔案的應用程式」選 Flipic → 按「全部更改…」。";
 "menu.rating" = "評分";
 "sc.group.rating" = "評分";
 "rating.none" = "未評分";
@@ -1451,3 +1451,10 @@ Return  重新命名目前圖片
 "exp.batch.doneTitle" = "輸出完成";
 "exp.batch.cancelledTitle" = "輸出已取消";
 "exp.batch.sum.exported" = "已輸出 %d 張";
+
+"set.partialDefault" = "部分圖片格式已是預設（%1$d / %2$d）";
+"set.makeDefaultAll" = "將全部格式設為預設";
+"set.defaultMoveTitle" = "請先把 Flipic 移到「應用程式」資料夾";
+"set.defaultMoveMsg" = "目前正在從磁碟映像或暫存位置執行，設為預設會在退出映像後失效。請把 Flipic 拖進「應用程式」再從那裡打開並設定。";
+"set.defaultFailedTitle" = "系統未允許自動更改預設打開方式";
+"set.defaultFailedMsg" = "請在 Finder 裡選取照片按 ⌘I（取得資訊），在「打開檔案的應用程式」選 Flipic，然後按「全部更改…」。";

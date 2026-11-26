@@ -274,7 +274,7 @@ Return  현재 이미지 이름 변경
 "set.makeDefault" = "기본 뷰어로 설정";
 "set.isDefault" = "Flipic이 기본 이미지 뷰어입니다";
 "set.currentDefault" = "지금은 사진을 %@(으)로 엽니다";
-"set.defaultNote" = "JPEG, PNG, HEIC, TIFF, GIF, WebP, 카메라 RAW 파일을 이중 클릭하면 Flipic으로 열립니다. Finder에서 이미지를 오른쪽 클릭한 뒤 ⌥ 키를 누른 채 '항상 선택한 응용 프로그램으로 열기' › Flipic을 골라도 됩니다.";
+"set.defaultNote" = "JPEG, PNG, HEIC, TIFF, GIF, WebP, 카메라 RAW 파일을 이중 클릭하면 Flipic으로 열립니다. Finder에서 이미지를 선택하고 ⌘I(정보 가져오기)를 누른 뒤 '다음으로 열기'에서 Flipic을 고르고 '모두 변경…'을 클릭해도 됩니다.";
 "menu.rating" = "등급";
 "sc.group.rating" = "등급";
 "rating.none" = "등급 없음";
@@ -1446,3 +1446,10 @@ Return  현재 이미지 이름 변경
 "exp.batch.doneTitle" = "내보내기 완료";
 "exp.batch.cancelledTitle" = "내보내기 취소됨";
 "exp.batch.sum.exported" = "%d장 내보냄";
+
+"set.partialDefault" = "일부 형식만 기본값 (%1$d / %2$d)";
+"set.makeDefaultAll" = "모든 형식을 기본값으로 설정";
+"set.defaultMoveTitle" = "먼저 Flipic을 '응용 프로그램' 폴더로 옮겨 주세요";
+"set.defaultMoveMsg" = "현재 디스크 이미지나 임시 위치에서 실행 중이어서 기본값으로 설정해도 이미지를 추출하면 해제됩니다. Flipic을 '응용 프로그램'으로 드래그해 실행한 뒤 다시 설정해 주세요.";
+"set.defaultFailedTitle" = "기본 앱을 자동으로 변경하지 못했습니다";
+"set.defaultFailedMsg" = "Finder에서 사진을 선택하고 ⌘I(정보 가져오기)를 누른 뒤 '다음으로 열기'에서 Flipic을 선택하고 '모두 변경…'을 클릭하세요.";

@@ -274,7 +274,7 @@ Return  إعادة تسمية الصورة الحالية
 "set.makeDefault" = "تعيينه عارضًا افتراضيًا";
 "set.isDefault" = "Flipic هو عارض الصور الافتراضي";
 "set.currentDefault" = "تُفتح الصور الآن في %@";
-"set.defaultNote" = "النقر المزدوج على ملفات JPEG وPNG وHEIC وTIFF وGIF وWebP وRAW يفتحها في Flipic. يمكنك أيضًا النقر بزر الماوس الأيمن على صورة في Finder، والضغط على ⌥ واختيار «فتح دومًا بواسطة» › Flipic.";
+"set.defaultNote" = "النقر المزدوج على ملفات JPEG وPNG وHEIC وTIFF وGIF وWebP وRAW يفتحها في Flipic. يمكنك أيضًا تحديد صورة في Finder والضغط على ⌘I (إحضار المعلومات) ثم اختيار Flipic تحت «فتح باستخدام» والنقر على «تغيير الكل…».";
 "menu.rating" = "التقييم";
 "sc.group.rating" = "التقييم";
 "rating.none" = "بلا تقييم";
@@ -1446,3 +1446,10 @@ Return  إعادة تسمية الصورة الحالية
 "exp.batch.doneTitle" = "اكتمل التصدير";
 "exp.batch.cancelledTitle" = "تم إلغاء التصدير";
 "exp.batch.sum.exported" = "تم تصدير %d";
+
+"set.partialDefault" = "افتراضي لبعض الصيغ (%1$d / %2$d)";
+"set.makeDefaultAll" = "تعيين لجميع الصيغ";
+"set.defaultMoveTitle" = "انقل Flipic إلى مجلد التطبيقات أولاً";
+"set.defaultMoveMsg" = "يعمل Flipic حالياً من صورة قرص أو موقع مؤقت، وسيتوقف التعيين بعد إخراج القرص. اسحب Flipic إلى مجلد التطبيقات وافتحه من هناك ثم أعد المحاولة.";
+"set.defaultFailedTitle" = "تعذّر تغيير التطبيق الافتراضي تلقائياً";
+"set.defaultFailedMsg" = "حدد صورة في Finder واضغط على ⌘I (إحضار المعلومات)، واختر Flipic تحت «فتح باستخدام» ثم انقر على «تغيير الكل…».";

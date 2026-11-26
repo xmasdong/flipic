@@ -10,13 +10,13 @@ REPO = ROOT.parent
 DOCS = REPO / "docs"
 OUT = ROOT / "public"
 BASE = "https://flipic.app"
-UPDATED = "2026-11-25"
+UPDATED = "2026-11-26"
 # 水印功能 1.0.43 发布后改成 True；False 时站点里不出现任何水印文字和图片
 SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
 SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "9.0 MB"
+SIZE = "9.1 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -2522,6 +2522,10 @@ def render_changelog(lang):
     desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
             else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
     entries_zh = [
+        ("1.0.66", "2026-11-26", [
+            "修复「设为默认看图软件」跨文件夹 / 多格式失效问题：扩展至全部 39 项常见图片与相机 RAW 系统类型（修复奥林巴斯 .orf 识别，补齐宾得 .pef、徕卡 .rwl、哈苏 .3fr/.fff、飞思 .iiq、佳能 .crw、索尼 .sr2/.srf、三星 .srw 等），检测所有格式并在部分格式未设为默认时保留一键补齐按钮。",
+            "新增从 DMG 镜像或临时路径运行时的提醒与系统拒绝改默认时的明确提示；修正 14 种语言设置页中的访达全局默认操作引导（改为 ⌘I 显示简介 → 全部更改…）。",
+        ]),
         ("1.0.65", "2026-11-25", [
             "批量「导出为…」与全模式工作台导出支持（免费 + Pro）：工作台现已完整支持「导出为…」（⌘S）、「调整尺寸…」、「加水印导出…」（⇧⌘S）、「批量转换格式…」（⇧⌘C）与「按预设导出」；在默认看图视图或工作台里多选 / 全选照片后，点「导出为…」可直接批量导出所选照片，右键菜单同步新增对应入口。",
             "全场景 ⌘A 全选修复：默认看图窗口（底部缩略图栏）现已支持按 ⌘A 一键全选当前列表全部照片（按 Esc 回到单选），并修复工作台焦点停在左侧边栏、胶片条或窗口空白区时 ⌘A 与导出菜单失效的问题。",
@@ -2579,6 +2583,10 @@ def render_changelog(lang):
         ]),
     ]
     entries_en = [
+        ("1.0.66", "2026-11-26", [
+            "Fixed default image viewer across formats and folders: expanded one-click registration to all 39 raster and camera RAW UTTypes (fixing Olympus .orf and adding Pentax .pef, Leica .rwl, Hasselblad .3fr/.fff, Phase One .iiq, Canon .crw, Sony .sr2/.srf, Samsung .srw and more), and check all formats instead of JPEG alone so partial bindings show a one-click Set for All Formats button.",
+            "Added a warning when attempting to set default while running from a mounted DMG or temporary folder, explicit error alerts if macOS blocks the change, and updated Finder instructions across all 14 languages to use ⌘I (Get Info) › Open with › Change All….",
+        ]),
         ("1.0.65", "2026-11-25", [
             "Batch Export As and full Workbench export support (Free + Pro): Workbench now supports Export As (⌘S), Resize, Export with Watermark (⇧⌘S), Batch Convert Format (⇧⌘C) and Export Presets. Selecting multiple or all photos in either the default Viewer or Workbench and choosing Export As now batch-exports all selected photos directly, with matching right-click menu items.",
             "⌘A Select All everywhere: the default Viewer now supports ⌘A to select all photos in the current list (press Esc to clear back to one), and Workbench now routes ⌘A and export commands cleanly even when focus sits in the left sidebar, filmstrip or window background.",

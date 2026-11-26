@@ -274,7 +274,7 @@ Return  表示中の画像を名称変更
 "set.makeDefault" = "デフォルトのビューアにする";
 "set.isDefault" = "Flipic がデフォルトの画像ビューアです";
 "set.currentDefault" = "現在、写真は「%@」で開きます";
-"set.defaultNote" = "JPEG、PNG、HEIC、TIFF、GIF、WebP、カメラ RAW をダブルクリックすると Flipic で開きます。Finder で画像を右クリックし、⌥ キーを押しながら「常にこのアプリケーションで開く」› Flipic を選んでも設定できます。";
+"set.defaultNote" = "JPEG、PNG、HEIC、TIFF、GIF、WebP、カメラ RAW をダブルクリックすると Flipic で開きます。Finder で画像を選んで ⌘I（情報を見る）を押し、「このアプリケーションで開く」で Flipic を選んで「すべてを変更…」をクリックしても設定できます。";
 "menu.rating" = "評価";
 "sc.group.rating" = "評価";
 "rating.none" = "評価なし";
@@ -1446,3 +1446,10 @@ Return  表示中の画像を名称変更
 "exp.batch.doneTitle" = "書き出し完了";
 "exp.batch.cancelledTitle" = "書き出しをキャンセルしました";
 "exp.batch.sum.exported" = "%d 枚を書き出しました";
+
+"set.partialDefault" = "一部の形式のみ既定（%1$d / %2$d）";
+"set.makeDefaultAll" = "すべての形式を既定にする";
+"set.defaultMoveTitle" = "先に Flipic を「アプリケーション」フォルダへ移動してください";
+"set.defaultMoveMsg" = "現在ディスクイメージまたは一時的な場所から起動しているため、既定に設定してもイメージを取り出すと無効になります。Flipic を「アプリケーション」にドラッグしてから再度お試しください。";
+"set.defaultFailedTitle" = "既定のアプリを自動で変更できませんでした";
+"set.defaultFailedMsg" = "Finder で写真を選んで ⌘I（情報を見る）を押し、「このアプリケーションで開く」で Flipic を選んで「すべてを変更…」をクリックしてください。";

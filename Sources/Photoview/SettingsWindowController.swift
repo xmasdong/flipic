@@ -152,15 +152,45 @@ final class SettingsWindowController: NSWindowController {
 
 protocol SettingsPane: AnyObject { func reload() }
 
-/// 默认看图软件：按常见图片格式逐个改，相机 RAW 每家的类型都要单独设
+/// 默认看图软件：按常见图片格式与各家相机 RAW 的真实系统 UTType 逐个设置，不抢 PSD / SVG / ICNS 等编辑格式
 enum DefaultViewer {
-    static let types: [UTType] = [
-        "public.jpeg", "public.png", "public.heic", "public.heif", "public.tiff", "com.compuserve.gif",
-        "org.webmproject.webp", "com.microsoft.bmp", "public.avif", "public.jpeg-xl",
-        "public.camera-raw-image", "com.adobe.raw-image", "com.sony.arw-raw-image", "com.canon.cr2-raw-image",
-        "com.canon.cr3-raw-image", "com.nikon.raw-image", "com.nikon.nrw-raw-image", "com.fuji.raw-image",
-        "com.panasonic.rw2-raw-image", "com.olympus.or-raw-image",
-    ].compactMap { UTType($0) }
+    static let types: [UTType] = {
+        let ids = [
+            // 常见位图 / 现代图片格式
+            "public.jpeg", "public.png", "public.heic", "public.heif", "public.tiff", "com.compuserve.gif",
+            "org.webmproject.webp", "com.microsoft.bmp", "public.avif", "public.jpeg-xl",
+            "public.jpeg-2000", "com.microsoft.ico", "com.truevision.tga-image", "com.ilm.openexr-image", "public.radiance",
+            // 相机 RAW（按 macOS 真实 UTType 全覆盖：DNG / Sony / Canon / Nikon / Fuji / Panasonic / Olympus / Pentax / Leica / Hasselblad / Phase One / Samsung / Epson / Kodak / Minolta / Leaf）
+            "public.camera-raw-image", "com.adobe.raw-image",
+            "com.sony.arw-raw-image", "com.sony.sr2-raw-image", "com.sony.raw-image",
+            "com.canon.cr2-raw-image", "com.canon.cr3-raw-image", "com.canon.crw-raw-image",
+            "com.nikon.raw-image", "com.nikon.nrw-raw-image",
+            "com.fuji.raw-image", "com.panasonic.rw2-raw-image",
+            "com.olympus.raw-image", "com.olympus.or-raw-image",
+            "com.pentax.raw-image", "com.leica.rwl-raw-image",
+            "com.hasselblad.3fr-raw-image", "com.hasselblad.fff-raw-image",
+            "com.phaseone.raw-image", "com.samsung.raw-image",
+            "com.epson.raw-image", "com.kodak.raw-image",
+            "com.konicaminolta.raw-image", "com.leafamerica.raw-image",
+        ]
+        var seen = Set<String>()
+        return ids.compactMap { id -> UTType? in
+            guard seen.insert(id).inserted else { return nil }
+            return UTType(id)
+        }
+    }()
+
+    enum Status: Equatable {
+        case allDefault
+        case partial(matched: Int, total: Int)
+        case other(String)
+    }
+
+    struct MakeResult {
+        let succeeded: Int
+        let failed: Int
+        let firstError: Error?
+    }
 
     /// 按 bundle id 比：同一个 App 装了几份时，系统打开的可能是另一份
     static func isFlipic(_ type: UTType) -> Bool {
@@ -168,23 +198,55 @@ enum DefaultViewer {
         return Bundle(url: url)?.bundleIdentifier == Bundle.main.bundleIdentifier
     }
 
-    static var isDefault: Bool { isFlipic(.jpeg) }
+    /// 检查全部目标格式，避免只改了 JPG 却误判全部已设默认并隐藏按钮
+    static var status: Status {
+        let matched = types.filter(isFlipic).count
+        if !types.isEmpty && matched == types.count { return .allDefault }
+        if matched > 0 { return .partial(matched: matched, total: types.count) }
+        return .other(currentName)
+    }
+
+    static var isDefault: Bool { status == .allDefault }
 
     static var currentName: String {
         guard let url = NSWorkspace.shared.urlForApplication(toOpen: .jpeg) else { return "-" }
         return FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
     }
 
+    /// 当前是否正从 DMG / 只读磁盘映像或 AppTranslocation 临时路径运行
+    static var isInTemporaryLocation: Bool {
+        let url = Bundle.main.bundleURL
+        return Volumes.isReadOnlyOrRemovable(url) || url.path.contains("/AppTranslocation/")
+    }
+
     static func make(_ done: @escaping () -> Void) {
+        makeWithResult { _ in done() }
+    }
+
+    static func makeWithResult(_ done: @escaping (MakeResult) -> Void) {
         let group = DispatchGroup()
+        let lock = NSLock()
+        var succeeded = 0
+        var failed = 0
+        var firstError: Error?
         for t in types {
             group.enter()
             NSWorkspace.shared.setDefaultApplication(at: Bundle.main.bundleURL, toOpen: t) { err in
-                if let err { NSLog("DefaultViewer %@: %@", t.identifier, "\(err)") }
+                lock.lock()
+                if let err {
+                    failed += 1
+                    if firstError == nil { firstError = err }
+                    NSLog("DefaultViewer %@: %@", t.identifier, "\(err)")
+                } else {
+                    succeeded += 1
+                }
+                lock.unlock()
                 group.leave()
             }
         }
-        group.notify(queue: .main, execute: done)
+        group.notify(queue: .main) {
+            done(MakeResult(succeeded: succeeded, failed: failed, firstError: firstError))
+        }
     }
 }
 
@@ -610,9 +672,10 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         sortRow.spacing = 12
         let defaultRow = NSStackView(views: [defaultStatus, makeDefault])
         defaultRow.spacing = 12
+        let defaultNoteText = L10n.t("set.defaultNote", "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相机 RAW 双击都用 Flipic 打开。也可以在访达里选中图片按 ⌘I（显示简介）→「打开方式」选 Flipic → 点「全部更改…」。")
         let g = grid([
             [label(L10n.t("set.default", "默认看图：")), defaultRow],
-            spacerRow(note(L10n.t("set.defaultNote", "JPEG、PNG、HEIC、TIFF、GIF、WebP 和相机 RAW 双击都用 Flipic 打开。也可以在访达里右键一张图，按住 ⌥ 键，选「始终以此打开」› Flipic。"))),
+            spacerRow(note(defaultNoteText)),
             [label(L10n.t("set.openPeek", "打开照片时：")), newWindow],
             [NSGridCell.emptyContentView, peekRow],
             spacerRow(note(L10n.t("set.openPeekNote", "从访达双击照片打开时，窗口直接收成照片的比例；按空格或 Esc 回到普通窗口。打开文件夹时还是普通窗口。"))),
@@ -650,11 +713,28 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
         newWindow.state = AppDelegate.openInNewWindow ? .on : .off
         autoUpdate.state = UpdateChecker.autoCheck ? .on : .off
         crashAsk.state = CrashReporter.askEnabled ? .on : .off
-        let isDefault = DefaultViewer.isDefault
-        defaultStatus.stringValue = isDefault ? L10n.t("set.isDefault", "Flipic 已是默认看图软件")
-            : L10n.f("set.currentDefault", "现在双击照片用「%@」打开", DefaultViewer.currentName)
-        defaultStatus.textColor = isDefault ? .labelColor : .secondaryLabelColor
-        makeDefault.isHidden = isDefault
+        let status = DefaultViewer.status
+        switch status {
+        case .allDefault:
+            defaultStatus.stringValue = L10n.t("set.isDefault", "Flipic 已是默认看图软件")
+            defaultStatus.textColor = .labelColor
+        case .partial(let matched, let total):
+            defaultStatus.stringValue = L10n.f("set.partialDefault", "部分图片格式已是默认（%1$d / %2$d）", matched, total)
+            defaultStatus.textColor = .secondaryLabelColor
+        case .other(let name):
+            defaultStatus.stringValue = L10n.f("set.currentDefault", "现在双击照片用「%@」打开", name)
+            defaultStatus.textColor = .secondaryLabelColor
+        }
+        switch status {
+        case .allDefault:
+            makeDefault.isHidden = true
+        case .partial:
+            makeDefault.title = L10n.t("set.makeDefaultAll", "将全部格式设为默认")
+            makeDefault.isHidden = false
+        case .other:
+            makeDefault.title = L10n.t("set.makeDefault", "设为默认看图软件")
+            makeDefault.isHidden = false
+        }
         if let app = ViewerViewController.storedEditorAppURL {
             editorName.stringValue = FileManager.default.displayName(atPath: app.path).replacingOccurrences(of: ".app", with: "")
             editorName.textColor = .labelColor
@@ -670,7 +750,27 @@ private final class GeneralSettingsPane: NSViewController, SettingsPane {
     }
 
     @objc private func makeDefaultViewer() {
-        DefaultViewer.make { [weak self] in self?.reload() }
+        if DefaultViewer.isInTemporaryLocation {
+            let alert = NSAlert()
+            alert.messageText = L10n.t("set.defaultMoveTitle", "请先把 Flipic 移到「应用程序」文件夹")
+            alert.informativeText = L10n.t("set.defaultMoveMsg", "当前正在从磁盘映像或临时位置运行，设为默认会在推出映像后失效。请把 Flipic 拖进「应用程序」再从那里打开并设置。")
+            alert.addButton(withTitle: L10n.t("bc.ok", "好"))
+            if let w = view.window { alert.beginSheetModal(for: w) } else { alert.runModal() }
+            return
+        }
+        makeDefault.isEnabled = false
+        DefaultViewer.makeWithResult { [weak self] res in
+            guard let self else { return }
+            self.makeDefault.isEnabled = true
+            self.reload()
+            if res.succeeded == 0 && res.failed > 0 {
+                let alert = NSAlert()
+                alert.messageText = L10n.t("set.defaultFailedTitle", "系统未允许自动更改默认打开方式")
+                alert.informativeText = L10n.t("set.defaultFailedMsg", "请在访达里选中照片按 ⌘I（显示简介），在「打开方式」中选 Flipic，然后点击「全部更改…」。")
+                alert.addButton(withTitle: L10n.t("bc.ok", "好"))
+                if let w = self.view.window { alert.beginSheetModal(for: w) } else { alert.runModal() }
+            }
+        }
     }
 
     @objc private func sortChanged() {
