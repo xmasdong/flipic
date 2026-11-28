@@ -133,6 +133,57 @@ enum Straighten {
         var pixelSize: CGSize?
         /// 写盘失败时的具体系统错误说明（如权限不足、只读文件系统）
         var error: String? = nil
+        /// 90° 覆盖原图时顺带同步无损写回的同名配对文件（JPG ↔ RAW）
+        var syncedPartners: [URL] = []
+    }
+
+    private static let companionRasterExtensions: Set<String> = ["jpg", "jpeg", "jpe", "heic", "heif"]
+
+    /// 找出同文件夹里与 url 同名的跨格式配对文件（JPG/HEIC ↔ RAW），供 90° 旋转覆盖原图时一起无损写回。
+    /// 传入已在内存中的目录列表 candidates 时 0 磁盘探测
+    static func pairedPartners(of url: URL, among candidates: [URL]? = nil) -> [URL] {
+        let stem = url.deletingPathExtension().path.lowercased()
+        let selfPath = url.standardizedFileURL.path.lowercased()
+        let srcIsRaw = CleanupUnit.isRaw(url)
+        let allowedExts = srcIsRaw ? companionRasterExtensions : RawOrientation.extensions
+        let pool: [URL]
+        if let candidates {
+            pool = candidates
+        } else {
+            let dir = url.deletingLastPathComponent()
+            pool = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])) ?? []
+        }
+        var seen = Set<String>([selfPath])
+        var out: [URL] = []
+        for c in pool {
+            let cp = c.standardizedFileURL.path.lowercased()
+            guard !seen.contains(cp),
+                  c.deletingPathExtension().path.lowercased() == stem,
+                  allowedExts.contains(c.pathExtension.lowercased()) else { continue }
+            seen.insert(cp)
+            out.append(c)
+        }
+        return out.sorted { $0.path < $1.path }
+    }
+
+    /// 把同名配对文件按相同角度无损写回（只做 90° 覆盖原图，不另存副本、不破坏不支持无损写回的格式）
+    private static func rotatePairedPartners(_ partners: [URL], turns: Int) -> [URL] {
+        guard turns != 0, !partners.isEmpty else { return [] }
+        var done: [URL] = []
+        for partner in partners {
+            if CleanupUnit.isRaw(partner) {
+                guard RawOrientation.canRotate(partner) else { continue }
+                FolderWatcher.noteOwnWrite(partner)
+                if RawOrientation.writeWithError(url: partner, clockwiseTurns: turns, to: partner).ok {
+                    ImageLoader.shared.evict(url: partner)
+                    done.append(partner)
+                }
+            } else if canOverwrite(partner) {
+                let w = ImageLoader.writeRotationWithError(url: partner, clockwiseTurns: turns)
+                if w.result != .failed { done.append(partner) }
+            }
+        }
+        return done
     }
 
     /// 手动裁剪框和它所在的尺寸（转好 90° 的原图像素）。保存时解出来的全图尺寸万一不一样，按比例换算
@@ -145,7 +196,7 @@ enum Straighten {
     /// 只转了 90° 的：能写方向标记的格式不动像素（无损）；裁剪或拉直过的要重新编码，JPEG/HEIC 用 0.95 质量，拍摄信息保留。
     /// maxLongEdge：另存时缩到长边不超过这么多像素（不放大，见 SaveSize）；覆盖原图不缩，给了也不管。要缩小就得重新编码，不走无损
     /// border：加边框，总是另存一份（IMG_1234-边框.jpg），尺寸按 border 里选的，不看 maxLongEdge
-    static func save(url: URL, quarterTurns: Int, degrees: Double, crop: CropSpec? = nil, overwrite: Bool, maxLongEdge: Int? = nil, border: BorderSpec? = nil) -> Outcome {
+    static func save(url: URL, quarterTurns: Int, degrees: Double, crop: CropSpec? = nil, overwrite: Bool, maxLongEdge: Int? = nil, border: BorderSpec? = nil, pairedPartners: [URL] = []) -> Outcome {
         beginSave()
         defer { endSave() }
         let turns = ((quarterTurns % 4) + 4) % 4
@@ -164,7 +215,8 @@ enum Straighten {
             let rw = RawOrientation.writeWithError(url: url, clockwiseTurns: turns, to: out)
             if rw.ok {
                 if overwrite { ImageLoader.shared.evict(url: url) }
-                return Outcome(result: .lossless, url: out)
+                let synced = overwrite ? rotatePairedPartners(pairedPartners, turns: turns) : []
+                return Outcome(result: .lossless, url: out, syncedPartners: synced)
             }
             let fallback = copyURL(for: url, ext: "jpg")
             let r = reencode(url: url, turns: turns, degrees: degrees, to: fallback, type: UTType.jpeg.identifier)
@@ -176,7 +228,8 @@ enum Straighten {
             guard writable else { return Outcome(result: .failed, url: nil) }
             if degrees == 0, !cropped {
                 let w = ImageLoader.writeRotationWithError(url: url, clockwiseTurns: turns)
-                return Outcome(result: w.result, url: url, error: w.error)
+                let synced = w.result != .failed ? rotatePairedPartners(pairedPartners, turns: turns) : []
+                return Outcome(result: w.result, url: url, error: w.error, syncedPartners: synced)
             }
             let r = reencode(url: url, turns: turns, degrees: degrees, crop: crop, to: url, type: nil)
             if r.result != .failed {

@@ -5275,9 +5275,12 @@ final class ViewerViewController: NSViewController {
         Straighten.profile?("at.1saveStart", 0)
         flash(L10n.t("msg.rotSaving", "保存中…"), seconds: 3600)
         let srcIsRaw = CleanupUnit.isRaw(url)
+        let partners = (overwrite && degrees == 0 && crop == nil)
+            ? Straighten.pairedPartners(of: url, among: folder.allItems.map(\.url))
+            : []
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             Straighten.profile?("at.2bgStart", 0)
-            let out = Straighten.save(url: url, quarterTurns: turns, degrees: degrees, crop: crop, overwrite: overwrite, maxLongEdge: maxLongEdge)
+            let out = Straighten.save(url: url, quarterTurns: turns, degrees: degrees, crop: crop, overwrite: overwrite, maxLongEdge: maxLongEdge, pairedPartners: partners)
             Straighten.profile?("file.done", 0)
             DispatchQueue.main.async {
                 guard let self else { return }
@@ -5300,11 +5303,23 @@ final class ViewerViewController: NSViewController {
                 self.rotationAutoSaveFailed = nil
                 let asJPEG = srcIsRaw && saved.pathExtension.lowercased() == "jpg"
                 if overwrite && saved == url {
-                    self.flash(out.result == .lossless ? L10n.t("msg.rotSaved", "已保存旋转（无损）")
-                               : (degrees != 0 || crop != nil ? L10n.t("msg.editSaved", "已保存（高画质重新编码）")
-                                  : L10n.t("msg.rotSavedReencoded", "已保存旋转（该格式重新编码）")), seconds: 3)
+                    var msg = out.result == .lossless ? L10n.t("msg.rotSaved", "已保存旋转（无损）")
+                        : (degrees != 0 || crop != nil ? L10n.t("msg.editSaved", "已保存（高画质重新编码）")
+                           : L10n.t("msg.rotSavedReencoded", "已保存旋转（该格式重新编码）"))
+                    if !out.syncedPartners.isEmpty,
+                       let types = Trash.fileTypesLabel(for: [url] + out.syncedPartners, photoCount: 1, includeFileCount: false) {
+                        msg += " · \(types)"
+                    }
+                    self.flash(msg, seconds: 3)
                     self.rotationJustSaved = url
                     self.loader.evict(url: url)
+                    for p in out.syncedPartners {
+                        self.prefetchedURLs.remove(p)
+                        self.loader.evict(url: p)
+                        if let row = self.folder.items.firstIndex(where: { $0.url == p }) {
+                            self.filmstrip.collectionView.reloadItems(at: [IndexPath(item: row, section: 0)])
+                        }
+                    }
                     self.finishOverwrite(url: url, newSize: out.pixelSize)
                 } else {
                     // 原图不动：视图回到原样，新文件由文件夹监视加进列表

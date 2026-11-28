@@ -2522,6 +2522,9 @@ def render_changelog(lang):
     desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
             else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
     entries_zh = [
+        ("1.0.70", "2026-11-28", [
+            "同名 JPG + RAW 90° 旋转同步无损写回（免费 + Pro）：在看图模式或工作台里旋转并覆盖原图时，只要同目录存在同名 JPG / HEIC 与 RAW（如 .CR3 / .CR2 / .ARW / .NEF / .RAF / .DNG 等），无论是否开启「合并显示 JPG 和 RAW」，现在都会双向同步无损写回两份原文件并立即刷新缩略图，提示条明确显示实际写回格式（如 JPG + CR3）。",
+        ]),
         ("1.0.69", "2026-11-28", [
             "底部缩略图栏支持自由快速滚动（免费 + Pro）：在看图窗口与工作台底部缩略图栏上使用鼠标上下/横向滚轮或触控板滑动时，现在可以一路顺滑滚到末尾跳过大量照片，上方大图不跟着切换，点击某张缩略图后再切换到那一张；同步优化缩略图缓存内存上限、高速甩滚按需解码与离屏队列自动取消。",
             "修复工作台 .CR3 等 RAW 旋转保存失败与自动保存缺失问题：工作台现已接入 RAW 无损 90° 旋转写回（支持 .CR3 / .CR2 / .ARW / .NEF / .RAF / .ORF / .RW2 / .DNG 等 20 种格式）及自动保存（遵循「设置 › 看图 › 保存修改」，翻页或关闭窗口前自动刷盘）；在设置中切换为「覆盖原图」后立即生效，保存失败时展示具体错误原因，并增强只读保护副本及外接盘 / NAS 写回兼容。",
@@ -2594,6 +2597,9 @@ def render_changelog(lang):
         ]),
     ]
     entries_en = [
+        ("1.0.70", "2026-11-28", [
+            "Paired JPG + RAW lossless 90° rotation sync (Free + Pro): when overwriting a 90° rotation in Viewer or Workbench, any same-name paired JPG / HEIC and RAW file (.CR3, .CR2, .ARW, .NEF, .RAF, .DNG and more) in the same folder is now rotated losslessly together in both directions whether or not Merge JPG & RAW is enabled, with immediate thumbnail refresh and format feedback (such as JPG + CR3).",
+        ]),
         ("1.0.69", "2026-11-28", [
             "Free-scrolling bottom filmstrip (Free + Pro): scrolling over the bottom filmstrip in both Viewer and Workbench with a mouse wheel, horizontal wheel or trackpad now glides freely across the entire strip without changing the main preview; click any thumbnail when ready to switch. Also caps thumbnail cache memory, defers uncached decodes during high-speed flings and cancels off-screen decode jobs.",
             "Fixed Workbench RAW (.CR3) rotation save failures and auto-save: Workbench now uses lossless 90° RAW orientation writing (20 formats including .CR3, .CR2, .ARW, .NEF, .RAF, .ORF, .RW2 and .DNG) and honors Settings › Viewing › Save Edits auto-save (flushing before paging or closing). Switching to Overwrite Original now applies immediately, save errors show the real system reason, and read-only copies plus exFAT / SMB file replacement are handled safely.",

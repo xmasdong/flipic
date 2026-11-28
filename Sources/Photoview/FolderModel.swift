@@ -231,8 +231,8 @@ final class FolderModel {
     /// 列表里这些文件，加上它们藏起来的同名搭档（导出、移动时一起带走）
     func withHiddenPartners(_ urls: [URL]) -> [URL] {
         guard !hidden.isEmpty else { return urls }
-        let keys = Set(urls.map { $0.deletingPathExtension().path })
-        return urls + hidden.filter { keys.contains($0.deletingPathExtension().path) }.sorted { $0.path < $1.path }
+        let keys = Set(urls.map { $0.deletingPathExtension().path.lowercased() })
+        return urls + hidden.filter { keys.contains($0.deletingPathExtension().path.lowercased()) }.sorted { $0.path < $1.path }
     }
 
     private func isVisible(_ item: ImageItem, _ f: PhotoFilter?) -> Bool {
