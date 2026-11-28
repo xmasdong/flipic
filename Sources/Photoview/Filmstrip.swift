@@ -5,11 +5,15 @@ final class FilmstripView: NSScrollView {
     let collectionView = FilmstripCollectionView()
     /// 常驻的细滚动条：系统的浮动滚动条不动就藏起来，看不出这一张在文件夹里大概的位置
     private let scrollBar = FilmstripScrollBar()
-    /// 鼠标在缩略图条上上下滚轮（或横向滚轮 / 侧键）翻页：-1 上一张，+1 下一张；触控板左右滑仍自由浏览整条缩略图
+    /// 鼠标前进 / 后退侧键在缩略图栏上翻页：-1 上一张，+1 下一张
     var onWheelNavigate: ((Int) -> Void)?
-    private var lastWheelFlip = Date.distantPast
-    private var wheelAccum: CGFloat = 0
-    private var wheelFlippedInGesture = false
+    /// 高速甩滚缩略图栏时暂缓未命中缓存的缩略图解码，慢下来或停住后触发，只解当前可见的格子（控内存、免排队）
+    var onScrollSettled: (() -> Void)?
+    private(set) var isFastScrolling = false
+    private var lastScrollX: CGFloat = 0
+    private var lastScrollTime: CFTimeInterval = 0
+    private var scrollSettleWork: DispatchWorkItem?
+    private var programmaticScroll = false
 
     /// 缩略图大小（点），设置里可选；格子是正方形，缩略图栏高度 = 格子 + 上下各 6
     static let thumbSizes: [CGFloat] = [48, 64, 96, 128]
@@ -59,8 +63,44 @@ final class FilmstripView: NSScrollView {
                             (NSView.frameDidChangeNotification, collectionView as NSView)] {
             NotificationCenter.default.addObserver(forName: name, object: obj, queue: .main) { [weak self] _ in
                 self?.scrollBar.needsDisplay = true
+                if name == NSView.boundsDidChangeNotification { self?.noteScrollBoundsChanged() }
             }
         }
+    }
+
+    /// 记录滚动速度：高速甩滚（> 3200 pt/s，约每秒划过 40+ 张）时跳过中间一闪而过的未缓存缩略图，
+    /// 停下来或减速 70ms 后再统一解当前屏幕里能看到的格子
+    private func noteScrollBoundsChanged() {
+        let now = CFAbsoluteTimeGetCurrent()
+        let x = contentView.bounds.origin.x
+        if programmaticScroll {
+            lastScrollX = x
+            lastScrollTime = now
+            return
+        }
+        let dt = now - lastScrollTime
+        if lastScrollTime > 0, dt > 0, dt < 0.25 {
+            let speed = abs(x - lastScrollX) / CGFloat(max(dt, 0.004))
+            if speed > 3200 { isFastScrolling = true }
+        }
+        lastScrollX = x
+        lastScrollTime = now
+        if isFastScrolling {
+            scrollSettleWork?.cancel()
+            let work = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                self.scrollSettleWork = nil
+                self.isFastScrolling = false
+                self.onScrollSettled?()
+            }
+            scrollSettleWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.07, execute: work)
+        }
+    }
+
+    var debugScrollX: CGFloat { contentView.bounds.origin.x }
+    var debugMaxScrollX: CGFloat {
+        max(0, (documentView?.bounds.width ?? 0) - contentView.bounds.width)
     }
 
     /// 滚动条放在缩略图下面留的那 6 点里，不压在缩略图上
@@ -75,50 +115,50 @@ final class FilmstripView: NSScrollView {
     func scrollTo(index: Int) {
         // 空文件夹时没有任何格子，滚到 (0,0) 会抛异常崩溃
         guard index >= 0, index < collectionView.numberOfItems(inSection: 0) else { return }
+        scrollSettleWork?.cancel()
+        scrollSettleWork = nil
+        isFastScrolling = false
+        programmaticScroll = true
+        defer {
+            programmaticScroll = false
+            lastScrollX = contentView.bounds.origin.x
+            lastScrollTime = CFAbsoluteTimeGetCurrent()
+        }
         collectionView.scrollToItems(at: Set([IndexPath(item: index, section: 0)]),
                                      scrollPosition: .centeredHorizontally)
     }
 
+    /// 悬停在底部缩略图栏上滚动：一律只自由横向滚动缩略图条，不切换上方大图，点到某张时再切。
+    /// 触控板左右滑走系统原生（带惯性与回弹）；上下滑与普通鼠标上下/左右滚轮换算为横向滚动，一甩就能滚到末尾跳过大量照片
     override func scrollWheel(with event: NSEvent) {
-        guard let onWheelNavigate else { super.scrollWheel(with: event); return }
         let dx = event.scrollingDeltaX
         let dy = event.scrollingDeltaY
         let precise = event.hasPreciseScrollingDeltas
-        // 触控板 / 妙控鼠标左右滑：保持原生自由滑动整条缩略图
-        if precise && abs(dx) > abs(dy) {
+        // 触控板 / 妙控鼠标左右滑：原生 1:1 横向滚动 + 惯性 + 橡皮筋
+        if precise && abs(dx) >= abs(dy) {
             super.scrollWheel(with: event)
             return
         }
-        // 鼠标横向滚轮（如拇指滚轮）：若设置开启了横向滚轮翻页则切图，否则横向滚动条
-        if !precise && abs(dx) > abs(dy) {
-            guard ZoomableImageView.hWheelNavigates else { super.scrollWheel(with: event); return }
-            guard event.momentumPhase.isEmpty else { return }
-            var x = dx
-            if event.isDirectionInvertedFromDevice { x = -x }
-            if ZoomableImageView.wheelNavInverted { x = -x }
-            guard x != 0, Date().timeIntervalSince(lastWheelFlip) > 0.06 else { return }
-            lastWheelFlip = Date()
-            onWheelNavigate(x < 0 ? 1 : -1)
-            return
-        }
-        // 鼠标普通上下滚轮 / 触控板双指上下滑：直接翻上一张 / 下一张（遵循翻页方向设置）
-        guard event.momentumPhase.isEmpty else { return }
-        if event.phase == .began { wheelAccum = 0; wheelFlippedInGesture = false }
-        var y = dy
-        if event.isDirectionInvertedFromDevice { y = -y }
-        if ZoomableImageView.wheelNavInverted { y = -y }
-        guard y != 0 else { return }
+        let maxX = debugMaxScrollX
+        guard maxX > 0.5 else { return }
+        let step: CGFloat
         if precise {
-            guard !wheelFlippedInGesture else { return }
-            wheelAccum += y
-            guard abs(wheelAccum) >= 30 else { return }
-            y = wheelAccum
-            wheelFlippedInGesture = true
+            // 触控板 / 妙控鼠标双指上下滑（含惯性帧）：1:1 转为横向滚动
+            step = -dy
         } else {
-            guard Date().timeIntervalSince(lastWheelFlip) > 0.06 else { return }
+            // 普通鼠标上下滚轮或横向拇指滚轮：按每格缩略图宽度缩放，配合系统滚轮加速，轻滚看近处、快甩直接到底
+            let delta = abs(dx) > abs(dy) ? dx : dy
+            guard delta != 0 else { return }
+            let layout = collectionView.collectionViewLayout as? NSCollectionViewFlowLayout
+            let pitch = (layout?.itemSize.width ?? Self.thumbSize) + (layout?.minimumLineSpacing ?? 8)
+            step = -delta * max(pitch * 0.9, 64)
         }
-        lastWheelFlip = Date()
-        onWheelNavigate(y < 0 ? 1 : -1)
+        guard abs(step) > 0.01 else { return }
+        let nx = min(max(contentView.bounds.origin.x + step, 0), maxX)
+        if abs(nx - contentView.bounds.origin.x) > 0.01 {
+            contentView.scroll(to: NSPoint(x: nx, y: contentView.bounds.origin.y))
+            reflectScrolledClipView(contentView)
+        }
     }
 
     override func otherMouseDown(with event: NSEvent) {
@@ -326,6 +366,16 @@ final class FilmstripItem: NSCollectionViewItem {
         guard on || hasMarkIcon else { return }
         hasMarkIcon = true
         markIcon.isHidden = !on
+    }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        itemIndex = -1
+        holder.layer?.contents = nil
+        holder.layer?.backgroundColor = nil
+        if hasMarkIcon { markIcon.isHidden = true }
+        if hasTagDots { tagDots.isHidden = true }
+        if hasDuration { durationLabel.isHidden = true }
     }
 
     override var isSelected: Bool {

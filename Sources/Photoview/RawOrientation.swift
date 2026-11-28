@@ -62,15 +62,26 @@ enum RawOrientation {
 
     /// 转 turns 个 90°（顺时针）后写到 out。out 可以等于 url（覆盖原图）。成功返回 true
     static func write(url: URL, clockwiseTurns turns: Int, to out: URL) -> Bool {
+        writeWithError(url: url, clockwiseTurns: turns, to: out).ok
+    }
+
+    /// 带错误原因的无损写回：文件系统/权限报错返回具体 localizedDescription，格式校验不通过返回 nil（供上层兜底另存 JPEG）
+    static func writeWithError(url: URL, clockwiseTurns turns: Int, to out: URL) -> (ok: Bool, error: String?) {
         let turns = ((turns % 4) + 4) % 4
-        guard let (current, fromSystem) = currentOrientation(url), cycle[current] != nil else { return false }
+        guard let (current, fromSystem) = currentOrientation(url), cycle[current] != nil else { return (false, nil) }
         var o = current
         for _ in 0..<turns { o = cycle[o]! }
         let fm = FileManager.default
         let tmp = out.deletingLastPathComponent().appendingPathComponent(".flipic-rotate-\(UUID().uuidString).\(url.pathExtension)")
-        do { try fm.copyItem(at: url, to: tmp) } catch { return false }   // APFS 上是克隆，不占空间、很快
-        func fail() -> Bool { try? fm.removeItem(at: tmp); return false }
-        guard let h = try? FileHandle(forUpdating: tmp) else { return fail() }
+        do { try fm.copyItem(at: url, to: tmp) } catch { return (false, error.localizedDescription) }   // APFS 上是克隆，不占空间、很快
+        func fail(_ err: String? = nil) -> (Bool, String?) { try? fm.removeItem(at: tmp); return (false, err) }
+        // 相机卡里设过「保护」的照片拷出来可能是 0444 只读；如果原文件本身没有 Finder 锁定（uchg），先给临时副本加上写权限再改方向字节
+        if let attrs = try? fm.attributesOfItem(atPath: tmp.path),
+           let perm = attrs[.posixPermissions] as? Int, (perm & 0o200) == 0 {
+            try? fm.setAttributes([.posixPermissions: perm | 0o200], ofItemAtPath: tmp.path)
+        }
+        let h: FileHandle
+        do { h = try FileHandle(forUpdating: tmp) } catch { return fail(error.localizedDescription) }
         let spots = orientationSpots(h)
         guard !spots.isEmpty else { try? h.close(); return fail() }
         for s in spots {
@@ -98,10 +109,11 @@ enum RawOrientation {
             }
         }
         do {
-            if fm.fileExists(atPath: out.path) { _ = try fm.replaceItemAt(out, withItemAt: tmp) }
-            else { try fm.moveItem(at: tmp, to: out) }
-            return true
-        } catch { return fail() }
+            try Straighten.replaceFile(tmp, at: out)
+            return (true, nil)
+        } catch {
+            return fail(error.localizedDescription)
+        }
     }
 
     /// 系统读到的方向；系统不认识这种 RAW（读不出尺寸）时为 nil，改读文件自己的方向标记

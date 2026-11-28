@@ -131,6 +131,8 @@ enum Straighten {
         var url: URL?
         /// 重新编码写出的文件的像素尺寸（旋转、拉直、裁剪后）；无损旋转时是 nil
         var pixelSize: CGSize?
+        /// 写盘失败时的具体系统错误说明（如权限不足、只读文件系统）
+        var error: String? = nil
     }
 
     /// 手动裁剪框和它所在的尺寸（转好 90° 的原图像素）。保存时解出来的全图尺寸万一不一样，按比例换算
@@ -152,34 +154,36 @@ enum Straighten {
             let writable = !CleanupUnit.isRaw(url) && canOverwrite(url)
             let out = copyURL(for: url, ext: writable ? FormatMismatch.preferredCopyExtension(for: url) : "jpg", border: true)
             let r = reencode(url: url, turns: turns, degrees: degrees, crop: crop, to: out, type: writable ? nil : UTType.jpeg.identifier, border: border)
-            return Outcome(result: r.result, url: r.result == .failed ? nil : out, pixelSize: r.size)
+            return Outcome(result: r.result, url: r.result == .failed ? nil : out, pixelSize: r.size, error: r.error)
         }
         let edge = overwrite ? nil : maxLongEdge
         // RAW 只转 90°：改方向标记，原图或副本都保持 RAW。改不了就退回另存 JPEG（另存要缩小时也直接存 JPEG）
         if CleanupUnit.isRaw(url), degrees == 0, !cropped, edge == nil, RawOrientation.canRotate(url) {
             let out = overwrite ? url : copyURL(for: url, ext: url.pathExtension)
             if overwrite { FolderWatcher.noteOwnWrite(url) }
-            if RawOrientation.write(url: url, clockwiseTurns: turns, to: out) {
+            let rw = RawOrientation.writeWithError(url: url, clockwiseTurns: turns, to: out)
+            if rw.ok {
                 if overwrite { ImageLoader.shared.evict(url: url) }
                 return Outcome(result: .lossless, url: out)
             }
             let fallback = copyURL(for: url, ext: "jpg")
             let r = reencode(url: url, turns: turns, degrees: degrees, to: fallback, type: UTType.jpeg.identifier)
-            return Outcome(result: r.result, url: r.result == .failed ? nil : fallback, pixelSize: r.size)
+            return Outcome(result: r.result, url: r.result == .failed ? nil : fallback, pixelSize: r.size, error: r.result == .failed ? (rw.error ?? r.error) : nil)
         }
         // RAW 走到这里说明裁剪或拉直过（或改不了方向标记）：只能另存 JPEG
         let writable = !CleanupUnit.isRaw(url) && canOverwrite(url)
         if overwrite {
             guard writable else { return Outcome(result: .failed, url: nil) }
             if degrees == 0, !cropped {
-                return Outcome(result: ImageLoader.writeRotation(url: url, clockwiseTurns: turns), url: url)
+                let w = ImageLoader.writeRotationWithError(url: url, clockwiseTurns: turns)
+                return Outcome(result: w.result, url: url, error: w.error)
             }
             let r = reencode(url: url, turns: turns, degrees: degrees, crop: crop, to: url, type: nil)
             if r.result != .failed {
                 FolderWatcher.noteOwnWrite(url)
                 ImageLoader.shared.evict(url: url)
             }
-            return Outcome(result: r.result, url: url, pixelSize: r.size)
+            return Outcome(result: r.result, url: url, pixelSize: r.size, error: r.error)
         }
         // 另存：能写回的格式用原格式（后缀与内容不符时改用真实格式后缀），RAW 等存成 JPEG
         let ext = writable ? FormatMismatch.preferredCopyExtension(for: url) : "jpg"
@@ -188,7 +192,7 @@ enum Straighten {
             return Outcome(result: lossless, url: out)
         }
         let r = reencode(url: url, turns: turns, degrees: degrees, crop: crop, to: out, type: writable ? nil : UTType.jpeg.identifier, maxLongEdge: edge)
-        return Outcome(result: r.result, url: r.result == .failed ? nil : out, pixelSize: r.size)
+        return Outcome(result: r.result, url: r.result == .failed ? nil : out, pixelSize: r.size, error: r.error)
     }
 
     /// 只转 90°、另存：原样拷贝数据，只改方向标记。格式不支持方向标记时返回 nil，改走重新编码
@@ -214,21 +218,21 @@ enum Straighten {
     }
 
     /// 解全分辨率（已按方向校正）→ 转 + 裁 → 按 type（nil = 原格式）编码，拍摄信息带过去，方向改成正常
-    private static func reencode(url: URL, turns: Int, degrees: Double, crop: CropSpec? = nil, to out: URL, type: String?, maxLongEdge: Int? = nil, border: BorderSpec? = nil) -> (result: ImageLoader.RotationWriteResult, size: CGSize?) {
-        let failed: (result: ImageLoader.RotationWriteResult, size: CGSize?) = (.failed, nil)
+    private static func reencode(url: URL, turns: Int, degrees: Double, crop: CropSpec? = nil, to out: URL, type: String?, maxLongEdge: Int? = nil, border: BorderSpec? = nil) -> (result: ImageLoader.RotationWriteResult, size: CGSize?, error: String?) {
+        func fail(_ err: String? = nil) -> (ImageLoader.RotationWriteResult, CGSize?, String?) { (.failed, nil, err) }
         // 点保存之前就在后台解好的全图（见 prewarm）：和下面自己解的是同一个调用，文件没动过才用
         let warmed = takeWarm(url)
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
               let srcType = CGImageSourceGetType(src),
-              let full = warmed ?? stage("1.decode", { ImageLoader.decodedFull(url: url) }) else { return failed }
-        guard var rendered = stage("2.render", { render(full, quarterTurns: turns, degrees: degrees, crop: scaledCrop(crop, full: full, turns: turns)) }) else { return failed }
+              let full = warmed ?? stage("1.decode", { ImageLoader.decodedFull(url: url) }) else { return fail() }
+        guard var rendered = stage("2.render", { render(full, quarterTurns: turns, degrees: degrees, crop: scaledCrop(crop, full: full, turns: turns)) }) else { return fail() }
         // 另存时选了尺寸：和导出的「长边不超过」同一个缩小（不放大）
         if let border {
             let exif = border.showExif ? BorderExif.read(url: url) : nil
-            guard let b = border.render(rendered, choice: border.size, exif: exif) else { return failed }
+            guard let b = border.render(rendered, choice: border.size, exif: exif) else { return fail() }
             rendered = b
         } else if let e = maxLongEdge, e < max(rendered.width, rendered.height) {
-            guard let s = stage("2b.scale", { ImageExporter.scaled(rendered, longEdge: e) }) else { return failed }
+            guard let s = stage("2b.scale", { ImageExporter.scaled(rendered, longEdge: e) }) else { return fail() }
             rendered = s
         }
         var props = (CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any]) ?? [:]
@@ -248,7 +252,9 @@ enum Straighten {
         }
         props[kCGImageDestinationLossyCompressionQuality as String] = 0.95
         let tmp = tempURL(near: out)
-        guard let dest = CGImageDestinationCreateWithURL(tmp as CFURL, (type ?? srcType as String) as CFString, 1, nil) else { return failed }
+        guard let dest = CGImageDestinationCreateWithURL(tmp as CFURL, (type ?? srcType as String) as CFString, 1, nil) else {
+            return fail(writeProbeError(in: out.deletingLastPathComponent()))
+        }
         // 连同文件里原样的 XMP / IPTC 一起带过去（只按属性字典写会丢图库自定义的 XMP、IPTC 的拍摄日期等）；
         // 方向和像素尺寸改成新的。读不出元数据的格式退回只写属性字典
         let fixedMeta = stage("3.metadata", { ImageExporter.fixedMetadata(from: src, width: rendered.width, height: rendered.height) })
@@ -260,8 +266,12 @@ enum Straighten {
                 CGImageDestinationAddImage(dest, rendered, props as CFDictionary)
             }
         }
-        guard stage("4b.encode", { CGImageDestinationFinalize(dest) }) else { try? FileManager.default.removeItem(at: tmp); return failed }
-        return stage("5.replace", { place(tmp, at: out) }) ? (.reencoded, CGSize(width: rendered.width, height: rendered.height)) : failed
+        guard stage("4b.encode", { CGImageDestinationFinalize(dest) }) else {
+            try? FileManager.default.removeItem(at: tmp)
+            return fail(writeProbeError(in: out.deletingLastPathComponent()))
+        }
+        if let err = stage("5.replace", { placeWithError(tmp, at: out) }) { return fail(err) }
+        return (.reencoded, CGSize(width: rendered.width, height: rendered.height), nil)
     }
 
     // MARK: - 提前解码
@@ -351,19 +361,54 @@ enum Straighten {
         out.deletingLastPathComponent().appendingPathComponent("\(FolderWatcher.tempPrefix)\(UUID().uuidString).\(out.pathExtension)")
     }
 
-    /// 临时文件换到目标位置（覆盖时用 replaceItem，保留原文件的创建时间、标签等）
-    private static func place(_ tmp: URL, at out: URL) -> Bool {
-        let fm = FileManager.default
+    /// ImageIO 写不出文件时顺手探一下目录写权限，把真正的系统报错（权限不足 / 只读卷）带给用户
+    static func writeProbeError(in dir: URL) -> String? {
+        let probe = dir.appendingPathComponent("\(FolderWatcher.tempPrefix)probe-\(UUID().uuidString)")
         do {
-            if fm.fileExists(atPath: out.path) {
-                _ = try fm.replaceItemAt(out, withItemAt: tmp)
-            } else {
-                try fm.moveItem(at: tmp, to: out)
-            }
-            return true
+            try Data().write(to: probe, options: .withoutOverwriting)
+            try? FileManager.default.removeItem(at: probe)
+            return nil
         } catch {
-            try? fm.removeItem(at: tmp)
-            return false
+            return error.localizedDescription
+        }
+    }
+
+    /// 原子替换目标文件；部分 exFAT / FAT32 存储卡、SMB 共享或同步盘不支持 replaceItemAt 时，
+    /// 用同目录备份先挪再换，失败自动回滚，绝不丢原图
+    static func replaceFile(_ tmp: URL, at out: URL) throws {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: out.path) else {
+            try fm.moveItem(at: tmp, to: out)
+            return
+        }
+        do {
+            _ = try fm.replaceItemAt(out, withItemAt: tmp)
+        } catch {
+            let bak = out.deletingLastPathComponent()
+                .appendingPathComponent("\(FolderWatcher.tempPrefix)bak-\(UUID().uuidString).\(out.pathExtension)")
+            try fm.moveItem(at: out, to: bak)
+            do {
+                try fm.moveItem(at: tmp, to: out)
+                try? fm.removeItem(at: bak)
+            } catch let moveErr {
+                try? fm.moveItem(at: bak, to: out)
+                throw moveErr
+            }
+        }
+    }
+
+    /// 临时文件换到目标位置（覆盖时用 replaceFile，保留原文件的创建时间、标签等）
+    private static func place(_ tmp: URL, at out: URL) -> Bool {
+        placeWithError(tmp, at: out) == nil
+    }
+
+    private static func placeWithError(_ tmp: URL, at out: URL) -> String? {
+        do {
+            try replaceFile(tmp, at: out)
+            return nil
+        } catch {
+            try? FileManager.default.removeItem(at: tmp)
+            return error.localizedDescription
         }
     }
 }

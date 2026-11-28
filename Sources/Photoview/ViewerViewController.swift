@@ -205,6 +205,9 @@ final class ViewerViewController: NSViewController {
     /// 草图：三路并行（JPEG 按 1/4 解码大多走硬件解码器，占 CPU 不多），不和清晰图、预取抢
     private let draftQueue = ViewerViewController.makeQueue("draft", width: 3, qos: .userInitiated)
     private let thumbQueue = ViewerViewController.makeQueue("thumb", width: 2, qos: .utility)
+    /// 正在排队或解码的缩略图按 URL 去重；滚出可视区域时立刻 cancel，甩滚几百张不积压内存与 I/O
+    private var thumbOps: [URL: Operation] = [:]
+    var debugThumbOpCount: Int { thumbOps.count }
 
     private static func makeQueue(_ name: String, width: Int, qos: QualityOfService) -> OperationQueue {
         let q = OperationQueue()
@@ -394,6 +397,7 @@ final class ViewerViewController: NSViewController {
             guard let self else { return }
             if delta > 0 { self.navigateForward(nil) } else { self.navigateBackward(nil) }
         }
+        filmstrip.onScrollSettled = { [weak self] in self?.loadVisibleFilmstripThumbs() }
         filmstrip.collectionView.onClick = { [weak self] i, mods in self?.filmstripClicked(i, mods) }
         filmstrip.collectionView.onBlankClick = { [weak self] in
             guard let self, self.filmstrip.collectionView.selectionIndexPaths.count > 1 else { return }
@@ -1353,6 +1357,7 @@ final class ViewerViewController: NSViewController {
         prefetchQueue.cancelAllOperations()
         draftQueue.cancelAllOperations()
         thumbQueue.cancelAllOperations()
+        thumbOps.removeAll()
         endRapidPaging()
         #if FLIPIC_PRO
         filmDisplay.reset()
@@ -2685,6 +2690,10 @@ final class ViewerViewController: NSViewController {
             // 解码方式变了，缓存里的图作废，当前这张重新解码
             loader.purge()
             showImage(resetToFit: false)
+        case "rotation":
+            // 设置里改了「保存修改」（例如切到覆盖原图）：当前已旋转的照片立刻按新设置生效
+            rotationAutoSaveFailed = nil
+            updateRotationBar()
         default: break
         }
     }
@@ -4573,6 +4582,7 @@ final class ViewerViewController: NSViewController {
         prefetchQueue.cancelAllOperations()
         draftQueue.cancelAllOperations()
         thumbQueue.cancelAllOperations()
+        thumbOps.removeAll()
         endRapidPaging()
         folder.clear()
         folderWatcher.stop()
@@ -5281,7 +5291,8 @@ final class ViewerViewController: NSViewController {
                     NSLog("STRAIGHTEN saved overwrite=%d result=%@ out=%@", overwrite ? 1 : 0, "\(out.result)", out.url?.lastPathComponent ?? "-")
                 }
                 guard out.result != .failed, let saved = out.url else {
-                    self.flash(L10n.f("msg.rotFailed", "保存失败： %@", " "), seconds: 3)
+                    let msg = out.error?.isEmpty == false ? out.error! : " "
+                    self.flash(L10n.f("msg.rotFailed", "保存失败： %@", msg), seconds: 4)
                     self.rotationAutoSaveFailed = url
                     self.updateRotationBar()
                     return
@@ -8328,21 +8339,61 @@ extension ViewerViewController: NSCollectionViewDataSource, NSCollectionViewDele
             item.setThumbnail(cached)
         } else {
             item.setThumbnail(nil)
-            thumbQueue.addOperation { [loader, weak item] in
-                let t = DiskIO.run(for: url, priority: .visible, isCancelled: { [weak item] in item == nil }) {
-                    loader.thumb(for: url)
-                }
-                // 视频出缩略图时顺带读过文件头，时长已经在缓存里
-                let d = isVideo ? Video.cachedMeta(url)?.duration : nil
-                DispatchQueue.main.async {
-                    if let item, item.itemIndex == idx {
-                        item.setThumbnail(t)
-                        if isVideo { item.setDuration(d) }
-                    }
-                }
+            if !filmstrip.isFastScrolling {
+                requestFilmstripThumb(index: idx, url: url, isVideo: isVideo)
             }
         }
         return item
+    }
+
+    func collectionView(_ collectionView: NSCollectionView, didEndDisplaying item: NSCollectionViewItem, forRepresentedObjectAt indexPath: IndexPath) {
+        let idx = indexPath.item
+        guard folder.items.indices.contains(idx) else { return }
+        let url = folder.items[idx].url
+        if let op = thumbOps.removeValue(forKey: url) { op.cancel() }
+    }
+
+    /// 高速甩滚减速或停住后，只为当前屏幕上可见且还没图的那几格发起解码
+    private func loadVisibleFilmstripThumbs() {
+        for case let item as FilmstripItem in filmstrip.collectionView.visibleItems() {
+            let idx = item.itemIndex
+            guard folder.items.indices.contains(idx) else { continue }
+            let url = folder.items[idx].url
+            let isVideo = Video.isVideo(url)
+            if let cached = loader.cachedThumb(for: url) {
+                item.setThumbnail(cached)
+                if isVideo { item.setDuration(Video.cachedMeta(url)?.duration) }
+            } else {
+                requestFilmstripThumb(index: idx, url: url, isVideo: isVideo)
+            }
+        }
+    }
+
+    private func requestFilmstripThumb(index idx: Int, url: URL, isVideo: Bool) {
+        guard thumbOps[url] == nil else { return }
+        let loader = self.loader
+        let op = BlockOperation()
+        op.addExecutionBlock { [weak self, weak op] in
+            guard op?.isCancelled == false else { return }
+            let t = DiskIO.run(for: url, priority: .visible, isCancelled: { [weak op] in op?.isCancelled == true }) {
+                loader.thumb(for: url)
+            }
+            // 视频出缩略图时顺带读过文件头，时长已经在缓存里
+            let d = isVideo ? Video.cachedMeta(url)?.duration : nil
+            DispatchQueue.main.async {
+                guard let self else { return }
+                let alive = op.map { self.thumbOps[url] === $0 && !$0.isCancelled } ?? false
+                if let op, self.thumbOps[url] === op { self.thumbOps.removeValue(forKey: url) }
+                guard alive, let t else { return }
+                for case let visible as FilmstripItem in self.filmstrip.collectionView.visibleItems()
+                where visible.itemIndex == idx {
+                    visible.setThumbnail(t)
+                    if isVideo { visible.setDuration(d) }
+                }
+            }
+        }
+        thumbOps[url] = op
+        thumbQueue.addOperation(op)
     }
 
     func collectionView(_ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>) {

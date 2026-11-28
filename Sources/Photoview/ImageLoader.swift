@@ -36,6 +36,7 @@ final class ImageLoader {
         fullCache.countLimit = 2
         fullCache.totalCostLimit = min(max(mem / 24, 192 << 20), 640 << 20)
         thumbCache.countLimit = 800
+        thumbCache.totalCostLimit = min(max(mem / 128, 32 << 20), 96 << 20)
         draftCache.countLimit = 8
         draftCache.totalCostLimit = min(max(mem / 160, 48 << 20), 96 << 20)
         infoCache.countLimit = 4000
@@ -531,57 +532,65 @@ final class ImageLoader {
         let px = targetPixel ?? FilmstripView.thumbPixel
         if targetPixel == nil, let hit = cachedThumb(for: url) { return hit }
         if let hit = thumbCache.object(url), hit.px >= px { return hit.image }
-        let slow = Volumes.isSlowStorage(url)
-        if slow, !Video.isVideo(url),
-           let disk = ExtDiskCache.shared.load(for: url, kind: .thumb, minLongEdge: px) {
-            infoCache.setObject(InfoBox(disk.info), forKey: url as NSURL)
-            thumbCache.set(CGBox(image: disk.image, px: px), for: url, cost: pixelBytes(disk.image))
-            return disk.image
-        }
-        var decoded: CGImage?
-        var meta: ImageInfo? = cachedInfo(for: url)
-        if Video.isVideo(url) {
-            decoded = Video.poster(url, maxPixel: px)
-        } else if CleanupUnit.isRaw(url) {
-            decoded = Self.rawEmbeddedPreview(url: url, maxPixel: px)
-                ?? Self.renderThumbnail(url: url, maxPixel: px, allowEmbedded: px <= 160 || slow)
-            if meta == nil, let f = EmbeddedPreview.locate(url) {
-                meta = ImageInfo(pixelSize: f.size, isAnimated: false)
-                infoCache.setObject(InfoBox(meta!), forKey: url as NSURL)
+        return autoreleasepool {
+            let slow = Volumes.isSlowStorage(url)
+            if slow, !Video.isVideo(url),
+               let disk = ExtDiskCache.shared.load(for: url, kind: .thumb, minLongEdge: px) {
+                infoCache.setObject(InfoBox(disk.info), forKey: url as NSURL)
+                thumbCache.set(CGBox(image: disk.image, px: px), for: url, cost: pixelBytes(disk.image))
+                return disk.image
             }
-        } else {
-            let allowEmb = px <= 160 || (slow && px <= 220)
-            // 慢盘且缩略图尺寸不大（≤ 220px）时，先一次顺序读文件头前 128 KB：有 EXIF 缩略图就直接 1 次小读同时拿到缩略图与原图尺寸
-            let ext = url.pathExtension.lowercased()
-            if allowEmb && slow && (ext == "jpg" || ext == "jpeg" || ext == "jpe"),
-               let head = DiskIO.readFileData(url, maxBytes: 128 << 10),
-               FormatMismatch.hasJPEGHeader(head),
-               let headSrc = CGImageSourceCreateWithData(head as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) {
-                if meta == nil { meta = info(for: url, source: headSrc) }
-                let embOpts: [CFString: Any] = [
-                    kCGImageSourceCreateThumbnailFromImageIfAbsent: false,
-                    kCGImageSourceCreateThumbnailWithTransform: true,
-                    kCGImageSourceThumbnailMaxPixelSize: px,
-                    kCGImageSourceShouldCacheImmediately: true,
-                ]
-                if let emb = CGImageSourceCreateThumbnailAtIndex(headSrc, 0, embOpts as CFDictionary),
-                   CGFloat(max(emb.width, emb.height)) >= min(px, 160) * 0.75 {
-                    decoded = emb
+            var decoded: CGImage?
+            var meta: ImageInfo? = cachedInfo(for: url)
+            if Video.isVideo(url) {
+                decoded = Video.poster(url, maxPixel: px)
+            } else if CleanupUnit.isRaw(url) {
+                decoded = Self.rawEmbeddedPreview(url: url, maxPixel: px)
+                    ?? Self.renderThumbnail(url: url, maxPixel: px, allowEmbedded: px <= 160 || slow)
+                if meta == nil, let f = EmbeddedPreview.locate(url) {
+                    meta = ImageInfo(pixelSize: f.size, isAnimated: false)
+                    infoCache.setObject(InfoBox(meta!), forKey: url as NSURL)
+                }
+            } else {
+                let allowEmb = px <= 160 || (slow && px <= 220)
+                // 慢盘且缩略图尺寸不大（≤ 220px）时，先一次顺序读文件头前 128 KB：有 EXIF 缩略图就直接 1 次小读同时拿到缩略图与原图尺寸
+                let ext = url.pathExtension.lowercased()
+                if allowEmb && slow && (ext == "jpg" || ext == "jpeg" || ext == "jpe"),
+                   let head = DiskIO.readFileData(url, maxBytes: 128 << 10),
+                   FormatMismatch.hasJPEGHeader(head),
+                   let headSrc = CGImageSourceCreateWithData(head as CFData, [kCGImageSourceShouldCache: false] as CFDictionary) {
+                    if meta == nil { meta = info(for: url, source: headSrc) }
+                    let embOpts: [CFString: Any] = [
+                        kCGImageSourceCreateThumbnailFromImageIfAbsent: false,
+                        kCGImageSourceCreateThumbnailWithTransform: true,
+                        kCGImageSourceThumbnailMaxPixelSize: px,
+                        kCGImageSourceShouldCacheImmediately: true,
+                    ]
+                    if let emb = CGImageSourceCreateThumbnailAtIndex(headSrc, 0, embOpts as CFDictionary),
+                       CGFloat(max(emb.width, emb.height)) >= min(px, 160) * 0.75 {
+                        decoded = emb
+                    }
+                }
+                if decoded == nil {
+                    // 本地盘取内嵌缩略图时直接按 URL 读文件头，不把整张 20–64 MB 原图读进堆内存，大幅降低快速甩滚时的内存峰值
+                    let src = (allowEmb && !slow)
+                        ? CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary)
+                        : Self.imageSource(url: url)
+                    if let src {
+                        if meta == nil { meta = info(for: url, source: src) }
+                        decoded = Self.renderThumbnail(source: src, maxPixel: px, allowEmbedded: allowEmb)
+                    }
                 }
             }
-            if decoded == nil, let src = Self.imageSource(url: url) {
-                if meta == nil { meta = info(for: url, source: src) }
-                decoded = Self.renderThumbnail(source: src, maxPixel: px, allowEmbedded: allowEmb)
+            guard let img = decoded else { return nil }
+            let finalMeta = meta ?? cachedInfo(for: url) ?? info(for: url)
+            if slow, !Video.isVideo(url), finalMeta?.isAnimated != true {
+                let orig = finalMeta?.pixelSize ?? CGSize(width: img.width, height: img.height)
+                ExtDiskCache.shared.store(img, origSize: orig, for: url, kind: .thumb)
             }
+            thumbCache.set(CGBox(image: img, px: px), for: url, cost: pixelBytes(img))
+            return img
         }
-        guard let img = decoded else { return nil }
-        let finalMeta = meta ?? cachedInfo(for: url) ?? info(for: url)
-        if slow, !Video.isVideo(url), finalMeta?.isAnimated != true {
-            let orig = finalMeta?.pixelSize ?? CGSize(width: img.width, height: img.height)
-            ExtDiskCache.shared.store(img, origSize: orig, for: url, kind: .thumb)
-        }
-        thumbCache.set(CGBox(image: img, px: px), for: url, cost: pixelBytes(img))
-        return img
     }
 
     /// 判断文件是否为可播放的动图（ImageIO 动画 API 支持 GIF 与 APNG）
@@ -606,10 +615,13 @@ final class ImageLoader {
     /// 把视图旋转（顺时针 turns 个 90°）无损写回文件。
     /// JPEG/HEIC/TIFF 走方向元数据重写；PNG 等回退为像素旋转重编码（PNG 无损）
     static func writeRotation(url: URL, clockwiseTurns: Int) -> RotationWriteResult {
+        writeRotationWithError(url: url, clockwiseTurns: clockwiseTurns).result
+    }
+
+    static func writeRotationWithError(url: URL, clockwiseTurns: Int) -> (result: RotationWriteResult, error: String?) {
         let fm = FileManager.default
         guard let src = CGImageSourceCreateWithURL(url as CFURL, [kCGImageSourceShouldCache: false] as CFDictionary),
-              let typeID = CGImageSourceGetType(src) else { return .failed }
-        let type = typeID as String
+              let typeID = CGImageSourceGetType(src) else { return (.failed, nil) }
 
         var props = (CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any]) ?? [:]
         let oldOrientation = (props[kCGImagePropertyOrientation as String] as? Int) ?? 1
@@ -621,12 +633,12 @@ final class ImageLoader {
         let tmp = url.deletingLastPathComponent()
             .appendingPathComponent(".photoview-rotate-\(UUID().uuidString).\(url.pathExtension)")
         guard let dest = CGImageDestinationCreateWithURL(tmp as CFURL, typeID as CFString, 1, nil) else {
-            return .failed
+            return (.failed, Straighten.writeProbeError(in: url.deletingLastPathComponent()))
         }
         CGImageDestinationAddImageFromSource(dest, src, 0, props as CFDictionary)
         guard CGImageDestinationFinalize(dest) else {
             try? fm.removeItem(at: tmp)
-            return .failed
+            return (.failed, Straighten.writeProbeError(in: url.deletingLastPathComponent()))
         }
 
         // 校验方向是否真正写入（PNG 等格式可能不支持方向属性）
@@ -641,29 +653,29 @@ final class ImageLoader {
             // 回退：按显示方向旋转像素后重编码（PNG 无损；其余 0.95 质量）
             guard let pixels = decodedFull(url: url) else {
                 try? fm.removeItem(at: tmp)
-                return .failed
+                return (.failed, nil)
             }
             let rotated = ImageLoader.rotated(pixels, quarterTurns: clockwiseTurns % 4)
             guard let rdest = CGImageDestinationCreateWithURL(tmp as CFURL, typeID as CFString, 1, nil) else {
-                return .failed
+                try? fm.removeItem(at: tmp)
+                return (.failed, Straighten.writeProbeError(in: url.deletingLastPathComponent()))
             }
             CGImageDestinationAddImage(rdest, rotated,
                                        [kCGImageDestinationLossyCompressionQuality: 0.95] as CFDictionary)
             guard CGImageDestinationFinalize(rdest) else {
                 try? fm.removeItem(at: tmp)
-                return .failed
+                return (.failed, Straighten.writeProbeError(in: url.deletingLastPathComponent()))
             }
         }
         do {
-            if fm.fileExists(atPath: url.path) { try fm.removeItem(at: url) }
-            try fm.moveItem(at: tmp, to: url)
+            try Straighten.replaceFile(tmp, at: url)
         } catch {
             try? fm.removeItem(at: tmp)
-            return .failed
+            return (.failed, error.localizedDescription)
         }
         FolderWatcher.noteOwnWrite(url)
         ImageLoader.shared.evict(url: url)
-        return lossless ? .lossless : .reencoded
+        return (lossless ? .lossless : .reencoded, nil)
     }
 
     func evict(url: URL) {

@@ -692,7 +692,8 @@ extension ViewerViewController {
                     self.flash(L10n.f("msg.rotSavedAs", "已另存为 %@", saved.lastPathComponent), seconds: 3)
                     self.folderDidChange()
                 } else {
-                    self.flash(L10n.f("msg.rotFailed", "保存失败： %@", " "), seconds: 3)
+                    let msg = out.error?.isEmpty == false ? out.error! : " "
+                    self.flash(L10n.f("msg.rotFailed", "保存失败： %@", msg), seconds: 4)
                 }
             }
         }

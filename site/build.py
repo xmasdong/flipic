@@ -16,7 +16,7 @@ SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
 SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "9.2 MB"
+SIZE = "9.3 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -2522,6 +2522,10 @@ def render_changelog(lang):
     desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
             else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
     entries_zh = [
+        ("1.0.69", "2026-11-28", [
+            "底部缩略图栏支持自由快速滚动（免费 + Pro）：在看图窗口与工作台底部缩略图栏上使用鼠标上下/横向滚轮或触控板滑动时，现在可以一路顺滑滚到末尾跳过大量照片，上方大图不跟着切换，点击某张缩略图后再切换到那一张；同步优化缩略图缓存内存上限、高速甩滚按需解码与离屏队列自动取消。",
+            "修复工作台 .CR3 等 RAW 旋转保存失败与自动保存缺失问题：工作台现已接入 RAW 无损 90° 旋转写回（支持 .CR3 / .CR2 / .ARW / .NEF / .RAF / .ORF / .RW2 / .DNG 等 20 种格式）及自动保存（遵循「设置 › 看图 › 保存修改」，翻页或关闭窗口前自动刷盘）；在设置中切换为「覆盖原图」后立即生效，保存失败时展示具体错误原因，并增强只读保护副本及外接盘 / NAS 写回兼容。",
+        ]),
         ("1.0.68", "2026-11-27", [
             "视频附属文件一起处理：大疆 Pocket 3 的 .LRF / .SRT、GoPro 的 .LRV / .THM、索尼的 .XML 附属文件，现在删除、复制、移动或重命名视频时会跟着一起走，⌘Z 撤销和从废纸篓放回时也一并恢复。",
             "视频播放体验修复：视频周围改为干净深色背景（不再残留第一帧颜色），消除边缘 1 像素错位露边；加载完成前按播放现在就绪后自动开始播放；播放期间暂停后台缩略图预读，并为外接盘与存储卡加大预缓冲。",
@@ -2590,6 +2594,10 @@ def render_changelog(lang):
         ]),
     ]
     entries_en = [
+        ("1.0.69", "2026-11-28", [
+            "Free-scrolling bottom filmstrip (Free + Pro): scrolling over the bottom filmstrip in both Viewer and Workbench with a mouse wheel, horizontal wheel or trackpad now glides freely across the entire strip without changing the main preview; click any thumbnail when ready to switch. Also caps thumbnail cache memory, defers uncached decodes during high-speed flings and cancels off-screen decode jobs.",
+            "Fixed Workbench RAW (.CR3) rotation save failures and auto-save: Workbench now uses lossless 90° RAW orientation writing (20 formats including .CR3, .CR2, .ARW, .NEF, .RAF, .ORF, .RW2 and .DNG) and honors Settings › Viewing › Save Edits auto-save (flushing before paging or closing). Switching to Overwrite Original now applies immediately, save errors show the real system reason, and read-only copies plus exFAT / SMB file replacement are handled safely.",
+        ]),
         ("1.0.68", "2026-11-27", [
             "Video companion files move with the video: same-name DJI Pocket 3 (.LRF / .SRT), GoPro (.LRV / .THM) and Sony (.XML) companion files are now deleted, copied, moved and renamed alongside their video, and restored together on ⌘Z Undo or Trash recovery.",
             "Video playback fixes: clean dark backdrop behind playback (no frozen first-frame bleed), exact pixel alignment with no 1px edge strip, queued play if pressed before loading finishes, paused background thumbnail preloading during playback and deeper buffering on external drives and memory cards.",

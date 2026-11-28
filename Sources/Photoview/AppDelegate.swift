@@ -731,6 +731,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return
         }
+        if let i = CommandLine.arguments.firstIndex(of: "--filmstriprottest"), i + 1 < CommandLine.arguments.count {
+            let outDir = CommandLine.arguments[i + 1]
+            let cr3 = (i + 2 < CommandLine.arguments.count && !CommandLine.arguments[i + 2].hasPrefix("--"))
+                ? CommandLine.arguments[i + 2] : nil
+            Timer.scheduledTimer(withTimeInterval: 0.6, repeats: false) { _ in
+                FilmstripRotateSelfTest.run(outDir: outDir, cr3Sample: cr3)
+            }
+            return
+        }
         #endif
         if let i = CommandLine.arguments.firstIndex(of: "--extcachetest"), i + 1 < CommandLine.arguments.count {
             // --extcachetest <工作文件夹>：外接硬盘本机 SSD 持久化缓存与慢盘单通道调度自测，最后一行 EXTCACHE summary

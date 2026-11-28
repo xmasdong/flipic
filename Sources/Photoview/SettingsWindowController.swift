@@ -1089,9 +1089,13 @@ private final class ViewingSettingsPane: NSViewController, SettingsPane {
 
     @objc private func rotSaveChanged() {
         Straighten.saveTarget = Straighten.Target(rawValue: rotSavePopup.selectedItem?.representedObject as? String ?? "") ?? .ask
+        SettingsWindowController.notify("rotation")
     }
 
-    @objc private func rotRemindChanged() { Straighten.remindUnsaved = rotRemind.state == .on }
+    @objc private func rotRemindChanged() {
+        Straighten.remindUnsaved = rotRemind.state == .on
+        SettingsWindowController.notify("rotation")
+    }
 
     @objc private func liveTextChanged() {
         TextRecognition.autoAnalyze = liveText.state == .on
