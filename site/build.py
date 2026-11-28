@@ -10,13 +10,13 @@ REPO = ROOT.parent
 DOCS = REPO / "docs"
 OUT = ROOT / "public"
 BASE = "https://flipic.app"
-UPDATED = "2026-11-26"
+UPDATED = "2026-11-28"
 # 水印功能 1.0.43 发布后改成 True；False 时站点里不出现任何水印文字和图片
 SHOW_WATERMARK = True
 # Windows 版候补名单：首页的留邮箱区块、首屏的「用 Windows？」链接、隐私政策里的说明。False 时三处都不生成（Worker 的 /api/waitlist 不受影响）
 SHOW_WINDOWS_WAITLIST = True
 VERSION = json.loads((DOCS / "version.json").read_text())["version"]
-SIZE = "9.1 MB"
+SIZE = "9.2 MB"
 # 样式和脚本按内容取版本号：它们缓存一年，内容一变地址就变
 import hashlib
 # 截图也一样：放进按内容命名的子文件夹，换了图地址就变
@@ -2522,6 +2522,13 @@ def render_changelog(lang):
     desc = ("Flipic Lens 各版本更新记录：摄影质检、EXIF 参数相框、外接盘 SSD 缓存、跟随访达排序、胶片滤镜与水印导出。" if is_zh
             else "Flipic Lens release history: photographer inspection tools, EXIF photo frame, external drive SSD cache, Same as Finder sort, film looks and watermarks.")
     entries_zh = [
+        ("1.0.68", "2026-11-27", [
+            "视频附属文件一起处理：大疆 Pocket 3 的 .LRF / .SRT、GoPro 的 .LRV / .THM、索尼的 .XML 附属文件，现在删除、复制、移动或重命名视频时会跟着一起走，⌘Z 撤销和从废纸篓放回时也一并恢复。",
+            "视频播放体验修复：视频周围改为干净深色背景（不再残留第一帧颜色），消除边缘 1 像素错位露边；加载完成前按播放现在就绪后自动开始播放；播放期间暂停后台缩略图预读，并为外接盘与存储卡加大预缓冲。",
+        ]),
+        ("1.0.67", "2026-11-26", [
+            "一步设为默认看图软件：从访达打开尚未设为默认格式的照片时，窗口底部轻提示可一键将常见图片格式和相机 RAW 全部设为默认（每种格式只提示一次，可点「不再提示」）；应用菜单同步新增「设为默认看图软件」，支持在设置中自定义快捷键。",
+        ]),
         ("1.0.66", "2026-11-26", [
             "修复「设为默认看图软件」跨文件夹 / 多格式失效问题：扩展至全部 39 项常见图片与相机 RAW 系统类型（修复奥林巴斯 .orf 识别，补齐宾得 .pef、徕卡 .rwl、哈苏 .3fr/.fff、飞思 .iiq、佳能 .crw、索尼 .sr2/.srf、三星 .srw 等），检测所有格式并在部分格式未设为默认时保留一键补齐按钮。",
             "新增从 DMG 镜像或临时路径运行时的提醒与系统拒绝改默认时的明确提示；修正 14 种语言设置页中的访达全局默认操作引导（改为 ⌘I 显示简介 → 全部更改…）。",
@@ -2583,6 +2590,13 @@ def render_changelog(lang):
         ]),
     ]
     entries_en = [
+        ("1.0.68", "2026-11-27", [
+            "Video companion files move with the video: same-name DJI Pocket 3 (.LRF / .SRT), GoPro (.LRV / .THM) and Sony (.XML) companion files are now deleted, copied, moved and renamed alongside their video, and restored together on ⌘Z Undo or Trash recovery.",
+            "Video playback fixes: clean dark backdrop behind playback (no frozen first-frame bleed), exact pixel alignment with no 1px edge strip, queued play if pressed before loading finishes, paused background thumbnail preloading during playback and deeper buffering on external drives and memory cards.",
+        ]),
+        ("1.0.67", "2026-11-26", [
+            "One-step default viewer prompt: opening a photo from Finder whose format is not yet set to Flipic shows a lightweight bottom bar offering Make Default or Don't Ask Again (once per format). The app menu also adds Make Default Viewer, assignable in Settings › Shortcuts.",
+        ]),
         ("1.0.66", "2026-11-26", [
             "Fixed default image viewer across formats and folders: expanded one-click registration to all 39 raster and camera RAW UTTypes (fixing Olympus .orf and adding Pentax .pef, Leica .rwl, Hasselblad .3fr/.fff, Phase One .iiq, Canon .crw, Sony .sr2/.srf, Samsung .srw and more), and check all formats instead of JPEG alone so partial bindings show a one-click Set for All Formats button.",
             "Added a warning when attempting to set default while running from a mounted DMG or temporary folder, explicit error alerts if macOS blocks the change, and updated Finder instructions across all 14 languages to use ⌘I (Get Info) › Open with › Change All….",
